@@ -6,7 +6,7 @@ import os
 import sys
 
 
-def warning(tgt=sys.stderr, *objs):
+def swarn(tgt=sys.stderr, *objs):
     """Writes a warning message to a target (stderr by default)."""
     print("WARNING: ", *objs, file=tgt)
 

@@ -19,11 +19,15 @@ def expected_dir_data():
 
 # Tests #
 class TestFindFiles(unittest.TestCase):
-    "Calc tests"
+    """
+    Tests for the file finder.
+    """
 
     def test_find(self):
         self.maxDiff = None
         found = find_files_by_dir(FES_BASE, DEF_FILE_PAT)
-        for key, files in expected_dir_data().iteritems():
+        exp_data = expected_dir_data()
+        self.assertEqual(len(exp_data), len(found))
+        for key, files in exp_data.iteritems():
             found_files = found.get(key)
             self.assertItemsEqual(files, found_files)
