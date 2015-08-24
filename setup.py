@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import raptor_utils
 
 try:
     from setuptools import setup
@@ -15,7 +15,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    # TODO: put package requirements here
+    'argparse',
 ]
 
 test_requirements = [
@@ -24,7 +24,7 @@ test_requirements = [
 
 setup(
     name='raptor_utils',
-    version='0.1.0',
+    version=raptor_utils.__version__,
     description="Utility scripts for Raptor data",
     long_description=readme + '\n\n' + history,
     author="Heather Mayes",
@@ -33,8 +33,16 @@ setup(
     packages=[
         'raptor_utils',
     ],
+    entry_points = {
+        'console_scripts': [
+            'fes_combo = raptor_utils.fes_combo:main',
+        ],
+    },
     package_dir={'raptor_utils':
                  'raptor_utils'},
+    package_data = {
+        'aimless': ['skel/*.*', 'skel/tpl/*.*', 'skel/input/*.*'],
+    },
     include_package_data=True,
     install_requires=requirements,
     license="BSD",

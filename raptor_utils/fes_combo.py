@@ -17,7 +17,7 @@ import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('fes_combo')
 logger.setLevel(logging.DEBUG)
 
@@ -53,6 +53,13 @@ def combine(tgt_files):
 
 
 def map_fes(tgt_file):
+    """
+    Maps each line of the given FES output file to its timestep value.  Lines that do not have a timestep
+    for its first element are discarded.
+
+    :param tgt_file: The file location to process.
+    :return: A dict with each FES data line mapped to its int timestep value.
+    """
     fmap = {}
     fkey = None
     with open(tgt_file) as tf:
@@ -66,6 +73,43 @@ def map_fes(tgt_file):
                 logger.debug("Error '{}' for line '{}'".format(e, tline))
     return fkey, fmap
 
+def extract_header(tgt_file):
+    """
+    Collects lines that don't have a timestep and returns them.
+
+    :param tgt_file: The file to process.
+    :return: The headers for the given file.
+    """
+    with open(tgt_file) as tf:
+        hlines = []
+        for tline in tf:
+            sline = tline.strip().split()
+            if len(sline) < 2:
+                hlines.append(tline)
+                continue
+            try:
+                # If we have a timestep, this is not a header line
+                int(sline[0])
+                break
+            except:
+                hlines.append(tline)
+        return hlines
+
+def write_combo(headers, combo, combo_file):
+    """
+    Writes the headers, then the combo, to the combo file location.
+    :param headers: The headers to write.
+    :param combo: A dict of combined file contents indexed by timestep.
+    :param combo_file: The file location for the output.
+    """
+    with open(combo_file, 'w') as f:
+        for hline in headers:
+            if not hline:
+                f.write(os.linesep)
+            else:
+                f.write(hline)
+        for key, line in sorted(combo.items()):
+            f.write(line)
 
 # CLI Processing #
 
@@ -98,9 +142,6 @@ def parse_cmdline(argv):
 
     return args, 0
 
-
-
-
 def main(argv=None):
     args, ret = parse_cmdline(argv)
     if ret != 0:
@@ -108,13 +149,16 @@ def main(argv=None):
     found_files = find_files_by_dir(args.base_dir, args.pattern)
     logger.debug("Found '{}' dirs with files to combine".format(len(found_files)))
     for fdir, files in found_files.iteritems():
+        if not files:
+            logger.warn("No files found for dir '{}'")
+            continue
         combo_file = os.path.join(fdir, args.target_file)
         if os.path.exists(combo_file) and not args.overwrite:
             logger.warning("Target file '{}' already exists.  Skipping dir '{}'".
                            format(combo_file, fdir))
             continue
         combo = combine([os.path.join(fdir, tgt) for tgt in files])
-        #write_combo(combo, combo_file)
+        write_combo(extract_header(os.path.join(fdir, files[0])), combo, combo_file)
 
     return 0  # success
 
