@@ -8,9 +8,9 @@ from raptor_utils.fes_combo import combine, DEF_FILE_PAT, DEF_TGT, map_fes, extr
 __author__ = 'cmayes'
 
 # Logging #
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_fes_combo')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 DATA_DIR = 'test_data'
 FES_OUT_DIR = 'fes_out'
