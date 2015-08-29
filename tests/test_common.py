@@ -1,7 +1,7 @@
 import os
 import unittest
-from raptor_utils.common import find_files_by_dir
-from raptor_utils.fes_combo import DEF_FILE_PAT
+from md_utils.common import find_files_by_dir
+from md_utils.fes_combo import DEF_FILE_PAT
 
 __author__ = 'cmayes'
 

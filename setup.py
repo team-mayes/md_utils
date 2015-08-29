@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import raptor_utils
+import md_utils
 
 try:
     from setuptools import setup
@@ -23,23 +23,23 @@ test_requirements = [
 ]
 
 setup(
-    name='raptor_utils',
-    version=raptor_utils.__version__,
-    description="Utility scripts for Raptor data",
+    name='md_utils',
+    version=md_utils.__version__,
+    description="Utility scripts for MD data",
     long_description=readme + '\n\n' + history,
     author="Heather Mayes",
     author_email='hmayes@hmayes.com',
-    url='https://github.com/hmayes/raptor_utils',
+    url='https://github.com/hmayes/md_utils',
     packages=[
-        'raptor_utils',
+        'md_utils',
     ],
     entry_points = {
         'console_scripts': [
-            'fes_combo = raptor_utils.fes_combo:main',
+            'fes_combo = md_utils.fes_combo:main',
         ],
     },
-    package_dir={'raptor_utils':
-                 'raptor_utils'},
+    package_dir={'md_utils':
+                 'md_utils'},
     package_data = {
         'aimless': ['skel/*.*', 'skel/tpl/*.*', 'skel/input/*.*'],
     },
@@ -47,7 +47,7 @@ setup(
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='raptor_utils',
+    keywords='md_utils',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

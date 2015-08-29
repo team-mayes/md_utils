@@ -35,7 +35,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 raptor_utils tests
+	flake8 md_utils tests
 
 test:
 	python setup.py test
@@ -44,15 +44,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source raptor_utils setup.py test
+	coverage run --source md_utils setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/raptor_utils.rst
+	rm -f docs/md_utils.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ raptor_utils
+	sphinx-apidoc -o docs/ md_utils
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html

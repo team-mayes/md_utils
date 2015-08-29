@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ easy_install raptor_utils
+    $ easy_install md_utils
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv raptor_utils
-    $ pip install raptor_utils
+    $ mkvirtualenv md_utils
+    $ pip install md_utils

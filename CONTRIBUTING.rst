@@ -13,7 +13,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/hmayes/raptor_utils/issues.
+Report bugs at https://github.com/hmayes/md_utils/issues.
 
 If you are reporting a bug, please include:
 
@@ -36,14 +36,14 @@ is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-Raptor Utilities could always use more documentation, whether as part of the
-official Raptor Utilities docs, in docstrings, or even on the web in blog posts,
+MD Utilities could always use more documentation, whether as part of the
+official MD Utilities docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/hmayes/raptor_utils/issues.
+The best way to send feedback is to file an issue at https://github.com/hmayes/md_utils/issues.
 
 If you are proposing a feature:
 
@@ -55,17 +55,17 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `raptor_utils` for local development.
+Ready to contribute? Here's how to set up `md_utils` for local development.
 
-1. Fork the `raptor_utils` repo on GitHub.
+1. Fork the `md_utils` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/raptor_utils.git
+    $ git clone git@github.com:your_name_here/md_utils.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv raptor_utils
-    $ cd raptor_utils/
+    $ mkvirtualenv md_utils
+    $ cd md_utils/
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -76,7 +76,7 @@ Ready to contribute? Here's how to set up `raptor_utils` for local development.
 
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
-    $ flake8 raptor_utils tests
+    $ flake8 md_utils tests
     $ python setup.py test
     $ tox
 
@@ -100,7 +100,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 2.6, 2.7, 3.3, and 3.4, and for PyPy. Check
-   https://travis-ci.org/hmayes/raptor_utils/pull_requests
+   https://travis-ci.org/hmayes/md_utils/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
@@ -108,4 +108,4 @@ Tips
 
 To run a subset of tests::
 
-    $ python -m unittest tests.test_raptor_utils
+    $ python -m unittest tests.test_md_utils

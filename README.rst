@@ -1,20 +1,22 @@
-===============================
-Raptor Utilities
-===============================
+============
+MD Utilities
+============
 
-.. image:: https://img.shields.io/travis/hmayes/raptor_utils.svg
-        :target: https://travis-ci.org/hmayes/raptor_utils
+.. image:: https://img.shields.io/travis/hmayes/md_utils.svg
+        :target: https://travis-ci.org/hmayes/md_utils
 
-.. image:: https://img.shields.io/pypi/v/raptor_utils.svg
-        :target: https://pypi.python.org/pypi/raptor_utils
+.. image:: https://img.shields.io/pypi/v/md_utils.svg
+        :target: https://pypi.python.org/pypi/md_utils
 
 
-Utility scripts for Raptor data
+Utility scripts for MD data
 
 * Free software: BSD license
-* Documentation: https://raptor_utils.readthedocs.org.
+* Documentation: https://md_utils.readthedocs.org.
 
 Features
 --------
 
-* TODO
+* fes_combo: Combines multiple FES output files into a single file so that the
+             first column's value is sequential.  Files with higher starting
+             index numbers are favored.
