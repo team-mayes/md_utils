@@ -17,9 +17,8 @@ import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('fes_combo')
-logger.setLevel(logging.INFO)
 
 # Defaults #
 
@@ -61,17 +60,17 @@ def map_fes(tgt_file):
     :return: A dict with each FES data line mapped to its int timestep value.
     """
     fmap = {}
-    fkey = None
+    first_key = None
     with open(tgt_file) as tf:
         for tline in tf:
             try:
                 tstep = int(tline.strip().split()[0].strip())
                 fmap[tstep] = tline
-                if not fkey:
-                    fkey = tstep
+                if first_key is None:
+                    first_key = tstep
             except Exception, e:
                 logger.debug("Error '{}' for line '{}'".format(e, tline))
-    return fkey, fmap
+    return first_key, fmap
 
 def extract_header(tgt_file):
     """

@@ -36,6 +36,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'fes_combo = md_utils.fes_combo:main',
+            'wham_rad = md_utils.wham_rad:main',
         ],
     },
     package_dir={'md_utils':
