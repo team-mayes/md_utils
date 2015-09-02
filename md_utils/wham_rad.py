@@ -20,7 +20,7 @@ import sys
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('fes_combo')
+logger = logging.getLogger('wham_rad')
 
 # Constants
 
@@ -70,7 +70,7 @@ def calc_rad(src_file, kbt):
             reslines.append(wres)
     return reslines
 
-def set_zero_point(corr_res):
+def to_zero_point(corr_res):
     max_cor_freng = None
     for zrow in corr_res:
         try:
@@ -129,7 +129,7 @@ def main(argv=None):
     kbt = args.temp * BOLTZ_CONST
 
     if args.src_file is not None:
-        proc_data = set_zero_point(calc_rad(args.src_file, kbt))
+        proc_data = to_zero_point(calc_rad(args.src_file, kbt))
         write_result(proc_data, create_out_fname(args.src_file))
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
@@ -139,7 +139,7 @@ def main(argv=None):
                 logger.warn("No files found for dir '{}'")
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
-                proc_data = set_zero_point(calc_rad(pmf_path, kbt))
+                proc_data = to_zero_point(calc_rad(pmf_path, kbt))
                 write_result(proc_data, create_out_fname(pmf_path))
 
     return 0  # success

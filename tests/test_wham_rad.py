@@ -1,8 +1,10 @@
+import csv
 import logging
 import os
 import unittest
+import math
 from md_utils.wham_rad import create_out_fname, OUT_PFX, calc_corr, BOLTZ_CONST, calc_rad, COORD_KEY, CORR_KEY, FREE_KEY, \
-    set_zero_point, write_result
+    to_zero_point, write_result
 
 # Experimental temperature was 310 Kelvin
 INF = "inf"
@@ -22,6 +24,15 @@ ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_FNAME = "PMFtest.txt"
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
+# Shared Methods #
+
+def zpe_check(test_inst, zpe):
+    for zrow in zpe:
+        corr, coord = float(zrow[CORR_KEY]), float(zrow[COORD_KEY])
+        if corr == 0:
+            test_inst.assertAlmostEqual(6.0, coord)
+        else:
+            test_inst.assertTrue(corr < 0.0 or math.isinf(corr))
 
 # Tests #
 class TestCreateOutFname(unittest.TestCase):
@@ -58,10 +69,14 @@ class TestCalcRad(unittest.TestCase):
 class TestZeroPoint(unittest.TestCase):
 
     def testZeroPoint(self):
-        logger.debug(set_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT)))
+        zpe = to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT))
+        zpe_check(self, zpe)
 
 class TestWriteOut(unittest.TestCase):
 
     def testWrite(self):
-        write_result(calc_rad(SHORT_WHAM_PATH, EXP_KBT), create_out_fname(SHORT_WHAM_PATH))
+        tgt_fname = create_out_fname(SHORT_WHAM_PATH)
+        write_result(to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT)), tgt_fname)
+        with open(tgt_fname) as csvfile:
+            zpe_check(self, csv.DictReader(csvfile))
 
