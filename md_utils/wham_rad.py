@@ -10,7 +10,7 @@ __author__ = 'cmayes'
 # !/usr/bin/env python
 
 """
-Module docstring.
+Creates a radial correction value for each line of the target file(s).
 """
 
 import argparse
@@ -22,7 +22,7 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham_rad')
 
-# Constants
+# Constants #
 
 OUT_PFX = 'rad_'
 # Boltzmann's Constant in kcal/mol Kelvin
@@ -140,7 +140,11 @@ def main(argv=None):
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                write_result(proc_data, create_out_fname(pmf_path))
+                out_fname = create_out_fname(pmf_path)
+                if os.path.exists(out_fname) and not args.overwrite:
+                    logger.warn("Not overwriting existing file '%s'", out_fname)
+                    continue
+                write_result(proc_data, out_fname)
 
     return 0  # success
 

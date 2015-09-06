@@ -11,4 +11,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=hmayes@hmayes.com
 
-
+wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt

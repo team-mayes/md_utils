@@ -8,7 +8,9 @@ __author__ = 'cmayes'
 # !/usr/bin/env python
 
 """
-Module docstring.
+Combines one or more FES files into a single file where each line has a
+timestep value unique to the combined file.  Files with higher initial
+timestep values take precedence.
 """
 
 import argparse
