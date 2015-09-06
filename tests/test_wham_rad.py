@@ -1,10 +1,19 @@
-import csv
+# coding=utf-8
+
+"""
+Tests for wham_rad.
+"""
+
 import logging
-import os
 import unittest
 import math
-from md_utils.wham_rad import create_out_fname, OUT_PFX, calc_corr, BOLTZ_CONST, calc_rad, COORD_KEY, CORR_KEY, FREE_KEY, \
-    to_zero_point, write_result
+
+import os
+from md_utils.common import BOLTZ_CONST
+
+from md_utils.wham_rad import (calc_corr, calc_rad, COORD_KEY, CORR_KEY,
+                               FREE_KEY, to_zero_point)
+
 
 # Experimental temperature was 310 Kelvin
 INF = "inf"
@@ -26,7 +35,12 @@ SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
 # Shared Methods #
 
+
 def zpe_check(test_inst, zpe):
+    """Tests that the zero-point energy value has been properly applied.
+    :param test_inst: The test class instance.
+    :param zpe: The zpe-calibrated data to test.
+    """
     for zrow in zpe:
         corr, coord = float(zrow[CORR_KEY]), float(zrow[COORD_KEY])
         if corr == 0:
@@ -35,13 +49,7 @@ def zpe_check(test_inst, zpe):
             test_inst.assertTrue(corr < 0.0 or math.isinf(corr))
 
 # Tests #
-class TestCreateOutFname(unittest.TestCase):
-    def testOutFname(self):
-        """
-        Check for prefix addition.
-        """
-        self.assertTrue(create_out_fname(ORIG_WHAM_PATH).endswith(
-            os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
 
 class TestCalcCorr(unittest.TestCase):
     def testCalcCorr(self):
@@ -71,12 +79,3 @@ class TestZeroPoint(unittest.TestCase):
     def testZeroPoint(self):
         zpe = to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT))
         zpe_check(self, zpe)
-
-class TestWriteOut(unittest.TestCase):
-
-    def testWrite(self):
-        tgt_fname = create_out_fname(SHORT_WHAM_PATH)
-        write_result(to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT)), tgt_fname)
-        with open(tgt_fname) as csvfile:
-            zpe_check(self, csv.DictReader(csvfile))
-

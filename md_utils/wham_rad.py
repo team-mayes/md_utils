@@ -5,14 +5,12 @@
 Creates a radial correction value for each line of the target file(s).
 """
 from __future__ import print_function
-import csv
 import logging
 import math
 
-from md_utils.common import find_files_by_dir
+from md_utils.common import find_files_by_dir, create_out_fname, write_csv, calc_kbt
 
 __author__ = 'cmayes'
-
 
 import argparse
 import os
@@ -26,8 +24,6 @@ logger = logging.getLogger('wham_rad')
 # Constants #
 
 OUT_PFX = 'rad_'
-# Boltzmann's Constant in kcal/mol Kelvin
-BOLTZ_CONST = 0.0019872041
 
 # Defaults #
 
@@ -39,17 +35,9 @@ CORR_KEY = 'corr'
 COORD_KEY = 'coord'
 FREE_KEY = 'free_energy'
 
+KEY_SEQ = [COORD_KEY, FREE_KEY, CORR_KEY]
+
 # Logic #
-
-
-def create_out_fname(src_file):
-    """Creates an outfile name for the given source file.
-
-    :param src_file: The file to process.
-    :return: The output file name.
-    """
-    return os.path.abspath(os.path.join(os.path.dirname(src_file),
-                                        OUT_PFX + os.path.basename(src_file)))
 
 
 def calc_corr(coord, freng, kbt):
@@ -116,19 +104,6 @@ def to_zero_point(corr_res):
     return corr_res
 
 
-def write_result(proc_data, out_fname):
-    """
-    Writes the given data to the given file location.
-
-    :param proc_data: The data to write.
-    :param out_fname: The name of the file to write to.
-    """
-    with open(out_fname, 'w') as csvfile:
-        fieldnames = [COORD_KEY, FREE_KEY, CORR_KEY]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(proc_data)
-
 # CLI Processing #
 
 
@@ -170,11 +145,11 @@ def main(argv=None):
     if ret != 0:
         return ret
 
-    kbt = args.temp * BOLTZ_CONST
+    kbt = calc_kbt(args.temp)
 
     if args.src_file is not None:
         proc_data = to_zero_point(calc_rad(args.src_file, kbt))
-        write_result(proc_data, create_out_fname(args.src_file))
+        write_csv(proc_data, create_out_fname(args.src_file, OUT_PFX), KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
@@ -184,11 +159,11 @@ def main(argv=None):
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                out_fname = create_out_fname(pmf_path)
+                out_fname = create_out_fname(pmf_path, OUT_PFX)
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue
-                write_result(proc_data, out_fname)
+                write_csv(proc_data, out_fname, KEY_SEQ)
 
     return 0  # success
 

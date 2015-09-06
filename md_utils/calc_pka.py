@@ -2,18 +2,17 @@
 # coding=utf-8
 
 """
-Calculates the proton dissociation constant (PKA) for the given radially-corrected
-free energy data for a set of coordinates.
+Calculates the proton dissociation constant (PKA) for the given free energy
+data for a set of coordinates.
 """
 from __future__ import print_function
-import csv
 import logging
 import math
 
-from md_utils.common import find_files_by_dir
+from md_utils.common import (find_files_by_dir, create_out_fname,
+                             read_csv, write_csv, calc_kbt)
 
 __author__ = 'cmayes'
-
 
 import argparse
 import os
@@ -25,110 +24,71 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('calc_pka')
 
 # Constants #
-
-OUT_PFX = 'rad_'
-# Boltzmann's Constant in kcal/mol Kelvin
-BOLTZ_CONST = 0.0019872041
-
+OUT_PFX = 'pKa.'
+# Inverse of the standard concentration in Angstrom ^ 3 / molecule
+inv_C_0 = 1660.0
 # Defaults #
 
-DEF_FILE_PAT = 'PMF*'
-
+DEF_FILE_PAT = 'rad_PMF*'
 
 # Keys #
 CORR_KEY = 'corr'
 COORD_KEY = 'coord'
 FREE_KEY = 'free_energy'
 
+SRC_KEY = 'source_file'
+PKA_KEY = 'pKa'
+
+OUT_KEY_SEQ = [SRC_KEY, PKA_KEY]
+
+KEY_CONV = {FREE_KEY: float,
+            CORR_KEY: float,
+            COORD_KEY: float, }
+
 # Logic #
 
 
-def create_out_fname(src_file):
-    """Creates an outfile name for the given source file.
+def write_result(result, src_file, overwrite=False, basedir=None):
+    """Writes the result to a file named for the given source file.
 
-    :param src_file: The file to process.
-    :return: The output file name.
+    :param result: The result to write.
+    :param src_file: The original source file name.
+    :param overwrite: Whether to overwrite an existing file name.
+    :param basedir: The base directory to target (uses the source file's base directory
+        if not specified)
     """
-    return os.path.abspath(os.path.join(os.path.dirname(src_file),
-                                        OUT_PFX + os.path.basename(src_file)))
+    out_fname = create_out_fname(src_file, OUT_PFX, base_dir=basedir)
+    if os.path.exists(out_fname) and not overwrite:
+        logger.warn("Not overwriting existing file '%s'", out_fname)
+        return
+    write_csv(result, out_fname, OUT_KEY_SEQ)
 
 
-def calc_corr(coord, freng, kbt):
-    """Calculates the radial correction for the given free energy.
+def calc_pka(file_data, kbt):
+    """Calculates the proton dissociation constant (PKA) for the given free energy data.
 
-    :param coord: The coordinates under consideration.
-    :param freng: The free energy to correct.
-    :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
-    :return: The radially corrected free energy.
+    :param file_data: The list of dicts to process.
+    :param kbt: The experimental temperature multiplied by Boltzmann's Constant.
+    :return: The PKA for the given data set or an error string if no local max is found.
     """
-    try:
-        return freng + kbt * math.log(4 * math.pi * coord ** 2)
-    except TypeError:
-        return freng
-
-
-def calc_rad(src_file, kbt):
-    """
-    Applies radial correction to the free energy values in the given source file, returning a list of dicts
-    containing the corrected contents of the given file.
-
-    :param src_file: The file with the data to correct.
-    :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
-    :return: The corrected contents of the file as a list of dicts.
-    """
-    reslines = []
-    with open(src_file) as wham:
-        for wline in wham:
-            wres = {}
-            try:
-                swline = wline.strip().split()
-                if len(swline) < 2 or "#" in swline[0]:
-                    continue
-                wres[COORD_KEY] = float(swline[0])
-                try:
-                    wres[FREE_KEY] = float(swline[1])
-                except ValueError:
-                    wres[FREE_KEY] = swline[1]
-            except Exception, e:
-                logger.debug("Error '%s' for line '%s'", e, wline)
-            wres[CORR_KEY] = calc_corr(wres[COORD_KEY], wres[FREE_KEY], kbt)
-            reslines.append(wres)
-    return reslines
-
-
-def to_zero_point(corr_res):
-    """
-    Sets the highest free energy value as zero for the given data set.
-
-    :param corr_res: The data set to orient.
-    :return: The data set reoriented relative to the highest free energy value.
-    """
-    max_cor_freng = None
-    for zrow in corr_res:
-        try:
-            row_corr_val = zrow[CORR_KEY]
-            if max_cor_freng < row_corr_val and not math.isinf(row_corr_val):
-                max_cor_freng = row_corr_val
-        except Exception, e:
-            logger.debug("Error finding zero point: '%s'", e)
+    sum_for_pka = 0.0
+    data_len = len(file_data)
+    last_idx = data_len - 1
+    for i in range(data_len):
+        if i == last_idx:
+            return "No local max found"
+        cur_coord = file_data[i][COORD_KEY]
+        cur_corr = file_data[i][CORR_KEY]
+        if math.isinf(cur_corr):
             continue
-    for zrow in corr_res:
-        zrow[CORR_KEY] -= max_cor_freng
-    return corr_res
+        delta_r = cur_coord - file_data[i + 1][COORD_KEY]
+        sum_for_pka += 4.0 * math.pi * cur_coord ** 2 * math.exp(-cur_corr / kbt) * delta_r
 
-
-def write_result(proc_data, out_fname):
-    """
-    Writes the given data to the given file location.
-
-    :param proc_data: The data to write.
-    :param out_fname: The name of the file to write to.
-    """
-    with open(out_fname, 'w') as csvfile:
-        fieldnames = [COORD_KEY, FREE_KEY, CORR_KEY]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(proc_data)
+        if i == 0:
+            continue
+        if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
+            logger.info("Found local max '%f' at coordinates '%f'", cur_corr, cur_coord)
+            return math.log10(inv_C_0 / sum_for_pka)
 
 # CLI Processing #
 
@@ -142,8 +102,9 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates a radial correction value for each line '
-                                                 'of the target file(s).')
+    parser = argparse.ArgumentParser(description='Calculates the proton dissociation constant '
+                                                 '(PKA) for the given radially-corrected free '
+                                                 'energy data for a set of coordinates.')
     parser.add_argument("-d", "--base_dir", help="The starting point for a file search "
                                                  "(defaults to current directory)",
                         default=os.getcwd())
@@ -171,25 +132,23 @@ def main(argv=None):
     if ret != 0:
         return ret
 
-    kbt = args.temp * BOLTZ_CONST
+    kbt = calc_kbt(args.temp)
 
     if args.src_file is not None:
-        proc_data = to_zero_point(calc_rad(args.src_file, kbt))
-        write_result(proc_data, create_out_fname(args.src_file))
+        file_data = read_csv(args.src_file, KEY_CONV)
+        result = [{SRC_KEY: args.src_file, PKA_KEY: calc_pka(file_data, kbt)}]
+        write_result(result, args.src_file, args.overwrite)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
         for fdir, files in found_files.iteritems():
+            results = []
             if not files:
                 logger.warn("No files found for dir '%s'", fdir)
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
-                proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                out_fname = create_out_fname(pmf_path)
-                if os.path.exists(out_fname) and not args.overwrite:
-                    logger.warn("Not overwriting existing file '%s'", out_fname)
-                    continue
-                write_result(proc_data, out_fname)
+                results.append({SRC_KEY: pmf_path, PKA_KEY: calc_pka(pmf_path, kbt)})
+            write_result(results, os.path.basename(fdir), args.overwrite, basedir=fdir)
 
     return 0  # success
 
