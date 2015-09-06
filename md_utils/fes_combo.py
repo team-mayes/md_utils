@@ -1,3 +1,12 @@
+# !/usr/bin/env python
+# coding=utf-8
+
+"""
+Combines one or more FES files into a single file where each line has a
+timestep value unique to the combined file.  Files with higher initial
+timestep values take precedence.
+"""
+
 from __future__ import print_function
 import logging
 
@@ -5,13 +14,6 @@ from md_utils.common import find_files_by_dir
 
 __author__ = 'cmayes'
 
-# !/usr/bin/env python
-
-"""
-Combines one or more FES files into a single file where each line has a
-timestep value unique to the combined file.  Files with higher initial
-timestep values take precedence.
-"""
 
 import argparse
 import os
@@ -28,6 +30,7 @@ DEF_FILE_PAT = 'fes*.out'
 DEF_TGT = 'all_fes.csv'
 
 # Logic #
+
 
 def combine(tgt_files):
     """
@@ -74,6 +77,7 @@ def map_fes(tgt_file):
                 logger.debug("Error '{}' for line '{}'".format(e, tline))
     return first_key, fmap
 
+
 def extract_header(tgt_file):
     """
     Collects lines that don't have a timestep and returns them.
@@ -92,9 +96,10 @@ def extract_header(tgt_file):
                 # If we have a timestep, this is not a header line
                 int(sline[0])
                 break
-            except:
+            except ValueError:
                 hlines.append(tline)
         return hlines
+
 
 def write_combo(headers, combo, combo_file):
     """
@@ -114,10 +119,11 @@ def write_combo(headers, combo, combo_file):
 
 # CLI Processing #
 
+
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
-    `argv` is a list of arguments, or `None` for ``sys.argv[1:]``.
+    :param argv: A list of arguments, or `None` for ``sys.argv[1:]``.
     """
     if argv is None:
         argv = sys.argv[1:]
@@ -143,7 +149,14 @@ def parse_cmdline(argv):
 
     return args, 0
 
+
 def main(argv=None):
+    """
+    Runs the main program.
+
+    :param argv: The command line arguments.
+    :return: The return code for the program's termination.
+    """
     args, ret = parse_cmdline(argv)
     if ret != 0:
         return ret

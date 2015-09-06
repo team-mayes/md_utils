@@ -1,3 +1,9 @@
+# !/usr/bin/env python
+# coding=utf-8
+
+"""
+Creates a radial correction value for each line of the target file(s).
+"""
 from __future__ import print_function
 import csv
 import logging
@@ -7,11 +13,6 @@ from md_utils.common import find_files_by_dir
 
 __author__ = 'cmayes'
 
-# !/usr/bin/env python
-
-"""
-Creates a radial correction value for each line of the target file(s).
-"""
 
 import argparse
 import os
@@ -40,17 +41,40 @@ FREE_KEY = 'free_energy'
 
 # Logic #
 
+
 def create_out_fname(src_file):
+    """Creates an outfile name for the given source file.
+
+    :param src_file: The file to process.
+    :return: The output file name.
+    """
     return os.path.abspath(os.path.join(os.path.dirname(src_file),
                                         OUT_PFX + os.path.basename(src_file)))
 
+
 def calc_corr(coord, freng, kbt):
+    """Calculates the radial correction for the given free energy.
+
+    :param coord: The coordinates under consideration.
+    :param freng: The free energy to correct.
+    :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
+    :return: The radially corrected free energy.
+    """
     try:
         return freng + kbt * math.log(4 * math.pi * coord ** 2)
     except TypeError:
         return freng
 
+
 def calc_rad(src_file, kbt):
+    """
+    Applies radial correction to the free energy values in the given source file, returning a list of dicts
+    containing the corrected contents of the given file.
+
+    :param src_file: The file with the data to correct.
+    :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
+    :return: The corrected contents of the file as a list of dicts.
+    """
     reslines = []
     with open(src_file) as wham:
         for wline in wham:
@@ -70,7 +94,14 @@ def calc_rad(src_file, kbt):
             reslines.append(wres)
     return reslines
 
+
 def to_zero_point(corr_res):
+    """
+    Sets the highest free energy value as zero for the given data set.
+
+    :param corr_res: The data set to orient.
+    :return: The data set reoriented relative to the highest free energy value.
+    """
     max_cor_freng = None
     for zrow in corr_res:
         try:
@@ -84,7 +115,14 @@ def to_zero_point(corr_res):
         zrow[CORR_KEY] -= max_cor_freng
     return corr_res
 
+
 def write_result(proc_data, out_fname):
+    """
+    Writes the given data to the given file location.
+
+    :param proc_data: The data to write.
+    :param out_fname: The name of the file to write to.
+    """
     with open(out_fname, 'w') as csvfile:
         fieldnames = [COORD_KEY, FREE_KEY, CORR_KEY]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -93,10 +131,11 @@ def write_result(proc_data, out_fname):
 
 # CLI Processing #
 
+
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
-    `argv` is a list of arguments, or `None` for ``sys.argv[1:]``.
+    :param argv: is a list of arguments, or `None` for ``sys.argv[1:]``.
     """
     if argv is None:
         argv = sys.argv[1:]
@@ -122,6 +161,11 @@ def parse_cmdline(argv):
 
 
 def main(argv=None):
+    """ Runs the main program.
+
+    :param argv: The command line arguments.
+    :return: The return code for the program's termination.
+    """
     args, ret = parse_cmdline(argv)
     if ret != 0:
         return ret

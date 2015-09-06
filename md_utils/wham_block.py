@@ -1,3 +1,10 @@
+# !/usr/bin/env python
+# coding=utf-8
+
+"""
+Block averages input data for WHAM.
+"""
+
 from __future__ import print_function, division
 import logging
 
@@ -5,11 +12,6 @@ from md_utils.common import find_files_by_dir, chunk
 
 __author__ = 'cmayes'
 
-# !/usr/bin/env python
-
-"""
-Block averages input data for WHAM.
-"""
 
 import argparse
 import os
@@ -32,6 +34,7 @@ DEF_STEPS_NUM = 12
 
 # Logic #
 
+
 def read_meta(meta_file):
     """
     Reads the given meta file, returning the parsed value as a dict containing:
@@ -50,6 +53,7 @@ def read_meta(meta_file):
             lines.append(mline.strip().split())
     meta[LINES_KEY] = lines
     return meta
+
 
 def read_rmsd(fname):
     """
@@ -71,6 +75,7 @@ def read_rmsd(fname):
                 logger.warn("RMSD Value '%s' is not a float", row_val)
     return rmsd_values
 
+
 def read_meta_rmsd(meta):
     """
     Finds and parses the RMSD files described in the given parsed meta file's contents.
@@ -86,6 +91,7 @@ def read_meta_rmsd(meta):
         rmsd_data[rmsd_fname] = read_rmsd(floc)
     return rmsd_data
 
+
 def pair_avg(vals):
     """
     Returns a list of the average between pairs of numbers in the input list.  If there is an odd
@@ -97,11 +103,12 @@ def pair_avg(vals):
     results = []
     for pair in chunk(vals, 2, list):
         if len(pair) == 2:
-            results.append(sum(pair)/2)
+            results.append(sum(pair) / 2)
         else:
             logger.debug("'%s' is not a pair", pair)
 
     return results
+
 
 def rmsd_avg(rmsd, avg_func):
     """
@@ -115,6 +122,7 @@ def rmsd_avg(rmsd, avg_func):
     for fname, data in rmsd.items():
         avg[fname] = avg_func(data)
     return avg
+
 
 def write_rmsd(tgt_dir, rmsd, overwrite=False):
     """
@@ -133,6 +141,7 @@ def write_rmsd(tgt_dir, rmsd, overwrite=False):
             for i, rmsd_val in enumerate(data, 1):
                 wfile.write("\t".join((str(i), str(rmsd_val))))
                 wfile.write("\n")
+
 
 def write_meta(tgt_dir, meta, step, overwrite=False):
     """
@@ -157,6 +166,7 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
             mfile.write('\t'.join(mline[1:]))
             mfile.write('\n')
 
+
 def block_average(meta_file, steps, overwrite):
     """
     Reads the given meta file, fetches the RMSD files in the inventory, computes
@@ -179,12 +189,14 @@ def block_average(meta_file, steps, overwrite):
         write_rmsd(rmsd_base_dir, rmsd, overwrite)
         write_meta(meta[DIR_KEY], meta, step, overwrite)
 
+
 # CLI Processing #
 
-def parse_cmdline(argv):
+
+def parse_cmdline(argv=None):
     """
     Returns the parsed argument list and return code.
-    `argv` is a list of arguments, or `None` for ``sys.argv[1:]``.
+    :param argv: A list of arguments, or `None` for ``sys.argv[1:]``.
     """
     if argv is None:
         argv = sys.argv[1:]
@@ -198,7 +210,7 @@ def parse_cmdline(argv):
                                                 "(defaults to '{}')".format(DEF_FILE_PAT),
                         default=DEF_FILE_PAT)
     parser.add_argument('-s', "--steps", help="The number of averaging steps to take "
-                                                "(defaults to '{}')".format(DEF_STEPS_NUM),
+                                              "(defaults to '{}')".format(DEF_STEPS_NUM),
                         type=int, default=DEF_STEPS_NUM)
     parser.add_argument('-o', "--overwrite", help='Overwrite existing locations',
                         action='store_true')
@@ -206,7 +218,14 @@ def parse_cmdline(argv):
 
     return args, 0
 
+
 def main(argv=None):
+    """
+    Runs the main program.
+
+    :param argv: The command line arguments.
+    :return: The return code for the program's termination.
+    """
     args, ret = parse_cmdline(argv)
     if ret != 0:
         return ret
