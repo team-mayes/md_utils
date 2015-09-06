@@ -168,7 +168,7 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
             mfile.write('\n')
 
 
-def block_average(meta_file, steps, overwrite):
+def block_average(meta_file, steps, overwrite=False, base_dir=None):
     """
     Reads the given meta file, fetches the RMSD files in the inventory, computes
     the average over the given number of cycles, and writes each computed RMSD
@@ -177,12 +177,13 @@ def block_average(meta_file, steps, overwrite):
     :param meta_file: The initial meta file.
     :param steps: The number of averaging steps to perform.
     :param overwrite: Whether to overwrite existing files.
+    :param base_dir: The base directory to write to (defaults to the meta file's dir)
     """
     meta = read_meta(meta_file)
     rmsd = read_meta_rmsd(meta)
-
-    for step in range(1, steps + 1):
+    if not base_dir:
         base_dir = meta[DIR_KEY]
+    for step in range(1, steps + 1):
         rmsd_base_dir = os.path.join(base_dir, "{:02d}".format(step))
         rmsd = rmsd_avg(rmsd, pair_avg)
         first_vals = six.next(six.itervalues(rmsd))
@@ -191,7 +192,7 @@ def block_average(meta_file, steps, overwrite):
             break
         os.makedirs(rmsd_base_dir)
         write_rmsd(rmsd_base_dir, rmsd, overwrite)
-        write_meta(meta[DIR_KEY], meta, step, overwrite)
+        write_meta(base_dir, meta, step, overwrite)
 
 
 # CLI Processing #

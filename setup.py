@@ -37,6 +37,8 @@ setup(
         'console_scripts': [
             'fes_combo = md_utils.fes_combo:main',
             'wham_rad = md_utils.wham_rad:main',
+            'wham_block = md_utils.wham_block:main',
+            'calc_pka = md_utils.calc_pka:main',
         ],
     },
     package_dir={'md_utils':

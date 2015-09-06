@@ -1,3 +1,9 @@
+# coding=utf-8
+"""
+Tests for wham_block.
+"""
+
+
 import logging
 import os
 import unittest
@@ -6,7 +12,7 @@ import tempfile
 import shutil
 
 from md_utils.wham_block import read_meta, LOC_KEY, DIR_KEY, LINES_KEY, read_meta_rmsd, pair_avg, rmsd_avg, write_rmsd, \
-    read_rmsd, write_meta
+    read_rmsd, write_meta, block_average
 
 ODD_KEY = "odd"
 
@@ -65,7 +71,6 @@ class TestAveraging(unittest.TestCase):
         avg = pair_avg(ODD_DATA)
         self.assertAlmostEqual(ODD_PAIR_AVG, avg)
 
-#rmsd_avg
 
 class RmsdAverage(unittest.TestCase):
     def testRmsdAveragePair(self):
@@ -73,7 +78,6 @@ class RmsdAverage(unittest.TestCase):
         self.assertAlmostEqual(EVEN_PAIR_AVG, avg[EVEN_KEY])
         self.assertAlmostEqual(ODD_PAIR_AVG, avg[ODD_KEY])
 
-# write_rmsd
 
 class WriteRmsd(unittest.TestCase):
     def testWriteRmsd(self):
@@ -86,7 +90,6 @@ class WriteRmsd(unittest.TestCase):
         finally:
             shutil.rmtree(directory_name)
 
-# write_meta
 
 class WriteMeta(unittest.TestCase):
     def testWriteMeta(self):
@@ -104,4 +107,13 @@ class WriteMeta(unittest.TestCase):
         finally:
             shutil.rmtree(directory_name)
 
-# block_average
+
+class BlockAverage(unittest.TestCase):
+
+    def testBlockAverage(self):
+        directory_name = None
+        try:
+            directory_name = tempfile.mkdtemp()
+            block_average(META_PATH, 12, base_dir=directory_name)
+        finally:
+            shutil.rmtree(directory_name)

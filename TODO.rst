@@ -12,14 +12,37 @@ TODO
 ----
 
 Make a new set of files to send to WHAM.
-* Average pairs of numbers in the second column (last odd is thrown out)
-** Repeat pair average n cycles (user-definable) each in a separate file
-** Create folders and meta file with the two-digit number
-** Use template to create an aggregated submit script
-* Replace first column with a new sequence
-* New input file for WHAM
+* Use template to create an aggregated submit script
 
 Submit Script
 -------------
 
 wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt
+
+WHAM_SPLIT
+==========
+
+* Create dirs named (total splits)_(part)
+* Floor for modulo remainder
+
+WHAM_POST_BLOCK
+===============
+
+* Read all parts for a given dir prefix
+* WHAM output file format (PMF*)
+** Also accept radial correction rad_PMF
+
+Out format CSV with headers:
+
+coordinates average_free_energy standard_deviation_free_energy
+
+CALC_PKA
+========
+
+* Input is rad_PMF (use corr col (3))
+** Plan for standard WHAM, too.
+* Find local max (inc, then dec) (two back) (middle val is tgt)
+* Up to local max, do math and add to sum
+* Result is PKA: out to stdout
+* Debug out local max value
+
