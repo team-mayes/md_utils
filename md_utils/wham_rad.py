@@ -89,7 +89,7 @@ def calc_rad(src_file, kbt):
                 except ValueError:
                     wres[FREE_KEY] = swline[1]
             except Exception, e:
-                logger.debug("Error '{}' for line '{}'".format(e, wline))
+                logger.debug("Error '%s' for line '%s'", e, wline)
             wres[CORR_KEY] = calc_corr(wres[COORD_KEY], wres[FREE_KEY], kbt)
             reslines.append(wres)
     return reslines
@@ -177,10 +177,10 @@ def main(argv=None):
         write_result(proc_data, create_out_fname(args.src_file))
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
-        logger.debug("Found '{}' dirs with files to process".format(len(found_files)))
+        logger.debug("Found '%d' dirs with files to process", len(found_files))
         for fdir, files in found_files.iteritems():
             if not files:
-                logger.warn("No files found for dir '{}'")
+                logger.warn("No files found for dir '%s'", fdir)
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))

@@ -7,6 +7,7 @@ Block averages input data for WHAM.
 
 from __future__ import print_function, division
 import logging
+import six
 
 from md_utils.common import find_files_by_dir, chunk
 
@@ -184,7 +185,10 @@ def block_average(meta_file, steps, overwrite):
         base_dir = meta[DIR_KEY]
         rmsd_base_dir = os.path.join(base_dir, "{:02d}".format(step))
         rmsd = rmsd_avg(rmsd, pair_avg)
-        logger.debug(len(rmsd.items()[1]))
+        first_vals = six.next(six.itervalues(rmsd))
+        if not first_vals:
+            logger.info("No more values at step %d; stopping", step)
+            break
         os.makedirs(rmsd_base_dir)
         write_rmsd(rmsd_base_dir, rmsd, overwrite)
         write_meta(meta[DIR_KEY], meta, step, overwrite)

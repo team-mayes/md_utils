@@ -51,7 +51,7 @@ def combine(tgt_files):
 
     combo_dict = {}
     for key, cur_dict in sorted(mapped_files.items()):
-        logger.debug("Processing timestep '{}'".format(key))
+        logger.debug("Processing timestep '%s'", key)
         combo_dict.update(cur_dict)
     return combo_dict
 
@@ -74,7 +74,7 @@ def map_fes(tgt_file):
                 if first_key is None:
                     first_key = tstep
             except Exception, e:
-                logger.debug("Error '{}' for line '{}'".format(e, tline))
+                logger.debug("Error '%s' for line '%s'", e, tline)
     return first_key, fmap
 
 
@@ -161,15 +161,15 @@ def main(argv=None):
     if ret != 0:
         return ret
     found_files = find_files_by_dir(args.base_dir, args.pattern)
-    logger.debug("Found '{}' dirs with files to combine".format(len(found_files)))
+    logger.debug("Found '%d' dirs with files to combine", len(found_files))
     for fdir, files in found_files.iteritems():
         if not files:
-            logger.warn("No files found for dir '{}'")
+            logger.warn("No files found for dir '%s'", fdir)
             continue
         combo_file = os.path.join(fdir, args.target_file)
         if os.path.exists(combo_file) and not args.overwrite:
-            logger.warning("Target file '{}' already exists.  Skipping dir '{}'".
-                           format(combo_file, fdir))
+            logger.warning("Target file '%s' already exists.  Skipping dir '%s'",
+                           combo_file, fdir)
             continue
         combo = combine([os.path.join(fdir, tgt) for tgt in files])
         write_combo(extract_header(os.path.join(fdir, files[0])), combo, combo_file)
