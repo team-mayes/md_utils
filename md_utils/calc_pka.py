@@ -90,7 +90,7 @@ def calc_pka(file_data, kbt):
             continue
         if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
             logger.info("Found local max '%f' at coordinates '%f'", cur_corr, cur_coord)
-            return math.log10(inv_C_0 / sum_for_pka)
+            return -math.log10(inv_C_0 / sum_for_pka)
 
 # CLI Processing #
 

@@ -10,14 +10,13 @@ import unittest
 import os
 
 from md_utils.calc_pka import calc_pka, NO_MAX_ERR
-from md_utils.common import BOLTZ_CONST, read_csv, calc_kbt
+from md_utils.common import read_csv, calc_kbt
 from md_utils.wham_rad import (COORD_KEY, CORR_KEY,
                                FREE_KEY)
 
 
 # Experimental temperature was 310 Kelvin
 EXP_TEMP = 310
-EXP_KBT = BOLTZ_CONST * EXP_TEMP
 
 __author__ = 'cmayes'
 
@@ -37,7 +36,7 @@ class TestCalcPka(unittest.TestCase):
         pka_val = calc_pka(read_csv(GOOD_RAD_PATH, {FREE_KEY: float,
                                                     CORR_KEY: float,
                                                     COORD_KEY: float, }), calc_kbt(EXP_TEMP))
-        logger.debug("PKA: %f", pka_val)
+        self.assertAlmostEqual(4.7036736, pka_val)
 
     def testNoMax(self):
         pka_val = calc_pka(read_csv(NO_MAX_RAD_PATH, {FREE_KEY: float,
