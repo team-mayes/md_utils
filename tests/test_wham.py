@@ -3,6 +3,8 @@
 """
 Tests for wham.
 """
+import inspect
+import logging
 
 import shutil
 import tempfile
@@ -10,20 +12,38 @@ import unittest
 
 import os
 import re
+import md_utils
+from md_utils.common import file_to_str
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd, read_rmsd,
-                           LINES_KEY, DIR_KEY, LOC_KEY)
+                           LINES_KEY, DIR_KEY, LOC_KEY, fill_submit_wham,
+                           DEF_BASE_SUBMIT_TPL, DEF_LINE_SUBMIT_TPL)
 from md_utils.wham_block import write_meta
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('test_wham')
+
 # Constants #
+
+# The directory of the md_utils base package
+MD_UTILS_BASE = os.path.dirname(inspect.getfile(md_utils))
+SKEL_LOC = os.path.join(MD_UTILS_BASE, "skel")
+TPL_LOC = os.path.join(SKEL_LOC, "tpl")
+SUB_WHAM_BASE_TPL = os.path.join(TPL_LOC, DEF_BASE_SUBMIT_TPL)
+SUB_WHAM_LINE_TPL = os.path.join(TPL_LOC, DEF_LINE_SUBMIT_TPL)
 
 DATA_DIR = os.path.join('test_data', 'wham_test_data')
 META_00_FNAME = 'meta.00'
 META_PATH = os.path.join(DATA_DIR, META_00_FNAME)
+SUBMIT_05_PATH = os.path.join(DATA_DIR, 'submit_wham_05.sh')
+
 EVEN_DATA = [1.201687, 1.260637, 1.242285, 1.199147, 1.175087, 1.251187,
              1.210499, 1.174376, 1.245316, 1.280658, ]
 ODD_DATA = [1.248430, 1.246537, 1.243088, 1.178917, 1.268993, 1.242438,
             1.204454, 1.177879, 1.173452, 1.283656, 1.217349, 1.269812,
             1.286239, 1.233201, 1.272090]
+
+# Keys #
+
 ODD_KEY = "odd"
 EVEN_KEY = "even"
 
@@ -77,3 +97,12 @@ class WriteMeta(unittest.TestCase):
 
         finally:
             shutil.rmtree(directory_name)
+
+class TestSubmitTemplate(unittest.TestCase):
+    def setUp(self):
+        self.base_tpl = file_to_str(SUB_WHAM_BASE_TPL)
+        self.line_tpl = file_to_str(SUB_WHAM_LINE_TPL)
+
+    def testFillSubmit(self):
+        wham_fill = fill_submit_wham(self.base_tpl, self.line_tpl, 5)
+        self.assertEqual(file_to_str(SUBMIT_05_PATH), wham_fill)

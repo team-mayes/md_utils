@@ -9,7 +9,7 @@ import tempfile
 import shutil
 
 from md_utils.wham_split import rmsd_split
-from tests.test_wham import (META_PATH)
+from tests.test_wham import (META_PATH, TPL_LOC)
 
 __author__ = 'cmayes'
 
@@ -27,6 +27,6 @@ class BlockAverage(unittest.TestCase):
         directory_name = None
         try:
             directory_name = tempfile.mkdtemp()
-            rmsd_split(META_PATH, 12, base_dir=directory_name)
+            rmsd_split(META_PATH, 12, tpl_dir=TPL_LOC, base_dir=directory_name)
         finally:
             shutil.rmtree(directory_name)

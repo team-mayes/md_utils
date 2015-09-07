@@ -12,7 +12,7 @@ import six
 
 from md_utils.common import find_files_by_dir, chunk
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
-                           DIR_KEY, LINES_KEY, STEP_META_FNAME)
+                           DIR_KEY, LINES_KEY)
 
 __author__ = 'cmayes'
 
@@ -25,6 +25,10 @@ import sys
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham_block')
+
+# Constants #
+
+STEP_META_FNAME = "meta.{:02d}"
 
 # Defaults #
 

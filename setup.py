@@ -39,12 +39,14 @@ setup(
             'wham_rad = md_utils.wham_rad:main',
             'wham_block = md_utils.wham_block:main',
             'calc_pka = md_utils.calc_pka:main',
+            'wham_split = md_utils.wham_split:main',
+            'md_init = md_utils.md_init:main',
         ],
     },
     package_dir={'md_utils':
                  'md_utils'},
     package_data = {
-        'aimless': ['skel/*.*', 'skel/tpl/*.*', 'skel/input/*.*'],
+        'md_utils': ['skel/*.*', 'skel/tpl/*.*', 'skel/input/*.*'],
     },
     include_package_data=True,
     install_requires=requirements,

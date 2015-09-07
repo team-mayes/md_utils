@@ -12,9 +12,16 @@ __author__ = 'cmayes'
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham')
 
+# Defaults #
+
+DEF_TPL_DIR = os.path.join(os.getcwd(), 'tpl')
+DEF_BASE_SUBMIT_TPL = "submit_wham.tpl"
+DEF_LINE_SUBMIT_TPL = "submit_wham_line.tpl"
+DEF_PART_LINE_SUBMIT_TPL = "submit_wham_part_line.tpl"
+
 # Constants #
 
-STEP_META_FNAME = "meta.{:02d}"
+STEP_SUBMIT_FNAME = "submit_wham.{:02d}"
 
 # Keys #
 
@@ -99,3 +106,25 @@ def write_rmsd(data, tgt_file):
         for i, rmsd_val in enumerate(data, 1):
             wfile.write("\t".join((str(i), str(rmsd_val))))
             wfile.write("\n")
+
+
+def fill_submit_wham(base_tpl, line_tpl, cur_step, use_part=False):
+    """Fills the base template with one or more lines from the filled line
+    template and returns the result.
+
+    :param base_tpl: The base template to fill.  Expected to have a
+        `{wham_block}` element.
+    :param line_tpl: The line template to fill.  Expected to have one or
+        more `{step}` elements.
+    :param cur_step: The current step.
+    :param use_part: Whether to add lines for each part of a split step.
+    :return: The results of filling the template.
+    """
+    step_lines = []
+    if use_part:
+        for step_part in range(1, cur_step + 2):
+            step_lines.append(line_tpl.format(step=cur_step,
+                                              step_part=step_part))
+    else:
+        step_lines.append(line_tpl.format(step=cur_step))
+    return base_tpl.format(wham_block=''.join(step_lines))
