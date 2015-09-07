@@ -52,10 +52,13 @@ def expected_dir_data():
 
 
 def csv_data():
-    rows = []
-    rows.append({CORR_KEY: 123.42, COORD_KEY: "75", FREE_KEY: True})
-    rows.append({CORR_KEY: 999.43, COORD_KEY: "yellow", FREE_KEY: False})
+    """
+    :return: Test data as a list of dicts.
+    """
+    rows = [{CORR_KEY: 123.42, COORD_KEY: "75", FREE_KEY: True},
+            {CORR_KEY: 999.43, COORD_KEY: "yellow", FREE_KEY: False}]
     return rows
+
 
 def is_one_of_type(val, types):
     """Returns whether the given value is one of the given types.
@@ -70,7 +73,10 @@ def is_one_of_type(val, types):
             return True
     return False
 
+
 # Tests #
+
+
 class TestFindFiles(unittest.TestCase):
     """
     Tests for the file finder.
@@ -130,7 +136,6 @@ class TestReadCsv(unittest.TestCase):
 
 
 class TestWriteCsv(unittest.TestCase):
-
     def testWriteCsv(self):
         tmp_dir = None
         data = csv_data()
@@ -140,12 +145,11 @@ class TestWriteCsv(unittest.TestCase):
 
             write_csv(data, tgt_fname, KEY_SEQ)
             csv_result = read_csv(tgt_fname, {FREE_KEY: str_to_bool,
-                                 CORR_KEY: float,
-                                 COORD_KEY: str, })
+                                              CORR_KEY: float,
+                                              COORD_KEY: str, })
             self.assertEqual(len(data), len(csv_result))
             for i, csv_row in enumerate(csv_result):
                 self.assertDictEqual(data[i], csv_row)
             logger.debug(csv_result)
         finally:
             shutil.rmtree(tmp_dir)
-

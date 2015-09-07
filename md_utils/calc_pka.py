@@ -12,6 +12,8 @@ import math
 from md_utils.common import (find_files_by_dir, create_out_fname,
                              read_csv, write_csv, calc_kbt)
 
+NO_MAX_ERR = "No local max found"
+
 __author__ = 'cmayes'
 
 import argparse
@@ -76,12 +78,12 @@ def calc_pka(file_data, kbt):
     last_idx = data_len - 1
     for i in range(data_len):
         if i == last_idx:
-            return "No local max found"
+            return NO_MAX_ERR
         cur_coord = file_data[i][COORD_KEY]
         cur_corr = file_data[i][CORR_KEY]
         if math.isinf(cur_corr):
             continue
-        delta_r = cur_coord - file_data[i + 1][COORD_KEY]
+        delta_r = file_data[i + 1][COORD_KEY] - cur_coord
         sum_for_pka += 4.0 * math.pi * cur_coord ** 2 * math.exp(-cur_corr / kbt) * delta_r
 
         if i == 0:
