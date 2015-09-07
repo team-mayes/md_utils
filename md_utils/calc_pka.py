@@ -11,6 +11,7 @@ import math
 
 from md_utils.common import (find_files_by_dir, create_out_fname,
                              read_csv, write_csv, calc_kbt)
+from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 NO_MAX_ERR = "No local max found"
 
@@ -32,12 +33,6 @@ inv_C_0 = 1660.0
 # Defaults #
 
 DEF_FILE_PAT = 'rad_PMF*'
-
-# Keys #
-CORR_KEY = 'corr'
-COORD_KEY = 'coord'
-FREE_KEY = 'free_energy'
-
 SRC_KEY = 'source_file'
 PKA_KEY = 'pKa'
 

@@ -8,7 +8,9 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.common import find_files_by_dir, create_out_fname, write_csv, calc_kbt
+from md_utils.common import (find_files_by_dir, create_out_fname, write_csv,
+                             calc_kbt)
+from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'cmayes'
 
@@ -29,13 +31,6 @@ OUT_PFX = 'rad_'
 
 DEF_FILE_PAT = 'PMF*'
 
-
-# Keys #
-CORR_KEY = 'corr'
-COORD_KEY = 'coord'
-FREE_KEY = 'free_energy'
-
-KEY_SEQ = [COORD_KEY, FREE_KEY, CORR_KEY]
 
 # Logic #
 
@@ -149,7 +144,7 @@ def main(argv=None):
 
     if args.src_file is not None:
         proc_data = to_zero_point(calc_rad(args.src_file, kbt))
-        write_csv(proc_data, create_out_fname(args.src_file, OUT_PFX), KEY_SEQ)
+        write_csv(proc_data, create_out_fname(args.src_file, OUT_PFX), RAD_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
@@ -163,7 +158,7 @@ def main(argv=None):
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue
-                write_csv(proc_data, out_fname, KEY_SEQ)
+                write_csv(proc_data, out_fname, RAD_KEY_SEQ)
 
     return 0  # success
 

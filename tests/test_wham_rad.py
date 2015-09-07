@@ -9,10 +9,10 @@ import unittest
 import math
 
 import os
-from md_utils.common import BOLTZ_CONST
 
-from md_utils.wham_rad import (calc_corr, calc_rad, COORD_KEY, CORR_KEY,
-                               FREE_KEY, to_zero_point)
+from md_utils.common import BOLTZ_CONST
+from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point
+from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 
 # Experimental temperature was 310 Kelvin

@@ -24,6 +24,7 @@ BOLTZ_CONST = 0.0019872041
 
 # Calculations #
 
+
 def calc_kbt(temp_k):
     """
     Returns the given temperature in Kelvin multiplied by Boltzmann's Constant.
@@ -34,6 +35,7 @@ def calc_kbt(temp_k):
     return BOLTZ_CONST * temp_k
 
 # Other #
+
 
 def swarn(tgt=sys.stderr, *objs):
     """Writes a warning message to a target (stderr by default).

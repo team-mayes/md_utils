@@ -6,23 +6,20 @@ Tests for the common lib.
 import logging
 import shutil
 import tempfile
+import unittest
 
 import os
-import unittest
-from md_utils.common import find_files_by_dir, create_out_fname, read_csv, write_csv, str_to_bool
+
+from md_utils.common import (find_files_by_dir, create_out_fname, read_csv,
+                             write_csv, str_to_bool)
 from md_utils.fes_combo import DEF_FILE_PAT
+from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_common')
 
-# Keys #
-CORR_KEY = 'corr'
-COORD_KEY = 'coord'
-FREE_KEY = 'free_energy'
-
-KEY_SEQ = [COORD_KEY, FREE_KEY, CORR_KEY]
 
 # Constants #
 DATA_DIR = 'test_data'
@@ -143,7 +140,7 @@ class TestWriteCsv(unittest.TestCase):
             tmp_dir = tempfile.mkdtemp()
             tgt_fname = create_out_fname(SHORT_WHAM_PATH, OUT_PFX, base_dir=tmp_dir)
 
-            write_csv(data, tgt_fname, KEY_SEQ)
+            write_csv(data, tgt_fname, RAD_KEY_SEQ)
             csv_result = read_csv(tgt_fname, {FREE_KEY: str_to_bool,
                                               CORR_KEY: float,
                                               COORD_KEY: str, })
