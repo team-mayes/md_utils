@@ -148,9 +148,12 @@ def main(argv=None):
             if not files:
                 logger.warn("No files found for dir '%s'", fdir)
                 continue
-            for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
-                results.append({SRC_KEY: pmf_path, PKA_KEY: calc_pka(pmf_path, kbt)})
-            write_result(results, os.path.basename(fdir), args.overwrite, basedir=fdir)
+            for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in files]):
+                file_data = read_csv(pmf_path, KEY_CONV)
+                results.append({SRC_KEY: fname, PKA_KEY: calc_pka(file_data, kbt)})
+
+            write_result(results, os.path.basename(fdir), args.overwrite,
+                         basedir=os.path.dirname(fdir))
 
     return 0  # success
 
