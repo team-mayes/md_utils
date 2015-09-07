@@ -8,11 +8,12 @@ steps specified.
 
 from __future__ import print_function, division
 import logging
+import math
 
-from md_utils.common import find_files_by_dir
+from md_utils.common import find_files_by_dir, chunk
+from md_utils.wham import read_meta, read_meta_rmsd, DIR_KEY, write_rmsd, LINES_KEY, STEP_META_FNAME
 
 __author__ = 'cmayes'
-
 
 import argparse
 import os
@@ -28,10 +29,76 @@ logger = logging.getLogger('wham_split')
 DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
 
+# Constants #
+
+STEP_DBG_MSG = "Step %d: Dividing %d lines from file %s into %d chunks of %d lines each."
+SPLIT_DIR_FMT = "{:02d}_{:02d}"
+
+
+# I/O #
+
+def write_meta(tgt_dir, meta, step, overwrite=False):
+    """
+    Writes out the meta file using the original meta data structure as a beginning.
+
+    :param tgt_dir: The target directory for the meta file.
+    :param meta: The parsed data from the original meta file.
+    :param step: The step number being processed.
+    :param overwrite: Whether to overwrite an existing meta file.
+    """
+    step_meta = STEP_META_FNAME.format(step)
+    meta_tgt = os.path.join(tgt_dir, step_meta)
+    if os.path.exists(meta_tgt) and not overwrite:
+        logger.warn("Not overwriting existing meta file '%s'", meta_tgt)
+        return
+    with open(meta_tgt, 'w') as mfile:
+        for mline in meta[LINES_KEY]:
+            for step_part in range(1, step + 2):
+                rmsd_loc = os.path.join(SPLIT_DIR_FMT.format(step, step_part),
+                                        os.path.basename(mline[0]))
+                mfile.write(rmsd_loc)
+                mfile.write('\t')
+                mfile.write('\t'.join(mline[1:]))
+                mfile.write('\n')
+
 # Logic #
 
 
+def rmsd_split(meta_file, steps, overwrite=False, base_dir=None):
+    """
+    Reads the given meta file, fetches the RMSD files in the inventory, and creates a succession
+    of directories that split the original RMSD files into a larger number of chunks for each step
+    such that step 1 will create a split of 2 in 01_01 and 01_02, etc.
 
+    :param meta_file: The initial meta file.
+    :param steps: The number of averaging steps to perform.
+    :param overwrite: Whether to overwrite existing files.
+    :param base_dir: The base directory to write to (defaults to the meta file's dir)
+    """
+    meta = read_meta(meta_file)
+    rmsd = read_meta_rmsd(meta)
+
+    if not base_dir:
+        base_dir = meta[DIR_KEY]
+    for step in range(1, steps + 1):
+        for rmsd_fname, data in rmsd.items():
+            data_len = len(data)
+            chunk_num = step + 1
+            chunk_size = math.floor(data_len / chunk_num)
+            logger.debug(STEP_DBG_MSG, step, data_len, rmsd_fname, chunk_num,
+                         chunk_size)
+            rmsd_chunks = [ch for ch in chunk(data, chunk_size, list)]
+            for step_part in range(1, chunk_num + 1):
+                rmsd_tgt_dir = os.path.join(base_dir, SPLIT_DIR_FMT.
+                                            format(step, step_part))
+                if not os.path.exists(rmsd_tgt_dir):
+                    os.makedirs(rmsd_tgt_dir)
+                tgt_file = os.path.join(rmsd_tgt_dir, rmsd_fname)
+                if os.path.exists(tgt_file) and not overwrite:
+                    logger.warn("Not overwriting existing RMSD file '%s'", tgt_file)
+                    continue
+                write_rmsd(rmsd_chunks[step_part - 1], tgt_file)
+        write_meta(base_dir, meta, step, overwrite)
 
 
 # CLI Processing #
@@ -76,8 +143,7 @@ def main(argv=None):
 
     for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
         for meta_file in meta_files:
-            pass
-            #block_average(os.path.join(meta_dir, meta_file), args.steps, args.overwrite)
+            rmsd_split(os.path.join(meta_dir, meta_file), args.steps, args.overwrite)
 
     return 0  # success
 

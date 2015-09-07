@@ -11,7 +11,8 @@ import unittest
 import os
 import re
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd, read_rmsd,
-                           write_meta, LINES_KEY, DIR_KEY, LOC_KEY)
+                           LINES_KEY, DIR_KEY, LOC_KEY)
+from md_utils.wham_block import write_meta
 
 # Constants #
 
@@ -25,7 +26,6 @@ ODD_DATA = [1.248430, 1.246537, 1.243088, 1.178917, 1.268993, 1.242438,
             1.286239, 1.233201, 1.272090]
 ODD_KEY = "odd"
 EVEN_KEY = "even"
-TEST_RMSD = {EVEN_KEY: EVEN_DATA, ODD_KEY: ODD_DATA}
 
 # Tests #
 
@@ -55,9 +55,9 @@ class WriteRmsd(unittest.TestCase):
         directory_name = None
         try:
             directory_name = tempfile.mkdtemp()
-            write_rmsd(directory_name, TEST_RMSD)
-            self.assertAlmostEqual(EVEN_DATA, read_rmsd(os.path.join(directory_name, EVEN_KEY)))
-            self.assertAlmostEqual(ODD_DATA, read_rmsd(os.path.join(directory_name, ODD_KEY)))
+            rfname = os.path.join(directory_name, EVEN_KEY)
+            write_rmsd(EVEN_DATA, rfname)
+            self.assertAlmostEqual(EVEN_DATA, read_rmsd(rfname))
         finally:
             shutil.rmtree(directory_name)
 

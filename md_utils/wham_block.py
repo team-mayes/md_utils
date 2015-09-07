@@ -11,8 +11,8 @@ import logging
 import six
 
 from md_utils.common import find_files_by_dir, chunk
-from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd, write_meta,
-                           DIR_KEY)
+from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
+                           DIR_KEY, LINES_KEY, STEP_META_FNAME)
 
 __author__ = 'cmayes'
 
@@ -30,6 +30,49 @@ logger = logging.getLogger('wham_block')
 
 DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
+
+# I/O #
+
+
+# TODO: Write tests for write_avg_rmsd
+def write_avg_rmsd(tgt_dir, rmsd, overwrite=False):
+    """
+    Writes out all of the described RMSD files into the given target directory.
+
+    :param tgt_dir: The data where the files will go.
+    :param rmsd: A dict of an array of floats keyed by file name.
+    :param overwrite: Whether to overwrite existing files.
+    """
+    for rmsd_fname, data in rmsd.items():
+        tgt_file = os.path.join(tgt_dir, rmsd_fname)
+        if os.path.exists(tgt_file) and not overwrite:
+            logger.warn("Not overwriting existing RMSD file '%s'", tgt_file)
+            continue
+        write_rmsd(data, tgt_file)
+
+
+def write_meta(tgt_dir, meta, step, overwrite=False):
+    """
+    Writes out the meta file using the original meta data structure as a beginning.
+
+    :param tgt_dir: The target directory for the meta file.
+    :param meta: The parsed data from the original meta file.
+    :param step: The step number being processed.
+    :param overwrite: Whether to overwrite an existing meta file.
+    """
+    step_meta = STEP_META_FNAME.format(step)
+    meta_tgt = os.path.join(tgt_dir, step_meta)
+    if os.path.exists(meta_tgt) and not overwrite:
+        logger.warn("Not overwriting existing meta file '%s'", meta_tgt)
+        return
+    with open(meta_tgt, 'w') as mfile:
+        for mline in meta[LINES_KEY]:
+            rmsd_loc = os.path.join("{:02d}".format(step),
+                                    os.path.basename(mline[0]))
+            mfile.write(rmsd_loc)
+            mfile.write('\t')
+            mfile.write('\t'.join(mline[1:]))
+            mfile.write('\n')
 
 # Logic #
 
@@ -89,7 +132,7 @@ def block_average(meta_file, steps, overwrite=False, base_dir=None):
             logger.info("No more values at step %d; stopping", step)
             break
         os.makedirs(rmsd_base_dir)
-        write_rmsd(rmsd_base_dir, rmsd, overwrite)
+        write_avg_rmsd(rmsd_base_dir, rmsd, overwrite)
         write_meta(base_dir, meta, step, overwrite)
 
 

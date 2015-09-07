@@ -11,7 +11,7 @@ import shutil
 from md_utils.wham_block import (pair_avg,
                                  rmsd_avg, block_average)
 from tests.test_wham import (META_PATH, EVEN_DATA, ODD_DATA,
-                             TEST_RMSD, ODD_KEY, EVEN_KEY)
+                             ODD_KEY, EVEN_KEY)
 
 __author__ = 'cmayes'
 
@@ -24,6 +24,7 @@ EVEN_PAIR_AVG = [1.2311619999999999, 1.220716, 1.2131370000000001,
 ODD_PAIR_AVG = [1.2474835, 1.2110025, 1.2557155, 1.1911665, 1.228554,
                 1.2435805, 1.25972]
 
+TEST_RMSD = {EVEN_KEY: EVEN_DATA, ODD_KEY: ODD_DATA}
 
 # Tests #
 

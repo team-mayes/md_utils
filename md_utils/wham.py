@@ -4,12 +4,17 @@
 Common WHAM logic.
 """
 import logging
+
 import os
 
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham')
+
+# Constants #
+
+STEP_META_FNAME = "meta.{:02d}"
 
 # Keys #
 
@@ -84,44 +89,13 @@ def read_meta_rmsd(meta):
     return rmsd_data
 
 
-def write_rmsd(tgt_dir, rmsd, overwrite=False):
-    """
-    Writes out all of the described RMSD files into the given target directory.
+def write_rmsd(data, tgt_file):
+    """Writes the given RMSD data list into the given target location.
 
-    :param tgt_dir: The data where the files will go.
-    :param rmsd: A dict of an array of floats keyed by file name.
-    :param overwrite: Whether to overwrite existing files.
+    :param data: The list of data to write.
+    :param tgt_file: The target file location.
     """
-    for rmsd_fname, data in rmsd.items():
-        tgt_file = os.path.join(tgt_dir, rmsd_fname)
-        if os.path.exists(tgt_file) and not overwrite:
-            logger.warn("Not overwriting existing RMSD file '%s'", tgt_file)
-            continue
-        with open(tgt_file, 'w') as wfile:
-            for i, rmsd_val in enumerate(data, 1):
-                wfile.write("\t".join((str(i), str(rmsd_val))))
-                wfile.write("\n")
-
-
-def write_meta(tgt_dir, meta, step, overwrite=False):
-    """
-    Writes out the meta file using the original meta data structure as a beginning.
-
-    :param tgt_dir: The target directory for the meta file.
-    :param meta: The parsed data from the original meta file.
-    :param step: The step number being processed.
-    :param overwrite: Whether to overwrite an existing meta file.
-    """
-    step_meta = "meta.{:02d}".format(step)
-    meta_tgt = os.path.join(tgt_dir, step_meta)
-    if os.path.exists(meta_tgt) and not overwrite:
-        logger.warn("Not overwriting existing meta file '%s'", meta_tgt)
-        return
-    with open(meta_tgt, 'w') as mfile:
-        for mline in meta[LINES_KEY]:
-            rmsd_loc = os.path.join("{:02d}".format(step),
-                                    os.path.basename(mline[0]))
-            mfile.write(rmsd_loc)
-            mfile.write('\t')
-            mfile.write('\t'.join(mline[1:]))
-            mfile.write('\n')
+    with open(tgt_file, 'w') as wfile:
+        for i, rmsd_val in enumerate(data, 1):
+            wfile.write("\t".join((str(i), str(rmsd_val))))
+            wfile.write("\n")
