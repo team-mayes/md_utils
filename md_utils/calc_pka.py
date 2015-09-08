@@ -87,6 +87,7 @@ def calc_pka(file_data, kbt):
             logger.info("Found local max '%f' at coordinates '%f'", cur_corr, cur_coord)
             return -math.log10(inv_C_0 / sum_for_pka)
 
+
 # CLI Processing #
 
 
@@ -138,12 +139,12 @@ def main(argv=None):
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
-        for fdir, files in found_files.iteritems():
+        for fdir, files in found_files.items():
             results = []
             if not files:
                 logger.warn("No files found for dir '%s'", fdir)
                 continue
-            for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in files]):
+            for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
                 file_data = read_csv(pmf_path, KEY_CONV)
                 results.append({SRC_KEY: fname, PKA_KEY: calc_pka(file_data, kbt)})
 
