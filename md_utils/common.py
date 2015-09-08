@@ -39,12 +39,19 @@ def calc_kbt(temp_k):
 # Other #
 
 
-def swarn(tgt=sys.stderr, *objs):
+def swarn(*objs):
     """Writes a warning message to a target (stderr by default).
     :param tgt: The target to write to (stderr by default).
     :param objs: The elements of the message to write.
     """
-    print("WARNING: ", *objs, file=tgt)
+    print("WARNING:", *objs, file=sys.stderr)
+
+def swerr(*objs):
+    """Writes an error message to a target (stderr by default).
+    :param tgt: The target to write to (stderr by default).
+    :param objs: The elements of the message to write.
+    """
+    print("ERROR:", *objs, file=sys.stderr)
 
 
 def chunk(seq, chunksize, process=iter):
@@ -71,6 +78,7 @@ def file_to_str(fname):
 
     :param fname: The location of the file to read.
     :return: The contents of the given file.
+    :raises: IOError if the file can't be opened for reading.
     """
     with open(fname) as myfile:
         return myfile.read()

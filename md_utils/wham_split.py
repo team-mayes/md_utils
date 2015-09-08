@@ -11,16 +11,19 @@ import logging
 import math
 
 from md_utils.common import (find_files_by_dir, chunk, file_to_str,
-                             allow_write, str_to_file)
+                             allow_write, str_to_file, swerr)
 from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            LINES_KEY, DEF_BASE_SUBMIT_TPL,
-                           DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL)
+                           DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
+                           TemplateNotReadableError)
 
 __author__ = 'cmayes'
 
 import argparse
 import os
 import sys
+
+# Exceptions #
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -33,7 +36,7 @@ DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
 
 # Constants #
-
+TPL_IO_ERR_MSG = "Couldn't read template at '{}'.  Have you run md_init in this directory?"
 STEP_DBG_MSG = "Step %d: Dividing %d lines from file %s into %d chunks of %d lines each."
 SPLIT_DIR_FMT = "{:02d}_{:02d}"
 STEP_META_FNAME = "meta." + SPLIT_DIR_FMT
@@ -64,6 +67,19 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
                     mfile.write('\t')
                     mfile.write('\t'.join(mline[1:]))
                     mfile.write('\n')
+
+
+def read_tpl(tpl_loc):
+    """Attempts to read the given template location and throws A
+    TemplateNotReadableError if it can't read the given location.
+
+    :param tpl_loc: The template location to read.
+    :raise TemplateNotReadableError: If there is an IOError reading the location.
+    """
+    try:
+        return file_to_str(tpl_loc)
+    except IOError, e:
+        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc), e)
 
 # Logic #
 
@@ -98,8 +114,8 @@ def rmsd_split(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=
     """
     meta = read_meta(meta_file)
     rmsd = read_meta_rmsd(meta)
-    sub_tpl_base = file_to_str(os.path.join(tpl_dir, DEF_BASE_SUBMIT_TPL))
-    sub_tpl_line = file_to_str(os.path.join(tpl_dir, DEF_PART_LINE_SUBMIT_TPL))
+    sub_tpl_base = read_tpl(os.path.join(tpl_dir, DEF_BASE_SUBMIT_TPL))
+    sub_tpl_line = read_tpl(os.path.join(tpl_dir, DEF_PART_LINE_SUBMIT_TPL))
 
     if not base_dir:
         base_dir = meta[DIR_KEY]
@@ -168,9 +184,13 @@ def main(argv=None):
     if ret != 0:
         return ret
 
-    for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
-        for meta_file in meta_files:
-            rmsd_split(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
+    try:
+        for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
+            for meta_file in meta_files:
+                rmsd_split(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
+    except TemplateNotReadableError, e:
+        swerr(e)
+        return 3
 
     return 0  # success
 

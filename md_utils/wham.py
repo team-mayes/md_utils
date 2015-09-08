@@ -38,6 +38,12 @@ COORD_KEY = 'coord'
 FREE_KEY = 'free_energy'
 RAD_KEY_SEQ = [COORD_KEY, FREE_KEY, CORR_KEY]
 
+# Exceptions #
+
+
+class TemplateNotReadableError(Exception):
+    pass
+
 
 def read_meta(meta_file):
     """
