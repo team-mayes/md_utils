@@ -10,9 +10,12 @@ import logging
 
 import six
 
-from md_utils.common import find_files_by_dir, chunk
+from md_utils.common import find_files_by_dir, chunk, allow_write, str_to_file
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
-                           DIR_KEY, LINES_KEY)
+                           DIR_KEY, LINES_KEY, STEP_SUBMIT_FNAME,
+                           fill_submit_wham, DEF_BASE_SUBMIT_TPL,
+                           DEF_LINE_SUBMIT_TPL)
+from md_utils.wham_split import read_tpl
 
 __author__ = 'cmayes'
 
@@ -32,10 +35,27 @@ STEP_META_FNAME = "meta.{:02d}"
 
 # Defaults #
 
+DEF_TPL_DIR = os.path.join(os.getcwd(), 'tpl')
 DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
 
 # I/O #
+
+
+def write_submit(tgt_dir, sub_tpl_base, sub_tpl_line, step, overwrite=False):
+    """
+    Uses the given templates and step number to write a submit script to the given target file location.
+
+    :param sub_tpl_base: The base template.
+    :param sub_tpl_line: The line template.
+    :param step: The step number.
+    :param tgt_dir: The target directory.
+    :param overwrite: Whether to allow overwrites.
+    """
+    sub_file = os.path.join(tgt_dir, STEP_SUBMIT_FNAME.format(step))
+    if allow_write(sub_file, overwrite):
+        wham_fill = fill_submit_wham(sub_tpl_base, sub_tpl_line, step, use_part=False)
+        str_to_file(wham_fill, sub_file)
 
 
 # TODO: Write tests for write_avg_rmsd
@@ -113,7 +133,7 @@ def rmsd_avg(rmsd, avg_func):
     return avg
 
 
-def block_average(meta_file, steps, overwrite=False, base_dir=None):
+def block_average(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=None):
     """
     Reads the given meta file, fetches the RMSD files in the inventory, computes
     the average over the given number of cycles, and writes each computed RMSD
@@ -126,6 +146,9 @@ def block_average(meta_file, steps, overwrite=False, base_dir=None):
     """
     meta = read_meta(meta_file)
     rmsd = read_meta_rmsd(meta)
+    sub_tpl_base = read_tpl(os.path.join(tpl_dir, DEF_BASE_SUBMIT_TPL))
+    sub_tpl_line = read_tpl(os.path.join(tpl_dir, DEF_LINE_SUBMIT_TPL))
+
     if not base_dir:
         base_dir = meta[DIR_KEY]
     for step in range(1, steps + 1):
@@ -138,6 +161,7 @@ def block_average(meta_file, steps, overwrite=False, base_dir=None):
         os.makedirs(rmsd_base_dir)
         write_avg_rmsd(rmsd_base_dir, rmsd, overwrite)
         write_meta(base_dir, meta, step, overwrite)
+        write_submit(base_dir, sub_tpl_base, sub_tpl_line, step, overwrite)
 
 
 # CLI Processing #
