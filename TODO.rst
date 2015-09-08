@@ -31,6 +31,10 @@ WHAM_POST_BLOCK
 * Read all parts for a given dir prefix
 * WHAM output file format (PMF*)
 ** Also accept radial correction rad_PMF
+* To calculate the average and standard deviation
+** read the (radial corrected) free energy for a given coordinate from each rad_PMF file for a given coordinate prefix
+** output the coordiante, the average, and standard deviation (i.e. for directory 07_*, there are 8 files; the
+coordinates will align for each file; read the 8 differing values for free E for that coordinate, calc the avg and st dev, and output
 
 Out format CSV with headers:
 

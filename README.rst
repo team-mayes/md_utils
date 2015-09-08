@@ -20,3 +20,11 @@ Features
 * fes_combo: Combines multiple FES output files into a single file so that the
              first column's value is sequential.  Files with higher starting
              index numbers are favored.
+
+* wham_split: Breaks wham input into increasingly smaller blocks (divide initial 
+              data set by 2, then 3, 4...) and creates wham input (meta) files
+              and submit scripts
+
+* wham_rad:   Calculates the radially-corrected free energy values from WHAM output
+
+* calc_pka:   From the wham_rad output, calculates the pKa
