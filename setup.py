@@ -41,6 +41,7 @@ setup(
             'calc_pka = md_utils.calc_pka:main',
             'wham_split = md_utils.wham_split:main',
             'md_init = md_utils.md_init:main',
+            'calc_split_avg = md_utils.calc_split_avg:main',
         ],
     },
     package_dir={'md_utils':

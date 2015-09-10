@@ -8,22 +8,6 @@ WHAM_BLOCK
 
 To get an error estimate, take a series of data points (each file is a series of data points)
 
-TODO
-----
-
-Make a new set of files to send to WHAM.
-* Use template to create an aggregated submit script
-
-Submit Script
--------------
-
-wham 1.00 6.00 50 0.0001 310.0 0 meta.$i PMF.$i > wham.$i.txt
-
-WHAM_SPLIT
-==========
-
-* Create dirs named (total splits)_(part)
-* Floor for modulo remainder
 
 WHAM_POST_BLOCK
 ===============
@@ -39,6 +23,10 @@ coordinates will align for each file; read the 8 differing values for free E for
 Out format CSV with headers:
 
 coordinates average_free_energy standard_deviation_free_energy
+
+File name
+
+avg_rad_PMF.02.csv
 
 CALC_PKA
 ========
