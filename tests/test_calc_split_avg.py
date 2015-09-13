@@ -15,7 +15,7 @@ FILES = ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.01_02', 'rad_PMF.02_03', 'ra
 
 BINNED_FILES = {'02': ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03'], '01': ['rad_PMF.01_02', 'rad_PMF.01_01']}
 
-DATA_DIR = os.path.join('test_data', 'post_rad_wham')
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data', 'post_rad_wham')
 
 INFILES = [os.path.join(DATA_DIR, radf) for radf in ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03']]
 

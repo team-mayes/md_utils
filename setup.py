@@ -27,9 +27,9 @@ setup(
     version=md_utils.__version__,
     description="Utility scripts for MD data",
     long_description=readme + '\n\n' + history,
-    author="Heather Mayes",
-    author_email='hmayes@hmayes.com',
-    url='https://github.com/hmayes/md_utils',
+    author="Chris Mayes",
+    author_email='cmayes@cmayes.com',
+    url='https://github.com/cmayes/md_utils',
     packages=[
         'md_utils',
     ],

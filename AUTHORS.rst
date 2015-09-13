@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Heather Mayes <hmayes@hmayes.com>
+* Chris Mayes <cmayes@cmayes.com>
 
 Contributors
 ------------
 
-* Chris Mayes <cmayes@cmayes.com>
+* Heather Mayes <hmayes@hmayes.com>

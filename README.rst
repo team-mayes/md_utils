@@ -2,8 +2,8 @@
 MD Utilities
 ============
 
-.. image:: https://img.shields.io/travis/hmayes/md_utils.svg
-        :target: https://travis-ci.org/hmayes/md_utils
+.. image:: https://img.shields.io/travis/cmayes/md_utils.svg
+        :target: https://travis-ci.org/cmayes/md_utils
 
 .. image:: https://img.shields.io/pypi/v/md_utils.svg
         :target: https://pypi.python.org/pypi/md_utils

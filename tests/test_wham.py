@@ -31,7 +31,7 @@ TPL_LOC = os.path.join(SKEL_LOC, "tpl")
 SUB_WHAM_BASE_TPL = os.path.join(TPL_LOC, DEF_BASE_SUBMIT_TPL)
 SUB_WHAM_LINE_TPL = os.path.join(TPL_LOC, DEF_LINE_SUBMIT_TPL)
 
-DATA_DIR = os.path.join('test_data', 'wham_test_data')
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_data', 'wham_test_data'))
 META_00_FNAME = 'meta.00'
 META_PATH = os.path.join(DATA_DIR, META_00_FNAME)
 SUBMIT_05_PATH = os.path.join(DATA_DIR, 'submit_wham_05.sh')

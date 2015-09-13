@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'MD Utilities'
-copyright = u'2015, Heather Mayes'
+copyright = u'2015, Chris Mayes'
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -210,7 +210,7 @@ latex_elements = {
 latex_documents = [
     ('index', 'md_utils.tex',
      u'MD Utilities Documentation',
-     u'Heather Mayes', 'manual'),
+     u'Chris Mayes', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -241,7 +241,7 @@ latex_documents = [
 man_pages = [
     ('index', 'md_utils',
      u'MD Utilities Documentation',
-     [u'Heather Mayes'], 1)
+     [u'Chris Mayes'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -256,7 +256,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'md_utils',
      u'MD Utilities Documentation',
-     u'Heather Mayes',
+     u'Chris Mayes',
      'md_utils',
      'One line description of project.',
      'Miscellaneous'),

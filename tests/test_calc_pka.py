@@ -22,7 +22,7 @@ __author__ = 'cmayes'
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_calc_pka')
 
-DATA_DIR = 'test_data'
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 PKA_DATA_DIR = os.path.join(DATA_DIR, 'calc_pka')
 GOOD_RAD_PATH = os.path.join(PKA_DATA_DIR, 'rad_PMFlast2ns3_1.txt')
 NO_MAX_RAD_PATH = os.path.join(PKA_DATA_DIR, 'rad_no_max.txt')
