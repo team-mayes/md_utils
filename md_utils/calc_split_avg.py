@@ -90,7 +90,7 @@ def write_avg_stdev(result, out_fname, overwrite=False, basedir=None):
         tgt_file = out_fname
 
     if allow_write(tgt_file, overwrite=overwrite):
-        with open(tgt_file , 'wb') as csvfile:
+        with open(tgt_file , 'w') as csvfile:
             res_writer = csv.writer(csvfile)
             res_writer.writerow(OUT_KEY_SEQ)
             for res_row in sorted(result):
