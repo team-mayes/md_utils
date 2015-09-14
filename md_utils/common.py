@@ -41,14 +41,13 @@ def calc_kbt(temp_k):
 
 def swarn(*objs):
     """Writes a warning message to a target (stderr by default).
-    :param tgt: The target to write to (stderr by default).
     :param objs: The elements of the message to write.
     """
     print("WARNING:", *objs, file=sys.stderr)
 
+
 def swerr(*objs):
     """Writes an error message to a target (stderr by default).
-    :param tgt: The target to write to (stderr by default).
     :param objs: The elements of the message to write.
     """
     print("ERROR:", *objs, file=sys.stderr)
@@ -68,6 +67,7 @@ def chunk(seq, chunksize, process=iter):
     while True:
         yield process(chain([it.next()], islice(it, chunksize - 1)))
 
+
 # Stats #
 
 # From http://stackoverflow.com/a/27758326
@@ -77,13 +77,15 @@ def mean(data):
     n = len(data)
     if n < 1:
         raise ValueError('mean requires at least one data point')
-    return sum(data)/n # in Python 2 use sum(data)/float(n)
+    return sum(data) / n  # in Python 2 use sum(data)/float(n)
+
 
 def _ss(data):
     """Return sum of square deviations of sequence data."""
     c = mean(data)
-    ss = sum((x-c)**2 for x in data)
+    ss = sum((x - c) ** 2 for x in data)
     return ss
+
 
 def pstdev(data):
     """Calculates the population standard deviation."""
@@ -91,8 +93,8 @@ def pstdev(data):
     if n < 2:
         raise ValueError('variance requires at least two data points')
     ss = _ss(data)
-    pvar = ss/n # the population variance
-    return pvar**0.5
+    pvar = ss / n  # the population variance
+    return pvar ** 0.5
 
 
 # I/O #
@@ -119,6 +121,7 @@ def str_to_file(str_val, fname):
     """
     with open(fname, 'w') as myfile:
         myfile.write(str_val)
+
 
 # TODO: Use this instead of duplicate logic in project.
 def allow_write(floc, overwrite=False):
@@ -225,13 +228,13 @@ def copytree(src, dst, symlinks=False, ignore=None):
                 copy2(srcname, dstname)
         # catch the Error from the recursive copytree so that we can
         # continue with other files
-        except Error, err:
+        except Error as err:
             errors.extend(err.args[0])
-        except EnvironmentError, why:
+        except EnvironmentError as why:
             errors.append((srcname, dstname, str(why)))
     try:
         copystat(src, dst)
-    except OSError, why:
+    except OSError as why:
         if WindowsError is not None and isinstance(why, WindowsError):
             # Copying file access times may fail on Windows
             pass
@@ -262,7 +265,7 @@ def read_csv(src_file, data_conv=None):
                 if data_conv and skey in data_conv:
                     try:
                         sdict[skey] = data_conv[skey](sval)
-                    except ValueError, e:
+                    except ValueError as e:
                         logger.debug("Could not convert value "
                                      "'%s' from column '%s': '%s'.  Leaving as str",
                                      sval, skey, e)
