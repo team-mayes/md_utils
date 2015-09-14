@@ -85,7 +85,7 @@ def to_zero_point(corr_res):
     :param corr_res: The data set to orient.
     :return: The data set reoriented relative to the highest free energy value.
     """
-    max_cor_freng = None
+    max_cor_freng = 0.0
     for zrow in corr_res:
         try:
             row_corr_val = zrow[CORR_KEY]

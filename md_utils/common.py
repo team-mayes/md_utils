@@ -13,7 +13,8 @@ from itertools import chain, islice
 
 import os
 import sys
-from shutil import copy2, Error, copystat, WindowsError
+from shutil import copy2, Error, copystat
+import six
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_wham_rad')
@@ -65,7 +66,7 @@ def chunk(seq, chunksize, process=iter):
     """
     it = iter(seq)
     while True:
-        yield process(chain([it.next()], islice(it, chunksize - 1)))
+        yield process(chain([six.next(it)], islice(it, chunksize - 1)))
 
 
 # Stats #
@@ -235,11 +236,9 @@ def copytree(src, dst, symlinks=False, ignore=None):
     try:
         copystat(src, dst)
     except OSError as why:
-        if WindowsError is not None and isinstance(why, WindowsError):
-            # Copying file access times may fail on Windows
-            pass
-        else:
-            errors.append((src, dst, str(why)))
+        # can't copy file access times on Windows
+        if why.winerror is None:
+            errors.extend((src, dst, str(why)))
     if errors:
         raise Error(errors)
 
