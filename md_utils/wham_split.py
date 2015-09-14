@@ -78,7 +78,7 @@ def read_tpl(tpl_loc):
     """
     try:
         return file_to_str(tpl_loc)
-    except IOError, e:
+    except IOError as e:
         raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc), e)
 
 # Logic #
@@ -188,7 +188,7 @@ def main(argv=None):
         for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
             for meta_file in meta_files:
                 rmsd_split(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
-    except TemplateNotReadableError, e:
+    except TemplateNotReadableError as e:
         swerr(e)
         return 3
 

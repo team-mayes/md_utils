@@ -73,7 +73,7 @@ def map_fes(tgt_file):
                 fmap[tstep] = tline
                 if first_key is None:
                     first_key = tstep
-            except Exception, e:
+            except Exception as e:
                 logger.debug("Error '%s' for line '%s'", e, tline)
     return first_key, fmap
 

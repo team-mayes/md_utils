@@ -71,7 +71,7 @@ def calc_rad(src_file, kbt):
                     wres[FREE_KEY] = float(swline[1])
                 except ValueError:
                     wres[FREE_KEY] = swline[1]
-            except Exception, e:
+            except Exception as e:
                 logger.debug("Error '%s' for line '%s'", e, wline)
             wres[CORR_KEY] = calc_corr(wres[COORD_KEY], wres[FREE_KEY], kbt)
             reslines.append(wres)
@@ -91,7 +91,7 @@ def to_zero_point(corr_res):
             row_corr_val = zrow[CORR_KEY]
             if max_cor_freng < row_corr_val and not math.isinf(row_corr_val):
                 max_cor_freng = row_corr_val
-        except Exception, e:
+        except Exception as e:
             logger.debug("Error finding zero point: '%s'", e)
             continue
     for zrow in corr_res:
