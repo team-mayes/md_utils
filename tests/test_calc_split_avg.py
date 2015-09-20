@@ -5,9 +5,15 @@ Tests for calc_split_avg.
 """
 
 import logging
+import shutil
+import tempfile
 import unittest
+
 import os
-from md_utils.calc_split_avg import bin_by_pattern, calc_avg_stdev, OUT_FNAME_FMT, write_avg_stdev
+
+from md_utils.calc_split_avg import bin_by_pattern, calc_avg_stdev, OUT_FNAME_FMT, write_avg_stdev, OUT_KEY_SEQ, \
+    AVG_KEY_CONV
+from md_utils.common import read_csv
 
 __author__ = 'cmayes'
 
@@ -29,6 +35,7 @@ class TestBinFileNames(unittest.TestCase):
     def testMulti(self):
         self.assertDictEqual(BINNED_FILES, bin_by_pattern(FILES))
 
+
 class TestDataProcess(unittest.TestCase):
     def testAvgStdev(self):
         results = calc_avg_stdev(INFILES)
@@ -41,4 +48,17 @@ class TestDataProcess(unittest.TestCase):
 class TestWriteAvg(unittest.TestCase):
     def testAvgStdev(self):
         results = calc_avg_stdev(INFILES)
-        write_avg_stdev(results, os.path.join(DATA_DIR, OUT_FNAME_FMT.format("02")))
+        directory_name = None
+        try:
+            directory_name = tempfile.mkdtemp()
+            tgt_file = OUT_FNAME_FMT.format("02")
+            write_avg_stdev(results, tgt_file, basedir=directory_name)
+            csv_data = read_csv(os.path.join(directory_name, tgt_file), data_conv=AVG_KEY_CONV)
+            logger.debug(csv_data)
+            for entry in csv_data:
+                self.assertEqual(3, len(entry))
+                for ckey, cval in entry.items():
+                    self.assertIsInstance(cval, float)
+                    self.assertTrue(ckey in OUT_KEY_SEQ)
+        finally:
+            shutil.rmtree(directory_name)

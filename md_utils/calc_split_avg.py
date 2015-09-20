@@ -44,6 +44,11 @@ KEY_CONV = {FREE_KEY: float,
             CORR_KEY: float,
             COORD_KEY: float, }
 
+AVG_KEY_CONV = {MEAN_KEY: float,
+            STDEV_KEY: float,
+            COORD_KEY: float, }
+
+
 # Logic #
 
 
