@@ -55,3 +55,8 @@ nosetests.xml
 
 # testing folder
 testing
+
+# Documentation
+docs/_build/
+htmlcov/
+
