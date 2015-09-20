@@ -47,7 +47,7 @@ coverage:
 	coverage run --source md_utils setup.py test
 	coverage report -m
 	coverage html
-	open htmlcov/index.html
+	see htmlcov/index.html
 
 docs:
 	rm -f docs/md_utils.rst
@@ -55,7 +55,7 @@ docs:
 	sphinx-apidoc -o docs/ md_utils
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
+	see docs/_build/html/index.html
 
 release: clean
 	python setup.py sdist upload

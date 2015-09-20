@@ -14,9 +14,11 @@ Contents:
    readme
    installation
    usage
+   code
    contributing
    authors
    history
+   md_utils
 
 Indices and tables
 ==================
