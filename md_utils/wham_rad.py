@@ -80,22 +80,39 @@ def calc_rad(src_file, kbt):
 
 def to_zero_point(corr_res):
     """
-    Sets the highest free energy value as zero for the given data set.
+    # Sets the highest free energy value as zero for the given data set.
+    Sets the free energy value at the furthers coordinate as zero for the given data set.
 
     :param corr_res: The data set to orient.
     :return: The data set reoriented relative to the highest free energy value.
     """
-    max_cor_freng = None
+    # max_cor_freng = None
+    # for zrow in corr_res:
+    #     try:
+    #         row_corr_val = zrow[CORR_KEY]
+    #         if max_cor_freng < row_corr_val and not math.isinf(row_corr_val):
+    #             max_cor_freng = row_corr_val
+    #     except Exception, e:
+    #         logger.debug("Error finding zero point: '%s'", e)
+    #         continue
+    # for zrow in corr_res:
+    #     zrow[CORR_KEY] -= max_cor_freng
+    # return corr_res
+
+    max_coord = None
+    set_cor_freng = None
     for zrow in corr_res:
         try:
+            row_coord_val = zrow[COORD_KEY]
             row_corr_val = zrow[CORR_KEY]
-            if max_cor_freng < row_corr_val and not math.isinf(row_corr_val):
-                max_cor_freng = row_corr_val
+            if max_coord < row_coord_val and not math.isinf(row_corr_val):
+                max_coord = row_coord_val
+                set_cor_freng = row_corr_val
         except Exception, e:
             logger.debug("Error finding zero point: '%s'", e)
             continue
     for zrow in corr_res:
-        zrow[CORR_KEY] -= max_cor_freng
+        zrow[CORR_KEY] -= set_cor_freng
     return corr_res
 
 
