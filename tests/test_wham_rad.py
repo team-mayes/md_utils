@@ -25,7 +25,7 @@ __author__ = 'cmayes'
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_wham_rad')
 
-DATA_DIR = 'test_data'
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
 ORIG_WHAM_FNAME = "PMFlast2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)

@@ -22,7 +22,7 @@ logger = logging.getLogger('test_common')
 
 
 # Constants #
-DATA_DIR = 'test_data'
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 FES_OUT_DIR = 'fes_out'
 CALC_PKA_DIR = 'calc_pka'
 CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMFlast2ns3_1.txt')
@@ -84,9 +84,13 @@ class TestFindFiles(unittest.TestCase):
         found = find_files_by_dir(FES_BASE, DEF_FILE_PAT)
         exp_data = expected_dir_data()
         self.assertEqual(len(exp_data), len(found))
-        for key, files in exp_data.iteritems():
+        for key, files in exp_data.items():
             found_files = found.get(key)
-            self.assertItemsEqual(files, found_files)
+            try:
+                self.assertCountEqual(files, found_files)
+            except AttributeError:
+                self.assertItemsEqual(files, found_files)
+
 
 
 class TestCreateOutFname(unittest.TestCase):

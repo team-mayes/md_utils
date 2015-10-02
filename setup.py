@@ -15,11 +15,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    'argparse',
+    'argparse', 'six',
 ]
 
 test_requirements = [
-    # TODO: put package test requirements here
+    'argparse', 'six',
 ]
 
 setup(
@@ -27,9 +27,9 @@ setup(
     version=md_utils.__version__,
     description="Utility scripts for MD data",
     long_description=readme + '\n\n' + history,
-    author="Heather Mayes",
-    author_email='hmayes@hmayes.com',
-    url='https://github.com/hmayes/md_utils',
+    author="Chris Mayes",
+    author_email='cmayes@cmayes.com',
+    url='https://github.com/cmayes/md_utils',
     packages=[
         'md_utils',
     ],
@@ -55,16 +55,16 @@ setup(
     zip_safe=False,
     keywords='md_utils',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Topic :: Scientific/Engineering :: Chemistry',
     ],
     test_suite='tests',
     tests_require=test_requirements

@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import logging
 import os
 import unittest
@@ -12,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_fes_combo')
 logger.setLevel(logging.INFO)
 
-DATA_DIR = 'test_data'
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 FES_OUT_DIR = 'fes_out'
 FES_ALL_DIR = 'fes_all'
 FES_MULTI_DIR = 'multi'
@@ -32,6 +34,7 @@ FES_ALL_TWO = os.path.join(FES_ALL_BASE, FES_TWO_DIR, DEF_TGT)
 FES_ALL_MULTI = os.path.join(FES_ALL_BASE, FES_MULTI_DIR, DEF_TGT)
 # Target writers #
 FES_ALL_MULTI_FILE = os.path.join(FES_OUT_BASE, FES_MULTI_DIR, DEF_TGT)
+
 
 def header_lines(tgt_file):
     """
@@ -53,11 +56,13 @@ def header_lines(tgt_file):
                 hlines.append(tline)
         return hlines
 
+
 # Tests #
 class TestFesCombo(unittest.TestCase):
     """
     Tests for the functions in fes_combo.
     """
+
     def test_single(self):
         test_dict = find_files_by_dir(FES_OUT_SINGLE, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
