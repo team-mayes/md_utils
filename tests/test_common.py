@@ -43,6 +43,7 @@ def expected_dir_data():
     :return: The data structure that's expected from `find_files_by_dir`
     """
     return {os.path.abspath(os.path.join(FES_BASE, "1.00")): ['fes.out'],
+            os.path.abspath(os.path.join(FES_BASE, "2.75")): ['fes.out', 'fes_cont.out'],
             os.path.abspath(os.path.join(FES_BASE, "5.50")): ['fes.out', 'fes_cont.out'],
             os.path.abspath(os.path.join(FES_BASE, "multi")): ['fes.out', 'fes_cont.out',
                                                                'fes_cont2.out', 'fes_cont3.out'], }

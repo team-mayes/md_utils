@@ -35,12 +35,16 @@ inv_C_0 = 1660.0
 DEF_FILE_PAT = 'rad_PMF*'
 SRC_KEY = 'source_file'
 PKA_KEY = 'pKa'
+MAX_LOC = 'max_loc'
+MAX_VAL = 'max_val'
 
-OUT_KEY_SEQ = [SRC_KEY, PKA_KEY]
+OUT_KEY_SEQ = [SRC_KEY, PKA_KEY, MAX_LOC, MAX_VAL]
 
 KEY_CONV = {FREE_KEY: float,
             CORR_KEY: float,
-            COORD_KEY: float, }
+            COORD_KEY: float,
+            MAX_LOC: float,
+            MAX_VAL: float }
 
 # Logic #
 
@@ -85,7 +89,7 @@ def calc_pka(file_data, kbt):
             continue
         if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
             logger.info("Found local max '%f' at coordinates '%f'", cur_corr, cur_coord)
-            return -math.log10(inv_C_0 / sum_for_pka)
+            return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
 
 # CLI Processing #
@@ -134,7 +138,8 @@ def main(argv=None):
 
     if args.src_file is not None:
         file_data = read_csv(args.src_file, KEY_CONV)
-        result = [{SRC_KEY: args.src_file, PKA_KEY: calc_pka(file_data, kbt)}]
+        pka, cur_corr, cur_coord = calc_pka(file_data, kbt)
+        result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
         write_result(result, args.src_file, args.overwrite)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
@@ -146,7 +151,9 @@ def main(argv=None):
                 continue
             for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
                 file_data = read_csv(pmf_path, KEY_CONV)
-                results.append({SRC_KEY: fname, PKA_KEY: calc_pka(file_data, kbt)})
+                pka, cur_corr, cur_coord = calc_pka(file_data, kbt)
+                results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,
+                            MAX_LOC: cur_coord})
 
             write_result(results, os.path.basename(fdir), args.overwrite,
                          basedir=os.path.dirname(fdir))

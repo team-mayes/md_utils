@@ -46,7 +46,7 @@ def combine(tgt_files):
     for tgt_file in tgt_files:
         fkey, fmap = map_fes(tgt_file)
 
-        if fkey:
+        if fkey is not None:
             mapped_files[fkey] = fmap
 
     combo_dict = {}

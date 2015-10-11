@@ -35,7 +35,7 @@ class TestCalcPka(unittest.TestCase):
         pka_val = calc_pka(read_csv(GOOD_RAD_PATH, {FREE_KEY: float,
                                                     CORR_KEY: float,
                                                     COORD_KEY: float, }), calc_kbt(EXP_TEMP))
-        self.assertAlmostEqual(4.7036736, pka_val)
+        self.assertAlmostEqual(4.7036736, pka_val[0])
 
     def testNoMax(self):
         pka_val = calc_pka(read_csv(NO_MAX_RAD_PATH, {FREE_KEY: float,

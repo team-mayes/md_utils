@@ -3,16 +3,16 @@
 History
 -------
 
-0.1.0 (2015-09-01)
+0.4.1 (2015-10-10)
 ------------------
 
-* Renamed to `md_utils`
-* Added `fes_combo.py`
+* Added max_loc and max_val columns to calc_pka output.
+* Fixed problem with 0-start files in fes_combo.
 
-0.2.0 (2015-09-03)
+0.4.0 (2015-10-01)
 ------------------
 
-* Added `wham_rad.py`
+* Changed `wham_rad` to set the zero point at the the largest CV free E, rather than the max CV
 
 0.3.0 (2015-09-07)
 ------------------
@@ -21,7 +21,14 @@ History
 * Added `wham_split.py`
 * Refactored common code to `common` and `wham` modules.
 
-0.4.0 (2015-10-01)
+0.2.0 (2015-09-03)
 ------------------
 
-* Changed `wham_rad` to set the zero point at the the largest CV free E, rather than the max CV
+* Added `wham_rad.py`
+
+0.1.0 (2015-09-01)
+------------------
+
+* Renamed to `md_utils`
+* Added `fes_combo.py`
+
