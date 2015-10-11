@@ -108,7 +108,7 @@ def to_zero_point(corr_res):
             if max_coord < row_coord_val and not math.isinf(row_corr_val):
                 max_coord = row_coord_val
                 set_cor_freng = row_corr_val
-        except Exception, e:
+        except Exception as e:
             logger.debug("Error finding zero point: '%s'", e)
             continue
     for zrow in corr_res:
