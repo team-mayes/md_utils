@@ -44,7 +44,7 @@ KEY_CONV = {FREE_KEY: float,
             CORR_KEY: float,
             COORD_KEY: float,
             MAX_LOC: float,
-            MAX_VAL: float }
+            MAX_VAL: float}
 
 # Logic #
 
@@ -65,7 +65,7 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     write_csv(result, out_fname, OUT_KEY_SEQ)
 
 
-def calc_pka(file_data, kbt):
+def calc_pka(file_data, kbt, coord_ts):
     """Calculates the proton dissociation constant (PKA) for the given free energy data.
 
     :param file_data: The list of dicts to process.
@@ -87,10 +87,15 @@ def calc_pka(file_data, kbt):
 
         if i == 0:
             continue
-        if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
-            logger.info("Found local max '%f' at coordinates '%f'", cur_corr, cur_coord)
-            return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
+        if coord_ts is None:
+            if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
+                logger.info("Found local max '%f' at coordinate '%f'", cur_corr, cur_coord)
+                return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
+        else:
+            if cur_corr >= coord_ts:
+                logger.info("Integrating to input TS coordinate '%f' with value , '%f'", cur_coord, cur_corr)
+                return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
 # CLI Processing #
 
@@ -117,6 +122,9 @@ def parse_cmdline(argv):
                         default=DEF_FILE_PAT)
     parser.add_argument('-o', "--overwrite", help='Overwrite existing target file',
                         action='store_true')
+    parser.add_argument('-c', "--coord_ts", help='Manually entered coordinate of TS. '
+                                                 'Used in place of first local maximum.',
+                        type=float)
     parser.add_argument("temp", help="The temperature in Kelvin for the simulation", type=float)
 
     args = parser.parse_args(argv)
@@ -135,10 +143,12 @@ def main(argv=None):
         return ret
 
     kbt = calc_kbt(args.temp)
+    if args.coord_ts is not None:
+        logger.info("Read TS coordinate value: '%f'", args.coord_ts)
 
     if args.src_file is not None:
         file_data = read_csv(args.src_file, KEY_CONV)
-        pka, cur_corr, cur_coord = calc_pka(file_data, kbt)
+        pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
         result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
         write_result(result, args.src_file, args.overwrite)
     else:
@@ -151,7 +161,7 @@ def main(argv=None):
                 continue
             for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
                 file_data = read_csv(pmf_path, KEY_CONV)
-                pka, cur_corr, cur_coord = calc_pka(file_data, kbt)
+                pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
                 results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,
                             MAX_LOC: cur_coord})
 
