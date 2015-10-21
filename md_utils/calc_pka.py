@@ -13,6 +13,8 @@ from md_utils.common import (find_files_by_dir, create_out_fname,
                              read_csv, write_csv, calc_kbt)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
+NO_MAX_MSG = 'NONE'
+
 NO_MAX_ERR = "No local max found"
 
 __author__ = 'cmayes'
@@ -46,6 +48,12 @@ KEY_CONV = {FREE_KEY: float,
             MAX_LOC: float,
             MAX_VAL: float}
 
+# Exceptions #
+
+
+class NoMaxError(Exception):
+    pass
+
 # Logic #
 
 
@@ -65,7 +73,7 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     write_csv(result, out_fname, OUT_KEY_SEQ)
 
 
-def calc_pka(file_data, kbt, coord_ts):
+def calc_pka(file_data, kbt, coord_ts=None):
     """Calculates the proton dissociation constant (PKA) for the given free energy data.
 
     :param file_data: The list of dicts to process.
@@ -77,7 +85,7 @@ def calc_pka(file_data, kbt, coord_ts):
     last_idx = data_len - 1
     for i in range(data_len):
         if i == last_idx:
-            return NO_MAX_ERR
+            raise NoMaxError(NO_MAX_ERR)
         cur_coord = file_data[i][COORD_KEY]
         cur_corr = file_data[i][CORR_KEY]
         if math.isinf(cur_corr):
@@ -94,7 +102,7 @@ def calc_pka(file_data, kbt, coord_ts):
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
         else:
             if cur_coord >= coord_ts:
-                logger.info("Integrating to input TS coordinate '%f' with value , '%f'", cur_coord, cur_corr)
+                logger.info("Integrating to input TS coordinate '%f' with value '%f'", cur_coord, cur_corr)
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
 # CLI Processing #
@@ -148,8 +156,11 @@ def main(argv=None):
 
     if args.src_file is not None:
         file_data = read_csv(args.src_file, KEY_CONV)
-        pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-        result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
+        try:
+            pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
+            result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
+        except NoMaxError:
+            result = [{SRC_KEY: args.src_file, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
         write_result(result, args.src_file, args.overwrite)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
@@ -161,9 +172,13 @@ def main(argv=None):
                 continue
             for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
                 file_data = read_csv(pmf_path, KEY_CONV)
-                pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-                results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,
-                            MAX_LOC: cur_coord})
+                try:
+                    pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
+                    results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,
+                                MAX_LOC: cur_coord})
+                except NoMaxError:
+                    results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG,
+                                    MAX_LOC: NO_MAX_MSG})
 
             write_result(results, os.path.basename(fdir), args.overwrite,
                          basedir=os.path.dirname(fdir))
