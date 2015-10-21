@@ -93,7 +93,7 @@ def calc_pka(file_data, kbt, coord_ts):
                 logger.info("Found local max '%f' at coordinate '%f'", cur_corr, cur_coord)
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
         else:
-            if cur_corr >= coord_ts:
+            if cur_coord >= coord_ts:
                 logger.info("Integrating to input TS coordinate '%f' with value , '%f'", cur_coord, cur_corr)
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
