@@ -8,10 +8,11 @@ free energy data for a set of coordinates.
 from __future__ import print_function
 import csv
 import logging
+import numpy as np
 
 import re
 
-from md_utils.common import (find_files_by_dir, read_csv, mean, pstdev, allow_write)
+from md_utils.common import (find_files_by_dir, read_csv, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 OUT_FNAME_FMT = "avg_rad_PMF.{}.csv"
@@ -76,7 +77,7 @@ def calc_avg_stdev(coord_bin):
             collect_coord[drow[COORD_KEY]].append(drow[CORR_KEY])
     results = []
     for coord, freng_vals in collect_coord.items():
-        results.append((coord, mean(freng_vals), pstdev(freng_vals)))
+        results.append((coord, np.mean(freng_vals), np.std(freng_vals)))
     return results
 
 

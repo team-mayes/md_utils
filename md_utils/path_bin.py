@@ -16,7 +16,6 @@ import datetime
 
 import numpy as np
 import os
-from md_utils.common import mean, pstdev
 
 __author__ = 'cmayes'
 
