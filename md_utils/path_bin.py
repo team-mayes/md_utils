@@ -8,8 +8,15 @@ separate CSV-formatted log file is also produced, which provides the bin value, 
 samples, and the average and standard deviation for X, Y, and Z.
 """
 import argparse
+from collections import defaultdict
+import csv
 import logging
 import sys
+import datetime
+
+import numpy as np
+import os
+from md_utils.common import mean, pstdev
 
 __author__ = 'cmayes'
 
@@ -21,6 +28,7 @@ logger = logging.getLogger('path_bin')
 # Constants #
 
 COORDS = ['x', 'y', 'z']
+
 
 # Logic #
 
@@ -40,19 +48,20 @@ def process_infile(infile, coord):
     coord_pos = COORDS.index(coord)
     max_coord = None
     min_coord = None
-    lines = []
+    line_idx = defaultdict(list)
     with open(infile) as xyzfile:
         for xyzline in xyzfile:
             xyz = xyzline.split()
             if len(xyz) != 3:
-                logger.warn("Skipping '%d'-element input line '%s'",
+                logger.warning("Skipping '%d'-element input line '%s'",
                             len(xyz), xyzline)
                 continue
 
             try:
-                float_xyz = map(float, xyz)
+                # Explicitly convert to list as Python 3 returns an iterable
+                float_xyz = list(map(float, xyz))
             except ValueError as e:
-                logger.warn("Skipping non-float input line '%s'",
+                logger.warning("Skipping non-float input line '%s'",
                             xyzline)
                 continue
 
@@ -64,9 +73,64 @@ def process_infile(infile, coord):
             if min_coord is None or line_coord_val < min_coord:
                 min_coord = line_coord_val
 
-            lines.append(float_xyz)
+            line_idx[line_coord_val].append(float_xyz)
 
-    return lines, max_coord, min_coord
+    return line_idx, min_coord, max_coord
+
+
+def bin_data(xyz_idx, min_val, max_val, step):
+    """
+    Creates bins based on the interval between the min and max val using the given step size.
+    The XYZ coordinates in `xyz_idx` are indexed to their proper bin based on which bin matches
+    the index key.  The function returns a list of bins and a dict mapping XYZ values to the
+    bin that they match.
+
+    :param xyz_idx: A dict mapping lists of XYZ values to the coordinate selected for binning.
+    :param min_val: The minimum value for the coordinate selected for binning.
+    :param max_val: The maximum value for the coordinate selected for binning.
+    :param step: The size of the step to take for the bin range between the min and max values.
+    :return: A list of the bin values and a dict of lists of the coordinates mapped to their assigned bins.
+    """
+    bins = np.arange(min_val + step, max_val + step, step)
+    # Explicitly convert keys to list as Python 3 returns an iterable
+    key_bin_idx = np.digitize(list(xyz_idx.keys()), bins)
+    bin_idx = defaultdict(list)
+    for idx, xyz_key in enumerate(xyz_idx.keys()):
+        bin_idx_loc = key_bin_idx[idx]
+        bin_idx[bins[bin_idx_loc]].extend(xyz_idx[xyz_key])
+
+    short_bins = []
+    for i, bin_num in enumerate(bins):
+        bin_coords = bin_idx[bin_num]
+        if len(bin_coords) < 2:
+            logger.debug("Removing %d-point bin '%.4f'",
+                         len(bin_coords), bin_num)
+            short_bins.append(i)
+            del bin_idx[bin_num]
+    bins = np.delete(bins, short_bins)
+    return bins, bin_idx
+
+
+def write_results(bins, bin_data, src_file):
+    base_fname = os.path.splitext(src_file)[0]
+    xyz_file = base_fname + '.xyz'
+    log_file = base_fname + '.log'
+    with open(xyz_file, 'w') as xyz:
+        xyz.write(str(len(bin_data)) + '\n')
+        xyz.write("{} {}\n".format(src_file, datetime.datetime.today()))
+        with open(log_file, 'w') as bin_log:
+            csv_log = csv.writer(bin_log)
+            csv_log.writerow(("bin", "count", "ax", "dx", "ay", "dy", "az", "dz"))
+            for cur_bin in bins:
+                if bin_data.has_key(cur_bin):
+                    bin_coords = bin_data[cur_bin]
+                    bin_mean = map(np.mean, zip(*bin_coords))
+                    bin_stdev = map(np.std, zip(*bin_coords))
+                    xyz.write("B   {:.4f}   {:.4f}   {:.4f}\n".format(
+                        *bin_mean))
+                    merged_xyz = [item for sublist in zip(bin_mean, bin_stdev) for item in sublist]
+                    csv_log.writerow(["{:.4f}".format(cur_bin), len(bin_coords)] +
+                                     ["{:.4f}".format(coord) for coord in merged_xyz])
 
 # CLI Processing #
 
@@ -105,6 +169,9 @@ def main(argv=None):
     if ret != 0:
         return ret
 
+    line_idx, min_coord, max_coord = process_infile(args.infile, args.bin_coordinate)
+    bins, bin_idx = bin_data(line_idx, min_coord, max_coord, args.bin_size)
+    write_results(bins, bin_idx, args.infile)
 
     return 0  # success
 

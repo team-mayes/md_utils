@@ -42,5 +42,4 @@ class TestCalcPka(unittest.TestCase):
             calc_pka(read_csv(NO_MAX_RAD_PATH, {FREE_KEY: float,
                                                 CORR_KEY: float,
                                                 COORD_KEY: float, }), calc_kbt(EXP_TEMP))
-
-        self.assertTrue(NO_MAX_ERR in context.exception)
+        self.assertTrue(NO_MAX_ERR in context.exception.args)

@@ -15,11 +15,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    'argparse', 'six',
+    'argparse', 'six', 'numpy',
 ]
 
 test_requirements = [
-    'argparse', 'six',
+    'argparse', 'six', 'numpy',
 ]
 
 setup(

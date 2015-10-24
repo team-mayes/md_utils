@@ -23,8 +23,6 @@ import argparse
 import os
 import sys
 
-# Exceptions #
-
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
