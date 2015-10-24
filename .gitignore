@@ -60,3 +60,7 @@ testing
 docs/_build/
 htmlcov/
 
+# Transient result data
+tests/test_data/path_bin/100th_CEC_z2_4.log
+tests/test_data/path_bin/100th_CEC_z2_4.xyz
+
