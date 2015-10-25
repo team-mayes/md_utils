@@ -113,9 +113,9 @@ def diff_lines(floc1, floc2):
             diff = difflib.ndiff(file1.readlines(),file2.readlines())
             for line in diff:
                 if line.startswith('-'):
-                    #logger.debug(line)
+                    logger.debug(line)
                     difflines.append(line)
                 elif line.startswith('+'):
-                    #logger.debug(line)
+                    logger.debug(line)
                     pass
     return difflines
