@@ -3,6 +3,7 @@
 """
 Tests path_bin.
 """
+import difflib
 
 import logging
 import unittest
@@ -103,9 +104,18 @@ def dump_idx(xyz_idx):
         dump.extend(val)
     return dump
 
+
 def diff_lines(floc1, floc2):
+    seq = difflib.SequenceMatcher()
+    difflines = []
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
-            diff = set(file1).difference(file2)
-            diff.discard('\n')
-            return diff
+            diff = difflib.ndiff(file1.readlines(),file2.readlines())
+            for line in diff:
+                if line.startswith('-'):
+                    #logger.debug(line)
+                    difflines.append(line)
+                elif line.startswith('+'):
+                    #logger.debug(line)
+                    pass
+    return difflines

@@ -126,8 +126,8 @@ def write_results(bins, bin_data, src_file):
             for cur_bin in bins:
                 if cur_bin in bin_data:
                     bin_coords = bin_data[cur_bin]
-                    bin_mean = map(np.mean, zip(*bin_coords))
-                    bin_stdev = map(np.std, zip(*bin_coords))
+                    bin_mean = list(map(np.mean, zip(*bin_coords)))
+                    bin_stdev = list(map(np.std, zip(*bin_coords)))
                     xyz.write("B   {: .4f}   {: .4f}   {: .4f}\n".format(
                         *bin_mean))
                     merged_xyz = [item for sublist in zip(bin_mean, bin_stdev) for item in sublist]
