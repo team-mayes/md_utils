@@ -20,7 +20,7 @@ from tests.test_wham import (META_PATH, EVEN_DATA, ODD_DATA,
 
 __author__ = 'cmayes'
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_wham_block')
 
 EVEN_PAIR_AVG = [1.2311619999999999, 1.220716, 1.2131370000000001,

@@ -110,7 +110,7 @@ def diff_lines(floc1, floc2):
     difflines = []
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
-            diff = difflib.ndiff(file1.readlines(),file2.readlines())
+            diff = difflib.ndiff(file1.read().splitlines(),file2.read().splitlines())
             for line in diff:
                 if line.startswith('-'):
                     logger.debug(line)

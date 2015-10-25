@@ -24,6 +24,7 @@ __author__ = 'cmayes'
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('path_bin')
+logger.setLevel(logging.INFO)
 
 # Constants #
 

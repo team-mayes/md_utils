@@ -23,7 +23,7 @@ import sys
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('fes_combo')
-
+logger.setLevel(logging.INFO)
 # Defaults #
 
 DEF_FILE_PAT = 'fes*.out'

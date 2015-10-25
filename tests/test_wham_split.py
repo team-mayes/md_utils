@@ -13,9 +13,9 @@ from tests.test_wham import (META_PATH, TPL_LOC)
 
 __author__ = 'cmayes'
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_wham_split')
-
+logger.setLevel(logging.INFO)
 
 # Tests #
 

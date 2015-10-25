@@ -26,8 +26,9 @@ import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('wham_block')
+logger.setLevel(logging.INFO)
 
 # Constants #
 

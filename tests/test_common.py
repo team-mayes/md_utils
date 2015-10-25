@@ -152,6 +152,5 @@ class TestWriteCsv(unittest.TestCase):
             self.assertEqual(len(data), len(csv_result))
             for i, csv_row in enumerate(csv_result):
                 self.assertDictEqual(data[i], csv_row)
-            logger.debug(csv_result)
         finally:
             shutil.rmtree(tmp_dir)

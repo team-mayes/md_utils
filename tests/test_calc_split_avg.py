@@ -54,7 +54,6 @@ class TestWriteAvg(unittest.TestCase):
             tgt_file = OUT_FNAME_FMT.format("02")
             write_avg_stdev(results, tgt_file, basedir=directory_name)
             csv_data = read_csv(os.path.join(directory_name, tgt_file), data_conv=AVG_KEY_CONV)
-            logger.debug(csv_data)
             for entry in csv_data:
                 self.assertEqual(3, len(entry))
                 for ckey, cval in entry.items():
