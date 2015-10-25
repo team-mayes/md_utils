@@ -7,7 +7,11 @@ Common methods for this project.
 from __future__ import print_function, division
 # Util Methods #
 import csv
+import glob
 import logging
+from datetime import datetime
+import shutil
+import errno
 import fnmatch
 from itertools import chain, islice
 
@@ -15,6 +19,8 @@ import os
 import sys
 from shutil import copy2, Error, copystat
 import six
+
+BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_wham_rad')
@@ -95,6 +101,34 @@ def str_to_file(str_val, fname):
         myfile.write(str_val)
 
 
+def create_backup_filename(orig):
+    base, ext = os.path.splitext(orig)
+    now = datetime.now()
+    return "".join((base, now.strftime(BACKUP_TS_FMT), ext))
+
+def find_backup_filenames(orig):
+    base, ext = os.path.splitext(orig)
+    found = glob.glob(base + "*" + ext)
+    try:
+        found.remove(orig)
+    except ValueError:
+        # Original not present; ignore.
+        pass
+    return found
+
+def silent_remove(filename):
+    """
+    Removes the target file name, catching and ignoring errors that indicate that the
+    file does not exist.
+
+    :param filename: The file to remove.
+    """
+    try:
+        os.remove(filename)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
 # TODO: Use this instead of duplicate logic in project.
 def allow_write(floc, overwrite=False):
     """
@@ -109,6 +143,14 @@ def allow_write(floc, overwrite=False):
         return False
     return True
 
+def move_existing_file(floc):
+    """
+    Renames an existing file using a timestamp based on the move time.
+
+    :param floc: The location to check.
+    """
+    if os.path.exists(floc):
+        shutil.move(floc, create_backup_filename(floc))
 
 def create_out_fname(src_file, prefix, base_dir=None):
     """Creates an outfile name for the given source file.

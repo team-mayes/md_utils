@@ -3,6 +3,11 @@
 History
 -------
 
+0.4.2 (2015-10-24)
+------------------
+
+* Added path_bin for creating an averaged VMD file from a larger set of coordinates.
+
 0.4.1 (2015-10-10)
 ------------------
 

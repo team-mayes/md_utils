@@ -42,6 +42,7 @@ setup(
             'wham_split = md_utils.wham_split:main',
             'md_init = md_utils.md_init:main',
             'calc_split_avg = md_utils.calc_split_avg:main',
+            'path_bin = md_utils.path_bin:main',
         ],
     },
     package_dir={'md_utils':

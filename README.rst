@@ -34,3 +34,7 @@ wham_rad
 calc_pka
    From the wham_rad output, calculates the pKa.
 
+path_bin
+  Creates a summary VMD XYZ file (and separate log file) that averages a
+  set of coordinates (one set of XYZ coordinates per line) from an input file.
+

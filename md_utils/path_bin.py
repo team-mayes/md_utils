@@ -16,6 +16,7 @@ import datetime
 
 import numpy as np
 import os
+from md_utils.common import move_existing_file
 
 __author__ = 'cmayes'
 
@@ -27,7 +28,7 @@ logger = logging.getLogger('path_bin')
 # Constants #
 
 COORDS = ['x', 'y', 'z']
-
+FLOAT_FMT = "{:.4f}"
 
 # Logic #
 
@@ -113,7 +114,9 @@ def bin_data(xyz_idx, min_val, max_val, step):
 def write_results(bins, bin_data, src_file):
     base_fname = os.path.splitext(src_file)[0]
     xyz_file = base_fname + '.xyz'
+    move_existing_file(xyz_file)
     log_file = base_fname + '.log'
+    move_existing_file(log_file)
     with open(xyz_file, 'w') as xyz:
         xyz.write(str(len(bin_data)) + '\n')
         xyz.write("{} {}\n".format(src_file, datetime.datetime.today()))
@@ -125,11 +128,11 @@ def write_results(bins, bin_data, src_file):
                     bin_coords = bin_data[cur_bin]
                     bin_mean = map(np.mean, zip(*bin_coords))
                     bin_stdev = map(np.std, zip(*bin_coords))
-                    xyz.write("B   {:.4f}   {:.4f}   {:.4f}\n".format(
+                    xyz.write("B   {: .4f}   {: .4f}   {: .4f}\n".format(
                         *bin_mean))
                     merged_xyz = [item for sublist in zip(bin_mean, bin_stdev) for item in sublist]
-                    csv_log.writerow(["{:.4f}".format(cur_bin), len(bin_coords)] +
-                                     ["{:.4f}".format(coord) for coord in merged_xyz])
+                    csv_log.writerow([FLOAT_FMT.format(cur_bin), len(bin_coords)] +
+                                     [FLOAT_FMT.format(coord) for coord in merged_xyz])
 
 # CLI Processing #
 
