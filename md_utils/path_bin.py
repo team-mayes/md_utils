@@ -124,7 +124,7 @@ def write_results(bins, bin_data, src_file):
             csv_log = csv.writer(bin_log)
             csv_log.writerow(("bin", "count", "ax", "dx", "ay", "dy", "az", "dz"))
             for cur_bin in bins:
-                if bin_data.has_key(cur_bin):
+                if cur_bin in bin_data:
                     bin_coords = bin_data[cur_bin]
                     bin_mean = map(np.mean, zip(*bin_coords))
                     bin_stdev = map(np.std, zip(*bin_coords))
