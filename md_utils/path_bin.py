@@ -13,10 +13,12 @@ import csv
 import logging
 import sys
 import datetime
+import os
 
 import numpy as np
-import os
+
 from md_utils.common import move_existing_file
+
 
 __author__ = 'cmayes'
 

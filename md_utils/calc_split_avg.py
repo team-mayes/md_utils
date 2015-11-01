@@ -8,12 +8,13 @@ free energy data for a set of coordinates.
 from __future__ import print_function
 import csv
 import logging
-import numpy as np
-
 import re
+
+import numpy as np
 
 from md_utils.common import (find_files_by_dir, read_csv, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
+
 
 OUT_FNAME_FMT = "avg_rad_PMF.{}.csv"
 

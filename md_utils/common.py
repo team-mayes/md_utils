@@ -101,6 +101,19 @@ def str_to_file(str_val, fname):
         myfile.write(str_val)
 
 
+def list_to_file(list_val, fname):
+    """
+    Writes the list to the given file.
+
+    :param list_val: The list to write.
+    :param fname: The location of the file to write.
+    """
+    with open(fname, 'w') as myfile:
+        for line in list_val:
+            myfile.write(line+"\n")
+
+
+
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)
     now = datetime.now()
@@ -288,7 +301,7 @@ def read_csv(src_file, data_conv=None):
     return result
 
 
-def write_csv(data, out_fname, fieldnames):
+def write_csv(data, out_fname, fieldnames,extrasaction="raise"):
     """
     Writes the given data to the given file location.
 
@@ -297,7 +310,7 @@ def write_csv(data, out_fname, fieldnames):
     :param fieldnames: The sequence of field names to use for the header.
     """
     with open(out_fname, 'w') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames,extrasaction=extrasaction)
         writer.writeheader()
         writer.writerows(data)
 

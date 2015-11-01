@@ -41,7 +41,9 @@ def calc_corr(coord, freng, kbt):
     :param coord: The coordinates under consideration.
     :param freng: The free energy to correct.
     :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
-    :return: The radially corrected free energy.
+    :return: The radially corrected free energy. If there is an error, return freng
+             because the most likely error is that freng is inf; in that case, just return freng,
+             which is handled later.
     """
     try:
         return freng + kbt * math.log(4 * math.pi * coord ** 2)
