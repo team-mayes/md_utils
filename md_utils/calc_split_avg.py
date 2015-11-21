@@ -73,7 +73,7 @@ def bin_by_pattern(vals, pat='rad_PMF.(\d+)_\d+'):
 
 def calc_avg_stdev(coord_bin):
     collect_coord = defaultdict(list)
-    for csv_data in (read_csv(cfile, KEY_CONV) for cfile in coord_bin):
+    for csv_data in (read_csv(cfile, data_conv=KEY_CONV) for cfile in coord_bin):
         for drow in csv_data:
             collect_coord[drow[COORD_KEY]].append(drow[CORR_KEY])
     results = []

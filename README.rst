@@ -38,3 +38,7 @@ path_bin
   Creates a summary VMD XYZ file (and separate log file) that averages a
   set of coordinates (one set of XYZ coordinates per line) from an input file.
 
+press_dups
+  Compresses lines in a given CSV based on duplicate values in a specified
+  column (RMSD by default)  Compressed lines have their values averaged.
+

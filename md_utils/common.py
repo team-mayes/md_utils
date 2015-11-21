@@ -7,14 +7,16 @@ Common methods for this project.
 from __future__ import print_function, division
 # Util Methods #
 import csv
+import difflib
 import glob
 import logging
 from datetime import datetime
 import shutil
 import errno
+
+import collections
 import fnmatch
 from itertools import chain, islice
-
 import os
 import sys
 from shutil import copy2, Error, copystat
@@ -29,6 +31,7 @@ logger = logging.getLogger('test_wham_rad')
 
 # Boltzmann's Constant in kcal/mol Kelvin
 BOLTZ_CONST = 0.0019872041
+
 
 # Calculations #
 
@@ -110,14 +113,14 @@ def list_to_file(list_val, fname):
     """
     with open(fname, 'w') as myfile:
         for line in list_val:
-            myfile.write(line+"\n")
-
+            myfile.write(line + "\n")
 
 
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)
     now = datetime.now()
     return "".join((base, now.strftime(BACKUP_TS_FMT), ext))
+
 
 def find_backup_filenames(orig):
     base, ext = os.path.splitext(orig)
@@ -128,6 +131,7 @@ def find_backup_filenames(orig):
         # Original not present; ignore.
         pass
     return found
+
 
 def silent_remove(filename):
     """
@@ -141,6 +145,7 @@ def silent_remove(filename):
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
+
 
 # TODO: Use this instead of duplicate logic in project.
 def allow_write(floc, overwrite=False):
@@ -156,6 +161,7 @@ def allow_write(floc, overwrite=False):
         return False
     return True
 
+
 def move_existing_file(floc):
     """
     Renames an existing file using a timestamp based on the move time.
@@ -164,6 +170,7 @@ def move_existing_file(floc):
     """
     if os.path.exists(floc):
         shutil.move(floc, create_backup_filename(floc))
+
 
 def create_out_fname(src_file, prefix, base_dir=None):
     """Creates an outfile name for the given source file.
@@ -271,8 +278,19 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
 # CSV #
 
+def read_csv_header(src_file):
+    """Returns a list containing the values from the first row of the given CSV
+    file or None if the file is empty.
 
-def read_csv(src_file, data_conv=None):
+    :param src_file: The CSV file to read.
+    :return: The first row or None if empty.
+    """
+    with open(src_file) as csvfile:
+        for row in csv.reader(csvfile):
+            return list(row)
+
+
+def read_csv(src_file, data_conv=None, all_conv=None):
     """
     Reads the given CSV (comma-separated with a first-line header row) and returns a list of
     dicts where each dict contains a row's data keyed by the header row.
@@ -280,6 +298,8 @@ def read_csv(src_file, data_conv=None):
     :param src_file: The CSV to read.
     :param data_conv: A map of header keys to conversion functions.  Note that values
         that throw a TypeError from an attempted conversion are left as strings in the result.
+    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+        takes precedence.
     :return: A list of dicts containing the file's data.
     """
     result = []
@@ -295,28 +315,37 @@ def read_csv(src_file, data_conv=None):
                                      "'%s' from column '%s': '%s'.  Leaving as str",
                                      sval, skey, e)
                         sdict[skey] = sval
+                elif all_conv:
+                    try:
+                        sdict[skey] = all_conv(sval)
+                    except ValueError as e:
+                        logger.debug("Could not convert value "
+                                     "'%s' from column '%s': '%s'.  Leaving as str",
+                                     sval, skey, e)
+                        sdict[skey] = sval
                 else:
                     sdict[skey] = sval
             result.append(sdict)
     return result
 
 
-def write_csv(data, out_fname, fieldnames,extrasaction="raise"):
+def write_csv(data, out_fname, fieldnames, extrasaction="raise"):
     """
     Writes the given data to the given file location.
 
     :param data: The data to write.
     :param out_fname: The name of the file to write to.
     :param fieldnames: The sequence of field names to use for the header.
+    :param extrasaction: What to do when there are extra keys.  Acceptable
+        values are "raise" or "ignore".
     """
     with open(out_fname, 'w') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames,extrasaction=extrasaction)
+        writer = csv.DictWriter(csvfile, fieldnames, extrasaction=extrasaction)
         writer.writeheader()
         writer.writerows(data)
 
 
 # Conversions #
-
 
 def str_to_bool(s):
     """
@@ -331,3 +360,37 @@ def str_to_bool(s):
         return False
     else:
         raise ValueError("Cannot covert {} to a bool".format(s))
+
+
+def fmt_row_data(raw_data, fmt_str):
+    """ Formats the values in the dicts in the given list of raw data using
+    the given format string.
+
+    :param raw_data: The list of dicts to format.
+    :param fmt_str: The format string to use when formatting.
+    :return: The formatted list of dicts.
+    """
+    fmt_rows = []
+    for row in raw_data:
+        fmt_row = {}
+        for key, raw_val in row.items():
+            fmt_row[key] = fmt_str.format(raw_val)
+        fmt_rows.append(fmt_row)
+    return fmt_rows
+
+
+# Comparisons #
+
+def diff_lines(floc1, floc2):
+    difflines = []
+    with open(floc1) as file1:
+        with open(floc2) as file2:
+            diff = difflib.ndiff(file1.read().splitlines(),file2.read().splitlines())
+            for line in diff:
+                if line.startswith('-'):
+                    logger.debug(line)
+                    difflines.append(line)
+                elif line.startswith('+'):
+                    logger.debug(line)
+                    pass
+    return difflines

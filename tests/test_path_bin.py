@@ -8,13 +8,13 @@ import difflib
 import logging
 import unittest
 import os
-from md_utils.common import find_backup_filenames, silent_remove
+from md_utils.common import find_backup_filenames, silent_remove, diff_lines
 from md_utils.path_bin import process_infile, bin_data, main
 
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_calc_pka')
+logger = logging.getLogger('test_path_bin')
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 PB_DATA_DIR = os.path.join(DATA_DIR, 'path_bin')
@@ -103,19 +103,3 @@ def dump_idx(xyz_idx):
     for val in xyz_idx.values():
         dump.extend(val)
     return dump
-
-
-def diff_lines(floc1, floc2):
-    seq = difflib.SequenceMatcher()
-    difflines = []
-    with open(floc1, 'r') as file1:
-        with open(floc2, 'r') as file2:
-            diff = difflib.ndiff(file1.read().splitlines(),file2.read().splitlines())
-            for line in diff:
-                if line.startswith('-'):
-                    logger.debug(line)
-                    difflines.append(line)
-                elif line.startswith('+'):
-                    logger.debug(line)
-                    pass
-    return difflines

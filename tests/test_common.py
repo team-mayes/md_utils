@@ -11,7 +11,7 @@ import unittest
 import os
 
 from md_utils.common import (find_files_by_dir, create_out_fname, read_csv,
-                             write_csv, str_to_bool)
+                             write_csv, str_to_bool, read_csv_header, fmt_row_data)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -32,8 +32,12 @@ FRENG_TYPES = [float, str]
 ORIG_WHAM_FNAME = "PMFlast2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
+EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')
 
 OUT_PFX = 'rad_'
+
+# Data #
+CSV_HEADER = ['coord', 'free_energy', 'corr']
 
 # Util Functions #
 
@@ -93,6 +97,14 @@ class TestFindFiles(unittest.TestCase):
                 self.assertItemsEqual(files, found_files)
 
 
+class TestReadFirstRow(unittest.TestCase):
+
+    def testFirstRow(self):
+        self.assertListEqual(CSV_HEADER, read_csv_header(CSV_FILE))
+
+    def testEmptyFile(self):
+        self.assertIsNone(read_csv_header(EMPTY_CSV))
+
 
 class TestCreateOutFname(unittest.TestCase):
     def testOutFname(self):
@@ -123,9 +135,24 @@ class TestReadCsv(unittest.TestCase):
         """
         Verifies the contents of the CSV file.
         """
-        result = read_csv(CSV_FILE, {FREE_KEY: float,
+        result = read_csv(CSV_FILE, data_conv={FREE_KEY: float,
                                      CORR_KEY: float,
                                      COORD_KEY: float, })
+        self.assertTrue(result)
+        for row in result:
+            self.assertEqual(3, len(row))
+            self.assertIsNotNone(row.get(FREE_KEY, None))
+            self.assertTrue(is_one_of_type(row[FREE_KEY], FRENG_TYPES))
+            self.assertIsNotNone(row.get(CORR_KEY, None))
+            self.assertTrue(is_one_of_type(row[CORR_KEY], FRENG_TYPES))
+            self.assertIsNotNone(row.get(COORD_KEY, None))
+            self.assertIsInstance(row[COORD_KEY], float)
+
+    def testReadTypedCsvAllConv(self):
+        """
+        Verifies the contents of the CSV file using the all_conv function.
+        """
+        result = read_csv(CSV_FILE, all_conv=float)
         self.assertTrue(result)
         for row in result:
             self.assertEqual(3, len(row))
@@ -146,7 +173,7 @@ class TestWriteCsv(unittest.TestCase):
             tgt_fname = create_out_fname(SHORT_WHAM_PATH, OUT_PFX, base_dir=tmp_dir)
 
             write_csv(data, tgt_fname, RAD_KEY_SEQ)
-            csv_result = read_csv(tgt_fname, {FREE_KEY: str_to_bool,
+            csv_result = read_csv(tgt_fname, data_conv={FREE_KEY: str_to_bool,
                                               CORR_KEY: float,
                                               COORD_KEY: str, })
             self.assertEqual(len(data), len(csv_result))
@@ -154,3 +181,10 @@ class TestWriteCsv(unittest.TestCase):
                 self.assertDictEqual(data[i], csv_row)
         finally:
             shutil.rmtree(tmp_dir)
+
+
+class TestFormatData(unittest.TestCase):
+    def testFormatRows(self):
+        raw = [{"a": 1.3333322333, "b": 999.222321}, {"a": 333.44422222, "b": 17.121}]
+        fmt_std = [{'a': '1.3333', 'b': '999.2223'}, {'a': '333.4442', 'b': '17.1210'}]
+        self.assertListEqual(fmt_std, fmt_row_data(raw, "{0:.4f}"))

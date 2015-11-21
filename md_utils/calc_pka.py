@@ -155,7 +155,7 @@ def main(argv=None):
         logger.info("Read TS coordinate value: '%f'", args.coord_ts)
 
     if args.src_file is not None:
-        file_data = read_csv(args.src_file, KEY_CONV)
+        file_data = read_csv(args.src_file, data_conv=KEY_CONV)
         try:
             pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
             result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
@@ -171,7 +171,7 @@ def main(argv=None):
                 logger.warn("No files found for dir '%s'", fdir)
                 continue
             for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
-                file_data = read_csv(pmf_path, KEY_CONV)
+                file_data = read_csv(pmf_path, data_conv=KEY_CONV)
                 try:
                     pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
                     results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,

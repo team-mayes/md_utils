@@ -32,14 +32,14 @@ NO_MAX_RAD_PATH = os.path.join(PKA_DATA_DIR, 'rad_PMFno_max.txt')
 
 class TestCalcPka(unittest.TestCase):
     def testGood(self):
-        pka_val = calc_pka(read_csv(GOOD_RAD_PATH, {FREE_KEY: float,
+        pka_val = calc_pka(read_csv(GOOD_RAD_PATH, data_conv={FREE_KEY: float,
                                                     CORR_KEY: float,
                                                     COORD_KEY: float, }), calc_kbt(EXP_TEMP))
         self.assertAlmostEqual(4.7036736, pka_val[0])
 
     def testNoMax(self):
         with self.assertRaises(NoMaxError) as context:
-            calc_pka(read_csv(NO_MAX_RAD_PATH, {FREE_KEY: float,
+            calc_pka(read_csv(NO_MAX_RAD_PATH, data_conv={FREE_KEY: float,
                                                 CORR_KEY: float,
                                                 COORD_KEY: float, }), calc_kbt(EXP_TEMP))
         self.assertTrue(NO_MAX_ERR in context.exception.args)
