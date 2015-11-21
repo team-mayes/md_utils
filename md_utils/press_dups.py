@@ -43,7 +43,7 @@ def avg_rows(rows):
     return {k: (reduce(np.add, v) / len(v)) for k, v in agg_vals.items()}
 
 
-def press_dups(data, column):
+def compress_dups(data, column):
     """Compresses rows that have the same value for the given column key,
     averaging the values for the other entries.
 
@@ -99,7 +99,7 @@ def main(argv=None):
     if ret != 0:
         return ret
 
-    deduped = press_dups(common.read_csv(args.file, all_conv=float), args.column)
+    deduped = compress_dups(common.read_csv(args.file, all_conv=float), args.column)
     fmt_deduped = common.fmt_row_data(deduped, "{:.6f}")
     common.write_csv(fmt_deduped, common.create_out_fname(args.file, PREFIX),
                      common.read_csv_header(args.file))

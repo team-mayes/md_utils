@@ -11,7 +11,7 @@ import os
 
 from md_utils.calc_pka import calc_pka, NO_MAX_ERR, NoMaxError
 from md_utils.common import read_csv, calc_kbt, diff_lines, silent_remove
-from md_utils.press_dups import avg_rows, press_dups, PREFIX, main
+from md_utils.press_dups import avg_rows, compress_dups, PREFIX, main
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 
@@ -44,7 +44,7 @@ class TestPressDups(unittest.TestCase):
         data = [{"a": 1.3, "b": 3.0, "c": 8.5}, {"a": 1.3, "b": 1.0, "c": -4.2},
                 {"a": 1.3, "b": 2.2, "c": 19.0}, {"a": 99, "b": 1.0, "c": -4.2},
                 {"a": -22, "b": 1.0, "c": -4.2}]
-        avg = press_dups(data, "a")
+        avg = compress_dups(data, "a")
         self.assertEquals(3, len(avg))
 
 
