@@ -49,8 +49,7 @@ class TestPressDups(unittest.TestCase):
 class TestFromMain(unittest.TestCase):
     def testWhithead075Data(self):
         try:
-            press_dups.main([WHIT_RAW])
+            press_dups.main(argv=[WHIT_RAW])
             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
         finally:
             silent_remove(WHIT_PRESS)
-
