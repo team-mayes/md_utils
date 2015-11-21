@@ -9,11 +9,9 @@ import unittest
 
 import os
 
-from md_utils.calc_pka import calc_pka, NO_MAX_ERR, NoMaxError
-from md_utils.common import read_csv, calc_kbt, diff_lines, silent_remove
-from md_utils.press_dups import avg_rows, compress_dups, PREFIX, main
-from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
-
+import md_utils.press_dups as press_dups
+from md_utils.common import diff_lines, silent_remove
+from md_utils.press_dups import avg_rows, compress_dups, PREFIX
 
 __author__ = 'cmayes'
 
@@ -51,7 +49,7 @@ class TestPressDups(unittest.TestCase):
 class TestFromMain(unittest.TestCase):
     def testWhithead075Data(self):
         try:
-            main([WHIT_RAW])
+            press_dups.main([WHIT_RAW])
             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
         finally:
             silent_remove(WHIT_PRESS)
