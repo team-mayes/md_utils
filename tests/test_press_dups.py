@@ -9,8 +9,6 @@ import unittest
 
 import os
 
-import md_utils.press_dups as press_dups
-from md_utils.common import diff_lines, silent_remove
 from md_utils.press_dups import avg_rows, compress_dups, PREFIX
 
 __author__ = 'cmayes'
@@ -46,10 +44,10 @@ class TestPressDups(unittest.TestCase):
         self.assertEquals(3, len(avg))
 
 
-class TestFromMain(unittest.TestCase):
-    def testWhithead075Data(self):
-        try:
-            press_dups.main(argv=[WHIT_RAW])
-            self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
-        finally:
-            silent_remove(WHIT_PRESS)
+# class TestFromMain(unittest.TestCase):
+#     def testWhithead075Data(self):
+#         try:
+#             press_dups.main(argv=[WHIT_RAW])
+#             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
+#         finally:
+#             silent_remove(WHIT_PRESS)
