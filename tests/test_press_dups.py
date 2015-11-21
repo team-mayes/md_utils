@@ -16,11 +16,12 @@
 # logging.basicConfig(level=logging.DEBUG)
 # logger = logging.getLogger('test_press_dups')
 #
+import unittest
+
 import os
 
-# from md_utils.common import diff_lines, silent_remove
-# import unittest
 # from md_utils import press_dups
+from md_utils.common import diff_lines, silent_remove
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
