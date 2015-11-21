@@ -16,11 +16,18 @@
 # logging.basicConfig(level=logging.DEBUG)
 # logger = logging.getLogger('test_press_dups')
 #
-# DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-# DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
-# WHIT_RAW = os.path.join(DUPS_DIR, 'proc_data_all_withhead0.75.csv')
-# WHIT_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_withhead0.75.csv')
-# WHIT_PRESS = os.path.join(DUPS_DIR, PREFIX + 'proc_data_all_withhead0.75.csv')
+import os
+
+from md_utils.common import diff_lines, silent_remove
+from md_utils.press_dups import PREFIX
+import unittest
+from md_utils import press_dups
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
+WHIT_RAW = os.path.join(DUPS_DIR, 'proc_data_all_withhead0.75.csv')
+WHIT_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_withhead0.75.csv')
+WHIT_PRESS = os.path.join(DUPS_DIR, PREFIX + 'proc_data_all_withhead0.75.csv')
 #
 # # Shared Methods #
 #
@@ -44,10 +51,12 @@
 #         self.assertEquals(3, len(avg))
 #
 #
-# # class TestFromMain(unittest.TestCase):
-# #     def testWhithead075Data(self):
-# #         try:
-# #             press_dups.main(argv=[WHIT_RAW])
-# #             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
-# #         finally:
-# #             silent_remove(WHIT_PRESS)
+
+
+class TestFromMain(unittest.TestCase):
+    def testWhithead075Data(self):
+        try:
+            press_dups.main(argv=[WHIT_RAW])
+            self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
+        finally:
+            silent_remove(WHIT_PRESS)
