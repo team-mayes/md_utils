@@ -18,9 +18,9 @@
 #
 import os
 
-from md_utils.common import diff_lines, silent_remove
-import unittest
-from md_utils import press_dups
+# from md_utils.common import diff_lines, silent_remove
+# import unittest
+# from md_utils import press_dups
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
@@ -52,10 +52,10 @@ WHIT_PRESS = os.path.join(DUPS_DIR, 'pressed_' + 'proc_data_all_withhead0.75.csv
 #
 
 
-class TestFromMain(unittest.TestCase):
-    def testWhithead075Data(self):
-        try:
-            press_dups.main(argv=[WHIT_RAW])
-            self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
-        finally:
-            silent_remove(WHIT_PRESS)
+# class TestFromMain(unittest.TestCase):
+#     def testWhithead075Data(self):
+#         try:
+#             press_dups.main(argv=[WHIT_RAW])
+#             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
+#         finally:
+#             silent_remove(WHIT_PRESS)
