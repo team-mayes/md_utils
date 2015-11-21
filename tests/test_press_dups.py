@@ -19,7 +19,6 @@
 import os
 
 from md_utils.common import diff_lines, silent_remove
-from md_utils.press_dups import PREFIX
 import unittest
 from md_utils import press_dups
 
@@ -27,7 +26,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
 WHIT_RAW = os.path.join(DUPS_DIR, 'proc_data_all_withhead0.75.csv')
 WHIT_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_withhead0.75.csv')
-WHIT_PRESS = os.path.join(DUPS_DIR, PREFIX + 'proc_data_all_withhead0.75.csv')
+WHIT_PRESS = os.path.join(DUPS_DIR, 'pressed_' + 'proc_data_all_withhead0.75.csv')
 #
 # # Shared Methods #
 #
