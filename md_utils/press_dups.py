@@ -9,6 +9,7 @@ import argparse
 import logging
 import sys
 #from six.moves import reduce
+from collections import defaultdict
 from functools import reduce
 #from collections import defaultdict
 
@@ -44,24 +45,24 @@ def avg_rows(rows):
     return {k: (reduce(np.add, v) / len(v)) for k, v in agg_vals.items()}
 
 
-# def compress_dups(data, column):
-#     """Compresses rows that have the same value for the given column key,
-#     averaging the values for the other entries.
-#
-#     :param data: The data to compress.
-#     :param column: The column to search for duplicates.
-#     :return: The data compressed for duplicates and sorted by the target
-#         column's values.
-#     """
-#     idx = defaultdict(list)
-#     for row in data:
-#         idx[row[column]].append(row)
-#
-#     dedup = []
-#
-#     for idx_row in sorted(idx.items()):
-#         dedup.append(avg_rows(idx_row[1]))
-#     return dedup
+def compress_dups(data, column):
+    """Compresses rows that have the same value for the given column key,
+    averaging the values for the other entries.
+
+    :param data: The data to compress.
+    :param column: The column to search for duplicates.
+    :return: The data compressed for duplicates and sorted by the target
+        column's values.
+    """
+    idx = defaultdict(list)
+    for row in data:
+        idx[row[column]].append(row)
+
+    dedup = []
+
+    for idx_row in sorted(idx.items()):
+        dedup.append(avg_rows(idx_row[1]))
+    return dedup
 #
 #
 # # CLI Processing #
