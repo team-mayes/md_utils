@@ -1,9 +1,9 @@
-# # coding=utf-8
-#
-# """
-# Tests for wham_rad.
-# """
-#
+# coding=utf-8
+
+"""
+Tests for wham_rad.
+"""
+
 import logging
 
 __author__ = 'cmayes'
