@@ -10,7 +10,7 @@ import logging
 
 import six
 
-from md_utils.common import find_files_by_dir, chunk, allow_write, str_to_file
+from md_utils.md_common import find_files_by_dir, chunk, allow_write, str_to_file
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
                            DIR_KEY, LINES_KEY, STEP_SUBMIT_FNAME,
                            fill_submit_wham, DEF_BASE_SUBMIT_TPL,

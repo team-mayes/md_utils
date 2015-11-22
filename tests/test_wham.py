@@ -13,7 +13,7 @@ import unittest
 import os
 import re
 import md_utils
-from md_utils.common import file_to_str
+from md_utils.md_common import file_to_str
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd, read_rmsd,
                            LINES_KEY, DIR_KEY, LOC_KEY, fill_submit_wham,
                            DEF_BASE_SUBMIT_TPL, DEF_LINE_SUBMIT_TPL)

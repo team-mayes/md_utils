@@ -4,22 +4,17 @@
 # Tests for wham_rad.
 # """
 #
-# import logging
-# import unittest
-#
-# import os
-#
-# from md_utils.press_dups import avg_rows, compress_dups, PREFIX
-#
-# __author__ = 'cmayes'
-#
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger('test_press_dups')
-#
+import logging
+
+__author__ = 'cmayes'
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('test_press_dups')
+
 import unittest
-
 import os
-
+from md_utils import press_dups
+from md_utils.md_common import silent_remove, diff_lines
 from md_utils.press_dups import avg_rows, compress_dups
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
@@ -27,10 +22,10 @@ DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
 WHIT_RAW = os.path.join(DUPS_DIR, 'proc_data_all_withhead0.75.csv')
 WHIT_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_withhead0.75.csv')
 WHIT_PRESS = os.path.join(DUPS_DIR, 'pressed_' + 'proc_data_all_withhead0.75.csv')
-#
-# # Shared Methods #
-#
-#
+
+
+# Shared Methods #
+
 class TestAvgRows(unittest.TestCase):
     def testThree(self):
         data = [{"a": 1.3, "b": 3.0, "c": 8.5}, {"a": 1.3, "b": 1.0, "c": -4.2},
@@ -50,12 +45,10 @@ class TestPressDups(unittest.TestCase):
         self.assertEquals(3, len(avg))
 
 
-
-
-# class TestFromMain(unittest.TestCase):
-#     def testWhithead075Data(self):
-#         try:
-#             press_dups.main(argv=[WHIT_RAW])
-#             self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
-#         finally:
-#             silent_remove(WHIT_PRESS)
+class TestFromMain(unittest.TestCase):
+    def testWhithead075Data(self):
+        try:
+            press_dups.main(argv=[WHIT_RAW])
+            self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
+        finally:
+            silent_remove(WHIT_PRESS)

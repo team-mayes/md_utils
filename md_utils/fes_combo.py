@@ -10,7 +10,7 @@ timestep values take precedence.
 from __future__ import print_function
 import logging
 
-from md_utils.common import find_files_by_dir
+from md_utils.md_common import find_files_by_dir
 
 __author__ = 'cmayes'
 

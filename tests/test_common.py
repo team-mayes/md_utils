@@ -10,8 +10,8 @@ import unittest
 
 import os
 
-from md_utils.common import (find_files_by_dir, create_out_fname, read_csv,
-                             write_csv, str_to_bool, read_csv_header, fmt_row_data)
+from md_utils.md_common import (find_files_by_dir, create_out_fname, read_csv,
+                                write_csv, str_to_bool, read_csv_header, fmt_row_data)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 

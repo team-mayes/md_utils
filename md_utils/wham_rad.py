@@ -8,8 +8,8 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.common import (find_files_by_dir, create_out_fname, write_csv,
-                             calc_kbt)
+from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv,
+                                calc_kbt)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'cmayes'

@@ -8,7 +8,7 @@ import difflib
 import logging
 import unittest
 import os
-from md_utils.common import find_backup_filenames, silent_remove, diff_lines
+from md_utils.md_common import find_backup_filenames, silent_remove, diff_lines
 from md_utils.path_bin import process_infile, bin_data, main
 
 __author__ = 'cmayes'

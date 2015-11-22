@@ -17,7 +17,7 @@ import os
 
 import numpy as np
 
-from md_utils.common import move_existing_file
+from md_utils.md_common import move_existing_file
 
 
 __author__ = 'cmayes'

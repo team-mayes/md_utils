@@ -12,7 +12,7 @@ import sys
 
 import os
 
-import common
+import md_common
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ DEF_SKEL_LOC = os.path.join(os.path.dirname(__file__), 'skel')
 
 def copy_skel(src, dest):
     """Copies the contents of src to dest."""
-    common.copytree(src, dest)
+    md_common.copytree(src, dest)
 
 
 # CLI Processing #

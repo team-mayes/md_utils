@@ -12,7 +12,7 @@ import re
 
 import numpy as np
 
-from md_utils.common import (find_files_by_dir, read_csv, allow_write)
+from md_utils.md_common import (find_files_by_dir, read_csv, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 

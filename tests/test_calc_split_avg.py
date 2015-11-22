@@ -13,7 +13,7 @@ import os
 
 from md_utils.calc_split_avg import bin_by_pattern, calc_avg_stdev, OUT_FNAME_FMT, write_avg_stdev, OUT_KEY_SEQ, \
     AVG_KEY_CONV
-from md_utils.common import read_csv
+from md_utils.md_common import read_csv
 
 __author__ = 'cmayes'
 

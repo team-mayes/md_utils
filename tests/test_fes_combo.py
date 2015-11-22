@@ -4,7 +4,7 @@ import logging
 import os
 import unittest
 
-from md_utils.common import find_files_by_dir
+from md_utils.md_common import find_files_by_dir
 from md_utils.fes_combo import combine, DEF_FILE_PAT, DEF_TGT, map_fes, extract_header, write_combo
 
 __author__ = 'cmayes'

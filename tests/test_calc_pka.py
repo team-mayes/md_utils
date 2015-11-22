@@ -10,7 +10,7 @@ import unittest
 import os
 
 from md_utils.calc_pka import calc_pka, NO_MAX_ERR, NoMaxError
-from md_utils.common import read_csv, calc_kbt
+from md_utils.md_common import read_csv, calc_kbt
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 

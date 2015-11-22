@@ -13,7 +13,7 @@ from functools import reduce
 
 import numpy as np
 
-from md_utils import common
+from md_utils import md_common
 
 logger = logging.getLogger(__name__)
 
@@ -98,10 +98,10 @@ def main(argv=None):
     if ret != 0:
         return ret
 
-    deduped = compress_dups(common.read_csv(args.file, all_conv=float), args.column)
-    fmt_deduped = common.fmt_row_data(deduped, "{:.6f}")
-    common.write_csv(fmt_deduped, common.create_out_fname(args.file, PREFIX),
-                     common.read_csv_header(args.file))
+    deduped = compress_dups(md_common.read_csv(args.file, all_conv=float), args.column)
+    fmt_deduped = md_common.fmt_row_data(deduped, "{:.6f}")
+    md_common.write_csv(fmt_deduped, md_common.create_out_fname(args.file, PREFIX),
+                        md_common.read_csv_header(args.file))
 
     return 0  # success
 

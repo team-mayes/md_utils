@@ -9,8 +9,8 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.common import (find_files_by_dir, create_out_fname,
-                             read_csv, write_csv, calc_kbt)
+from md_utils.md_common import (find_files_by_dir, create_out_fname,
+                                read_csv, write_csv, calc_kbt)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 NO_MAX_MSG = 'NONE'

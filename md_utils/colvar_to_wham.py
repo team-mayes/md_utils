@@ -10,7 +10,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.common import (find_files_by_dir, create_out_fname, write_csv, list_to_file)
+from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file)
 
 __author__ = 'hmayes'
 
