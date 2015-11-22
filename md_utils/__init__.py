@@ -5,4 +5,4 @@ Molecular dynamics utilities.
 
 __author__ = 'Chris Mayes'
 __email__ = 'cmayes@cmay.es'
-__version__ = '0.4.2'
+__version__ = '0.5.0'
