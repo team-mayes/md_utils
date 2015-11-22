@@ -8,14 +8,11 @@ column values will be averaged as floats.
 import argparse
 import logging
 import sys
-#from six.moves import reduce
 from collections import defaultdict
 from functools import reduce
-#from collections import defaultdict
 
 import numpy as np
 
-#import common
 from md_utils import common
 
 logger = logging.getLogger(__name__)
@@ -107,8 +104,8 @@ def main(argv=None):
                      common.read_csv_header(args.file))
 
     return 0  # success
-#
-#
-# if __name__ == '__main__':
-#     status = main()
-#     sys.exit(status)
+
+
+if __name__ == '__main__':
+    status = main()
+    sys.exit(status)
