@@ -8,7 +8,8 @@ column values will be averaged as floats.
 import argparse
 import logging
 import sys
-from six.moves import reduce
+#from six.moves import reduce
+from functools import reduce
 from collections import defaultdict
 
 import numpy as np
