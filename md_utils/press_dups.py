@@ -16,7 +16,7 @@ from functools import reduce
 import numpy as np
 
 #import common
-
+from md_utils import common
 
 logger = logging.getLogger(__name__)
 
@@ -88,25 +88,25 @@ def parse_cmdline(argv=None):
     args = parser.parse_args(argv)
 
     return args, 0
-#
-#
-# def main(argv=None):
-#     """
-#     Runs the main program.
-#
-#     :param argv: The command line arguments.
-#     :return: The return code for the program's termination.
-#     """
-#     args, ret = parse_cmdline(argv)
-#     if ret != 0:
-#         return ret
-#
-#     deduped = compress_dups(common.read_csv(args.file, all_conv=float), args.column)
-#     fmt_deduped = common.fmt_row_data(deduped, "{:.6f}")
-#     common.write_csv(fmt_deduped, common.create_out_fname(args.file, PREFIX),
-#                      common.read_csv_header(args.file))
-#
-#     return 0  # success
+
+
+def main(argv=None):
+    """
+    Runs the main program.
+
+    :param argv: The command line arguments.
+    :return: The return code for the program's termination.
+    """
+    args, ret = parse_cmdline(argv)
+    if ret != 0:
+        return ret
+
+    deduped = compress_dups(common.read_csv(args.file, all_conv=float), args.column)
+    fmt_deduped = common.fmt_row_data(deduped, "{:.6f}")
+    common.write_csv(fmt_deduped, common.create_out_fname(args.file, PREFIX),
+                     common.read_csv_header(args.file))
+
+    return 0  # success
 #
 #
 # if __name__ == '__main__':
