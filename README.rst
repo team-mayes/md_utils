@@ -42,3 +42,6 @@ press_dups
   Compresses lines in a given CSV based on duplicate values in a specified
   column (RMSD by default)  Compressed lines have their values averaged.
 
+lammps_dist
+  Calculates the distances between a given set of atom pairs for each
+  time step in a given LAMMPS dump file.

@@ -44,6 +44,7 @@ setup(
             'calc_split_avg = md_utils.calc_split_avg:main',
             'path_bin = md_utils.path_bin:main',
             'press_dups = md_utils.press_dups:main',
+            'lammps_dist = md_utils.lammps_dist:main',
         ],
     },
     package_dir={'md_utils':

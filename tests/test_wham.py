@@ -20,7 +20,7 @@ from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd, read_rmsd,
 from md_utils.wham_block import write_meta
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_wham')
+logger = logging.getLogger(__name__)
 
 # Constants #
 

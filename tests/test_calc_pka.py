@@ -20,7 +20,7 @@ EXP_TEMP = 310
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_calc_pka')
+logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 PKA_DATA_DIR = os.path.join(DATA_DIR, 'calc_pka')

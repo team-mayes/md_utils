@@ -18,7 +18,7 @@ from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_common')
+logger = logging.getLogger(__name__)
 
 
 # Constants #

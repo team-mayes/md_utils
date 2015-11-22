@@ -23,7 +23,7 @@ EXP_KBT = BOLTZ_CONST * EXP_TEMP
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_wham_rad')
+logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 

@@ -13,10 +13,11 @@ import logging
 from datetime import datetime
 import shutil
 import errno
-
 import collections
 import fnmatch
 from itertools import chain, islice
+
+import math
 import os
 import sys
 from shutil import copy2, Error, copystat
@@ -33,6 +34,17 @@ logger = logging.getLogger('test_wham_rad')
 BOLTZ_CONST = 0.0019872041
 
 
+# Exceptions #
+
+class MdError(Exception): pass
+
+
+class InvalidDataError(MdError): pass
+
+
+class NotFoundError(MdError): pass
+
+
 # Calculations #
 
 
@@ -44,6 +56,23 @@ def calc_kbt(temp_k):
     :return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
     """
     return BOLTZ_CONST * temp_k
+
+
+def xyz_distance(fir, sec):
+    """
+    Calculates the Euclidean distance between the two given
+    coordinates (expected format is numbers as [x,y,z]).
+
+    TODO: Consider adding numpy optimization if lib is present.
+
+    :param fir: The first XYZ coordinate.
+    :type name: list.
+    :param sec: The second XYZ coordinate.
+    :type state: list.
+    :returns:  float -- The Euclidean distance between the given points.
+    :raises: KeyError
+    """
+    return math.sqrt((fir[0] - sec[0]) ** 2 + (fir[1] - sec[1]) ** 2 + (fir[2] - sec[2]) ** 2)
 
 
 # Other #
@@ -79,6 +108,21 @@ def chunk(seq, chunksize, process=iter):
 
 
 # I/O #
+
+def cmakedir(tgt_dir):
+    """
+    Creates the given directory and its parent directories if it
+    does not already exist.
+
+    Keyword arguments:
+    tgt_dir -- The directory to create
+
+    """
+    if not os.path.exists(tgt_dir):
+        os.makedirs(tgt_dir)
+    elif not os.path.isdir(tgt_dir):
+        raise NotFoundError("Resource %s exists and is not a dir" %
+                            tgt_dir)
 
 
 def file_to_str(fname):
@@ -172,19 +216,26 @@ def move_existing_file(floc):
         shutil.move(floc, create_backup_filename(floc))
 
 
-def create_out_fname(src_file, prefix, base_dir=None):
+def create_out_fname(src_file, prefix, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
     :param src_file: The file to process.
     :param prefix: The file prefix to prepend.
-    :param base_dir: The base directory to use; defaults to `src_file`'s directory
+    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
+    :param ext: The extension to use instead of the source file's extension;
+        defaults to the `sec_file`'s extension.
     :return: The output file name.
     """
     if base_dir is None:
         base_dir = os.path.dirname(src_file)
 
-    return os.path.abspath(os.path.join(base_dir,
-                                        prefix + os.path.basename(src_file)))
+    if ext is None:
+        tgt_file = src_file
+    else:
+        tgt_file = os.path.splitext(src_file)[0] + ext
+
+    return os.path.abspath(
+        os.path.join(base_dir, prefix + os.path.basename(tgt_file)))
 
 
 def find_files_by_dir(tgt_dir, pat):
@@ -385,7 +436,7 @@ def diff_lines(floc1, floc2):
     difflines = []
     with open(floc1) as file1:
         with open(floc2) as file2:
-            diff = difflib.ndiff(file1.read().splitlines(),file2.read().splitlines())
+            diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
             for line in diff:
                 if line.startswith('-'):
                     logger.debug(line)
@@ -394,3 +445,18 @@ def diff_lines(floc1, floc2):
                     logger.debug(line)
                     pass
     return difflines
+
+
+# Data Structures #
+
+def unique_list(alist):
+    """ Creates an ordered list from a list of tuples or other hashable items.
+    From https://code.activestate.com/recipes/576694/#c6
+    """
+    mmap = {}
+    oset = []
+    for item in alist:
+        if item not in mmap:
+            mmap[item] = 1
+            oset.append(item)
+    return oset

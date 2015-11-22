@@ -9,7 +9,7 @@ import logging
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_press_dups')
+logger = logging.getLogger(__name__)
 
 import unittest
 import os

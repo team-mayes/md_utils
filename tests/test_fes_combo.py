@@ -11,7 +11,7 @@ __author__ = 'cmayes'
 
 # Logging #
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('test_fes_combo')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')

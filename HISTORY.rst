@@ -3,6 +3,17 @@
 History
 -------
 
+0.6.0 (2015-11-22)
+------------------
+
+* Added lammps_dist to calculate atom pair distances as found in a LAMMPS dump file.
+
+
+0.5.0 (2015-11-21)
+------------------
+
+* Added press_dups to compress CSV rows that have duplicate values for a given column.
+
 0.4.2 (2015-10-24)
 ------------------
 

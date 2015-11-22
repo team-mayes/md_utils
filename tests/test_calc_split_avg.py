@@ -28,7 +28,7 @@ INFILES = [os.path.join(DATA_DIR, radf) for radf in ['rad_PMF.02_01', 'rad_PMF.0
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_calc_split_avg')
+logger = logging.getLogger(__name__)
 
 
 class TestBinFileNames(unittest.TestCase):

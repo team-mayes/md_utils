@@ -14,7 +14,7 @@ from md_utils.path_bin import process_infile, bin_data, main
 __author__ = 'cmayes'
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_path_bin')
+logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 PB_DATA_DIR = os.path.join(DATA_DIR, 'path_bin')
