@@ -63,31 +63,31 @@ def compress_dups(data, column):
     for idx_row in sorted(idx.items()):
         dedup.append(avg_rows(idx_row[1]))
     return dedup
-#
-#
-# # CLI Processing #
-#
-#
-# def parse_cmdline(argv=None):
-#     """
-#     Returns the parsed argument list and return code.
-#     :param argv: A list of arguments, or `None` for ``sys.argv[1:]``.
-#     """
-#     if argv is None:
-#         argv = sys.argv[1:]
-#
-#     # initialize the parser object:
-#     parser = argparse.ArgumentParser(description='Compresses duplicate rows in a '
-#                                                  'given file based on values from '
-#                                                  'a given column')
-#
-#     parser.add_argument('-c', '--column', default=DEF_COL_NAME,
-#                         help="Specify dupe column. (defaults to {})".format(DEF_COL_NAME),
-#                         metavar="DUPE_COL")
-#     parser.add_argument("file", help="The CSV file to process")
-#     args = parser.parse_args(argv)
-#
-#     return args, 0
+
+
+# CLI Processing #
+
+
+def parse_cmdline(argv=None):
+    """
+    Returns the parsed argument list and return code.
+    :param argv: A list of arguments, or `None` for ``sys.argv[1:]``.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # initialize the parser object:
+    parser = argparse.ArgumentParser(description='Compresses duplicate rows in a '
+                                                 'given file based on values from '
+                                                 'a given column')
+
+    parser.add_argument('-c', '--column', default=DEF_COL_NAME,
+                        help="Specify dupe column. (defaults to {})".format(DEF_COL_NAME),
+                        metavar="DUPE_COL")
+    parser.add_argument("file", help="The CSV file to process")
+    args = parser.parse_args(argv)
+
+    return args, 0
 #
 #
 # def main(argv=None):
