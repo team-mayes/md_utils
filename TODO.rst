@@ -28,32 +28,37 @@ File name
 
 avg_rad_PMF.02.csv
 
-CALC_PKA
+EVBDUMP2PDB
 ========
 
-* Input is rad_PMF (use corr col (3))
-** Plan for standard WHAM, too.
-* Find local max (inc, then dec) (two back) (middle val is tgt);
-  in the algorithm below, I will call the coordinate points
-  r_i-1 r_i, and r_i+1   (middle point, r_i, is the tgt);
-  and for energy, corr_i-1, corr_i, and coor_i+1
-* Up to local max, do math and add to sum
-** Will need to calculate the spacing between coordinate values
-  (called delta_r); usually this will be a constant number, but
-  it is not in the case of your sample data because I deleted
-  points. You can certainly calculate this every step if you wish,
-  so we don't have to count on equal spacing; the calculation
-  can be delta_r = r_i+1 - r_i
-** we will need pi
-** a new constant we can call inv_C_0 (that's a zero) = 1660.0
-   (it's units are Angstrom ^ 3 / molecule )
-** will will need kBT (you calculated this before, in wham_rad;
-   you can have the user enter the temp. The temp will be the
-   same as used in wham_rad and in making the wham input line
-** sum_for_pka += 4.0 * pi * r_i ** 2 * math.exp( -corr_i / kBT ) * delta_r
-** pKa = - math.log10 ( inv_C_0 / sum_for_pka )
-* Result is PKA: out to stdout
-* Debug out local max value
+* Creates lammps data files from lammps dump files, given a template lammps data file
+* This cannot be done in the available programs (such as lammps2pdb) because we need to adjust for changes
+  made by RAPTOR (to which molecule hosts the excess proton)
+
+* The data file will provide some lines that are copied directly (everything above and below the "Atoms" section)
+** The data file should correspond to the deprotonated state
+** It is expected that all the water (and hydronium) are in a continuous section, with the oxygen atoms always
+   preceding the hydrogen atoms
+
+* The "Atoms" section of the template will be updated with coordinates from the dump file, which will be
+  updated as follows:
+** The x, y, z coordinates will be wrapped to be in the main box
+** The protonateable residue may be protonated or not; if it is, we will converted it to the deprotonated state
+   by reassigning the proton to the nearest water molecule and converting that water molecule to a hydronium
+** We always want the same molecule id for the hydronium. Swap the molecule ID as needed.
+
+* Current information hard-coded into rewritedata.cpp:
+** The molecule type for water oxygen, water hydrogen, hydronium hydrogen, and hydronium oxygen
+** The molecule ID for the hydronium
+** The first and last atom ID for the water/hydronium section
+** A specific format for the dump files
+
+* Input into new program:
+** Name of the template file
+** File with list of dump file names
+** The molecule type for water oxygen, water hydrogen, hydronium hydrogen, and hydronium oxygen
+
+
 
 Questions
 ---------
