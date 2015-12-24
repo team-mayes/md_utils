@@ -28,7 +28,7 @@ File name
 
 avg_rad_PMF.02.csv
 
-EVBDUMP2PDB
+EVBDUMP2DATA
 ========
 
 * Creates lammps data files from lammps dump files, given a template lammps data file
