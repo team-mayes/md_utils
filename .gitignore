@@ -67,4 +67,6 @@ tests/test_data/path_bin/100th_CEC_z2_4.xyz
 tests/test_data/evbd2d/atoms.txt
 tests/test_data/evbd2d/head.txt
 tests/test_data/evbd2d/tail.txt
-
+tests/test_data/evbd2d/*small*.data
+tests/test_data/evbd2d/short.dump
+tests/test_data/evbd2d/test_dump.txt

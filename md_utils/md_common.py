@@ -148,25 +148,25 @@ def str_to_file(str_val, fname):
         myfile.write(str_val)
 
 
-def list_to_file(list_val, fname):
+def list_to_file(list_val, fname, mode='w'):
     """
     Writes the list to the given file.
 
     :param list_val: The list to write.
     :param fname: The location of the file to write.
     """
-    with open(fname, 'w') as myfile:
+    with open(fname, mode) as myfile:
         for line in list_val:
             myfile.write(line + "\n")
 
-def seq_list_to_file(list_val, fname):
+def seq_list_to_file(list_val, fname, mode='w'):
     """
     Writes the list of sequences to the given file.
 
     :param list_val: The list of sequences to write.
     :param fname: The location of the file to write.
     """
-    with open(fname, 'w') as myfile:
+    with open(fname, mode) as myfile:
         for line in list_val:
             myfile.write(' '.join(map(str,line)) + "\n")
 
@@ -246,6 +246,27 @@ def create_out_fname(src_file, prefix, base_dir=None, ext=None):
 
     return os.path.abspath(
         os.path.join(base_dir, prefix + os.path.basename(tgt_file)))
+
+
+def create_out_suf_fname(src_file, suffix, base_dir=None, ext=None):
+    """Creates an outfile name for the given source file.
+
+    :param src_file: The file to process.
+    :param suffix: The file suffix to append.
+    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
+    :param ext: The extension to use instead of the source file's extension;
+        defaults to the `scr_file`'s extension.
+    :return: The output file name.
+    """
+    if base_dir is None:
+        base_dir = os.path.dirname(src_file)
+
+    base_name = os.path.splitext(src_file)[0]
+
+    if ext is None:
+        ext = os.path.splitext(src_file)[1]
+
+    return os.path.abspath(os.path.join(base_dir, base_name + suffix + ext ))
 
 
 def find_files_by_dir(tgt_dir, pat):

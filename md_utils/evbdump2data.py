@@ -1,26 +1,29 @@
 #!/usr/bin/env python
+"""
+Creates lammps data files from lammps dump files, given a template lammps data file.
+"""
+
 from __future__ import print_function
 
 import ConfigParser
 import logging
 import re
-from md_utils.md_common import NotFoundError, list_to_file, InvalidDataError, seq_list_to_file
+import csv
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname
+
+SEC_TIMESTEP = 'timestep'
+SEC_NUM_ATOMS = 'dump_num_atoms'
+SEC_BOX_SIZE = 'dump_box_size'
+SEC_ATOMS = 'dump_atoms'
 
 NUM_ATOMS = 'num_atoms'
-
 TAIL_CONTENT = 'tail_content'
-
 ATOMS_CONTENT = 'atoms_content'
-
 HEAD_CONTENT = 'head_content'
 
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
-
-"""
-Creates lammps data files from lammps dump files, given a template lammps data file.
-"""
 
 import sys
 import argparse
@@ -29,9 +32,10 @@ __author__ = 'mayes'
 
 
 # Logging
-logging.basicConfig(filename='evbd2d.log', level=logging.DEBUG, filemode='w')
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('evbd2d')
+logging.basicConfig(filename='evbd2d.log', filemode='w', level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
+
 
 
 # Error Codes
@@ -62,11 +66,19 @@ PROT_IGNORE = 'prot_ignore_atom_nums'
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt', PROT_IGNORE: [], }
-DEF_REQ_KEYS = [DATA_TPL_FILE, WAT_O, WAT_H, H3O_O, H3O_H, PROT_RES, PROT_H, ]
+REQ_KEYS = {DATA_TPL_FILE: str, WAT_O: int, WAT_H: int, H3O_O: int, H3O_H: int, PROT_RES: int, PROT_H: int, }
 
 def warning(*objs):
     """Writes a message to stderr."""
     print("WARNING: ", *objs, file=sys.stderr)
+
+
+def to_int_list(raw_val):
+    return_vals = []
+    for val in raw_val.split(','):
+        return_vals.append(int(val.strip()))
+    return return_vals
+
 
 def conv_raw_val(param, def_val):
     """
@@ -87,7 +99,7 @@ def conv_raw_val(param, def_val):
     if isinstance(def_val, float):
         return float(param)
     if isinstance(def_val, list):
-        return list(param)
+        return to_int_list(param)
     return param
 
 def process_cfg(raw_cfg):
@@ -98,13 +110,17 @@ def process_cfg(raw_cfg):
     :return: The processed configuration.
     """
     proc_cfg = {}
-    for key, def_val in DEF_CFG_VALS.items():
-        proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
+    try:
+        for key, def_val in DEF_CFG_VALS.items():
+            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
+    except Exception as e:
+        logger.error('Problem with default config vals on key %s: %s', key, e)
+    try:
+        for key, type_func in REQ_KEYS.items():
+            proc_cfg[key] = type_func(raw_cfg[key])
+    except Exception as e:
+        logger.error('Problem with reqquired config vals on key %s: %s', key, e)
 
-    for key in DEF_REQ_KEYS:
-        proc_cfg[key] = conv_raw_val(raw_cfg.get(key), None)
-        if proc_cfg[key] is None:
-            raise NotFoundError('Input value for {} missing in the configuration file.'.format(key))
 
     # If I needed to make calculations based on values, get the values as below, and then
     # assign to calculated config values
@@ -160,7 +176,7 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except NotFoundError as e:
+    except KeyError as e:
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
@@ -225,22 +241,106 @@ def process_data_tpl(tpl_loc):
     return tpl_data
 
 
+def find_section_state(line):
+    atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
+    if line == 'ITEM: TIMESTEP':
+        return SEC_TIMESTEP
+    elif line == 'ITEM: NUMBER OF ATOMS':
+        return SEC_NUM_ATOMS
+    elif line == 'ITEM: BOX BOUNDS pp pp pp':
+        return SEC_BOX_SIZE
+    elif atoms_pat.match(line):
+        return SEC_ATOMS
+
+def process_dump_files(cfg,data_tpl_content):
+    section = None
+    with open(cfg[DUMPS_FILE]) as f:
+        for dump_file in f.readlines():
+            dump_file = dump_file.strip()
+            data_file_num = 0
+            with open(dump_file) as d:
+                counter = 1
+                for line in d.readlines():
+                    line = line.strip()
+                    if section is None:
+                        section = find_section_state(line)
+                        logger.debug("In process_dump_files, set section to %s.", section)
+                        if section is None:
+                            raise InvalidDataError('Unexpected line in file {}, timestep {}: {}'.format(
+                                timestep,d,line))
+                    elif section == SEC_TIMESTEP:
+                        timestep = line
+                        # Reset variables
+                        dump_atom_data = []
+                        excess_proton = None
+                        h3o_mol = None
+                        data_file_num+=1
+                        section = None
+                    elif section == SEC_NUM_ATOMS:
+                        if data_tpl_content[NUM_ATOMS] != int(line):
+                            raise InvalidDataError('At timestep {} in file {}, the listed number of atoms ({}) ' \
+                                'does not equal the number of atoms in the template data file ({}).'.format(
+                                timestep,d,line,data_tpl_content[NUM_ATOMS]))
+                        section = None
+                    elif section == SEC_BOX_SIZE:
+                        split_line = line.split()
+                        diff = float(split_line[1]) - float(split_line[0])
+                        if counter == 1:
+                            boxx = diff
+                            counter += 1
+                        elif counter == 2:
+                            boxy = diff
+                            counter += 1
+                        elif counter == 3:
+                            boxz = diff
+                            counter = 1
+                            section = None
+                    elif section == SEC_ATOMS:
+                        split_line = line.split()
+                        atom_num = int(split_line[0])
+                        mol_num = int(split_line[1])
+                        atom_type = int(split_line[2])
+                        charge = float(split_line[3])
+                        x,y,z = map(float,split_line[4:7])
+                        dump_atom_data.append((atom_num, mol_num, atom_type, charge, x, y, z))
+                        # See if protonatable residue is protonated. If so, keep track of excess proton.
+                        # Else, keep track of hydronium molecule.
+                        if mol_num == cfg[PROT_RES] and atom_type == cfg[PROT_H] and atom_num not in cfg[PROT_IGNORE]:
+                            excess_proton = atom_num
+                            print(excess_proton)
+                        elif atom_type == cfg[H3O_O]:
+                            h3o_mol = mol_num
+                            print(h3o_mol)
+                        if counter == data_tpl_content[NUM_ATOMS]:
+                            d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
+                            list_to_file(data_tpl_content[HEAD_CONTENT],d_out)
+                            seq_list_to_file(dump_atom_data,d_out,mode='a')
+                            list_to_file(data_tpl_content[TAIL_CONTENT],d_out,mode='a')
+                            counter = 0
+                            section = None
+                        counter += 1
+    return
+
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
     if ret != GOOD_RET:
         return ret
 
-    # Read template file
+    # Read template and dump files
     cfg = args.config
     try:
-        content = process_data_tpl(cfg[DATA_TPL_FILE])
+        data_tpl_content = process_data_tpl(cfg[DATA_TPL_FILE])
+        process_dump_files(cfg,data_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
         warning("Problems reading data template:", e)
         return INVALID_DATA
+
+
+
 
     return GOOD_RET  # success
 
