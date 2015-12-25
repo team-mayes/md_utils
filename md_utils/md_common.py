@@ -159,6 +159,16 @@ def list_to_file(list_val, fname):
         for line in list_val:
             myfile.write(line + "\n")
 
+def seq_list_to_file(list_val, fname):
+    """
+    Writes the list of sequences to the given file.
+
+    :param list_val: The list of sequences to write.
+    :param fname: The location of the file to write.
+    """
+    with open(fname, 'w') as myfile:
+        for line in list_val:
+            myfile.write(' '.join(map(str,line)) + "\n")
 
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)

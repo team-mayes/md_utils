@@ -4,7 +4,15 @@ from __future__ import print_function
 import ConfigParser
 import logging
 import re
-from md_utils.md_common import NotFoundError, list_to_file, InvalidDataError
+from md_utils.md_common import NotFoundError, list_to_file, InvalidDataError, seq_list_to_file
+
+NUM_ATOMS = 'num_atoms'
+
+TAIL_CONTENT = 'tail_content'
+
+ATOMS_CONTENT = 'atoms_content'
+
+HEAD_CONTENT = 'head_content'
 
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
@@ -161,58 +169,60 @@ def parse_cmdline(argv):
 
 
 def process_data_tpl(tpl_loc):
+    tpl_data = {}
+    tpl_data[HEAD_CONTENT] = []
+    tpl_data[ATOMS_CONTENT] = []
+    tpl_data[TAIL_CONTENT] = []
     section = SEC_HEAD
-    head_content = []
-    atoms_content = []
-    tail_content = []
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
     velos_pat = re.compile(r"^Velocities.*")
-    num_atoms = None
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
-            # data_head to contain Everything before 'Atoms' section
+            # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
             if section == SEC_HEAD:
-                head_content.append(line)
-                if num_atoms is None:
+                tpl_data[HEAD_CONTENT].append(line)
+                if NUM_ATOMS not in tpl_data:
                     atoms_match = num_atoms_pat.match(line)
                     if atoms_match:
                         # regex is 1-based
-                        num_atoms = int(atoms_match.group(1))
+                        tpl_data[NUM_ATOMS] = int(atoms_match.group(1))
                 if atoms_pat.match(line):
                     section = SEC_ATOMS
+                    tpl_data[HEAD_CONTENT].append('')
+            # atoms_content to contain everything but the xyz: atom_num, mol_num, atom_type, charge'
             elif section == SEC_ATOMS:
                 if len(line)==0:
                     continue
                 if velos_pat.match(line):
                     section = SEC_TAIL
                     # Append one new line
-                    tail_content.append('')
-                    tail_content.append(line)
+                    tpl_data[TAIL_CONTENT].append('')
+                    tpl_data[TAIL_CONTENT].append(line)
                     continue
-                atoms_content.append(line)
+                split_line = line.split()
+                atom_num = int(split_line[0])
+                mol_num = int(split_line[1])
+                atom_type = int(split_line[2])
+                charge = float(split_line[3])
+                tpl_data[ATOMS_CONTENT].append((atom_num, mol_num, atom_type, charge))
+            # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
-                tail_content.append(line)
+                tpl_data[TAIL_CONTENT].append(line)
 
     # Validate data section
-    if len(atoms_content) != num_atoms:
+    if len(tpl_data[ATOMS_CONTENT]) != tpl_data[NUM_ATOMS]:
         raise InvalidDataError('The length of the "Atoms" section ({}) does not equal the' \
-                               'number of atoms ({}).'.format(len(atoms_content),num_atoms))
+                               'number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT]),tpl_data[NUM_ATOMS]))
 
     if logger.isEnabledFor(logging.DEBUG):
-        list_to_file(head_content,'head.txt')
-        list_to_file(atoms_content,'atoms.txt')
-        list_to_file(tail_content,'tail.txt')
+        list_to_file(tpl_data[HEAD_CONTENT],'head.txt')
+        seq_list_to_file(tpl_data[ATOMS_CONTENT],'atoms.txt')
+        list_to_file(tpl_data[TAIL_CONTENT],'tail.txt')
 
-# data to extract
-
-    num_atoms = '* atoms'
-    data = 'Verify the num lines = num_atoms; ' \
-           'Keep everything but the xyz: atom_num, mol_num, atom_type, charge'
-    data_tail = 'Everything after atom section'
-    return atoms_content
+    return tpl_data
 
 
 def main(argv=None):
