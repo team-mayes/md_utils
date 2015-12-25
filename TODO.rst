@@ -29,7 +29,7 @@ File name
 avg_rad_PMF.02.csv
 
 EVBDUMP2DATA
-========
+============
 
 * Creates lammps data files from lammps dump files, given a template lammps data file
 * This cannot be done in the available programs (such as lammps2pdb) because we need to adjust for changes
@@ -52,15 +52,13 @@ EVBDUMP2DATA
 ** The molecule ID for the hydronium
 ** The first and last atom ID for the water/hydronium section
 ** A specific format for the dump files
+** A way to detect if a residue is protonated.
 
 * Input into new program:
+Config File
+-----------
 ** Name of the template file
+** The atom type for water oxygen, water hydrogen, hydronium hydrogen, and hydronium oxygen
+Command option with default
+---------------------------
 ** File with list of dump file names
-** The molecule type for water oxygen, water hydrogen, hydronium hydrogen, and hydronium oxygen
-
-
-
-Questions
----------
-
-* Did we intend to leave rad file as .txt as opposed to .csv?
