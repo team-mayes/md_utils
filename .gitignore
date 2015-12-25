@@ -64,3 +64,7 @@ htmlcov/
 tests/test_data/path_bin/100th_CEC_z2_4.log
 tests/test_data/path_bin/100th_CEC_z2_4.xyz
 **/pressed_*
+tests/test_data/evbd2d/atoms.txt
+tests/test_data/evbd2d/head.txt
+tests/test_data/evbd2d/tail.txt
+

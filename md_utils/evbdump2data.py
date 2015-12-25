@@ -2,6 +2,13 @@
 from __future__ import print_function
 
 import ConfigParser
+import logging
+import re
+from md_utils.md_common import NotFoundError, list_to_file, InvalidDataError
+
+SEC_HEAD = 'head_section'
+SEC_ATOMS = 'atoms_section'
+SEC_TAIL = 'tail_section'
 
 """
 Creates lammps data files from lammps dump files, given a template lammps data file.
@@ -12,16 +19,68 @@ import argparse
 
 __author__ = 'mayes'
 
-# Constants #
 
-DEF_CFG_FILE = 'evbd2d.ini'
+# Logging
+logging.basicConfig(filename='evbd2d.log', level=logging.DEBUG, filemode='w')
+# logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('evbd2d')
+
+
+# Error Codes
+# The good status code
+GOOD_RET = 0
+INPUT_ERROR = 1
+IO_ERROR = 2
+INVALID_DATA = 3
+
+
+# Constants #
 
 # Config File Sections
 MAIN_SEC = 'main'
 
+# Config keys
+DATA_TPL_FILE = 'data_tpl_file'
+DUMPS_FILE = 'dump_list_file'
+WAT_O = 'water_o_type'
+WAT_H = 'water_o_type'
+H3O_O = 'h3o_o_type'
+H3O_H = 'h3o_h_type'
+PROT_RES = 'prot_res'
+PROT_H = 'prot_h_type'
+PROT_IGNORE = 'prot_ignore_atom_nums'
+
+# Defaults
+DEF_CFG_FILE = 'evbd2d.ini'
+# Set notation
+DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt', PROT_IGNORE: [], }
+DEF_REQ_KEYS = [DATA_TPL_FILE, WAT_O, WAT_H, H3O_O, H3O_H, PROT_RES, PROT_H, ]
+
 def warning(*objs):
     """Writes a message to stderr."""
     print("WARNING: ", *objs, file=sys.stderr)
+
+def conv_raw_val(param, def_val):
+    """
+    Converts the given parameter into the given type (default returns the raw value).  Returns the default value
+    if the param is None.
+    :param param: The value to convert.
+    :param def_val: The value that determines the type to target.
+    :return: The converted parameter value.
+    """
+    if param is None:
+        return def_val
+    if isinstance(def_val, bool):
+        return bool(param)
+    if isinstance(def_val, int):
+        return int(param)
+    if isinstance(def_val, long):
+        return long(param)
+    if isinstance(def_val, float):
+        return float(param)
+    if isinstance(def_val, list):
+        return list(param)
+    return param
 
 def process_cfg(raw_cfg):
     """
@@ -31,31 +90,16 @@ def process_cfg(raw_cfg):
     :return: The processed configuration.
     """
     proc_cfg = {}
-    for key, def_val in DEF_CFG_VALS.iteritems():
+    for key, def_val in DEF_CFG_VALS.items():
         proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
 
-    steps = proc_cfg[STEPS_KEY]
-    burn_in = proc_cfg[BURN_IN_KEY]
-    kbest_samples = proc_cfg[KBEST_SAMPLES_KEY]
-    kbest_depth = proc_cfg[KBEST_DEPTH_KEY]
-    sim_runs = proc_cfg[SIM_RUN_COUNT_KEY]
-    samples = proc_cfg[SAMPLE_NUMBER_KEY]
+    for key in DEF_REQ_KEYS:
+        proc_cfg[key] = conv_raw_val(raw_cfg.get(key), None)
+        if proc_cfg[key] is None:
+            raise NotFoundError('Input value for {} missing in the configuration file.'.format(key))
 
-    exp_cl_rate = proc_cfg[EXP_CL_RATE_KEY]
-    exp_cl_unc = proc_cfg[EXP_CL_UNC_KEY]
-    stoich = proc_cfg[STOICH_KEY]
-    stoich_unc = proc_cfg[STOICH_UNC_KEY]
-    ph = proc_cfg[EXP_PH_KEY]
-
-    # Calculated config params
-    proc_cfg[KBEST_STRIDE_KEY] = max(1, int(steps * (1 - burn_in) / kbest_samples * kbest_depth * sim_runs))
-    proc_cfg[SAMPLE_STRIDE_KEY] = max(1, int((1 - burn_in) * steps * sim_runs / samples))
-
-    proc_cfg[EXP_H_RATE_KEY] = exp_cl_rate / stoich
-    proc_cfg[PROTON_CONC_KEY] = 10 ** -ph
-    # This comes from error propogation analysis
-    proc_cfg[EXP_H_UNC_KEY] = math.sqrt(1. / exp_cl_rate ** 2 * exp_cl_unc ** 2 +
-                                        (exp_cl_rate ** 2 / stoich ** 4) * stoich_unc ** 2)
+    # If I needed to make calculations based on values, get the values as below, and then
+    # assign to calculated config values
     return proc_cfg
 
 
@@ -71,9 +115,8 @@ def read_cfg(floc, cfg_proc=process_cfg):
     config = ConfigParser.ConfigParser()
     good_files = config.read(floc)
     if not good_files:
-        raise IOError('Could not read file {0}'.format(floc))
+        raise IOError('Could not read file {}'.format(floc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)))
-    main_proc[KA_KEY] = calc_ka(config)
     return main_proc
 
 
@@ -87,7 +130,14 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     # TODO: Add description
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='Creates lammps data files from lammps dump files, given a template '
+                                                 'lammps data file. The required input file provides the location of the '
+                                                 'data template file, a file with a list of dump files to convert, and'
+                                                 'information about the configuration of the data file, needed to '
+                                                 'process the dump file to produce data files matching the template '
+                                                 '(consistent ID for the hydronium ion, protonatable residue always'
+                                                 'deprotonated, etc.). Currently, this script expects only one '
+                                                 'protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
                                                "format. See the example file /test/test_data/markovian.ini. "
                                                "The default file name is markovian.ini, located in the "
@@ -98,19 +148,91 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-    except IOError, e:
+    except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
-        return args, 2
+        return args, IO_ERROR
+    except NotFoundError as e:
+        warning("Input data missing:", e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
-    return args, 0
+    return args, GOOD_RET
+
+
+def process_data_tpl(tpl_loc):
+    section = SEC_HEAD
+    head_content = []
+    atoms_content = []
+    tail_content = []
+    num_atoms_pat = re.compile(r"(\d+).*atoms$")
+    atoms_pat = re.compile(r"^Atoms.*")
+    velos_pat = re.compile(r"^Velocities.*")
+    num_atoms = None
+    with open(tpl_loc) as f:
+        for line in f.readlines():
+            line = line.strip()
+            # data_head to contain Everything before 'Atoms' section
+            # also capture the number of atoms
+            if section == SEC_HEAD:
+                head_content.append(line)
+                if num_atoms is None:
+                    atoms_match = num_atoms_pat.match(line)
+                    if atoms_match:
+                        # regex is 1-based
+                        num_atoms = int(atoms_match.group(1))
+                if atoms_pat.match(line):
+                    section = SEC_ATOMS
+            elif section == SEC_ATOMS:
+                if len(line)==0:
+                    continue
+                if velos_pat.match(line):
+                    section = SEC_TAIL
+                    # Append one new line
+                    tail_content.append('')
+                    tail_content.append(line)
+                    continue
+                atoms_content.append(line)
+            elif section == SEC_TAIL:
+                tail_content.append(line)
+
+    # Validate data section
+    if len(atoms_content) != num_atoms:
+        raise InvalidDataError('The length of the "Atoms" section ({}) does not equal the' \
+                               'number of atoms ({}).'.format(len(atoms_content),num_atoms))
+
+    if logger.isEnabledFor(logging.DEBUG):
+        list_to_file(head_content,'head.txt')
+        list_to_file(atoms_content,'atoms.txt')
+        list_to_file(tail_content,'tail.txt')
+
+# data to extract
+
+    num_atoms = '* atoms'
+    data = 'Verify the num lines = num_atoms; ' \
+           'Keep everything but the xyz: atom_num, mol_num, atom_type, charge'
+    data_tail = 'Everything after atom section'
+    return atoms_content
 
 
 def main(argv=None):
+    # Read input
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
-    return 0  # success
+
+    # Read template file
+    cfg = args.config
+    try:
+        content = process_data_tpl(cfg[DATA_TPL_FILE])
+    except IOError as e:
+        warning("Problems reading file:", e)
+        return IO_ERROR
+    except InvalidDataError as e:
+        warning("Problems reading data template:", e)
+        return INVALID_DATA
+
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':
