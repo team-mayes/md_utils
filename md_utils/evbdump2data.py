@@ -11,20 +11,6 @@ import re
 import csv
 from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname
 
-SEC_TIMESTEP = 'timestep'
-SEC_NUM_ATOMS = 'dump_num_atoms'
-SEC_BOX_SIZE = 'dump_box_size'
-SEC_ATOMS = 'dump_atoms'
-
-NUM_ATOMS = 'num_atoms'
-TAIL_CONTENT = 'tail_content'
-ATOMS_CONTENT = 'atoms_content'
-HEAD_CONTENT = 'head_content'
-
-SEC_HEAD = 'head_section'
-SEC_ATOMS = 'atoms_section'
-SEC_TAIL = 'tail_section'
-
 import sys
 import argparse
 
@@ -55,7 +41,7 @@ MAIN_SEC = 'main'
 DATA_TPL_FILE = 'data_tpl_file'
 DUMPS_FILE = 'dump_list_file'
 WAT_O = 'water_o_type'
-WAT_H = 'water_o_type'
+WAT_H = 'water_h_type'
 H3O_O = 'h3o_o_type'
 H3O_H = 'h3o_h_type'
 PROT_RES = 'prot_res'
@@ -67,6 +53,26 @@ DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt', PROT_IGNORE: [], }
 REQ_KEYS = {DATA_TPL_FILE: str, WAT_O: int, WAT_H: int, H3O_O: int, H3O_H: int, PROT_RES: int, PROT_H: int, }
+
+# From data template file
+NUM_ATOMS = 'num_atoms'
+TAIL_CONTENT = 'tail_content'
+ATOMS_CONTENT = 'atoms_content'
+HEAD_CONTENT = 'head_content'
+H3O_MOL = 'hydronium_molecule_index'
+
+# For data template file processing
+SEC_HEAD = 'head_section'
+SEC_ATOMS = 'atoms_section'
+SEC_TAIL = 'tail_section'
+
+
+# For dump file processing
+SEC_TIMESTEP = 'timestep'
+SEC_NUM_ATOMS = 'dump_num_atoms'
+SEC_BOX_SIZE = 'dump_box_size'
+SEC_ATOMS = 'dump_atoms'
+
 
 def warning(*objs):
     """Writes a message to stderr."""
@@ -153,7 +159,6 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    # TODO: Add description
     parser = argparse.ArgumentParser(description='Creates lammps data files from lammps dump files, given a template '
                                                  'lammps data file. The required input file provides the location of the '
                                                  'data template file, a file with a list of dump files to convert, and'
@@ -184,7 +189,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_data_tpl(tpl_loc):
+def process_data_tpl(tpl_loc,h3o_o_type):
     tpl_data = {}
     tpl_data[HEAD_CONTENT] = []
     tpl_data[ATOMS_CONTENT] = []
@@ -224,6 +229,8 @@ def process_data_tpl(tpl_loc):
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
                 tpl_data[ATOMS_CONTENT].append((atom_num, mol_num, atom_type, charge))
+                if atom_type == h3o_o_type:
+                    tpl_data[H3O_MOL] = mol_num
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
@@ -252,6 +259,23 @@ def find_section_state(line):
     elif atoms_pat.match(line):
         return SEC_ATOMS
 
+
+def find_close_wat(pivot, list):
+    for atom in list:
+        break
+    #return make_h3o
+    return 3
+
+
+def process_dump_atoms(dump_atom_data,excess_proton,h3o_mol,water_mols):
+    if h3o_mol is None:
+        # TODO: Find closest water and assign hydronium
+        print('Need to find closest water')
+        #make_h3o = find_close_wat(excess_proton,water_mols,dump_atom_data)
+    # TODO: now, if neeed, swap h30_mol for the molecule we want to be the hydronium
+    return dump_atom_data
+
+
 def process_dump_files(cfg,data_tpl_content):
     section = None
     with open(cfg[DUMPS_FILE]) as f:
@@ -274,6 +298,7 @@ def process_dump_files(cfg,data_tpl_content):
                         dump_atom_data = []
                         excess_proton = None
                         h3o_mol = None
+                        water_mols = []
                         data_file_num+=1
                         section = None
                     elif section == SEC_NUM_ATOMS:
@@ -307,11 +332,12 @@ def process_dump_files(cfg,data_tpl_content):
                         # Else, keep track of hydronium molecule.
                         if mol_num == cfg[PROT_RES] and atom_type == cfg[PROT_H] and atom_num not in cfg[PROT_IGNORE]:
                             excess_proton = atom_num
-                            print(excess_proton)
                         elif atom_type == cfg[H3O_O]:
                             h3o_mol = mol_num
-                            print(h3o_mol)
+                        elif atom_type == cfg[H3O_O]:
+                            water_mols.append(atom_num)
                         if counter == data_tpl_content[NUM_ATOMS]:
+                            dump_atom_data = process_dump_atoms(dump_atom_data,excess_proton,h3o_mol,water_mols)
                             d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
                             list_to_file(data_tpl_content[HEAD_CONTENT],d_out)
                             seq_list_to_file(dump_atom_data,d_out,mode='a')
@@ -330,7 +356,7 @@ def main(argv=None):
     # Read template and dump files
     cfg = args.config
     try:
-        data_tpl_content = process_data_tpl(cfg[DATA_TPL_FILE])
+        data_tpl_content = process_data_tpl(cfg[DATA_TPL_FILE],cfg[H3O_O])
         process_dump_files(cfg,data_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
@@ -338,7 +364,6 @@ def main(argv=None):
     except InvalidDataError as e:
         warning("Problems reading data template:", e)
         return INVALID_DATA
-
 
 
 
