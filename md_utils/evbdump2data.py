@@ -46,7 +46,7 @@ WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 H3O_O_TYPE = 'h3o_o_type'
 H3O_H_TYPE = 'h3o_h_type'
-PROT_RES = 'prot_res'
+PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
 
@@ -54,16 +54,19 @@ PROT_IGNORE = 'prot_ignore_atom_nums'
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt', PROT_IGNORE: [], }
-REQ_KEYS = {DATA_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int, PROT_RES: int, PROT_H_TYPE: int, }
+REQ_KEYS = {DATA_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,
+            PROT_RES_MOL_ID: int, PROT_H_TYPE: int, }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
 TAIL_CONTENT = 'tail_content'
 ATOMS_CONTENT = 'atoms_content'
 HEAD_CONTENT = 'head_content'
-H3O_MOL = 'hydronium_molecule_index'
+H3O_MOL_ID = 'hydronium_molecule_id'
 H3O_O_CHARGE = 'hydronium_o_charge'
 H3O_H_CHARGE = 'hydronium_h_charge'
+PROT_RES_MOL = 'protonatable_residue_molecule'
+
 
 # For data template file processing
 SEC_HEAD = 'head_section'
@@ -193,11 +196,12 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_data_tpl(tpl_loc,h3o_o_type,h3o_h_type):
+def process_data_tpl(tpl_loc,h3o_o_type,h3o_h_type,prot_res_mol_id):
     tpl_data = {}
     tpl_data[HEAD_CONTENT] = []
     tpl_data[ATOMS_CONTENT] = []
     tpl_data[TAIL_CONTENT] = []
+    tpl_data[PROT_RES_MOL] = []
     section = SEC_HEAD
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
@@ -232,12 +236,15 @@ def process_data_tpl(tpl_loc,h3o_o_type,h3o_h_type):
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
-                tpl_data[ATOMS_CONTENT].append((atom_num, mol_num, atom_type, charge))
+                atom_struct = [atom_num, mol_num, atom_type, charge]
+                tpl_data[ATOMS_CONTENT].append(atom_struct)
                 if atom_type == h3o_o_type:
-                    tpl_data[H3O_MOL] = mol_num
+                    tpl_data[H3O_MOL_ID] = mol_num
                     tpl_data[H3O_O_CHARGE] = charge
-                if atom_type == h3o_h_type:
+                elif atom_type == h3o_h_type:
                     tpl_data[H3O_H_CHARGE] = charge
+                elif mol_num == prot_res_mol_id:
+                    tpl_data[PROT_RES_MOL].append(atom_struct)
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
@@ -282,11 +289,10 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
     # first, if the residue is protonated, remove the excess proton from the residue and make sure a hydronium
     if len(dump_h3o_mol) == 0:
         # Convert excess proton to a hydronium proton
-        excess_proton[1] = tpl_data[H3O_MOL]
+        excess_proton[1] = tpl_data[H3O_MOL_ID]
         excess_proton[2] = cfg[H3O_H_TYPE]
         excess_proton[3] = tpl_data[H3O_H_CHARGE]
         dump_h3o_mol.append(excess_proton)
-        # TODO: assign hydronium to closest water
         min_dist = np.linalg.norm(box)
         for mol_id,molecule in water_mol_dict.items():
             for atom in molecule:
@@ -304,18 +310,19 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
             elif atom[2] == cfg[WAT_H_TYPE]:
                 atom[2] = cfg[H3O_H_TYPE]
                 atom[3] = tpl_data[H3O_H_CHARGE]
-    # Now, for all cases, if the h3o molecule id does not match the template, make it so
-#     # then, get the molecules to match
-# #    for atom in dump_atom_data:
-# #        # check if the molecules match
-# #        print(atom[1],tpl_data[ATOMS_CONTENT][atom[0]-1][1])
-# #        continue
-# #        print(tpl_data[ATOMS_CONTENT][atom[0]][1])
-#         #print(dump_atom_data[atom][1],tpl_data[ATOMS_CONTENT][atom][1])
-#     if dump_h3o_mol != tpl_data[H3O_MOL]:
-#         print('Need to swap h3o identity')
-#         #make_h3o = find_close_wat(excess_proton,water_mols,dump_atom_data)
-    # TODO: now, if need, swap h30_mol for the molecule we want to be the hydronium
+        # Make the atom type and charge of the protonatable residue the same as for the template file (switching
+        # from protonated to deprotonated residue)
+        if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
+            raise InvalidDataError('In the current timestep of the curent dump file, the number of atoms in the ' \
+                                'protonatable residue does not equal the number of atoms in the template data file.')
+        for atom in range(0,len(protonatable_res)):
+            if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
+                protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
+            else:
+                raise InvalidDataError('In the current timestep of the curent dump file, the atoms in the ' \
+                                'protonatable residue are not ordered as in the template data file.')
+    # TODO: Return here: Now, for all cases, if the h3o molecule id does not match the template, make it so
+    # TODO: Reorder water molecules if needed
     return
 
 
@@ -343,6 +350,7 @@ def process_dump_files(cfg,data_tpl_content):
                         dump_atom_data = []
                         excess_proton = None
                         h3o_mol = []
+                        prot_res = []
                         data_file_num+=1
                         section = None
                     elif section == SEC_NUM_ATOMS:
@@ -370,15 +378,17 @@ def process_dump_files(cfg,data_tpl_content):
                         dump_atom_data.append(atom_struct)
                         # See if protonatable residue is protonated. If so, keep track of excess proton.
                         # Else, keep track of hydronium molecule.
-                        if mol_num == cfg[PROT_RES] and atom_type == cfg[PROT_H_TYPE] and atom_num not in cfg[PROT_IGNORE]:
+                        if mol_num == cfg[PROT_RES_MOL_ID] and atom_type == cfg[PROT_H_TYPE] and atom_num not in cfg[PROT_IGNORE]:
                             # substract 1 from counter because counter starts at 1, index starts at zero
                             excess_proton = atom_struct
+                        elif mol_num == cfg[PROT_RES_MOL_ID]:
+                            prot_res.append(atom_struct)
                         elif atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[H3O_H_TYPE]:
                             h3o_mol.append(atom_struct)
                         elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE] :
                             water_dict[mol_num].append(atom_struct)
                         if counter == data_tpl_content[NUM_ATOMS]:
-                            dump_atom_data = process_dump_atoms(cfg,dump_atom_data, excess_proton, h3o_mol, water_dict, box,
+                            process_dump_atoms(cfg,prot_res, excess_proton, h3o_mol, water_dict, box,
                                                                 data_tpl_content)
                             d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
                             list_to_file(data_tpl_content[HEAD_CONTENT],d_out)
@@ -392,13 +402,14 @@ def process_dump_files(cfg,data_tpl_content):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
+    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
     # Read template and dump files
     cfg = args.config
     try:
-        data_tpl_content = process_data_tpl(cfg[DATA_TPL_FILE],cfg[H3O_O_TYPE],cfg[H3O_H_TYPE])
+        data_tpl_content = process_data_tpl(cfg[DATA_TPL_FILE],cfg[H3O_O_TYPE],cfg[H3O_H_TYPE],cfg[PROT_RES_MOL_ID])
         process_dump_files(cfg,data_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
