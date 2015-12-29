@@ -293,9 +293,10 @@ def pbc_dist(a, b, box):
 
 def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
     # first, if the residue is protonated, remove the excess proton from the residue and make sure a hydronium
+
     if len(dump_h3o_mol) == 0:
         # Convert excess proton to a hydronium proton
-        excess_proton[1] = tpl_data[H3O_MOL]
+        excess_proton[1] = tpl_data[H3O_MOL][0][1]
         excess_proton[2] = cfg[H3O_H_TYPE]
         excess_proton[3] = tpl_data[H3O_H_CHARGE]
         dump_h3o_mol.append(excess_proton)
@@ -305,12 +306,15 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
                 if atom[2] == cfg[WAT_O_TYPE]:
                     dist = pbc_dist(np.asarray(excess_proton[4:]),np.asarray(atom[4:]),box)
             if dist < min_dist:
-                dump_h3o_mol.append(molecule)
+                min_dist_id = mol_id
                 min_dist = dist
+        # Now that have the closed water, add its atoms to the hydronium list
+        print('min_dist_id',min_dist_id)
+        for atom in water_mol_dict[min_dist_id]:
+            dump_h3o_mol.append(atom)
         # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
-        # TODO: See if del statement below is needed!
-        #print(dump_h3o_mol[0][1])
-        #del water_mol_dict[dump_h3o_mol[0][1]]
+        del water_mol_dict[min_dist_id]
+        print('dump_h3o_mol',dump_h3o_mol)
         for atom in dump_h3o_mol:
             if atom[2] == cfg[WAT_O_TYPE]:
                 atom[2] = cfg[H3O_O_TYPE]
@@ -355,21 +359,16 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
                 new_h3o_mol[atom_id][2:] = copy.copy(atom[2:])
         for atom_id,atom in enumerate(new_water_mol):
             atom[2:] = water_props[atom_id][2:]
-        # TODO: Problem with the below!!
         del water_mol_dict[target_h3o_mol_id]
         water_mol_dict[new_water_mol[0][1]] = copy.copy(new_water_mol)
 
     # TODO: Return here: Reorder water molecules if needed
     # if the order of the water atoms does not match the template, make it so!
     if len(tpl_data[WATER_MOLS]) != len(water_mol_dict):
-        print(len(tpl_data[WATER_MOLS]))
-        print(len(water_mol_dict))
         raise InvalidDataError('In the current timestep of the current dump file, the number water atoms ' \
                         'does not equal the number of atoms in the template data file.')
     for mol_id,molecule in water_mol_dict.items():
-        #print(mol_id)
         for atom_id,atom in enumerate(molecule):
-            #print(atom_id)
             if atom[0] == tpl_data[WATER_MOLS][mol_id][atom_id][0] and atom[2] == tpl_data[WATER_MOLS][mol_id][atom_id][2]:
                 break
             print('Fix me!', atom,tpl_data[WATER_MOLS][mol_id][atom_id])
@@ -389,7 +388,7 @@ def process_dump_files(cfg,data_tpl_content):
                     line = line.strip()
                     if section is None:
                         section = find_section_state(line)
-                        logger.debug("In process_dump_files, set section to %s.", section)
+                        #logger.debug("In process_dump_files, set section to %s.", section)
                         if section is None:
                             raise InvalidDataError('Unexpected line in file {}: {}'.format(d,line))
                     elif section == SEC_TIMESTEP:
