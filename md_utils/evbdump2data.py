@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import ConfigParser
 from collections import defaultdict
+import copy
 import logging
 import re
 import numpy as np
@@ -62,9 +63,10 @@ NUM_ATOMS = 'num_atoms'
 TAIL_CONTENT = 'tail_content'
 ATOMS_CONTENT = 'atoms_content'
 HEAD_CONTENT = 'head_content'
-H3O_MOL_ID = 'hydronium_molecule_id'
+H3O_MOL = 'hydronium_molecule'
 H3O_O_CHARGE = 'hydronium_o_charge'
 H3O_H_CHARGE = 'hydronium_h_charge'
+FIRST_H3O_H_INDEX = 'first h3o hydrogen index'
 PROT_RES_MOL = 'protonatable_residue_molecule'
 WATER_MOLS = 'template_water_molecules'
 
@@ -204,7 +206,9 @@ def process_data_tpl(cfg):
     tpl_data[ATOMS_CONTENT] = []
     tpl_data[TAIL_CONTENT] = []
     tpl_data[PROT_RES_MOL] = []
+    tpl_data[H3O_MOL] = []
     tpl_data[WATER_MOLS] = defaultdict(list)
+    tpl_data[FIRST_H3O_H_INDEX] = None
     section = SEC_HEAD
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
@@ -242,9 +246,12 @@ def process_data_tpl(cfg):
                 atom_struct = [atom_num, mol_num, atom_type, charge]
                 tpl_data[ATOMS_CONTENT].append(atom_struct)
                 if atom_type == cfg[H3O_O_TYPE]:
-                    tpl_data[H3O_MOL_ID] = mol_num
+                    tpl_data[H3O_MOL].append(atom_struct)
                     tpl_data[H3O_O_CHARGE] = charge
                 elif atom_type == cfg[H3O_H_TYPE]:
+                    if tpl_data[FIRST_H3O_H_INDEX] is None:
+                        tpl_data[FIRST_H3O_H_INDEX] = len(tpl_data[H3O_MOL])
+                    tpl_data[H3O_MOL].append(atom_struct)
                     tpl_data[H3O_H_CHARGE] = charge
                 elif mol_num == cfg[PROT_RES_MOL_ID]:
                     tpl_data[PROT_RES_MOL].append(atom_struct)
@@ -279,12 +286,6 @@ def find_section_state(line):
         return SEC_ATOMS
 
 
-def find_close_wat(pivot, list):
-    for atom in list:
-        break
-    #return make_h3o
-    return 3
-
 def pbc_dist(a, b, box):
     dist = a-b
     dist = dist - box * np.asarray(map(round,dist/box))
@@ -294,7 +295,7 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
     # first, if the residue is protonated, remove the excess proton from the residue and make sure a hydronium
     if len(dump_h3o_mol) == 0:
         # Convert excess proton to a hydronium proton
-        excess_proton[1] = tpl_data[H3O_MOL_ID]
+        excess_proton[1] = tpl_data[H3O_MOL]
         excess_proton[2] = cfg[H3O_H_TYPE]
         excess_proton[3] = tpl_data[H3O_H_CHARGE]
         dump_h3o_mol.append(excess_proton)
@@ -304,10 +305,12 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
                 if atom[2] == cfg[WAT_O_TYPE]:
                     dist = pbc_dist(np.asarray(excess_proton[4:]),np.asarray(atom[4:]),box)
             if dist < min_dist:
-                dump_h3o_mol = molecule
+                dump_h3o_mol.append(molecule)
                 min_dist = dist
         # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
-        del water_mol_dict[dump_h3o_mol[0][1]]
+        # TODO: See if del statement below is needed!
+        #print(dump_h3o_mol[0][1])
+        #del water_mol_dict[dump_h3o_mol[0][1]]
         for atom in dump_h3o_mol:
             if atom[2] == cfg[WAT_O_TYPE]:
                 atom[2] = cfg[H3O_O_TYPE]
@@ -324,21 +327,52 @@ def process_dump_atoms(cfg,protonatable_res, excess_proton, dump_h3o_mol, water_
             if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
                 protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
             else:
-                raise InvalidDataError('In the current timestep of the curent dump file, the atoms in the ' \
+                raise InvalidDataError('In the current timestep of the current dump file, the atoms in the ' \
                                 'protonatable residue are not ordered as in the template data file.')
     #  if the h3o molecule id does not match the template, make it so
-    if dump_h3o_mol[0][1] != tpl_data[H3O_MOL_ID]:
-        # TODO: Return here: Now, for all cases, if the h3o molecule id does not match the template, make it so
-        print('Reorder h3o molecule!')
-    # TODO: Reorder water molecules if needed
+    # Note: assumed excess proton is the first element in the h3o
+    # saved as new name for readability only
+    target_h3o_mol_id = tpl_data[H3O_MOL][0][1]
+    if dump_h3o_mol[0][1] != target_h3o_mol_id:
+        new_h3o_mol = []
+        new_water_mol = []
+        # I was assigning parts of the original water and h3o to the same new molecules, and it was referencing only, so
+        # I did not get my required combination results. Use copy!
+        water_props = copy.deepcopy(water_mol_dict[target_h3o_mol_id])
+        for atom_id,atom in enumerate(dump_h3o_mol):
+            # Grab a hydrogen. tpl_data[FIRST_H3O_H_INDEX] can only be 0 or 1.
+            if atom_id == tpl_data[FIRST_H3O_H_INDEX]:
+                # double check really is a hydrogen
+                if atom[2] == cfg[H3O_H_TYPE]:
+                    atom[1] =  target_h3o_mol_id
+                    new_h3o_mol = [atom] + water_mol_dict[target_h3o_mol_id]
+                else:
+                    # TODO: Take care of possible problem?
+                    raise InvalidDataError('In the current timestep of the current dump file, there was an ' \
+                                'oxygen where a hydrogen was expected. Please fix the code to handle this problem!')
+            else:
+                new_water_mol.append(atom)
+                new_h3o_mol[atom_id][2:] = copy.copy(atom[2:])
+        for atom_id,atom in enumerate(new_water_mol):
+            atom[2:] = water_props[atom_id][2:]
+        # TODO: Problem with the below!!
+        del water_mol_dict[target_h3o_mol_id]
+        water_mol_dict[new_water_mol[0][1]] = copy.copy(new_water_mol)
+
+    # TODO: Return here: Reorder water molecules if needed
     # if the order of the water atoms does not match the template, make it so!
     if len(tpl_data[WATER_MOLS]) != len(water_mol_dict):
         print(len(tpl_data[WATER_MOLS]))
         print(len(water_mol_dict))
         raise InvalidDataError('In the current timestep of the current dump file, the number water atoms ' \
                         'does not equal the number of atoms in the template data file.')
-    for atom in range(0,len(water_mol_dict)):
-        continue
+    for mol_id,molecule in water_mol_dict.items():
+        #print(mol_id)
+        for atom_id,atom in enumerate(molecule):
+            #print(atom_id)
+            if atom[0] == tpl_data[WATER_MOLS][mol_id][atom_id][0] and atom[2] == tpl_data[WATER_MOLS][mol_id][atom_id][2]:
+                break
+            print('Fix me!', atom,tpl_data[WATER_MOLS][mol_id][atom_id])
     return
 
 
@@ -357,8 +391,7 @@ def process_dump_files(cfg,data_tpl_content):
                         section = find_section_state(line)
                         logger.debug("In process_dump_files, set section to %s.", section)
                         if section is None:
-                            raise InvalidDataError('Unexpected line in file {}, timestep {}: {}'.format(
-                                timestep,d,line))
+                            raise InvalidDataError('Unexpected line in file {}: {}'.format(d,line))
                     elif section == SEC_TIMESTEP:
                         timestep = line
                         # Reset variables
@@ -404,8 +437,7 @@ def process_dump_files(cfg,data_tpl_content):
                         elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
                             water_dict[mol_num].append(atom_struct)
                         if counter == data_tpl_content[NUM_ATOMS]:
-                            process_dump_atoms(cfg,prot_res, excess_proton, h3o_mol, water_dict, box,
-                                                                data_tpl_content)
+                            process_dump_atoms(cfg,prot_res, excess_proton, h3o_mol, water_dict, box,data_tpl_content)
                             d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
                             list_to_file(data_tpl_content[HEAD_CONTENT],d_out)
                             seq_list_to_file(dump_atom_data,d_out,mode='a')
