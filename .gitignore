@@ -69,7 +69,7 @@ tests/test_data/evbd2d/head.txt
 tests/test_data/evbd2d/tail.txt
 tests/test_data/evbd2d/1*.data
 tests/test_data/evbd2d/short.dump
-tests/test_data/evbd2d/test*.txt
+tests/test_data/evbd2d/*test*.txt
 tests/test_data/evbd2d/1_short.dump
 tests/test_data/evbd2d/check.sh
 tests/test_data/evbd2d/data_check_list.txt

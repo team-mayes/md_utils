@@ -179,12 +179,10 @@ def parse_cmdline(argv):
                                                  'deprotonated, etc.). Currently, this script expects only one '
                                                  'protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/markovian.ini. "
-                                               "The default file name is markovian.ini, located in the "
+                                               "format. See the example file /test/test_data/evbd2d/evbd2d.ini. "
+                                               "The default file name is evbd2d.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
-    # parser.add_argument("-i", "--input_rates", help="The location of the input rates file",
-    #                     default=DEF_IRATE_FILE, type=read_input_rates)
     args = None
     try:
         args = parser.parse_args(argv)
