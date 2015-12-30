@@ -34,7 +34,6 @@ INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
 
-
 # Constants #
 
 # Config File Sections
@@ -43,6 +42,14 @@ MAIN_SEC = 'main'
 # Config keys
 PDB_TPL_FILE = 'pdb_tpl_file'
 DATAS_FILE = 'data_list_file'
+# PDB file info
+PDB_ATOM_INFO_LAST_CHAR = 'pdb_atom_info_last_char'
+PDB_MOL_NUM_LAST_CHAR = 'pdb_mol_num_last_char'
+PDB_X_LAST_CHAR = 'pdb_x_last_char'
+PDB_Y_LAST_CHAR = 'pdb_y_last_char'
+PDB_Z_LAST_CHAR = 'pdb_z_last_char'
+PDB_FORMAT = 'pdb_print_format'
+# data file info
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 H3O_O_TYPE = 'h3o_o_type'
@@ -51,8 +58,10 @@ H3O_H_TYPE = 'h3o_h_type'
 # Defaults
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'dump_list.txt', }
-REQ_KEYS = {PDB_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,}
+DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', PDB_FORMAT: '%s%4d    %8.3f%8.3f%8.3f%s', }
+REQ_KEYS = {PDB_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,
+            PDB_ATOM_INFO_LAST_CHAR: int, PDB_MOL_NUM_LAST_CHAR: int,
+            PDB_X_LAST_CHAR: int, PDB_Y_LAST_CHAR: int, PDB_Z_LAST_CHAR: int, }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -176,16 +185,28 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_data_tpl(cfg):
+def pdb_atoms_to_file(pdb_format, list_val, fname, mode='w'):
+    """
+    Writes the list of sequences to the given file in the specified format for a PDB.
+
+    :param list_val: The list of sequences to write.
+    :param fname: The location of the file to write.
+    """
+    with open(fname, mode) as myfile:
+        for line in list_val:
+            #print(pdb_format % tuple(line))
+            myfile.write(pdb_format % tuple(line) + '\n')
+
+
+def process_pdb_tpl(cfg):
     tpl_loc = cfg[PDB_TPL_FILE]
     tpl_data = {}
     tpl_data[HEAD_CONTENT] = []
     tpl_data[ATOMS_CONTENT] = []
     tpl_data[TAIL_CONTENT] = []
     section = SEC_HEAD
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    atoms_pat = re.compile(r"^Atoms.*")
-    velos_pat = re.compile(r"^Velocities.*")
+    end_pat = re.compile(r"^END.*")
+    print_me = 0
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
@@ -193,56 +214,33 @@ def process_data_tpl(cfg):
             # also capture the number of atoms
             if section == SEC_HEAD:
                 tpl_data[HEAD_CONTENT].append(line)
-                if NUM_ATOMS not in tpl_data:
-                    atoms_match = num_atoms_pat.match(line)
-                    if atoms_match:
-                        # regex is 1-based
-                        tpl_data[NUM_ATOMS] = int(atoms_match.group(1))
-                if atoms_pat.match(line):
-                    section = SEC_ATOMS
-                    tpl_data[HEAD_CONTENT].append('')
-            # atoms_content to contain everything but the xyz: atom_num, mol_num, atom_type, charge'
+                section = SEC_ATOMS
+            # atoms_content to contain everything but the xyz
             elif section == SEC_ATOMS:
-                if len(line) == 0:
-                    continue
-                if velos_pat.match(line):
+                if end_pat.match(line):
                     section = SEC_TAIL
-                    # Append one new line
-                    tpl_data[TAIL_CONTENT].append('')
                     tpl_data[TAIL_CONTENT].append(line)
                     continue
-                split_line = line.split()
-                atom_num = int(split_line[0])
-                mol_num = int(split_line[1])
-                atom_type = int(split_line[2])
-                charge = float(split_line[3])
-                atom_struct = [atom_num, mol_num, atom_type, charge]
-                tpl_data[ATOMS_CONTENT].append(atom_struct)
-                # if atom_type == cfg[H3O_O_TYPE]:
-                #     tpl_data[H3O_MOL].append(atom_struct)
-                #     tpl_data[H3O_O_CHARGE] = charge
-                # elif atom_type == cfg[H3O_H_TYPE]:
-                #     if tpl_data[FIRST_H3O_H_INDEX] is None:
-                #         tpl_data[FIRST_H3O_H_INDEX] = len(tpl_data[H3O_MOL])
-                #     tpl_data[H3O_MOL].append(atom_struct)
-                #     tpl_data[H3O_H_CHARGE] = charge
-                # elif mol_num == cfg[PROT_RES_MOL_ID]:
-                #     tpl_data[PROT_RES_MOL].append(atom_struct)
-                # elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
-                #     tpl_data[WATER_MOLS][mol_num].append(atom_struct)
+                # tpl_data[ATOMS_CONTENT].append(line)
+
+                first_cols = line[:cfg[PDB_ATOM_INFO_LAST_CHAR]]
+                # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
+                # There is already a try when calling the subroutine, so maybe I don't need to?
+                mol_num = int(line[cfg[PDB_ATOM_INFO_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
+                pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
+                pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
+                pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
+                last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
+                line_struct = [first_cols, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+                tpl_data[ATOMS_CONTENT].append(line_struct)
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
 
-    # Validate data section
-    if len(tpl_data[ATOMS_CONTENT]) != tpl_data[NUM_ATOMS]:
-        raise InvalidDataError('The length of the "Atoms" section ({}) does not equal ' \
-                               'the number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT]), tpl_data[NUM_ATOMS]))
-
     if logger.isEnabledFor(logging.DEBUG):
-        list_to_file(tpl_data[HEAD_CONTENT], 'head.txt')
-        seq_list_to_file(tpl_data[ATOMS_CONTENT], 'atoms.txt')
-        list_to_file(tpl_data[TAIL_CONTENT], 'tail.txt')
+        list_to_file(tpl_data[HEAD_CONTENT], 'reproduced_tpl.pdb')
+        pdb_atoms_to_file(cfg[PDB_FORMAT], tpl_data[ATOMS_CONTENT], 'reproduced_tpl.pdb', mode='a')
+        list_to_file(tpl_data[TAIL_CONTENT], 'reproduced_tpl.pdb', mode='a')
 
     return tpl_data
 
@@ -441,20 +439,20 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
-    # # Read template and dump files
-    # cfg = args.config
-    # try:
-    #     data_tpl_content = process_data_tpl(cfg)
-    #     process_dump_files(cfg, data_tpl_content)
-    # except IOError as e:
-    #     warning("Problems reading file:", e)
-    #     return IO_ERROR
-    # except InvalidDataError as e:
-    #     warning("Problems reading data template:", e)
-    #     return INVALID_DATA
-    #
-    # return GOOD_RET  # success
-    #
+    # Read template and dump files
+    cfg = args.config
+    try:
+        pdb_tpl_content = process_pdb_tpl(cfg)
+    #     process_dump_files(cfg, pdb_tpl_content)
+    except IOError as e:
+        warning("Problems reading file:", e)
+        return IO_ERROR
+    except InvalidDataError as e:
+        warning("Problems reading data template:", e)
+        return INVALID_DATA
+
+    return GOOD_RET  # success
+
 
 if __name__ == '__main__':
     status = main()
