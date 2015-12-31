@@ -12,7 +12,7 @@ import logging
 import re
 import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname
 
 import sys
 import argparse
@@ -43,12 +43,18 @@ MAIN_SEC = 'main'
 PDB_TPL_FILE = 'pdb_tpl_file'
 DATAS_FILE = 'data_list_file'
 # PDB file info
+PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
+PDB_ATOM_TYPE_LAST_CHAR = 'pdb_atom_type_last_char'
 PDB_ATOM_INFO_LAST_CHAR = 'pdb_atom_info_last_char'
 PDB_MOL_NUM_LAST_CHAR = 'pdb_mol_num_last_char'
 PDB_X_LAST_CHAR = 'pdb_x_last_char'
 PDB_Y_LAST_CHAR = 'pdb_y_last_char'
 PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
+#The below must have the correct number of characters! See default values
+CHARMM_O = 'charmm_O_types4water_hydronium'
+CHARMM_H = 'charmm_H_types4water_hydronium'
+
 # data file info
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
@@ -58,10 +64,19 @@ H3O_H_TYPE = 'h3o_h_type'
 # Defaults
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', PDB_FORMAT: '%s%4d    %8.3f%8.3f%8.3f%s', }
+DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', PDB_FORMAT: '%s%s%s%4d    %8.3f%8.3f%8.3f%s',
+                PDB_ATOM_NUM_LAST_CHAR: 12,
+                PDB_ATOM_TYPE_LAST_CHAR: 17,
+                PDB_ATOM_INFO_LAST_CHAR: 22,
+                PDB_MOL_NUM_LAST_CHAR: 28,
+                PDB_X_LAST_CHAR: 38,
+                PDB_Y_LAST_CHAR: 46,
+                PDB_Z_LAST_CHAR: 54,
+                CHARMM_O: [' OH2 '],
+                CHARMM_H: [' H1  ',' H2  ',' H3  '],
+                }
 REQ_KEYS = {PDB_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,
-            PDB_ATOM_INFO_LAST_CHAR: int, PDB_MOL_NUM_LAST_CHAR: int,
-            PDB_X_LAST_CHAR: int, PDB_Y_LAST_CHAR: int, PDB_Z_LAST_CHAR: int, }
+             }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -194,8 +209,14 @@ def pdb_atoms_to_file(pdb_format, list_val, fname, mode='w'):
     """
     with open(fname, mode) as myfile:
         for line in list_val:
-            #print(pdb_format % tuple(line))
             myfile.write(pdb_format % tuple(line) + '\n')
+
+
+def print_pdb(head_data, atoms_data, tail_data,file_name, file_format):
+    list_to_file(head_data, file_name)
+    pdb_atoms_to_file(file_format, atoms_data, file_name, mode='a')
+    list_to_file(tail_data, file_name, mode='a')
+    return
 
 
 def process_pdb_tpl(cfg):
@@ -206,24 +227,32 @@ def process_pdb_tpl(cfg):
     tpl_data[TAIL_CONTENT] = []
     section = SEC_HEAD
     end_pat = re.compile(r"^END.*")
-    print_me = 0
+    # The two lines below are for renumbering a PDB, but see comment below... not doing this right now
+    # last_mol_num = None
+    # new_mol_num = None
+
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
+
+
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
             if section == SEC_HEAD:
                 tpl_data[HEAD_CONTENT].append(line)
                 section = SEC_ATOMS
+
             # atoms_content to contain everything but the xyz
             elif section == SEC_ATOMS:
                 if end_pat.match(line):
                     section = SEC_TAIL
                     tpl_data[TAIL_CONTENT].append(line)
                     continue
-                # tpl_data[ATOMS_CONTENT].append(line)
 
-                first_cols = line[:cfg[PDB_ATOM_INFO_LAST_CHAR]]
+
+                atom_nums = line[:cfg[PDB_ATOM_NUM_LAST_CHAR]]
+                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
+                residue = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_ATOM_INFO_LAST_CHAR]]
                 # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
                 # There is already a try when calling the subroutine, so maybe I don't need to?
                 mol_num = int(line[cfg[PDB_ATOM_INFO_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
@@ -231,204 +260,103 @@ def process_pdb_tpl(cfg):
                 pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
                 pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
-                line_struct = [first_cols, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+
+
+                # # For making a renumbered PDB
+                # # However, the number of molecules is too large, so I'm not going to worry about it!
+                # if last_mol_num is None:
+                #     last_mol_num = mol_num
+                #     new_mol_num = mol_num
+                #     print(new_mol_num)
+                # if mol_num == last_mol_num:
+                #     continue
+                # else:
+                #     new_mol_num += 1
+                #     print(mol_num,new_mol_num)
+                # last_mol_num = mol_num
+                # mol_num = new_mol_num
+
+
+                line_struct = [atom_nums, atom_type, residue, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
                 tpl_data[ATOMS_CONTENT].append(line_struct)
+
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
 
     if logger.isEnabledFor(logging.DEBUG):
-        list_to_file(tpl_data[HEAD_CONTENT], 'reproduced_tpl.pdb')
-        pdb_atoms_to_file(cfg[PDB_FORMAT], tpl_data[ATOMS_CONTENT], 'reproduced_tpl.pdb', mode='a')
-        list_to_file(tpl_data[TAIL_CONTENT], 'reproduced_tpl.pdb', mode='a')
+        print_pdb(tpl_data[HEAD_CONTENT],tpl_data[ATOMS_CONTENT],tpl_data[TAIL_CONTENT],
+                  'reproduced_tpl.pdb',cfg[PDB_FORMAT])
 
     return tpl_data
 
-
-def find_section_state(line):
-    # atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
-    # if line == 'ITEM: TIMESTEP':
-    #     return SEC_TIMESTEP
-    # elif line == 'ITEM: NUMBER OF ATOMS':
-    #     return SEC_NUM_ATOMS
-    # elif line == 'ITEM: BOX BOUNDS pp pp pp':
-    #     return SEC_BOX_SIZE
-    # elif atoms_pat.match(line):
-    #     return SEC_ATOMS
-    pass
-
-
-def pbc_dist(a, b, box):
-    dist = a - b
-    dist = dist - box * np.asarray(map(round, dist / box))
-    return np.linalg.norm(dist)
-
-
-def process_dump_atoms(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
-    """
-    Correct for any reordering and residue protonation that may have happened in the course of the simulation,
-    so that the output data matches with the template.
-    """
-    # first, if the residue is protonated, remove the excess proton from the residue and make sure a hydronium
-    if len(dump_h3o_mol) == 0:
-        # Convert excess proton to a hydronium proton
-        # excess_proton[1] = tpl_data[H3O_MOL][0][1]
-        # excess_proton[2] = cfg[H3O_H_TYPE]
-        # excess_proton[3] = tpl_data[H3O_H_CHARGE]
-        dump_h3o_mol.append(excess_proton)
-        min_dist = np.linalg.norm(box)
-        for mol_id, molecule in water_mol_dict.items():
-            for atom in molecule:
-                if atom[2] == cfg[WAT_O_TYPE]:
-                    dist = pbc_dist(np.asarray(excess_proton[4:]), np.asarray(atom[4:]), box)
-            if dist < min_dist:
-                min_dist_id = mol_id
-                min_dist = dist
-                # Now that have the closed water, add its atoms to the hydronium list
-                # logger.debug("In deprotonating residue routine, the molecule ID of the closest water (to become a hydronium)"
-            #              "is %s.", min_dist_id)
-        for atom in water_mol_dict[min_dist_id]:
-            dump_h3o_mol.append(atom)
-            # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
-        del water_mol_dict[min_dist_id]
-        # for atom in dump_h3o_mol:
-        #     if atom[2] == cfg[WAT_O_TYPE]:
-        #         atom[2] = cfg[H3O_O_TYPE]
-        #         atom[3] = tpl_data[H3O_O_CHARGE]
-        #     elif atom[2] == cfg[WAT_H_TYPE]:
-        #         atom[2] = cfg[H3O_H_TYPE]
-        #         atom[3] = tpl_data[H3O_H_CHARGE]
-        #         # Make the atom type and charge of the protonatable residue the same as for the template file (switching
-        #         # from protonated to deprotonated residue)
-        # if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
-        #     raise InvalidDataError('In the current timestep of the current dump file, the number of atoms in the ' \
-        #                            'protonatable residue does not equal the number of atoms in the template data file.')
-        # for atom in range(0, len(protonatable_res)):
-        #     if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
-        #         protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
-        #     else:
-        #         raise InvalidDataError('In the current timestep of the current dump file, the atoms in the ' \
-        #                                'protonatable residue are not ordered as in the template data file.')
-
-
-    #  if the h3o molecule id does not match the template, make it so
-    # Note: assumed excess proton is the first element in the h3o
-    # saved as new name for readability only
-    # target_h3o_mol_id = tpl_data[H3O_MOL][-1][1]
-    # Note: if the procedure for deprotonating a residue has been run, (at least currently) the first hydrogen may
-    # have the correct molecule ID, while the rest does not! Thus, check from the last atom of the molecule
-    # (guaranteed not to be the first hydrogen!)
-    # if dump_h3o_mol[-1][1] != target_h3o_mol_id:
-    #     new_h3o_mol = []
-    #     new_water_mol = []
-    #     # FYI on why I used copy: I was assigning parts of the original water and h3o to the same new molecules,
-    #     # and it was referencing only, so I did not get my required combination results. Fixed now.
-    #     water_props = copy.deepcopy(water_mol_dict[target_h3o_mol_id])
-    #     for atom_id, atom in enumerate(dump_h3o_mol):
-    #         # Grab a hydrogen. tpl_data[FIRST_H3O_H_INDEX] can only be 0 or 1.
-    #         if atom_id == tpl_data[FIRST_H3O_H_INDEX]:
-    #             # double check really is a hydrogen
-    #             if atom[2] == cfg[H3O_H_TYPE]:
-    #                 atom[1] = target_h3o_mol_id
-    #                 new_h3o_mol = [atom] + water_mol_dict[target_h3o_mol_id]
-    #             else:
-    #                 # TODO: Take care of possible problem?
-    #                 raise InvalidDataError('In the current timestep of the current dump file, there was an ' \
-    #                                        'oxygen where a hydrogen was expected. Please fix the code to handle this problem!')
-    #         else:
-    #             new_water_mol.append(atom)
-    #             new_h3o_mol[atom_id][2:] = copy.copy(atom[2:])
-    #     for atom_id, atom in enumerate(new_water_mol):
-    #         atom[2:] = water_props[atom_id][2:]
-    #     del water_mol_dict[target_h3o_mol_id]
-    #     water_mol_dict[new_water_mol[0][1]] = copy.copy(new_water_mol)
-
-    # TODO: Return here: Reorder water molecules if needed
-    # if the order of the water atoms does not match the template, make it so!
-    # if len(tpl_data[WATER_MOLS]) != len(water_mol_dict):
-    #     raise InvalidDataError('In the current timestep of the current dump file, the number water atoms ' \
-    #                            'does not equal the number of atoms in the template data file.')
-    # for mol_id, molecule in water_mol_dict.items():
-    #     for atom_id, atom in enumerate(molecule):
-    #         # print(tpl_data[WATER_MOLS])
-    #         if atom[0] == tpl_data[WATER_MOLS][mol_id][atom_id][0] and \
-    #                       atom[2] == tpl_data[WATER_MOLS][mol_id][atom_id][2]:
-    #             break
-    #         print('Fix me!', atom, tpl_data[WATER_MOLS][mol_id][atom_id])
-    return
-
-
-def process_dump_files(cfg, data_tpl_content):
-    section = None
-    box = np.zeros((3,))
+def process_data_files(cfg, data_tpl_content, match_table):
+    atoms_pat = re.compile(r"^Atoms.*")
+    velos_pat = re.compile(r"^Velocities.*")
+    # Don't want to change the original template data when preparing to print the new file:
+    pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
     with open(cfg[DATAS_FILE]) as f:
-        for dump_file in f.readlines():
-            dump_file = dump_file.strip()
-            data_file_num = 0
-            with open(dump_file) as d:
-                counter = 1
+        for data_file in f.readlines():
+            data_file = data_file.strip()
+            with open(data_file) as d:
+                section = SEC_HEAD
+                atoms_xyz = []
+                atom_id = 0
+
                 for line in d.readlines():
                     line = line.strip()
-                    if section is None:
-                        section = find_section_state(line)
-                        #logger.debug("In process_dump_files, set section to %s.", section)
-                        if section is None:
-                            raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
-                    # elif section == SEC_TIMESTEP:
-                    #     timestep = line
-                    #     # Reset variables
-                    #     water_dict = defaultdict(list)
-                    #     dump_atom_data = []
-                    #     excess_proton = None
-                    #     h3o_mol = []
-                    #     prot_res = []
-                    #     data_file_num += 1
-                    #     section = None
-                    # elif section == SEC_NUM_ATOMS:
-                    #     if data_tpl_content[NUM_ATOMS] != int(line):
-                    #         raise InvalidDataError('At timestep {} in file {}, the listed number of atoms ({}) ' \
-                    #                                'does not equal the number of atoms in the template data file ({}).'.format(
-                    #             timestep, d, line, data_tpl_content[NUM_ATOMS]))
-                    #     section = None
-                    # elif section == SEC_BOX_SIZE:
-                    #     split_line = line.split()
-                    #     diff = float(split_line[1]) - float(split_line[0])
-                    #     box[counter - 1] = diff
-                    #     if counter == 3:
-                    #         counter = 0
-                    #         section = None
-                    #     counter += 1
-                    # elif section == SEC_ATOMS:
-                    #     split_line = line.split()
-                    #     atom_num = int(split_line[0])
-                    #     mol_num = int(split_line[1])
-                    #     atom_type = int(split_line[2])
-                    #     charge = float(split_line[3])
-                    #     x, y, z = map(float, split_line[4:7])
-                    #     atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z]
-                    #     dump_atom_data.append(atom_struct)
-                    #     # See if protonatable residue is protonated. If so, keep track of excess proton.
-                    #     # Else, keep track of hydronium molecule.
-                    #     if mol_num == cfg[PROT_RES_MOL_ID] and atom_type == cfg[PROT_H_TYPE] and atom_num not in cfg[
-                    #         PROT_IGNORE]:
-                    #         # subtract 1 from counter because counter starts at 1, index starts at zero
-                    #         excess_proton = atom_struct
-                    #     elif mol_num == cfg[PROT_RES_MOL_ID]:
-                    #         prot_res.append(atom_struct)
-                    #     elif atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[H3O_H_TYPE]:
-                    #         h3o_mol.append(atom_struct)
-                    #     elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
-                    #         water_dict[mol_num].append(atom_struct)
-                    #     if counter == data_tpl_content[NUM_ATOMS]:
-                    #         process_dump_atoms(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                    #         d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
-                    #         list_to_file(data_tpl_content[HEAD_CONTENT], d_out)
-                    #         seq_list_to_file(dump_atom_data, d_out, mode='a')
-                    #         list_to_file(data_tpl_content[TAIL_CONTENT], d_out, mode='a')
-                    #         print('Wrote file: {}'.format(d_out))
-                    #         counter = 0
-                    #         section = None
-                    #     counter += 1
+                    # not currently keeping anything from the header
+                    if section == SEC_HEAD:
+                        if atoms_pat.match(line):
+                            section = SEC_ATOMS
+                    # atoms_content to contain only xyz; also perform some checking
+                    elif section == SEC_ATOMS:
+                        if len(line) == 0:
+                            continue
+                        if velos_pat.match(line):
+                            # Since we don't need anything from the tail, just move on.
+                            break
+                        split_line = line.split()
+
+                        # Not currently checking molecule number; the number may be wrong and the data still correct!
+                        # This is due to a max on the size of the molecule number in the generated PDB
+                        # mol_num = int(split_line[1])
+
+                        atom_type = int(split_line[2])
+
+                        # Perform checking on selected atom types: O and H for water and hydronium.
+                        charm_type_atom_id = data_tpl_content[ATOMS_CONTENT][atom_id][1]
+                        #if atom_type == cfg[WAT_O_TYPE]:
+                        if atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[WAT_O_TYPE]:
+                            if charm_type_atom_id not in cfg[CHARMM_O]:
+                                raise InvalidDataError('There is a mismatch between the template pdb and the data file.'
+                                                       ' Found an oxygen on line {} (atom type {}), but expected a '
+                                                       'lammps type matching CHARMM type {}.'.format(
+                                    atom_id, atom_type, charm_type_atom_id))
+                        elif atom_type == cfg[H3O_H_TYPE] or atom_type == cfg[WAT_H_TYPE]:
+                            if charm_type_atom_id not in cfg[CHARMM_H]:
+                                raise InvalidDataError('There is a mismatch between the template pdb and the data file.'
+                                                       ' Found an oxygen on line {} (atom type {}), but expected a '
+                                                       'lammps type matching CHARMM type {}.'.format(
+                                    atom_id, atom_type, charm_type_atom_id))
+
+                        if atom_id in match_table:
+                            pdb_data_section[match_table[atom_id]][4:7] = map(float,split_line[4:7])
+                        else:
+                            pdb_data_section[atom_id][4:7] = map(float,split_line[4:7])
+                        atom_id += 1
+
+            # Now that finished reading the file...
+            # Check total length
+            if atom_id  != len(data_tpl_content[ATOMS_CONTENT]):
+                raise InvalidDataError('The number of atoms in the data file {} ({}) does not equal ' \
+                                       'the number of atoms in the pdb template file ({}).'.format(
+                    atom_id,len(data_tpl_content[ATOMS_CONTENT]),data_file))
+            # Now print!
+            f_name = create_out_fname(data_file, '', ext='.pdb')
+            print_pdb(data_tpl_content[HEAD_CONTENT],pdb_data_section,data_tpl_content[TAIL_CONTENT],
+                  f_name,cfg[PDB_FORMAT])
+            print('Completed writing {}'.format(f_name))
     return
 
 
@@ -439,11 +367,19 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
+    match_table = {}
+    with open('match_table.csv', 'r') as csvfile:
+        table_reader = csv.reader(csvfile)
+        for row in table_reader:
+            if len(row) != 2:
+                raise InvalidDataError('Row is length {}. Must be length 2.'.format(len(row)))
+            match_table[int(row[0])] = int(row[1])
+
     # Read template and dump files
     cfg = args.config
     try:
         pdb_tpl_content = process_pdb_tpl(cfg)
-    #     process_dump_files(cfg, pdb_tpl_content)
+        process_data_files(cfg, pdb_tpl_content,match_table)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

@@ -75,7 +75,11 @@ tests/test_data/evbd2d/check.sh
 tests/test_data/evbd2d/data_check_list.txt
 tests/test_data/evbd2d/dump_list.txt
 tests/test_data/evbd2d/*3*.data
-tests/test_data/data2pdb/reus_1_topdb.data
-tests/test_data/data2pdb/reus_2_topdb.data
-tests/test_data/data2pdb/reus_3_topdb.data
-tests/test_data/data2pdb/reus_4_topdb.data
+tests/test_data/data2pdb/reus_1*
+tests/test_data/data2pdb/reus_2*
+tests/test_data/data2pdb/reus_3*
+tests/test_data/data2pdb/reus_4*
+tests/test_data/data2pdb/reus_*pdb
+tests/test_data/data2pdb/match_table.csv
+tests/test_data/data2pdb/reproduced_tpl.pdb
+

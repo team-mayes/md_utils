@@ -137,14 +137,14 @@ def file_to_str(fname):
         return myfile.read()
 
 
-def str_to_file(str_val, fname):
+def str_to_file(str_val, fname, mode='w'):
     """
     Writes the string to the given file.
 
     :param str_val: The string to write.
     :param fname: The location of the file to write.
     """
-    with open(fname, 'w') as myfile:
+    with open(fname, mode) as myfile:
         myfile.write(str_val)
 
 
