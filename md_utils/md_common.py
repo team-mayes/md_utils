@@ -45,6 +45,11 @@ class InvalidDataError(MdError): pass
 class NotFoundError(MdError): pass
 
 
+def warning(*objs):
+    """Writes a message to stderr."""
+    print("WARNING: ", *objs, file=sys.stderr)
+
+
 # Calculations #
 
 
@@ -459,6 +464,54 @@ def fmt_row_data(raw_data, fmt_str):
             fmt_row[key] = fmt_str.format(raw_val)
         fmt_rows.append(fmt_row)
     return fmt_rows
+
+
+def conv_raw_val(param, def_val):
+    """
+    Converts the given parameter into the given type (default returns the raw value).  Returns the default value
+    if the param is None.
+    :param param: The value to convert.
+    :param def_val: The value that determines the type to target.
+    :return: The converted parameter value.
+    """
+    if param is None:
+        return def_val
+    if isinstance(def_val, bool):
+        return bool(param)
+    if isinstance(def_val, int):
+        return int(param)
+    if isinstance(def_val, long):
+        return long(param)
+    if isinstance(def_val, float):
+        return float(param)
+    return param
+
+
+def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
+    """
+    Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
+    default value's type.
+    :param raw_cfg: The configuration map.
+    :return: The processed configuration.
+    """
+    proc_cfg = {}
+    try:
+        for key, def_val in def_cfg_vals.items():
+            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
+    except Exception as e:
+        logger.error('Problem with default config vals on key %s: %s', key, e)
+    try:
+        for key, type_func in req_keys.items():
+            proc_cfg[key] = type_func(raw_cfg[key])
+    except Exception as e:
+        logger.error('Problem with required config vals on key %s: %s', key, e)
+
+
+    # If I needed to make calculations based on values, get the values as below, and then
+    # assign to calculated config values
+    return proc_cfg
+
+
 
 
 # Comparisons #

@@ -82,4 +82,4 @@ tests/test_data/data2pdb/reus_4*
 tests/test_data/data2pdb/reus_*pdb
 tests/test_data/data2pdb/match_table.csv
 tests/test_data/data2pdb/reproduced_tpl.pdb
-
+tests/test_data/pdb2data/*

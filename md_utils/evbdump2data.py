@@ -11,7 +11,6 @@ import copy
 import logging
 import re
 import numpy as np
-import csv
 from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname
 
 import sys

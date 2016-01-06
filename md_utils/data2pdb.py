@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Creates lammps data files from lammps dump files, given a template lammps data file.
+Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
@@ -12,12 +12,11 @@ import logging
 import re
 import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname
-
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning
 import sys
 import argparse
 
-__author__ = 'mayes'
+__author__ = 'hmayes'
 
 
 # Logging
@@ -88,10 +87,6 @@ TAIL_CONTENT = 'tail_content'
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
-
-def warning(*objs):
-    """Writes a message to stderr."""
-    print("WARNING: ", *objs, file=sys.stderr)
 
 
 def to_int_list(raw_val):
@@ -181,7 +176,7 @@ def parse_cmdline(argv):
                                                  'information about the configuration of the data file to allow for '
                                                  'some checks on the data files.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/pdb2data/pdb2data.ini. "
+                                               "format. See the example file /test/test_data/data2pdb/data2pdb.ini. "
                                                "The default file name is pdb2data.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
@@ -375,7 +370,7 @@ def main(argv=None):
                 raise InvalidDataError('Row is length {}. Must be length 2.'.format(len(row)))
             match_table[int(row[0])] = int(row[1])
 
-    # Read template and dump files
+    # Read template and data files
     cfg = args.config
     try:
         pdb_tpl_content = process_pdb_tpl(cfg)
