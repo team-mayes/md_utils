@@ -41,41 +41,36 @@ MAIN_SEC = 'main'
 # Config keys
 PDB_TPL_FILE = 'pdb_tpl_file'
 DATAS_FILE = 'data_list_file'
+ATOM_TYPE_DICT_FILE = 'atom_type_dict_file'
 # PDB file info
+PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
 PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
-PDB_ATOM_TYPE_LAST_CHAR = 'pdb_atom_type_last_char'
-PDB_ATOM_INFO_LAST_CHAR = 'pdb_atom_info_last_char'
+PDB_ATOM_RES_TYPE_LAST_CHAR = 'pdb_atom+res_type_last_char'
 PDB_MOL_NUM_LAST_CHAR = 'pdb_mol_num_last_char'
 PDB_X_LAST_CHAR = 'pdb_x_last_char'
 PDB_Y_LAST_CHAR = 'pdb_y_last_char'
 PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
 #The below must have the correct number of characters! See default values
-CHARMM_O = 'charmm_O_types4water_hydronium'
-CHARMM_H = 'charmm_H_types4water_hydronium'
+
 
 # data file info
-WAT_O_TYPE = 'water_o_type'
-WAT_H_TYPE = 'water_h_type'
-H3O_O_TYPE = 'h3o_o_type'
-H3O_H_TYPE = 'h3o_h_type'
 
 # Defaults
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', PDB_FORMAT: '%s%s%s%4d    %8.3f%8.3f%8.3f%s',
-                PDB_ATOM_NUM_LAST_CHAR: 12,
-                PDB_ATOM_TYPE_LAST_CHAR: 17,
-                PDB_ATOM_INFO_LAST_CHAR: 22,
+DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv',
+                PDB_FORMAT: '%s%s%s%4d    %8.3f%8.3f%8.3f%s',
+                PDB_LINE_TYPE_LAST_CHAR: 6,
+                PDB_ATOM_NUM_LAST_CHAR: 11,
+                PDB_ATOM_RES_TYPE_LAST_CHAR: 22,
                 PDB_MOL_NUM_LAST_CHAR: 28,
                 PDB_X_LAST_CHAR: 38,
                 PDB_Y_LAST_CHAR: 46,
                 PDB_Z_LAST_CHAR: 54,
-                CHARMM_O: [' OH2 '],
-                CHARMM_H: [' H1  ',' H2  ',' H3  '],
-                }
-REQ_KEYS = {PDB_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,
-             }
+}
+REQ_KEYS = {PDB_TPL_FILE: str,
+}
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -170,11 +165,13 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file.'
+    parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file and'
+                                                 'a dictionary of CHARMM and LAMMPS types for verying that the atom'
+                                                 'types on the corresponding lines align.'
                                                  'The required input file provides the location of the '
-                                                 'template file, a file with a list of data files to convert, and '
-                                                 'information about the configuration of the data file to allow for '
-                                                 'some checks on the data files.')
+                                                 'template file, the file with a list of data files to convert, and '
+                                                 'the dictionary file (CSV, with charmm type (exactly as it in the PDB)'
+                                                 'followed by the lammps type (int).')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
                                                "format. See the example file /test/test_data/data2pdb/data2pdb.ini. "
                                                "The default file name is pdb2data.ini, located in the "
@@ -207,7 +204,7 @@ def pdb_atoms_to_file(pdb_format, list_val, fname, mode='w'):
             myfile.write(pdb_format % tuple(line) + '\n')
 
 
-def print_pdb(head_data, atoms_data, tail_data,file_name, file_format):
+def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
     list_to_file(head_data, file_name)
     pdb_atoms_to_file(file_format, atoms_data, file_name, mode='a')
     list_to_file(tail_data, file_name, mode='a')
@@ -220,45 +217,47 @@ def process_pdb_tpl(cfg):
     tpl_data[HEAD_CONTENT] = []
     tpl_data[ATOMS_CONTENT] = []
     tpl_data[TAIL_CONTENT] = []
-    section = SEC_HEAD
-    end_pat = re.compile(r"^END.*")
-    # The two lines below are for renumbering a PDB, but see comment below... not doing this right now
-    # last_mol_num = None
-    # new_mol_num = None
+
+    atom_id = 0
 
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
-
+            if len(line) == 0:
+                continue
+            line_head = line[:cfg[PDB_LINE_TYPE_LAST_CHAR]]
 
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
-            if section == SEC_HEAD:
+            if line_head == 'REMARK' or line_head == 'CRYST1':
                 tpl_data[HEAD_CONTENT].append(line)
-                section = SEC_ATOMS
 
             # atoms_content to contain everything but the xyz
-            elif section == SEC_ATOMS:
-                if end_pat.match(line):
-                    section = SEC_TAIL
-                    tpl_data[TAIL_CONTENT].append(line)
-                    continue
+            elif line_head == 'ATOM  ':
 
+                # My template PDB has ***** after atom_id 99999. Thus, I'm renumbering. Otherise, this this:
+                # atom_num = line[cfg[PDB_LINE_TYPE_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
+                # For renumbering, making sure prints in the correct format, including num of characters:
+                atom_id += 1
 
-                atom_nums = line[:cfg[PDB_ATOM_NUM_LAST_CHAR]]
-                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
-                residue = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_ATOM_INFO_LAST_CHAR]]
+                if atom_id > 99999:
+                    atom_num = format(atom_id, 'x')
+                else:
+                    atom_num = '{:5d}'.format(atom_id)
+
+                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_RES_TYPE_LAST_CHAR]]
                 # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
                 # There is already a try when calling the subroutine, so maybe I don't need to?
-                mol_num = int(line[cfg[PDB_ATOM_INFO_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
+                mol_num = int(line[cfg[PDB_ATOM_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
                 pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
                 pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
                 pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
 
-
-                # # For making a renumbered PDB
-                # # However, the number of molecules is too large, so I'm not going to worry about it!
+                # # For renumbering molecules
+                # # If this is wanted, need to handle when molid must switch to hex; probably make
+                # # a new variable for sending to line structure that is a string, as done with atom
+                # # number, switch to hex at 9999 molecules.
                 # if last_mol_num is None:
                 #     last_mol_num = mol_num
                 #     new_mol_num = mol_num
@@ -271,23 +270,84 @@ def process_pdb_tpl(cfg):
                 # last_mol_num = mol_num
                 # mol_num = new_mol_num
 
-
-                line_struct = [atom_nums, atom_type, residue, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+                line_struct = [line_head, atom_num, atom_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
                 tpl_data[ATOMS_CONTENT].append(line_struct)
 
             # tail_content to contain everything after the 'Atoms' section
-            elif section == SEC_TAIL:
+            else:
                 tpl_data[TAIL_CONTENT].append(line)
 
     if logger.isEnabledFor(logging.DEBUG):
-        print_pdb(tpl_data[HEAD_CONTENT],tpl_data[ATOMS_CONTENT],tpl_data[TAIL_CONTENT],
-                  'reproduced_tpl.pdb',cfg[PDB_FORMAT])
+        print_pdb(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT],
+                  'reproduced_tpl.pdb', cfg[PDB_FORMAT])
 
     return tpl_data
 
-def process_data_files(cfg, data_tpl_content, match_table):
+def make_dict(cfg, data_tpl_content):
     atoms_pat = re.compile(r"^Atoms.*")
-    velos_pat = re.compile(r"^Velocities.*")
+    num_atoms_pat = re.compile(r"(\d+).*atoms$")
+    matched_atom_types = {}
+    atom_type_dict = defaultdict(list)
+    non_unique_charmm = []
+    with open(cfg[DATAS_FILE]) as f:
+        for data_file in f.readlines():
+            data_file = data_file.strip()
+            with open(data_file) as d:
+                section = SEC_HEAD
+                atom_id = 0
+                num_atoms = None
+                for line in d.readlines():
+                    line = line.strip()
+                    # not currently keeping anything from the header; just check num atoms
+                    if section == SEC_HEAD:
+                        if atoms_pat.match(line):
+                            section = SEC_ATOMS
+                        elif num_atoms is None:
+                            atoms_match = num_atoms_pat.match(line)
+                            if atoms_match:
+                                # regex is 1-based
+                                num_atoms = int(atoms_match.group(1))
+
+                    elif section == SEC_ATOMS:
+                        if len(line) == 0:
+                            continue
+                        split_line = line.split()
+
+                        lammps_atom_type = int(split_line[2])
+                        charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+
+                        # Making the dictionary; use charmm as unique key. Do this first to verify library.
+                        if charmm_atom_type in matched_atom_types:
+                            # Check that we don't have conflicting matching
+                            if lammps_atom_type != matched_atom_types[charmm_atom_type]:
+                                if charmm_atom_type not in non_unique_charmm:
+                                    print('Verify that this charmm type can have multiple lammps types: ', charmm_atom_type)
+                                    print('First collision for this charmm type occurred on atom:', atom_id + 1)
+                                    non_unique_charmm.append(charmm_atom_type)
+                        else:
+                            matched_atom_types[charmm_atom_type] = lammps_atom_type
+
+                        atom_type_dict[lammps_atom_type].append(charmm_atom_type)
+
+                        atom_id += 1
+                        # Check after increment because the counter started at 0
+                        if atom_id == num_atoms:
+                            # Since the tail will come only from the template, nothing more is needed.
+                            break
+            print('Finished looking for dictionary values in file ', data_file)
+    # # Write dictionary
+    # # TODO: Save dictionary as a JASON file, then use it in processing the data files. For now, just do the check above.
+    # with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as myfile:
+    #     for line in atom_type_dict.items():
+    #         print(line)
+    #         # myfile.write('%s,%d' % line + '\n')
+
+    print('Completed making dictionary.')
+    return atom_type_dict
+
+def process_data_files(cfg, data_tpl_content):
+    atoms_pat = re.compile(r"^Atoms.*")
+    num_atoms_pat = re.compile(r"(\d+).*atoms$")
     # Don't want to change the original template data when preparing to print the new file:
     pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
     with open(cfg[DATAS_FILE]) as f:
@@ -295,62 +355,57 @@ def process_data_files(cfg, data_tpl_content, match_table):
             data_file = data_file.strip()
             with open(data_file) as d:
                 section = SEC_HEAD
-                atoms_xyz = []
                 atom_id = 0
+                num_atoms = None
 
                 for line in d.readlines():
                     line = line.strip()
-                    # not currently keeping anything from the header
+                    # not currently keeping anything from the header; just check num atoms
                     if section == SEC_HEAD:
                         if atoms_pat.match(line):
                             section = SEC_ATOMS
+                        elif num_atoms is None:
+                            atoms_match = num_atoms_pat.match(line)
+                            if atoms_match:
+                                # regex is 1-based
+                                num_atoms = int(atoms_match.group(1))
+                                if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
+                                    raise InvalidDataError('The number of atoms listed in the data file {} ({}) does ' \
+                                                    'not equal the number of atoms in the template file ({}).'.format(
+                                        num_atoms, len(data_tpl_content[ATOMS_CONTENT]), data_file))
+
                     # atoms_content to contain only xyz; also perform some checking
                     elif section == SEC_ATOMS:
                         if len(line) == 0:
                             continue
-                        if velos_pat.match(line):
-                            # Since we don't need anything from the tail, just move on.
-                            break
                         split_line = line.split()
 
-                        # Not currently checking molecule number; the number may be wrong and the data still correct!
-                        # This is due to a max on the size of the molecule number in the generated PDB
+                        # Not currently checking molecule number; the number may be wrong and the data still correct,
+                        # as PDB numbering starts over at zero a few times (due to restrictions on number of digits in
+                        # mol_num) but not the data file
                         # mol_num = int(split_line[1])
 
-                        atom_type = int(split_line[2])
+                        # TODO: Later, do a check on atom_type based on reading the dictionary.
+                        # For now, the checking was in making the dictionary.
+                        # atom_type = int(split_line[2])
 
-                        # Perform checking on selected atom types: O and H for water and hydronium.
-                        charm_type_atom_id = data_tpl_content[ATOMS_CONTENT][atom_id][1]
-                        #if atom_type == cfg[WAT_O_TYPE]:
-                        if atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[WAT_O_TYPE]:
-                            if charm_type_atom_id not in cfg[CHARMM_O]:
-                                raise InvalidDataError('There is a mismatch between the template pdb and the data file.'
-                                                       ' Found an oxygen on line {} (atom type {}), but expected a '
-                                                       'lammps type matching CHARMM type {}.'.format(
-                                    atom_id, atom_type, charm_type_atom_id))
-                        elif atom_type == cfg[H3O_H_TYPE] or atom_type == cfg[WAT_H_TYPE]:
-                            if charm_type_atom_id not in cfg[CHARMM_H]:
-                                raise InvalidDataError('There is a mismatch between the template pdb and the data file.'
-                                                       ' Found an oxygen on line {} (atom type {}), but expected a '
-                                                       'lammps type matching CHARMM type {}.'.format(
-                                    atom_id, atom_type, charm_type_atom_id))
-
-                        if atom_id in match_table:
-                            pdb_data_section[match_table[atom_id]][4:7] = map(float,split_line[4:7])
-                        else:
-                            pdb_data_section[atom_id][4:7] = map(float,split_line[4:7])
+                        pdb_data_section[atom_id][4:7] = map(float, split_line[4:7])
                         atom_id += 1
+                        # Check after increment because the counter started at 0
+                        if atom_id == num_atoms:
+                            # Since the tail will come only from the template, nothing more is needed.
+                            break
 
             # Now that finished reading the file...
             # Check total length
-            if atom_id  != len(data_tpl_content[ATOMS_CONTENT]):
-                raise InvalidDataError('The number of atoms in the data file {} ({}) does not equal ' \
-                                       'the number of atoms in the pdb template file ({}).'.format(
-                    atom_id,len(data_tpl_content[ATOMS_CONTENT]),data_file))
-            # Now print!
+            # (will be wrong if got to tail before reaching num_atoms)
+            if atom_id != num_atoms:
+                raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
+                                       'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
+            # Now make new file
             f_name = create_out_fname(data_file, '', ext='.pdb')
-            print_pdb(data_tpl_content[HEAD_CONTENT],pdb_data_section,data_tpl_content[TAIL_CONTENT],
-                  f_name,cfg[PDB_FORMAT])
+            print_pdb(data_tpl_content[HEAD_CONTENT], pdb_data_section, data_tpl_content[TAIL_CONTENT],
+                      f_name, cfg[PDB_FORMAT])
             print('Completed writing {}'.format(f_name))
     return
 
@@ -362,19 +417,13 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
-    match_table = {}
-    with open('match_table.csv', 'r') as csvfile:
-        table_reader = csv.reader(csvfile)
-        for row in table_reader:
-            if len(row) != 2:
-                raise InvalidDataError('Row is length {}. Must be length 2.'.format(len(row)))
-            match_table[int(row[0])] = int(row[1])
+    cfg = args.config
 
     # Read template and data files
-    cfg = args.config
     try:
         pdb_tpl_content = process_pdb_tpl(cfg)
-        process_data_files(cfg, pdb_tpl_content,match_table)
+        lammps_charmm_dict = make_dict(cfg, pdb_tpl_content)
+        process_data_files(cfg, pdb_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
