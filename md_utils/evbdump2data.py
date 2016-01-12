@@ -210,7 +210,10 @@ def process_data_tpl(cfg):
     section = SEC_HEAD
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
-    velos_pat = re.compile(r"^Velocities.*")
+    # put in dummy x y z
+    x = 0.0
+    y = 0.0
+    z = 0.0
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
@@ -226,21 +229,16 @@ def process_data_tpl(cfg):
                 if atoms_pat.match(line):
                     section = SEC_ATOMS
                     tpl_data[HEAD_CONTENT].append('')
-            # atoms_content to contain everything but the xyz: atom_num, mol_num, atom_type, charge'
+            # atoms_content to contain everything but the xyz: atom_num, mol_num, atom_type, charge, type'
             elif section == SEC_ATOMS:
                 if len(line) == 0:
-                    continue
-                if velos_pat.match(line):
-                    section = SEC_TAIL
-                    # Append one new line
-                    tpl_data[TAIL_CONTENT].append('')
-                    tpl_data[TAIL_CONTENT].append(line)
                     continue
                 split_line = line.split()
                 atom_num = int(split_line[0])
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
+                type = ' '.join(split_line[7:])
                 atom_struct = [atom_num, mol_num, atom_type, charge]
                 tpl_data[ATOMS_CONTENT].append(atom_struct)
                 if atom_type == cfg[H3O_O_TYPE]:
@@ -255,6 +253,8 @@ def process_data_tpl(cfg):
                     tpl_data[PROT_RES_MOL].append(atom_struct)
                 elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
                     tpl_data[WATER_MOLS][mol_num].append(atom_struct)
+                if atom_num == tpl_data[NUM_ATOMS]:
+                     section = SEC_TAIL
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
@@ -447,7 +447,7 @@ def process_dump_files(cfg, data_tpl_content):
                             water_dict[mol_num].append(atom_struct)
                         if counter == data_tpl_content[NUM_ATOMS]:
                             process_dump_atoms(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                            d_out = create_out_suf_fname(dump_file, '_' + str(data_file_num), ext='.data')
+                            d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
                             list_to_file(data_tpl_content[HEAD_CONTENT], d_out)
                             seq_list_to_file(dump_atom_data, d_out, mode='a')
                             list_to_file(data_tpl_content[TAIL_CONTENT], d_out, mode='a')
@@ -464,6 +464,8 @@ def main(argv=None):
     # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
+
+    # TODO: in generated data files, print atom types and provide new header based on where this came from
 
     # Read template and dump files
     cfg = args.config
