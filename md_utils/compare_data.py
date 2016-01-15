@@ -238,8 +238,16 @@ def process_data_files(cfg):
 
     # Create dictionaries
     masses = {}
-    atoms = {}
     pairs = {}
+    angl_coef = {}
+    dihe_coef = {}
+    impr_coef = {}
+    atoms = {}
+    # No unique key for the following
+    bonds = defaultdict(list)
+    angls = defaultdict(list)
+    dihes = defaultdict(list)
+    imprs = defaultdict(list)
 
     first_file = True
     with open(cfg[DATAS_FILE]) as f:
@@ -328,11 +336,30 @@ def process_data_files(cfg):
                             masses[split_line[0]] = split_line[1]
                         else:
                             if split_line[0] in masses:
-                                if masses[split_line[0]] == split_line[1]:
-                                    continue
-                                else:
+                                if masses[split_line[0]] != split_line[1]:
+                                    print(count,num_atom_typ)
                                     print('Error: masses to not match for line: ', line)
                                     print(masses[split_line[0]],split_line[1])
+                                    break
+                            else:
+                                print('Key for this line does not match first file:', line)
+                        # Check after increment because the counter started at 0
+
+                        if count == num_atom_typ:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_PAIR_COEFF:
+                        count += 1
+                        split_line = line.split()
+                        pair_line = map(float,split_line[1:5])
+                        pair_line = [round(x, 5) for x in pair_line]
+                        if first_file:
+                            pairs[split_line[0]] = pair_line
+                        else:
+                            if split_line[0] in pairs:
+                                if pairs[split_line[0]] != pair_line:
+                                    print('Error: masses to not match for line: ', line)
+                                    print(pairs[split_line[0]],split_line[1:5])
                                     break
                             else:
                                 print('Key for this line does not match first file:', line)
@@ -340,41 +367,162 @@ def process_data_files(cfg):
                         if count == num_atom_typ:
                             print('Completed reading',section)
                             section = None
-                    elif section == SEC_PAIR_COEFF:
+                    elif section == SEC_ANGL_COEFF:
                         count += 1
                         split_line = line.split()
-                        pairs[split_line[0]] = split_line[1:]
+                        angl_line = map(float,split_line[1:5])
+                        angl_line = [round(x, 3) for x in angl_line]
+                        if first_file:
+                             angl_coef[split_line[0]] = angl_line
+                        else:
+                            if split_line[0] in angl_coef:
+                                if angl_coef[split_line[0]] !=  angl_line:
+                                    print('Error: mismatch on line: ', line)
+                                    print(angl_coef[split_line[0]],angl_line)
+                                    break
+                            else:
+                                print('Key for this line does not match first file:', line)
+                                break
                         # Check after increment because the counter started at 0
-                        if count == num_atom_typ:
+                        if count == num_angl_typ:
+                            print('Completed reading',section)
                             section = None
                     elif section == SEC_ATOMS:
                         count += 1
                         split_line = line.split()
-                        atoms[split_line[0]] = split_line[1:]
+                        # atoms_line = map(int,split_line[1:3]) + [round(x, 4) for x in  map(float,split_line[3:7])]
+                        atom_id = split_line[0]
+                        atoms_line = map(int,split_line[1:3]) + [round(float(split_line[3]), 4)]
+                        if first_file:
+                            atoms[atom_id] = atoms_line
+                        else:
+                            if split_line[0] in atoms:
+                                if atoms[atom_id] != atoms_line:
+                                    print('check atom id [first file type] [2nd file type]:', atom_id, atoms[atom_id],atoms_line)
+                            else:
+                                print('Key for this line does not match first file:', atoms_line)
+                                print(atom_id, atoms[atom_id])
                         # Check after increment because the counter started at 0
                         if count == num_atoms:
+                            print('Completed reading',section)
                             section = None
-
-
-#  = 'pair_coeff_section'
-# SEC_ANGL_COEFF = 'angle_coeff_section'
-# SEC_IMPR_COEFF = 'improp_coeff_section'
-# SEC_DIHE_COEFF = 'dihe_coeff_section'
-# SEC_ATOMS = 'atoms_section'
-# SEC_BONDS = 'bonds_section'
-# SEC_ANGLS = 'angles_section'
-# SEC_DIHES = 'dihedrals_section'
-# SEC_IMPRS = 'impropers_section'
-# SEC_VELOS = 'velos_section'
-
+                    elif section == SEC_BONDS:
+                        count += 1
+                        split_line = line.split()
+                        bond_type = int(split_line[1])
+                        bond_line = map(int,split_line[2:4])
+                        if first_file:
+                            bonds[bond_type].append(bond_line)
+                        else:
+                            if bond_type in bonds:
+                                if bond_line not in bonds[bond_type]:
+                                    print('Did not find listing in first file:', bond_type, bond_line)
+                            else:
+                                print('Did not find listing in first file:', bond_type, bond_line)
+                        if count == num_bonds:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_ANGLS:
+                        count += 1
+                        split_line = line.split()
+                        angle_type = int(split_line[1])
+                        angls_line = map(int,split_line[2:5])
+                        if first_file:
+                            angls[angle_type].append(angls_line)
+                        else:
+                            if angle_type in angls:
+                                if angls_line not in angls[angle_type]:
+                                    print('Did not find listing in first file:', angle_type, angls_line)
+                            else:
+                                print('Did not find listing in first file:', angle_type, angls_line)
+                        # if count == nums_dict[NUM_ANGLS]:
+                        if count == num_angls:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_DIHE_COEFF:
+                        count += 1
+                        split_line = line.split()
+                        dihe_line = [round(x, 3) for x in map(float,split_line[1:5])]
+                        if first_file:
+                            dihe_coef[split_line[0]] = dihe_line
+                        else:
+                            if split_line[0] in dihe_coef:
+                                if dihe_coef[split_line[0]] !=  dihe_line:
+                                    print('Error: mismatch on line: ', line)
+                                    print(dihe_coef[split_line[0]],dihe_line)
+                                    break
+                            else:
+                                print('Key for this line does not match first file:', line)
+                                break
+                        # Check after increment because the counter started at 0
+                        if count == num_dihe_typ:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_DIHES:
+                        count += 1
+                        split_line = line.split()
+                        dihe_type = int(split_line[1])
+                        dihes_line = map(int,split_line[2:6])
+                        if first_file:
+                            dihes[dihe_type].append(dihes_line)
+                        else:
+                                if dihe_type in dihes:
+                                    if dihes_line not in dihes[dihe_type]:
+                                        print('Did not find listing in first file:', dihe_type, dihes_line)
+                                else:
+                                    print('Did not find listing in first file:', dihe_type, dihes_line)
+                        if count == num_dihes:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_IMPR_COEFF:
+                        count += 1
+                        split_line = line.split()
+                        impr_line = map(float,split_line[1:3])
+                        impr_line = [round(x, 3) for x in impr_line]
+                        if first_file:
+                            impr_coef[split_line[0]] = impr_line
+                        else:
+                            if split_line[0] in impr_coef:
+                                if impr_coef[split_line[0]] !=  impr_line:
+                                    print('Error: mismatch on line: ', line)
+                                    print(impr_coef[split_line[0]],impr_line)
+                                    break
+                            else:
+                                print('Key for this line does not match first file:', line)
+                                break
+                        if count == num_impr_typ:
+                            print('Completed reading',section)
+                            section = None
+                    elif section == SEC_IMPRS:
+                        count += 1
+                        split_line = line.split()
+                        impr_type = int(split_line[1])
+                        imprs_line = map(int,split_line[2:6])
+                        if first_file:
+                            imprs[impr_type].append(imprs_line)
+                        else:
+                            if impr_type in imprs:
+                                if imprs_line not in imprs[impr_type]:
+                                    print('Did not find listing in first file:', impr_type, imprs_line)
+                            else:
+                                print('Did not find listing in first file:', impr_type, imprs_line)
+                        if count == num_imprs:
+                            print('Completed reading',section)
+                            # for index,item in enumerate(imprs):
+                            #     item_split = item.split()
+                            #     if '14006' in item_split:
+                            #         print(item)
+                            section = None
+                    # Don't need to compare velocities
+                    elif section == SEC_VELOS:
+                        count += 1
+                        if count == num_atoms:
+                            print('Completed reading',section)
+                            section = None
             first_file = False
-            print(num_atoms, num_bonds, num_angls, num_dihes, num_imprs)
-            # Now make new file
-            # f_name = create_out_suf_fname(data_file, '_new', ext='.data')
-            # print_data(data_tpl_content[HEAD_CONTENT], new_data_section, data_tpl_content[TAIL_CONTENT],
-            #            f_name)
-            # print('Completed writing {}'.format(f_name))
-
+            # print(num_atoms, num_bonds, num_angls, num_dihes, num_imprs)
+            print('Completed reading',data_file)
+            print('')
     return
 
 

@@ -68,8 +68,10 @@ tests/test_data/evbd2d/*.dump
 tests/test_data/evbd2d/check.sh
 tests/test_data/evbd2d/*.txt
 tests/test_data/evbd2d/*.data
+tests/test_data/evbd2d/*.csv
 tests/test_data/data2pdb/*pdb
 tests/test_data/data2pdb/*.csv
 tests/test_data/data2data/*.csv
 tests/test_data/data_reorder/*.txt
 tests/test_data/pdb2data/*.txt
+tests/test_data/data2data/*.data

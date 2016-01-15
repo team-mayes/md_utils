@@ -6,13 +6,11 @@ Creates pdb data files from lammps data files, given a template pdb file.
 from __future__ import print_function
 
 import ConfigParser
-from collections import defaultdict
 import copy
 import logging
 import re
-import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning
 import sys
 import argparse
 
@@ -42,6 +40,8 @@ MAIN_SEC = 'main'
 DATA_TPL_FILE = 'data_tpl_file'
 DATAS_FILE = 'data_list_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
+ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
+MAKE_DICT = 'make_dictionary_flag'
 
 # data file info
 
@@ -50,6 +50,7 @@ ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
 DEF_CFG_FILE = 'data2data.ini'
 # Set notation
 DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_type_dict_old_new.csv',
+                ANGL_TYPE_DICT_FILE: 'angle_type_dict_old_new.csv', MAKE_DICT: False,
 }
 REQ_KEYS = {DATA_TPL_FILE: str,
 }
@@ -153,7 +154,10 @@ def parse_cmdline(argv):
                                                  'file. The required input file provides the location of the '
                                                  'template file, a file with a list of data files to convert, and '
                                                  'a dictionary mapping old data types to new, to allow checks that the '
-                                                 'order is the same in the files to convert and the template file.')
+                                                 'order is the same in the files to convert and the template file.'
+                                                 'Note: Dictionaries of data types can be made, **assuming the atom'
+                                                 'numbers correspond**. The check on whether they do can be used to '
+                                                 'make a list of which atom numbers require remapping.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
                                                "format. See the example file /test/test_data/data2data/data2data.ini. "
                                                "The default file name is data2data.ini, located in the "
@@ -172,7 +176,6 @@ def parse_cmdline(argv):
         return args, INPUT_ERROR
 
     return args, GOOD_RET
-
 
 def process_data_tpl(cfg):
     tpl_loc = cfg[DATA_TPL_FILE]
@@ -230,7 +233,6 @@ def process_data_tpl(cfg):
 
     return tpl_data
 
-
 def print_data(head, data, tail, f_name):
     list_to_file(head, f_name)
     seq_list_to_file(data, f_name, mode='a')
@@ -238,7 +240,7 @@ def print_data(head, data, tail, f_name):
     return
 
 
-def make_dict(cfg, data_tpl_content):
+def make_atom_dict(cfg, data_tpl_content):
     atoms_pat = re.compile(r"^Atoms.*")
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     # Don't want to change the original template data when preparing to print the new file:
@@ -293,9 +295,9 @@ def make_dict(cfg, data_tpl_content):
                 for line in match_atom_type.items():
                     myfile.write('%d,%d' % line + '\n')
 
-            print('Completed making dictionary.')
+            print('Completed making atom dictionary.')
 
-    return
+    return match_atom_type
 
 
 def process_data_files(cfg, data_tpl_content):
@@ -379,7 +381,6 @@ def process_data_files(cfg, data_tpl_content):
             print_data(data_tpl_content[HEAD_CONTENT], new_data_section, data_tpl_content[TAIL_CONTENT],
                        f_name)
             print('Completed writing {}'.format(f_name))
-
     return
 
 
@@ -394,8 +395,10 @@ def main(argv=None):
     cfg = args.config
     try:
         data_tpl_content = process_data_tpl(cfg)
-        # make_dict(cfg, data_tpl_content)
-        process_data_files(cfg, data_tpl_content)
+        if cfg[MAKE_DICT]:
+            make_atom_dict(cfg, data_tpl_content)
+        else:
+            process_data_files(cfg, data_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

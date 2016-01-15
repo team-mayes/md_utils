@@ -1,5 +1,1 @@
-reus_0_edited_ord.data
-reus_1_edited_ord.data
-reus_2_edited_ord.data
-reus_3_edited_ord.data
-reus_4_edited_ord.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/making_new_data_files/1_lammps_matching/data_files/reus_0_edited.data
