@@ -7,12 +7,10 @@ from __future__ import print_function
 
 import ConfigParser
 from collections import defaultdict
-import copy
 import logging
 import re
-import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, warning
 import sys
 import argparse
 
@@ -92,6 +90,7 @@ SEC_DIHES = 'dihedrals_section'
 SEC_IMPRS = 'impropers_section'
 SEC_VELOS = 'velos_section'
 
+
 def to_int_list(raw_val):
     return_vals = []
     for val in raw_val.split(','):
@@ -140,9 +139,7 @@ def process_cfg(raw_cfg):
             proc_cfg[key] = type_func(raw_cfg[key])
     except Exception as e:
         logger.error('Problem with required config vals on key %s: %s', key, e)
-
-
-    # If I needed to make calculations based on values, get the values as below, and then
+        # If I needed to make calculations based on values, get the values as below, and then
     # assign to calculated config values
     return proc_cfg
 
@@ -176,10 +173,10 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(description='Compares parameters (i.e. bond coeffs) of data files to '
                                                  'determine differences. The first is read to align with the first'
                                                  'column in the dictionary; the rest to the second.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/evbd2d/compare_data_types.ini. "
-                                               "The default file name is compare_data_types.ini, located in the "
-                                               "base directory where the program as run.",
+    parser.add_argument("-c", "--config", help='The location of the configuration file in ini format. See the '
+                                               'example file /test/test_data/evbd2d/compare_data_types.ini. '
+                                               'The default file name is compare_data_types.ini, located in the '
+                                               'base directory where the program as run.',
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -201,6 +198,7 @@ def print_data(head, data, tail, f_name):
     seq_list_to_file(data, f_name, mode='a')
     list_to_file(tail, f_name, mode='a')
     return
+
 
 def find_section_state(line, current_section):
     masses_pat = re.compile(r"^Masses.*")
@@ -239,9 +237,10 @@ def find_section_state(line, current_section):
     else:
         return current_section
 
+
 def read_2int_dict(dict_file):
-    ''' Reads a two-field csv of integer values from dictionary and passes back as a dictionary
-    '''
+    """ Reads a two-field csv of integer values from dictionary and passes back as a dictionary
+    """
     two_item_dict = {}
     with open(dict_file) as csvfile:
         for line in csv.reader(csvfile):
@@ -255,7 +254,8 @@ def read_2int_dict(dict_file):
                 logger.debug("Could not convert line %s of file %s to two integers.", line, csvfile)
     return two_item_dict
 
-def find_header_values(line, dict):
+
+def find_header_values(line, num_dict):
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     num_bonds_pat = re.compile(r"(\d+).*bonds$")
     num_angl_pat = re.compile(r"(\d+).*angles$")
@@ -268,101 +268,106 @@ def find_header_values(line, dict):
     num_dihe_typ_pat = re.compile(r"(\d+).*dihedral types$")
     num_impr_typ_pat = re.compile(r"(\d+).*improper types$")
 
-    if dict[NUM_ATOMS] is None:
+    if num_dict[NUM_ATOMS] is None:
         atoms_match = num_atoms_pat.match(line)
         if atoms_match:
             # regex is 1-based
-            dict[NUM_ATOMS] = int(atoms_match.group(1))
+            num_dict[NUM_ATOMS] = int(atoms_match.group(1))
             return
-    if dict[NUM_ATOM_TYP] is None:
+    if num_dict[NUM_ATOM_TYP] is None:
         atom_match = num_atom_typ_pat.match(line)
         if atom_match:
             # regex is 1-based
-            dict[NUM_ATOM_TYP] = int(atom_match.group(1))
+            num_dict[NUM_ATOM_TYP] = int(atom_match.group(1))
             return
-    if dict[NUM_BONDS] is None:
+    if num_dict[NUM_BONDS] is None:
         bonds_match = num_bonds_pat.match(line)
         if bonds_match:
             # regex is 1-based
-            dict[NUM_BONDS] = int(bonds_match.group(1))
+            num_dict[NUM_BONDS] = int(bonds_match.group(1))
             return
-    if dict[NUM_BOND_TYP] is None:
+    if num_dict[NUM_BOND_TYP] is None:
         bond_match = num_bond_typ_pat.match(line)
         if bond_match:
             # regex is 1-based
-            dict[NUM_BOND_TYP] = int(bond_match.group(1))
+            num_dict[NUM_BOND_TYP] = int(bond_match.group(1))
             return
-    if dict[NUM_ANGLS] is None:
+    if num_dict[NUM_ANGLS] is None:
         angls_match = num_angl_pat.match(line)
         if angls_match:
             # regex is 1-based
-            dict[NUM_ANGLS] = int(angls_match.group(1))
+            num_dict[NUM_ANGLS] = int(angls_match.group(1))
             return
-    if dict[NUM_ANGL_TYP] is None:
+    if num_dict[NUM_ANGL_TYP] is None:
         angl_match = num_angl_typ_pat.match(line)
         if angl_match:
             # regex is 1-based
-            dict[NUM_ANGL_TYP] = int(angl_match.group(1))
+            num_dict[NUM_ANGL_TYP] = int(angl_match.group(1))
             return
-    if dict[NUM_DIHES] is None:
+    if num_dict[NUM_DIHES] is None:
         dihes_match = num_dihe_pat.match(line)
         if dihes_match:
             # regex is 1-based
-            dict[NUM_DIHES] = int(dihes_match.group(1))
+            num_dict[NUM_DIHES] = int(dihes_match.group(1))
             return
-    if dict[NUM_DIHE_TYP] is None:
+    if num_dict[NUM_DIHE_TYP] is None:
         dihe_match = num_dihe_typ_pat.match(line)
         if dihe_match:
             # regex is 1-based
-            dict[NUM_DIHE_TYP] = int(dihe_match.group(1))
+            num_dict[NUM_DIHE_TYP] = int(dihe_match.group(1))
             return
-    if dict[NUM_IMPRS ] is None:
+    if num_dict[NUM_IMPRS] is None:
         imprs_match = num_impr_pat.match(line)
         if imprs_match:
             # regex is 1-based
-            dict[NUM_IMPRS ] = int(imprs_match.group(1))
+            num_dict[NUM_IMPRS] = int(imprs_match.group(1))
             return
-    if dict[NUM_IMPR_TYP] is None:
+    if num_dict[NUM_IMPR_TYP] is None:
         impr_match = num_impr_typ_pat.match(line)
         if impr_match:
             # regex is 1-based
-            dict[NUM_IMPR_TYP] = int(impr_match.group(1))
+            num_dict[NUM_IMPR_TYP] = int(impr_match.group(1))
             return
 
 
-def print_dict(file_name, dict_list):
+def print_2int_dict(file_name, dict_list):
     with open(file_name, 'w') as myfile:
-        for key,value in dict_list.iteritems():
-            if len(value) == 2:
-                myfile.write('%d,%d' % (key, value) + '\n')
-            elif len(value) == 0:
-                continue
-            else:
-                raise InvalidDataError('Did not find the expected length of 2 (or 0) for the entry {} in the '
-                                       'dictionary list printing to {}.'.format(value, file_name))
+        for key, value in dict_list.iteritems():
+            myfile.write('%d,%d' % (key, value) + '\n')
 
 
 def process_data_files(cfg):
-
     # Create dictionaries
-    atom_type_dict = read_2int_dict(cfg[ATOM_TYPE_DICT_FILE])
+
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
-    masses = {}
-    pairs = {}
-    angl_coef = {}
-    dihe_coef = {}
-    impr_coef = {}
-    if cfg[MAKE_DICT] == True:
+
+    if cfg[MAKE_DICT]:
+        atoms = {}
+        atom_match = {}
         bonds = {}
         bond_match = {}
         angls = {}
         angle_match = {}
-        dihes = {}
-        dihe_match = {}
+        # dihes can have more than one type assigned.
+        dihes = defaultdict(list)
+        dihe_match = defaultdict(set)
+        dihe_dict = {}
         imprs = {}
         impr_match = {}
+    else:
+        masses = {}
+        pairs = {}
+        angl_coef = {}
+        dihe_coef = {}
+        impr_coef = {}
+        atom_type_dict = read_2int_dict(cfg[ATOM_TYPE_DICT_FILE])
+        bond_type_dict = read_2int_dict(cfg[BOND_TYPE_DICT_FILE])
+        angl_type_dict = read_2int_dict(cfg[ANGL_TYPE_DICT_FILE])
+        dihe_type_dict = read_2int_dict(cfg[DIHE_TYPE_DICT_FILE])
+        impr_type_dict = read_2int_dict(cfg[IMPR_TYPE_DICT_FILE])
+
     first_file = True
     with open(cfg[DATAS_FILE]) as f:
         for data_file in f.readlines():
@@ -373,7 +378,7 @@ def process_data_files(cfg):
                 count = 0
                 for key in num_dict_headers:
                     nums_dict[key] = None
-                # Now read the data
+                    # Now read the data
                 for line in d.readlines():
                     line = line.strip()
                     if len(line) == 0:
@@ -390,112 +395,140 @@ def process_data_files(cfg):
                                     raise InvalidDataError('Did not find a value for {} in the header of '
                                                            'file {}'.format(key, data_file))
                             continue
-                        find_header_values(line,nums_dict)
+                        find_header_values(line, nums_dict)
                     elif section == SEC_MASSES:
                         count += 1
-                        split_line = line.split()
-                        atom_type = int(split_line[0])
-                        mass = float(split_line[1])
-                        if first_file:
-                            new_atom_type = atom_type_dict[atom_type]
-                            masses[new_atom_type] = mass
-                        else:
-                            if atom_type in masses:
-                                if masses[atom_type] != mass:
-                                    print('Masses do not match for new data type: ', atom_type)
-                                    print('   Expected {}; found {}.'.format(masses[atom_type],mass))
+                        if not(cfg[MAKE_DICT]):
+                            split_line = line.split()
+                            atom_type = int(split_line[0])
+                            mass = float(split_line[1])
+                            if first_file:
+                                new_atom_type = atom_type_dict[atom_type]
+                                masses[new_atom_type] = mass
                             else:
-                                print('Did not find this atom type in the dictionary:', line)
-                        # Check after increment because the counter started at 0
+                                if atom_type in masses:
+                                    if masses[atom_type] != mass:
+                                        print('Masses do not match for new data type: ', atom_type)
+                                        print('   Expected {}; found {}.'.format(masses[atom_type], mass))
+                                else:
+                                    print('Did not find this atom type in the dictionary:', line)
+                                    # Check after increment because the counter started at 0
                         if count == nums_dict[NUM_ATOM_TYP]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_PAIR_COEFF:
                         count += 1
-                        split_line = line.split()
-                        atom_type = int(split_line[0])
-                        pair_line = map(float,split_line[1:5])
-                        pair_line = [round(x, 5) for x in pair_line]
-                        if first_file:
-                            new_atom_type = atom_type_dict[atom_type]
-                            pairs[new_atom_type] = pair_line
-                        else:
-                            if atom_type in pairs:
-                                if pairs[atom_type] != pair_line:
-                                    print('Error: pair types do not match for line: ', line)
-                                    print(pairs[atom_type],split_line[1:5])
-                                    break
+                        if not(cfg[MAKE_DICT]):
+                            split_line = line.split()
+                            atom_type = int(split_line[0])
+                            pair_line = map(float, split_line[1:5])
+                            pair_line = [round(x, 5) for x in pair_line]
+                            if first_file:
+                                new_atom_type = atom_type_dict[atom_type]
+                                pairs[new_atom_type] = pair_line
                             else:
-                                print('Key for this line does not match first file:', line)
-                        # Check after increment because the counter started at 0
+                                if atom_type in pairs:
+                                    if pairs[atom_type] != pair_line:
+                                        print('Error: pair types do not match for line: ', line)
+                                        print(pairs[atom_type], split_line[1:5])
+                                        break
+                                else:
+                                    print('Key for this line does not match first file:', line)
+                                    # Check after increment because the counter started at 0
                         if count == nums_dict[NUM_ATOM_TYP]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_ANGL_COEFF:
                         count += 1
-                        split_line = line.split()
-                        angle_type = int(split_line[0])
-                        angl_line = map(float,split_line[1:5])
-                        angl_line = [round(x, 3) for x in angl_line]
-                        if first_file:
-                             angl_coef[angle_type] = angl_line
-                        # else:
-                        #     if angle_type in angl_coef:
-                        #         if angl_coef[angle_type] !=  angl_line:
-                        #             print('Error: mismatch on line: ', line)
-                        #             print(angl_coef[angle_type],angl_line)
-                        #             break
-                        #     else:
-                        #         print('Key for this line does not match first file:', line)
+                        if not(cfg[MAKE_DICT]):
+                            split_line = line.split()
+                            angle_type = int(split_line[0])
+                            angl_line = map(float, split_line[1:5])
+                            angl_line = [round(x, 3) for x in angl_line]
+                            if first_file:
+                                angl_coef[angle_type] = angl_line
+                                # else:
+                            #     if angle_type in angl_coef:
+                            #         if angl_coef[angle_type] !=  angl_line:
+                            #             print('Error: mismatch on line: ', line)
+                            #             print(angl_coef[angle_type],angl_line)
+                            #             break
+                            #     else:
+                            #         print('Key for this line does not match first file:', line)
                         #         break
                         if count == nums_dict[NUM_ANGL_TYP]:
                             # print(angl_coef)
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_DIHE_COEFF:
                         count += 1
-                        # split_line = line.split()
-                        # dihe_line = [round(x, 3) for x in map(float,split_line[1:5])]
-                        # if first_file:
-                        #     dihe_coef[split_line[0]] = dihe_line
-                        # else:
-                        #     if split_line[0] in dihe_coef:
-                        #         if dihe_coef[split_line[0]] !=  dihe_line:
-                        #             print('Error: mismatch on line: ', line)
-                        #             print(dihe_coef[split_line[0]],dihe_line)
-                        #             break
-                        #     else:
-                        #         print('Key for this line does not match first file:', line)
-                        #         break
+                        # if not(cfg[MAKE_DICT]):
+                            # split_line = line.split()
+                            # dihe_line = [round(x, 3) for x in map(float,split_line[1:5])]
+                            # if first_file:
+                            #     dihe_coef[split_line[0]] = dihe_line
+                            # else:
+                            #     if split_line[0] in dihe_coef:
+                            #         if dihe_coef[split_line[0]] !=  dihe_line:
+                            #             print('Error: mismatch on line: ', line)
+                            #             print(dihe_coef[split_line[0]],dihe_line)
+                            #             break
+                            #     else:
+                            #         print('Key for this line does not match first file:', line)
+                            #         break
                         # Check after increment because the counter started at 0
                         if count == nums_dict[NUM_DIHE_TYP]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_IMPR_COEFF:
                         count += 1
-                        # split_line = line.split()
-                        # impr_line = map(float,split_line[1:3])
-                        # impr_line = [round(x, 3) for x in impr_line]
-                        # if first_file:
-                        #     impr_coef[split_line[0]] = impr_line
-                        # else:
-                        #     if split_line[0] in impr_coef:
-                        #         if impr_coef[split_line[0]] !=  impr_line:
-                        #             print('Error: mismatch on line: ', line)
-                        #             print(impr_coef[split_line[0]],impr_line)
-                        #             break
-                        #     else:
-                        #         print('Key for this line does not match first file:', line)
-                        #         break
+                        # if not(cfg[MAKE_DICT]):
+                            # split_line = line.split()
+                            # impr_line = map(float,split_line[1:3])
+                            # impr_line = [round(x, 3) for x in impr_line]
+                            # if first_file:
+                            #     impr_coef[split_line[0]] = impr_line
+                            # else:
+                            #     if split_line[0] in impr_coef:
+                            #         if impr_coef[split_line[0]] !=  impr_line:
+                            #             print('Error: mismatch on line: ', line)
+                            #             print(impr_coef[split_line[0]],impr_line)
+                            #             break
+                            #     else:
+                            #         print('Key for this line does not match first file:', line)
+                            #         break
                         if count == nums_dict[NUM_IMPR_TYP]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_ATOMS:
                         count += 1
-                        # For this program, nothing is needed from this section
-                        # Check after increment because the counter started at 0
+                        if cfg[MAKE_DICT]:
+                            split_line = line.split()
+                            atom_type = int(split_line[2])
+                            atoms_id = int(split_line[0])
+                            if first_file:
+                                if atoms_id in atoms:
+                                    print('Warning: non-unique atom id: ', atoms_id)
+                                else:
+                                    atoms[atoms_id] = atom_type
+                            else:
+                                if atoms_id in atoms:
+                                    old_atom_type = atoms[atoms_id]
+                                    # Have a match! If old_type in dictionary, not matched to a different new type, ok.
+                                    # If not there yet, add to the dictionary.
+                                    if old_atom_type in atom_match:
+                                        # check that no conflict!
+                                        if atom_type != atom_match[old_atom_type]:
+                                            print('    conflict! on atom:', atoms_id)
+                                            print('        matched to type {}, but expected {}.'.format(
+                                                atom_match[old_atom_type], atom_type))
+                                    else:
+                                        atom_match[old_atom_type] = atom_type
+                                else:
+                                    # Don't have a match
+                                    print('    Did not find atom listing in first file:', atom_type, atoms_id)
                         if count == nums_dict[NUM_ATOMS]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_BONDS:
                         count += 1
@@ -504,29 +537,32 @@ def process_data_files(cfg):
                             bond_type = int(split_line[1])
                             bonds_line = ' '.join(split_line[2:4])
                             if first_file:
-                                bonds[bonds_line] = bond_type
+                                if bonds_line in bonds:
+                                    print('Warning: non-unique bond: ', bonds_line)
+                                else:
+                                    bonds[bonds_line] = bond_type
                             else:
                                 opp_bonds_line = ' '.join([split_line[3], split_line[2]])
                                 if (bonds_line in bonds) or (opp_bonds_line in bonds):
                                     if bonds_line in bonds:
-                                        new_bond_type = bonds[bonds_line]
+                                        old_bond_type = bonds[bonds_line]
                                     else:
-                                        new_bond_type = bonds[opp_bonds_line]
-                                    # Have a match! Is it needed in the dictionary?
-                                    # If so and this is not a duplicate, all is well. If so and conflicts, print something.
+                                        old_bond_type = bonds[opp_bonds_line]
+                                    # Have a match! If old_type in dictionary, not matched to a different new type, ok.
                                     # If not there yet, add to the dictionary.
-                                    if bond_type in bond_match:
+                                    if old_bond_type in bond_match:
                                         # check that no conflict!
-                                        if new_bond_type != bond_match[bond_type]:
+                                        if bond_type != bond_match[old_bond_type]:
                                             print('    conflict! on bond:', bonds_line)
-                                            print('        matched to type {}, but expected {}.'.format(bond_match[bond_type],new_bond_type))
+                                            print('        matched to type {}, but expected {}.'.format(
+                                                bond_match[old_bond_type], bond_type))
                                     else:
-                                        bond_match[bond_type] = new_bond_type
+                                        bond_match[old_bond_type] = bond_type
                                 else:
                                     # Don't have a match
                                     print('    Did not find bond listing in first file:', bond_type, bonds_line)
                         if count == nums_dict[NUM_BONDS]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_ANGLS:
                         count += 1
@@ -535,29 +571,29 @@ def process_data_files(cfg):
                             angle_type = int(split_line[1])
                             angls_line = ' '.join(split_line[2:5])
                             if first_file:
-                                angls[angls_line] = angle_type
+                                if angls_line in angls:
+                                    print('Warning: non-unique angle: ', angls_line)
+                                else:
+                                    angls[angls_line] = angle_type
                             else:
                                 opp_angls_line = ' '.join([split_line[4], split_line[3], split_line[2]])
                                 if (angls_line in angls) or (opp_angls_line in angls):
                                     if angls_line in angls:
-                                        new_angle_type = angls[angls_line]
+                                        old_angle_type = angls[angls_line]
                                     else:
-                                        new_angle_type = angls[opp_angls_line]
-                                    # Have a match! Is it needed in the dictionary?
-                                    # If so and this is not a duplicate, all is well. If so and conflicts, print something.
-                                    # If not there yet, add to the dictionary.
-                                    if angle_type in angle_match:
-                                        # check that no conflict!
-                                        if new_angle_type != angle_match[angle_type]:
+                                        old_angle_type = angls[opp_angls_line]
+                                    if old_angle_type in angle_match:
+                                        if angle_type != angle_match[old_angle_type]:
                                             print('    conflict! on angle:', angls_line)
-                                            print('        matched to type {}, but expected {}.'.format(angle_match[angle_type],new_angle_type))
+                                            print('        matched to type {}, but expected {}.'.format(
+                                                angle_match[old_angle_type], angle_type))
                                     else:
-                                        angle_match[angle_type] = new_angle_type
+                                        angle_match[old_angle_type] = angle_type
                                 else:
                                     # Don't have a match
                                     print('    Did not find listing in first file:', angle_type, angls_line)
                         if count == nums_dict[NUM_ANGLS]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_DIHES:
                         count += 1
@@ -566,77 +602,73 @@ def process_data_files(cfg):
                             dihe_type = int(split_line[1])
                             dihes_line = ' '.join(split_line[2:6])
                             if first_file:
-                                dihes[dihes_line] = dihe_type
+                                # More than one type can be assigned to the same dihedral
+                                dihes[dihes_line].append(dihe_type)
                             else:
                                 opp_dihes_line = ' '.join([split_line[5], split_line[4], split_line[3], split_line[2]])
                                 if (dihes_line in dihes) or (opp_dihes_line in dihes):
                                     if dihes_line in dihes:
-                                        new_dihe_type = dihes[dihes_line]
+                                        old_dihe_type = dihes[dihes_line]
                                     else:
-                                        new_dihe_type = dihes[opp_dihes_line]
-                                    # Have a match! Is it needed in the dictionary?
-                                    # If so and this is not a duplicate, all is well. If so and conflicts, print something.
-                                    # If not there yet, add to the dictionary.
-                                    if dihe_type in dihe_match:
-                                        # check that no conflict!
-                                        if new_dihe_type != dihe_match[dihe_type]:
-                                            print('    conflict! on dihe:', dihes_line)
-                                            print('        matched to type {}, but expected {}.'.format(dihe_match[dihe_type],new_dihe_type))
-                                    else:
-                                        dihe_match[dihe_type] = new_dihe_type
+                                        old_dihe_type = dihes[opp_dihes_line]
+                                    for item in old_dihe_type:
+                                        dihe_match[item].add(dihe_type)
                                 else:
                                     # Don't have a match
                                     print('    Did not find dihe listing in first file:', dihe_type, dihes_line)
                         if count == nums_dict[NUM_DIHES]:
-                            print('Completed reading',section)
+                            for key in dihe_match:
+                                if key in dihe_match[key]:
+                                    dihe_dict[key] = key
+                                else:
+                                    print('New dihedral type for {}: {}'.format(key,dihe_match[key]))
+                            print('Completed reading', section)
                             section = None
                     elif section == SEC_IMPRS:
                         count += 1
                         if cfg[MAKE_DICT]:
                             split_line = line.split()
-                            impr_type = int(split_line[1])
+                            impre_type = int(split_line[1])
                             imprs_line = ' '.join(split_line[2:6])
                             if first_file:
-                                imprs[imprs_line] = impr_type
+                                if imprs_line in imprs:
+                                    print('Warning: non-unique impre: ', imprs_line)
+                                else:
+                                    imprs[imprs_line] = impre_type
                             else:
                                 opp_imprs_line = ' '.join([split_line[5], split_line[4], split_line[3], split_line[2]])
                                 if (imprs_line in imprs) or (opp_imprs_line in imprs):
                                     if imprs_line in imprs:
-                                        new_impr_type = imprs[imprs_line]
+                                        old_impr_type = imprs[imprs_line]
                                     else:
-                                        new_impr_type = imprs[opp_imprs_line]
-                                    # Have a match! Is it needed in the dictionary?
-                                    # If so and this is not a duplicate, all is well. If so and conflicts, print something.
-                                    # If not there yet, add to the dictionary.
-                                    if impr_type in impr_match:
-                                        # check that no conflict!
-                                        if new_impr_type != impr_match[impr_type]:
+                                        old_impr_type = imprs[opp_imprs_line]
+                                    if old_impr_type in impr_match:
+                                        if impre_type != impr_match[old_impr_type]:
                                             print('    conflict! on impr:', imprs_line)
-                                            print('        matched to type {}, but expected {}.'.format(impr_match[impr_type],new_impr_type))
+                                            print('        matched to type {}, but expected {}.'.format(
+                                                impr_match[old_impr_type], impre_type))
                                     else:
-                                        impr_match[impr_type] = new_impr_type
+                                        impr_match[old_impr_type] = impre_type
                                 else:
                                     # Don't have a match
-                                    print('    Did not find impr listing in first file:', impr_type, imprs_line)
+                                    print('    Did not find impr listing in first file:', impre_type, imprs_line)
                         if count == nums_dict[NUM_IMPRS]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
                     # Don't need to compare velocities
                     elif section == SEC_VELOS:
                         count += 1
                         if count == nums_dict[NUM_ATOMS]:
-                            print('Completed reading',section)
+                            print('Completed reading', section)
                             section = None
             first_file = False
-            # print(num_atoms, num_bonds, num_angls, num_dihes, num_imprs)
-            # for key,value in angle_match.iteritems():
-            #     print(key, value)
             if cfg[MAKE_DICT]:
-                print_dict(cfg[BOND_TYPE_DICT_FILE], bond_match)
-                print_dict(cfg[ANGL_TYPE_DICT_FILE], angle_match)
-                print_dict(cfg[DIHE_TYPE_DICT_FILE], dihe_match)
-                print_dict(cfg[IMPR_TYPE_DICT_FILE], impr_match)
-            print('Completed reading',data_file)
+                print_2int_dict(cfg[ATOM_TYPE_DICT_FILE], bond_match)
+                print_2int_dict(cfg[BOND_TYPE_DICT_FILE], bond_match)
+                print_2int_dict(cfg[ANGL_TYPE_DICT_FILE], angle_match)
+                print_2int_dict(cfg[DIHE_TYPE_DICT_FILE], dihe_dict)
+                print_2int_dict(cfg[IMPR_TYPE_DICT_FILE], impr_match)
+            print('Completed reading', data_file)
             print('')
     return
 

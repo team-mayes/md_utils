@@ -331,24 +331,35 @@ def process_data_files(cfg):
                 atoms_content = []
                 tail_content = []
                 reorder_data = {}
+                # TODO: Make printing velocities an option
+                # We are not printing velocities.
+                last_read_velos = False
                 # Now read the data
                 for line in d.readlines():
                     line = line.strip()
                     if section is None:
                         section = find_section_state(line, section)
+                        count = 0
                         if section == None:
-                            if len(atoms_content) < nums_dict[NUM_ATOMS]:
+                            # If we are skipping velocities and it was the last-read section, skip the buffer.
+                            # Otherwise, add it to the head if haven't finished reading atoms, tail otherwise
+                            if last_read_velos:
+                               last_read_velos = False
+                            elif len(atoms_content) < nums_dict[NUM_ATOMS]:
                                 head_content.append(line)
                             else:
                                 tail_content.append(line)
                             continue
-                        count = 0
+                    # Not an elif because want to continue from above if section state changed
                     if section == SEC_HEAD:
                         head_content.append(line)
                         section = find_section_state(line, section)
                         if section == SEC_HEAD:
                             find_header_values(line,nums_dict)
                         else:
+                            # Count starts at 1 because the title of the next section is already printed in the header
+                            # For all the rest, it is not
+                            count = 1
                             # Upon exiting header, made sure have all the data we need.
                             for key in nums_dict:
                                 if key is None:
@@ -356,34 +367,34 @@ def process_data_files(cfg):
                                                            'file {}'.format(key, data_file))
                     elif section in [SEC_MASSES, SEC_PAIR_COEFF]:
                         head_content.append(line)
-                        if len(line) != 0:
-                            count += 1
                         if count == nums_dict[NUM_ATOM_TYP]:
                             section = None
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_BOND_COEFF:
                         head_content.append(line)
-                        if len(line) != 0:
-                            count += 1
                         if count == nums_dict[NUM_BOND_TYP]:
                             section = None
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_ANGL_COEFF:
                         head_content.append(line)
-                        if len(line) != 0:
-                            count += 1
                         if count == nums_dict[NUM_ANGL_TYP]:
                             section = None
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_DIHE_COEFF:
                         head_content.append(line)
-                        if len(line) != 0:
-                            count += 1
                         if count == nums_dict[NUM_DIHE_TYP]:
                             section = None
-                    elif section == SEC_IMPR_COEFF:
-                        head_content.append(line)
                         if len(line) != 0:
                             count += 1
+                    elif section == SEC_IMPR_COEFF:
+                        head_content.append(line)
                         if count == nums_dict[NUM_IMPR_TYP]:
                             section = None
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_ATOMS:
                         if count == 0:
                             head_content.append(line)
@@ -395,7 +406,8 @@ def process_data_files(cfg):
                                 reorder_data[count] = line
                             if count == nums_dict[NUM_ATOMS]:
                                 section = None
-                        count += 1
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_VELOS:
                         # TODO: Don't really need velocities; They will be skipped. Not yet tested.
                         # split_line = line.split
@@ -403,11 +415,14 @@ def process_data_files(cfg):
                         # if atom_id in atom_id_dict:
                         #     atom_id = atom_id_dict[atom_id]
                         # tail_content.append(' '.join([str(atom_id)]+ split_line[1:]))
-                        if len(line) != 0:
-                            count += 1
+                        last_read_velos = True
                         if count == nums_dict[NUM_ATOMS]:
                             section = None
+                        if len(line) != 0:
+                            count += 1
                     elif section == SEC_BONDS:
+                        if count == nums_dict[NUM_BONDS]:
+                            section = None
                         if len(line) == 0:
                             tail_content.append(line)
                         else:
@@ -421,9 +436,9 @@ def process_data_files(cfg):
                                     new_atoms[id] = atom_id
                             tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[4:]))
                             count += 1
-                        if count == nums_dict[NUM_BONDS]:
-                            section = None
                     elif section == SEC_ANGLS:
+                        if count == nums_dict[NUM_ANGLS]:
+                            section = None
                         if len(line) == 0:
                             tail_content.append(line)
                         else:
@@ -437,27 +452,25 @@ def process_data_files(cfg):
                                     new_atoms[id] = atom_id
                             tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[5:]))
                             count += 1
-                        # if count == 6266:
-                        #     print(atoms, new_atoms)
-                        if count == nums_dict[NUM_ANGLS]:
-                            section = None
                     elif section == SEC_DIHES:
-                        if len(line) == 0:
-                            tail_content.append(line)
-                        else:
-                            split_line = line.split()
-                            atoms  = map(int,split_line[2:6])
-                            new_atoms = atoms
-                            for id,atom_id in enumerate(atoms):
-                                if atom_id in atom_id_dict:
-                                    new_atoms[id] = atom_id_dict[atom_id]
-                                else:
-                                    new_atoms[id] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[6:]))
-                            count += 1
                         if count == nums_dict[NUM_DIHES]:
                             section = None
+                        if len(line) == 0:
+                            tail_content.append(line)
+                        else:
+                            split_line = line.split()
+                            atoms = map(int,split_line[2:6])
+                            new_atoms = atoms
+                            for id,atom_id in enumerate(atoms):
+                                if atom_id in atom_id_dict:
+                                    new_atoms[id] = atom_id_dict[atom_id]
+                                else:
+                                    new_atoms[id] = atom_id
+                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[6:]))
+                            count += 1
                     elif section == SEC_IMPRS:
+                        if count == nums_dict[NUM_IMPRS]:
+                            section = None
                         if len(line) == 0:
                             tail_content.append(line)
                         else:
@@ -471,30 +484,26 @@ def process_data_files(cfg):
                                     new_atoms[id] = atom_id
                             tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[6:]))
                             count += 1
-                        if count == nums_dict[NUM_IMPRS]:
-                            section = None
                     else:
                         tail_content.append(line)
                         print("Note: unexpected content added to end of file:", line)
-
 
             # Now that finished reading the file...
             # Do any necessary reordering
             for atom in reorder_data:
                 atoms_content[atom_id_dict[atom]] = reorder_data[atom]
             # renumber atoms:
-            renumbered = []
+            renumbered = ['']
             new_atom_id = 1
             # new_mapping = []
             for line in atoms_content:
-                if len(line) == 0:
-                    renumbered.append(line)
-                else:
+                if len(line) != 0:
                     split_line = line.split()
                     # old_atom_id = int(split_line[0])
                     # if old_atom_id != new_atom_id:
                     #     new_mapping.append([old_atom_id,new_atom_id])
                     renumbered.append(' '.join([str(new_atom_id)]+split_line[1:]))
+                    new_atom_id += 1
 
             # # Write dictionary
             # with open('new_mapping.csv', 'w') as myfile:
