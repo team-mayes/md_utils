@@ -291,51 +291,52 @@ def pbc_dist(a, b, box):
 
 def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
     """
-    Correct for any reordering and residue protonation that may have happened in the course of the simulation,
+    Deprotonate a the residue and assign the proton to the closest water
     so that the output data matches with the template.
     """
-    # first, if the residue is protonated, remove the excess proton from the residue and make sure a hydronium
-    if len(dump_h3o_mol) == 0:
-        # Convert excess proton to a hydronium proton
-        excess_proton[1] = tpl_data[H3O_MOL][0][1]   # molecule number
-        excess_proton[2] = cfg[H3O_H_TYPE]           # type
-        excess_proton[3] = tpl_data[H3O_H_CHARGE]    # charge
-        dump_h3o_mol.append(excess_proton)
-        min_dist = np.linalg.norm(box)
-        for mol_id, molecule in water_mol_dict.items():
-            for atom in molecule:
-                if atom[2] == cfg[WAT_O_TYPE]:
-                    dist = pbc_dist(np.asarray(excess_proton[4:7]), np.asarray(atom[4:7]), box)
-            if dist < min_dist:
-                min_dist_id = mol_id
-                min_dist = dist
-                # Now that have the closed water, add its atoms to the hydronium list
-                # logger.debug("In deprotonating residue routine, the molecule ID of the closest water (to become a hydronium)"
-                #              "is %s.", min_dist_id)
-        for atom in water_mol_dict[min_dist_id]:
-            dump_h3o_mol.append(atom)
-            # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
-        del water_mol_dict[min_dist_id]
-        for atom in dump_h3o_mol:
+    # Convert excess proton to a hydronium proton
+    excess_proton[1] = tpl_data[H3O_MOL][0][1]   # molecule number
+    excess_proton[2] = cfg[H3O_H_TYPE]           # type
+    excess_proton[3] = tpl_data[H3O_H_CHARGE]    # charge
+    dump_h3o_mol.append(excess_proton)
+    min_dist = np.linalg.norm(box)
+    for mol_id, molecule in water_mol_dict.items():
+        for atom in molecule:
             if atom[2] == cfg[WAT_O_TYPE]:
-                atom[2] = cfg[H3O_O_TYPE]
-                atom[3] = tpl_data[H3O_O_CHARGE]
-            elif atom[2] == cfg[WAT_H_TYPE]:
-                atom[2] = cfg[H3O_H_TYPE]
-                atom[3] = tpl_data[H3O_H_CHARGE]
-                # Make the atom type and charge of the protonatable residue the same as for the template file (switching
-                # from protonated to deprotonated residue)
-        if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
-            raise InvalidDataError('In the current timestep of the current dump file, the number of atoms in the '
-                                   'protonatable residue does not equal the number of atoms in the template data file.')
-        for atom in range(0, len(protonatable_res)):
-            if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
-                protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
-            else:
-                raise InvalidDataError('In the current timestep of the current dump file, the atoms in the '
-                                       'protonatable residue are not ordered as in the template data file.')
+                dist = pbc_dist(np.asarray(excess_proton[4:7]), np.asarray(atom[4:7]), box)
+        if dist < min_dist:
+            min_dist_id = mol_id
+            min_dist = dist
+            # Now that have the closed water, add its atoms to the hydronium list
+            # logger.debug("In deprotonating residue routine, the molecule ID of the closest water (to become a hydronium)"
+            #              "is %s.", min_dist_id)
+    for atom in water_mol_dict[min_dist_id]:
+        dump_h3o_mol.append(atom)
+        # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
+    del water_mol_dict[min_dist_id]
+    for atom in dump_h3o_mol:
+        if atom[2] == cfg[WAT_O_TYPE]:
+            atom[2] = cfg[H3O_O_TYPE]
+            atom[3] = tpl_data[H3O_O_CHARGE]
+        elif atom[2] == cfg[WAT_H_TYPE]:
+            atom[2] = cfg[H3O_H_TYPE]
+            atom[3] = tpl_data[H3O_H_CHARGE]
+            # Make the atom type and charge of the protonatable residue the same as for the template file (switching
+            # from protonated to deprotonated residue)
+    if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
+        raise InvalidDataError('In the current timestep of the current dump file, the number of atoms in the '
+                               'protonatable residue does not equal the number of atoms in the template data file.')
+    for atom in range(0, len(protonatable_res)):
+        if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
+            protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
+        else:
+            raise InvalidDataError('In the current timestep of the current dump file, the atoms in the '
+                                   'protonatable residue are not ordered as in the template data file.')
+
+    return
 
 
+def check_h3o_mol_id(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
     # if the h3o molecule id does not match the template, make it so
     # saved as new name for readability
     #   Note: if the procedure for deprotonating a residue has been run, (at least currently) the first hydrogen may
@@ -392,8 +393,12 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         new_wat_mol = copy.copy(water_mol_dict[target_h3o_mol_id])
         del water_mol_dict[target_h3o_mol_id]
         water_mol_dict[target_wat_mol_id] = new_wat_mol
+    return
 
-###### Now reorder if needed!
+
+
+
+def check_atom_order(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
     print('template h30:', tpl_data[H3O_MOL])
 
     target_h3o_h_atom_ids = []
@@ -429,10 +434,6 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
                 h_atom_counter += 1
         print()
 
-
-#######
-
-
     # TODO: Return here: Reorder water molecules if needed
     # if the order of the water atoms does not match the template, make it so!
     if len(tpl_data[WATER_MOLS]) != len(water_mol_dict):
@@ -446,10 +447,6 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
                 break
             print('Fix me!', atom, tpl_data[WATER_MOLS][mol_id][atom_id])
     return
-
-
-def check_order(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
-    pass
 
 
 def process_dump_files(cfg, data_tpl_content):
@@ -522,7 +519,8 @@ def process_dump_files(cfg, data_tpl_content):
                 # Now that finished reading all lines
                 if len(h3o_mol) == 0:
                     deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                check_order(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
+                check_h3o_mol_id(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
+                check_atom_order(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
                 d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
                 print_data(data_tpl_content[HEAD_CONTENT], dump_atom_data, data_tpl_content[TAIL_CONTENT], d_out)
                 print('Wrote file: {}'.format(d_out))
