@@ -307,9 +307,9 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         if dist < min_dist:
             min_dist_id = mol_id
             min_dist = dist
-            # Now that have the closed water, add its atoms to the hydronium list
-            # logger.debug("In deprotonating residue routine, the molecule ID of the closest water (to become a hydronium)"
-            #              "is %s.", min_dist_id)
+    logger.debug("Deprotonated residue: the molecule ID of the closest water "
+                 "(to become a hydronium) is %s.", min_dist_id)
+    # Now that have the closest water, add its atoms to the hydronium list
     for atom in water_mol_dict[min_dist_id]:
         dump_h3o_mol.append(atom)
         # Remove the closest water from the dictionary of water molecules, and convert it to a hydronium
@@ -321,8 +321,8 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         elif atom[2] == cfg[WAT_H_TYPE]:
             atom[2] = cfg[H3O_H_TYPE]
             atom[3] = tpl_data[H3O_H_CHARGE]
-            # Make the atom type and charge of the protonatable residue the same as for the template file (switching
-            # from protonated to deprotonated residue)
+    # Make the atom type and charge of the protonatable residue the same as for the template file (switching
+    # from protonated to deprotonated residue)
     if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
         raise InvalidDataError('In the current timestep of the current dump file, the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
@@ -336,69 +336,68 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
     return
 
 
-def check_h3o_mol_id(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
+def check_h3o_mol_id(cfg, dump_h3o_mol, water_mol_dict, tpl_h3o_mol, tpl_water_mols):
     # if the h3o molecule id does not match the template, make it so
     # saved as new name for readability
     #   Note: if the procedure for deprotonating a residue has been run, (at least currently) the first hydrogen may
     #   have the correct molecule ID, while the rest does not! Thus, check from the last atom of the molecule
     #   (guaranteed not to be the first hydrogen!)
-    target_h3o_mol_id = tpl_data[H3O_MOL][-1][1]
-    if dump_h3o_mol[-1][1] != target_h3o_mol_id:
-        target_wat_mol_id = copy.copy(dump_h3o_mol[-1][1])
-        # Start by copying properties from the template; copy whole line so easier to align columns later
-        #   FYI on why I used copy: I was assigning parts of the original water and h3o to the same new molecules,
-        #   and it was referencing only, so I did not get my required combination results.
-        for atom in tpl_data[H3O_MOL]:
-            if atom[2] == cfg[H3O_O_TYPE]:
-                h3o_o_props = copy.copy(atom)
-            else:
-                # okay if overwrite; all H props should be the same
-                h3o_h_props = copy.copy(atom)
-        for atom in next(tpl_data[WATER_MOLS].itervalues()):
-            if atom[2] == cfg[WAT_O_TYPE]:
-                wat_o_props = copy.copy(atom)
-            else:
-                # okay if overwrite; all H props should be the same
-                wat_h_props = copy.copy(atom)
+    target_h3o_mol_id = tpl_h3o_mol[-1][1]
+    target_wat_mol_id = copy.copy(dump_h3o_mol[-1][1])
+    # Start by copying properties from the template; copy whole line so easier to align columns later
+    #   FYI on why I used copy: I was assigning parts of the original water and h3o to the same new molecules,
+    #   and it was referencing only, so I did not get my required combination results.
+    for atom in tpl_h3o_mol:
+        if atom[2] == cfg[H3O_O_TYPE]:
+            h3o_o_props = copy.copy(atom)
+        else:
+            # okay if overwrite; all H props should be the same
+            h3o_h_props = copy.copy(atom)
+    for atom in next(tpl_water_mols.itervalues()):
+        if atom[2] == cfg[WAT_O_TYPE]:
+            wat_o_props = copy.copy(atom)
+        else:
+            # okay if overwrite; all H props should be the same
+            wat_h_props = copy.copy(atom)
 
 
-        print('pre switching (old h3o, old water)')
-        print(dump_h3o_mol)
-        print(water_mol_dict[target_h3o_mol_id])
+    print('pre switching (old h3o, old water)')
+    print(dump_h3o_mol)
+    print(water_mol_dict[target_h3o_mol_id])
 
-        for atom_id, atom in enumerate(dump_h3o_mol):
-            atom[1] = target_h3o_mol_id
-            # Make sure line up atom types!
-            if atom[2] == cfg[H3O_O_TYPE]:
-                atom[2:3] = h3o_o_props[2:3]
-                atom[7:] = h3o_o_props[7:]
-            else:
-                atom[2:3] = h3o_h_props[2:3]
-                atom[7:] = h3o_h_props[7:]
+    for atom_id, atom in enumerate(dump_h3o_mol):
+        atom[1] = target_h3o_mol_id
+        # Make sure line up atom types!
+        if atom[2] == cfg[H3O_O_TYPE]:
+            atom[2:3] = h3o_o_props[2:3]
+            atom[7:] = h3o_o_props[7:]
+        else:
+            atom[2:3] = h3o_h_props[2:3]
+            atom[7:] = h3o_h_props[7:]
 
-        for atom_id, atom in enumerate(water_mol_dict[target_h3o_mol_id]):
-            atom[1] = target_wat_mol_id
-            # Make sure line up atom types!
-            if atom[2] == cfg[WAT_O_TYPE]:
-                atom[2:3] = wat_o_props[2:3]
-                atom[7:] = wat_o_props[7:]
-            else:
-                atom[2:3] = wat_h_props[2:3]
-                atom[7:] = wat_h_props[7:]
-        print('post switching (new h3o, new water)')
-        print(dump_h3o_mol)
-        print(water_mol_dict[target_h3o_mol_id])
+    for atom_id, atom in enumerate(water_mol_dict[target_h3o_mol_id]):
+        atom[1] = target_wat_mol_id
+        # Make sure line up atom types!
+        if atom[2] == cfg[WAT_O_TYPE]:
+            atom[2:3] = wat_o_props[2:3]
+            atom[7:] = wat_o_props[7:]
+        else:
+            atom[2:3] = wat_h_props[2:3]
+            atom[7:] = wat_h_props[7:]
+    print('post switching (new h3o, new water)')
+    print(dump_h3o_mol)
+    print(water_mol_dict[target_h3o_mol_id])
 
-        # copy before I delete it
-        new_wat_mol = copy.copy(water_mol_dict[target_h3o_mol_id])
-        del water_mol_dict[target_h3o_mol_id]
-        water_mol_dict[target_wat_mol_id] = new_wat_mol
+    # copy before I delete it
+    new_wat_mol = copy.copy(water_mol_dict[target_h3o_mol_id])
+    del water_mol_dict[target_h3o_mol_id]
+    water_mol_dict[target_wat_mol_id] = new_wat_mol
     return
 
 
 
 
-def check_atom_order(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
+def check_atom_order(cfg, dump_h3o_mol, water_mol_dict, tpl_data):
     print('template h30:', tpl_data[H3O_MOL])
 
     target_h3o_h_atom_ids = []
@@ -516,11 +515,15 @@ def process_dump_files(cfg, data_tpl_content):
                             counter = 0
                             section = None
                         counter += 1
-                # Now that finished reading all lines
+                # Now that finished reading all lines...
+                # Deprotonated if necessary
                 if len(h3o_mol) == 0:
                     deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                check_h3o_mol_id(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                check_atom_order(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
+                # Change H3O mol_id if necessary
+                target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
+                if h3o_mol[-1][1] != target_h3o_mol_id:
+                    check_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
+                check_atom_order(cfg, h3o_mol, water_dict, data_tpl_content)
                 d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
                 print_data(data_tpl_content[HEAD_CONTENT], dump_atom_data, data_tpl_content[TAIL_CONTENT], d_out)
                 print('Wrote file: {}'.format(d_out))
