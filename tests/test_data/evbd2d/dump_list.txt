@@ -1,1 +1,1 @@
-1_eq1.dump
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/equil1_new/0_eq1.dump

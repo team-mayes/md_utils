@@ -40,7 +40,6 @@ MAIN_SEC = 'main'
 DATA_TPL_FILE = 'data_tpl_file'
 DATAS_FILE = 'data_list_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
-ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
 MAKE_DICT = 'make_dictionary_flag'
 
 # data file info
@@ -50,7 +49,7 @@ MAKE_DICT = 'make_dictionary_flag'
 DEF_CFG_FILE = 'data2data.ini'
 # Set notation
 DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_type_dict_old_new.csv',
-                ANGL_TYPE_DICT_FILE: 'angle_type_dict_old_new.csv', MAKE_DICT: False,
+                MAKE_DICT: False,
 }
 REQ_KEYS = {DATA_TPL_FILE: str,
 }
@@ -391,8 +390,14 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
+
     # Read template and data files
     cfg = args.config
+
+    # TODO, did not read in file correctly
+    cfg[MAKE_DICT] = False
+
+
     try:
         data_tpl_content = process_data_tpl(cfg)
         if cfg[MAKE_DICT]:

@@ -343,6 +343,9 @@ def process_data_files(cfg):
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
 
+    # TODO Fix flag reading
+    # cfg[MAKE_DICT] = False
+
     if cfg[MAKE_DICT]:
         atoms = {}
         atom_match = {}
@@ -403,8 +406,12 @@ def process_data_files(cfg):
                             atom_type = int(split_line[0])
                             mass = float(split_line[1])
                             if first_file:
-                                new_atom_type = atom_type_dict[atom_type]
-                                masses[new_atom_type] = mass
+                                if atom_type in atom_type_dict:
+                                    new_atom_type = atom_type_dict[atom_type]
+                                    masses[new_atom_type] = mass
+                                else:
+                                    print('atom type {} does not appear in the dictionary. Its mass is {}:'.format(
+                                        atom_type,mass))
                             else:
                                 if atom_type in masses:
                                     if masses[atom_type] != mass:
@@ -424,8 +431,12 @@ def process_data_files(cfg):
                             pair_line = map(float, split_line[1:5])
                             pair_line = [round(x, 5) for x in pair_line]
                             if first_file:
-                                new_atom_type = atom_type_dict[atom_type]
-                                pairs[new_atom_type] = pair_line
+                                if atom_type in atom_type_dict:
+                                    new_atom_type = atom_type_dict[atom_type]
+                                    pairs[new_atom_type] = pair_line
+                                else:
+                                    print('atom type {} does not appear in the dictionary. Its coeffs are {}:'.format(
+                                        atom_type,pair_line))
                             else:
                                 if atom_type in pairs:
                                     if pairs[atom_type] != pair_line:
@@ -446,57 +457,82 @@ def process_data_files(cfg):
                             angl_line = map(float, split_line[1:5])
                             angl_line = [round(x, 3) for x in angl_line]
                             if first_file:
-                                angl_coef[angle_type] = angl_line
-                                # else:
-                            #     if angle_type in angl_coef:
-                            #         if angl_coef[angle_type] !=  angl_line:
-                            #             print('Error: mismatch on line: ', line)
-                            #             print(angl_coef[angle_type],angl_line)
-                            #             break
-                            #     else:
-                            #         print('Key for this line does not match first file:', line)
-                        #         break
+                                if angle_type in angl_type_dict:
+                                    new_angl_type = angl_type_dict[angle_type]
+                                    angl_coef[new_angl_type] = angl_line
+                                else:
+                                    print('Angl type {} does not appear in the dictionary. Its coeff are {}:'.format(
+                                        angle_type,angl_line))
+                            else:
+                                if angle_type in angl_coef:
+                                    if angl_coef[angle_type] !=  angl_line:
+                                        print('Error: mismatch on line: ', line)
+                                        print(angl_coef[angle_type],angl_line)
+                                        break
+                                    # else:
+                                    #     print(angle_type, angl_line, angl_coef[angle_type], 'good')
+                                else:
+                                    print('Key for this line does not match first file:', line)
+                                    break
                         if count == nums_dict[NUM_ANGL_TYP]:
                             # print(angl_coef)
                             print('Completed reading', section)
                             section = None
                     elif section == SEC_DIHE_COEFF:
                         count += 1
-                        # if not(cfg[MAKE_DICT]):
-                            # split_line = line.split()
-                            # dihe_line = [round(x, 3) for x in map(float,split_line[1:5])]
-                            # if first_file:
-                            #     dihe_coef[split_line[0]] = dihe_line
-                            # else:
-                            #     if split_line[0] in dihe_coef:
-                            #         if dihe_coef[split_line[0]] !=  dihe_line:
-                            #             print('Error: mismatch on line: ', line)
-                            #             print(dihe_coef[split_line[0]],dihe_line)
-                            #             break
-                            #     else:
-                            #         print('Key for this line does not match first file:', line)
-                            #         break
+                        if not(cfg[MAKE_DICT]):
+                            split_line = line.split()
+                            dihe_type = int(split_line[0])
+                            dihe_line = map(float, split_line[1:5])
+                            dihe_line = [round(x, 3) for x in dihe_line]
+                            if first_file:
+                                if dihe_type in dihe_type_dict:
+                                    new_dihe_type = dihe_type_dict[dihe_type]
+                                    dihe_coef[new_dihe_type] = dihe_line
+                                else:
+                                    print('Dihe type {} does not appear in the dictionary. Its coeff are: {}'.format(
+                                        dihe_type,dihe_line))
+                            else:
+                                if dihe_type in dihe_coef:
+                                    if dihe_coef[dihe_type] != dihe_line:
+                                        print('Error: mismatch on line: ', line)
+                                        print(dihe_coef[dihe_type],dihe_line)
+                                        break
+                                else:
+                                    print('Dihe type {} does not appear in the dictionary. Its coeff are: {}'.format(
+                                        dihe_type,dihe_line))
                         # Check after increment because the counter started at 0
                         if count == nums_dict[NUM_DIHE_TYP]:
                             print('Completed reading', section)
                             section = None
                     elif section == SEC_IMPR_COEFF:
                         count += 1
-                        # if not(cfg[MAKE_DICT]):
-                            # split_line = line.split()
-                            # impr_line = map(float,split_line[1:3])
-                            # impr_line = [round(x, 3) for x in impr_line]
-                            # if first_file:
-                            #     impr_coef[split_line[0]] = impr_line
-                            # else:
-                            #     if split_line[0] in impr_coef:
-                            #         if impr_coef[split_line[0]] !=  impr_line:
-                            #             print('Error: mismatch on line: ', line)
-                            #             print(impr_coef[split_line[0]],impr_line)
-                            #             break
-                            #     else:
-                            #         print('Key for this line does not match first file:', line)
-                            #         break
+                        # TODO: Why am I not reading this section for the second file??
+                        print('hello hello!')
+                        if not(cfg[MAKE_DICT]):
+                            split_line = line.split()
+                            impr_type = int(split_line[0])
+                            impr_line = map(float, split_line[1:3])
+                            impr_line = [round(x, 3) for x in impr_line]
+                            if first_file:
+                                if impr_type in impr_type_dict:
+                                    new_impr_type = impr_type_dict[impr_type]
+                                    impr_coef[new_impr_type] = impr_line
+                                else:
+                                    print('impr type {} does not appear in the dictionary. Its coeff are: {}'.format(
+                                        impr_type,impr_line))
+                            else:
+                                print(impr_type)
+                                if impr_type in impr_coef:
+                                    if impr_coef[impr_type] !=  impr_line:
+                                        print('Error: mismatch on line: ', line)
+                                        print(impr_coef[impr_type],impr_line)
+                                        break
+                                    else:
+                                        print(impr_type, impr_line, impr_coef[impr_type], 'good')
+                                else:
+                                    print('impr type {} does not appear in the dictionary. Its coeff are: {}'.format(
+                                        impr_type,impr_line))
                         if count == nums_dict[NUM_IMPR_TYP]:
                             print('Completed reading', section)
                             section = None
@@ -517,7 +553,6 @@ def process_data_files(cfg):
                                     # Have a match! If old_type in dictionary, not matched to a different new type, ok.
                                     # If not there yet, add to the dictionary.
                                     if old_atom_type in atom_match:
-                                        # check that no conflict!
                                         if atom_type != atom_match[old_atom_type]:
                                             print('    conflict! on atom:', atoms_id)
                                             print('        matched to type {}, but expected {}.'.format(
@@ -616,14 +651,14 @@ def process_data_files(cfg):
                                 else:
                                     # Don't have a match
                                     print('    Did not find dihe listing in first file:', dihe_type, dihes_line)
-                        if count == nums_dict[NUM_DIHES]:
-                            for key in dihe_match:
-                                if key in dihe_match[key]:
-                                    dihe_dict[key] = key
-                                else:
-                                    print('New dihedral type for {}: {}'.format(key,dihe_match[key]))
-                            print('Completed reading', section)
-                            section = None
+                            if count == nums_dict[NUM_DIHES]:
+                                for key in dihe_match:
+                                    if key in dihe_match[key]:
+                                        dihe_dict[key] = key
+                                    else:
+                                        print('New dihedral type for {}: {}'.format(key,dihe_match[key]))
+                                print('Completed reading', section)
+                                section = None
                     elif section == SEC_IMPRS:
                         count += 1
                         if cfg[MAKE_DICT]:
@@ -663,7 +698,7 @@ def process_data_files(cfg):
                             section = None
             first_file = False
             if cfg[MAKE_DICT]:
-                print_2int_dict(cfg[ATOM_TYPE_DICT_FILE], bond_match)
+                print_2int_dict(cfg[ATOM_TYPE_DICT_FILE], atom_match)
                 print_2int_dict(cfg[BOND_TYPE_DICT_FILE], bond_match)
                 print_2int_dict(cfg[ANGL_TYPE_DICT_FILE], angle_match)
                 print_2int_dict(cfg[DIHE_TYPE_DICT_FILE], dihe_dict)
