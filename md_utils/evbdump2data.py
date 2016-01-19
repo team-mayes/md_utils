@@ -360,7 +360,6 @@ def check_h3o_mol_id(cfg, dump_h3o_mol, water_mol_dict, tpl_h3o_mol, tpl_water_m
             # okay if overwrite; all H props should be the same
             wat_h_props = copy.copy(atom)
 
-
     print('pre switching (old h3o, old water)')
     print(dump_h3o_mol)
     print(water_mol_dict[target_h3o_mol_id])
@@ -395,43 +394,38 @@ def check_h3o_mol_id(cfg, dump_h3o_mol, water_mol_dict, tpl_h3o_mol, tpl_water_m
     return
 
 
-
-
 def check_atom_order(cfg, dump_h3o_mol, water_mol_dict, tpl_data):
     print('template h30:', tpl_data[H3O_MOL])
 
     target_h3o_h_atom_ids = []
-    target_wat_h_atom_ids = []
     for atom in tpl_data[H3O_MOL]:
         if atom[2] == cfg[H3O_O_TYPE]:
             target_h3o_o_atom_id = copy.copy(atom[0])
         else:
             target_h3o_h_atom_ids.append(copy.copy(atom[0]))
-    for atom in next(tpl_data[WATER_MOLS].itervalues()):
-        if atom[2] == cfg[WAT_O_TYPE]:
-            wat_o_props = copy.copy(atom)
-        else:
-            # okay if overwrite; all H props should be the same
-            wat_h_props = copy.copy(atom)
 
-    reorder = False
+    # Check if any are wrong
+    h_atom_counter = 0
+    target_wat_h_atom_ids = []
     for atom in dump_h3o_mol:
-        if atom[0] == target_h3o_o_atom_id or atom[0] in target_h3o_h_atom_ids:
-            continue
-        else:
-            reorder = True
-
-    if reorder:
-        h_atom_counter = 0
-        for atom in dump_h3o_mol:
-            if atom[2] == cfg[H3O_O_TYPE]:
+        if atom[2] == cfg[H3O_O_TYPE]:
+            if atom[0] == target_h3o_o_atom_id:
+                target_wat_o_atom_id = None
+            else:
+                reorder = True
                 target_wat_o_atom_id = copy.copy(atom[0])
                 atom[0] = target_h3o_o_atom_id
-            else:
-                target_wat_h_atom_ids.append(copy.copy(atom[0]))
-                atom[0] = target_h3o_h_atom_ids[h_atom_counter]
-                h_atom_counter += 1
-        print()
+        else:
+            if atom[0] in target_h3o_h_atom_ids:
+                continue
+            target_wat_h_atom_ids.append(copy.copy(atom[0]))
+            h_atom_counter += 1
+
+    if target_wat_o_atom_id is not None:
+        pass
+
+    for atom in target_wat_h_atom_ids:
+        print(atom)
 
     # TODO: Return here: Reorder water molecules if needed
     # if the order of the water atoms does not match the template, make it so!
