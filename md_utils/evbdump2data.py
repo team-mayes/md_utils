@@ -11,7 +11,7 @@ import copy
 import logging
 import re
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, to_int_list, pbc_dist, warning
 
 import sys
 import argparse
@@ -80,18 +80,6 @@ SEC_TAIL = 'tail_section'
 SEC_TIMESTEP = 'timestep'
 SEC_NUM_ATOMS = 'dump_num_atoms'
 SEC_BOX_SIZE = 'dump_box_size'
-
-
-def warning(*objs):
-    """Writes a message to stderr."""
-    print("WARNING: ", *objs, file=sys.stderr)
-
-
-def to_int_list(raw_val):
-    return_vals = []
-    for val in raw_val.split(','):
-        return_vals.append(int(val.strip()))
-    return return_vals
 
 
 def conv_raw_val(param, def_val):
@@ -281,12 +269,6 @@ def find_section_state(line):
         return SEC_BOX_SIZE
     elif atoms_pat.match(line):
         return SEC_ATOMS
-
-
-def pbc_dist(a, b, box):
-    dist = a - b
-    dist = dist - box * np.asarray(map(round, dist / box))
-    return np.linalg.norm(dist)
 
 
 def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):

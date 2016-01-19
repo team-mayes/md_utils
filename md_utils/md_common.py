@@ -18,6 +18,7 @@ import fnmatch
 from itertools import chain, islice
 
 import math
+import numpy as np
 import os
 import sys
 from shutil import copy2, Error, copystat
@@ -78,6 +79,12 @@ def xyz_distance(fir, sec):
     :raises: KeyError
     """
     return math.sqrt((fir[0] - sec[0]) ** 2 + (fir[1] - sec[1]) ** 2 + (fir[2] - sec[2]) ** 2)
+
+
+def pbc_dist(a, b, box):
+    dist = a - b
+    dist = dist - box * np.asarray(map(round, dist / box))
+    return np.linalg.norm(dist)
 
 
 # Other #
@@ -512,6 +519,11 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     return proc_cfg
 
 
+def to_int_list(raw_val):
+    return_vals = []
+    for val in raw_val.split(','):
+        return_vals.append(int(val.strip()))
+    return return_vals
 
 
 # Comparisons #
