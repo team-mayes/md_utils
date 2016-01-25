@@ -209,7 +209,7 @@ def process_evb_files(cfg):
             evb_file = evb_file.strip()
             with open(evb_file) as d:
                 section = None
-                to_print = []
+                to_print = ['timestep,prot_state_ci_squared']
                 for line in d.readlines():
                     line = line.strip()
                     if section is None:

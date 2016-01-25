@@ -189,7 +189,7 @@ def process_dump_files(cfg):
                 section = None
                 box = np.zeros((3,))
                 counter = 1
-                dist_diffs = []
+                dist_diffs = ['timestep,oh_dist1,oh_dist2,dist_diff']
                 for line in d.readlines():
                     line = line.strip()
                     if section is None:
@@ -237,8 +237,10 @@ def process_dump_files(cfg):
                             if len(carboxy_oxys) == 2:
                                 dist_diffs.append(timestep+','+calc_dists(excess_proton,carboxy_oxys,box))
                             else:
-                                raise InvalidDataError('Expected to find 2 carboxylic oxgyens. Found {}. '
-                                                       'Check input data.'.format(len(carboxy_oxys)))
+                                raise InvalidDataError('Expected to find atom indices {} in resid {} (to be treated as '
+                                                       'carboxylic oxygens). Found {} such indices at timestep {}. '
+                                                       'Check input data.'.format(cfg[PROT_O_IDS],cfg[PROT_RES_MOL_ID],
+                                                                len(carboxy_oxys),timestep))
                             section = None
                         counter += 1
                 # Now that finished reading all atom lines...
