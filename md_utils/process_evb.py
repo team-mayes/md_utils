@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-From a dump file, finds the hydroxyl OH distance on the protonateable residue (when protonated)
+Grabs selected data from evb output files
 """
 
 from __future__ import print_function
@@ -8,8 +8,9 @@ from __future__ import print_function
 import ConfigParser
 import logging
 import re
+import os
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, to_int_list, pbc_dist, warning
+from md_utils.md_common import list_to_file, InvalidDataError, warning
 
 import sys
 import argparse
@@ -18,8 +19,8 @@ __author__ = 'mayes'
 
 
 # Logging
-logger = logging.getLogger('hydroxyl_oh_dist')
-logging.basicConfig(filename='hydroxyl_oh_dist.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('process_evb')
+logging.basicConfig(filename='process_evb.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
@@ -37,24 +38,28 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-DUMPS_FILE = 'dump_list_file'
+EVBS_FILE = 'evb_list_file'
 
 PROT_RES_MOL_ID = 'prot_res_mol_id'
-PROT_H_TYPE = 'prot_h_type'
-PROT_IGNORE = 'prot_ignore_atom_nums'
-PROT_O_IDS = 'prot_carboxy_oxy_atom_nums'
 
 # Defaults
-DEF_CFG_FILE = 'hydroxyl_oh_dist.ini'
+DEF_CFG_FILE = 'process_evb.ini'
 # Set notation
-DEF_CFG_VALS = {DUMPS_FILE: 'list.txt', PROT_IGNORE: [], PROT_O_IDS: [], }
-REQ_KEYS = {PROT_RES_MOL_ID: int, PROT_H_TYPE: int, }
+DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt', }
+REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
-# For dump file processing
+# For evb file processing
 SEC_TIMESTEP = 'timestep'
-SEC_NUM_ATOMS = 'dump_num_atoms'
-SEC_BOX_SIZE = 'dump_box_size'
-SEC_ATOMS = 'atoms_section'
+SEC_COMPLEX = 'complex_section'
+SEC_STATES = 'states_section'
+SEC_EIGEN = 'eigen_vector_section'
+
+
+def to_int_list(raw_val):
+    return_vals = []
+    for val in raw_val.split(','):
+        return_vals.append(int(val.strip()))
+    return return_vals
 
 
 def conv_raw_val(param, def_val):
@@ -78,6 +83,27 @@ def conv_raw_val(param, def_val):
     if isinstance(def_val, list):
         return to_int_list(param)
     return param
+
+
+def create_out_suf_fname(src_file, suffix, base_dir=None, ext=None):
+    """Creates an outfile name for the given source file.
+
+    :param src_file: The file to process.
+    :param suffix: The file suffix to append.
+    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
+    :param ext: The extension to use instead of the source file's extension;
+        defaults to the `scr_file`'s extension.
+    :return: The output file name.
+    """
+    if base_dir is None:
+        base_dir = os.path.dirname(src_file)
+
+    base_name = os.path.splitext(src_file)[0]
+
+    if ext is None:
+        ext = os.path.splitext(src_file)[1]
+
+    return os.path.abspath(os.path.join(base_dir, base_name + suffix + ext ))
 
 
 def process_cfg(raw_cfg):
@@ -131,12 +157,11 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Find difference of distances between carboxylic oxygens and '
-                                                 'the excess proton, if the carboxylic group is protonated. '
-                                                 'Currently, this script expects only one '
-                                                 'protonatable residue.')
+    parser = argparse.ArgumentParser(description='For each timestep, find the protonated state (if appears) and its '
+                                                 'ci^2 value. '
+                                                 'Currently, this script expects only one protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
-                                               "See the example file /test/test_data/evbd2d/lammps_dist_pbc.ini. "
+                                               "See the example file /test/test_data/evbd2d/process_evb.ini. "
                                                "The default file name is lammps_dist_pbc.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
@@ -156,96 +181,83 @@ def parse_cmdline(argv):
 
 
 def find_section_state(line):
-    atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
-    if line == 'ITEM: TIMESTEP':
+    time_pat = re.compile(r"^TIMESTEP.*")
+    complex_pat = re.compile(r"^COMPLEX 1:.*")
+    state_pat = re.compile(r"^STATES.*")
+    eigen_pat = re.compile(r"^EIGEN_VECTOR.*")
+    if time_pat.match(line):
         return SEC_TIMESTEP
-    elif line == 'ITEM: NUMBER OF ATOMS':
-        return SEC_NUM_ATOMS
-    elif line == 'ITEM: BOX BOUNDS pp pp pp':
-        return SEC_BOX_SIZE
-    elif atoms_pat.match(line):
-        return SEC_ATOMS
-
-
-def calc_dists(excess_proton, carboxy_oxys,box):
-    if excess_proton is None:
-        return 'nan,nan,nan'
+    elif complex_pat.match(line):
+        return SEC_COMPLEX
+    elif state_pat.match(line):
+        return SEC_STATES
+    elif eigen_pat.match(line):
+        return SEC_EIGEN
     else:
-        dist = {}
-        for index,atom in enumerate(carboxy_oxys):
-            dist[index] = pbc_dist(np.asarray(excess_proton[4:7]), np.asarray(atom[4:7]), box)
-        return ','.join(map(str,[dist[0], dist[1], abs(dist[0] - dist[1])]))
+        return None
 
 
-def process_dump_files(cfg):
+def process_evb_files(cfg):
     """
+    Want to grab the timestep, first and 2nd mole found, first and 2nd ci^2
+    print the timestep, residue ci^2
     @param cfg: configuration data read from ini file
     @return: @raise InvalidDataError:
     """
-    with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f.readlines():
-            dump_file = dump_file.strip()
-            with open(dump_file) as d:
+    with open(cfg[EVBS_FILE]) as f:
+        for evb_file in f.readlines():
+            evb_file = evb_file.strip()
+            with open(evb_file) as d:
                 section = None
-                box = np.zeros((3,))
-                counter = 1
-                dist_diffs = []
+                to_print = []
                 for line in d.readlines():
                     line = line.strip()
                     if section is None:
                         section = find_section_state(line)
                         #logger.debug("In process_dump_files, set section to %s.", section)
-                        if section is None:
-                            raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
-                    elif section == SEC_TIMESTEP:
-                        timestep = line
+                        # If no state found, advance to next line.
+                        # Also advance to next line if the first line of a state does not contain data needed
+                        #   otherwise, go to next if block to get data from that line
+                        if section in [None, SEC_STATES, SEC_EIGEN]:
+                            continue
+                    if section == SEC_TIMESTEP:
+                        split_line = line.split()
+                        timestep = split_line[1]
                         # Reset variables
                         # Start with an entry so the atom-id = index
-                        dump_atom_data = ['']
-                        carboxy_oxys = []
-                        excess_proton = None
+                        num_states = 0
+                        state_count = 0
+                        prot_state = None
                         section = None
-                    elif section == SEC_NUM_ATOMS:
-                        num_atoms = int(line)
+                    elif section == SEC_COMPLEX:
+                        split_line = line.split()
+                        num_states = int(split_line[2])
                         section = None
-                    elif section == SEC_BOX_SIZE:
+                    elif section == SEC_STATES:
                         split_line = line.split()
-                        diff = float(split_line[1]) - float(split_line[0])
-                        box[counter - 1] = diff
-                        if counter == 3:
-                            counter = 0
-                            section = None
-                        counter += 1
-                    elif section == SEC_ATOMS:
-                        split_line = line.split()
-                        atom_num = int(split_line[0])
-                        mol_num = int(split_line[1])
-                        atom_type = int(split_line[2])
-                        charge = float(split_line[3])
-                        x, y, z = map(float, split_line[4:7])
-                        # Here, the atoms counting starts at 1. However, the template counted from zero
-                        atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z]
-                        dump_atom_data.append(atom_struct)
-                        # Keep track of carboxylic oxygens.
-                        if mol_num == cfg[PROT_RES_MOL_ID]:
-                            if atom_num in cfg[PROT_O_IDS]:
-                                carboxy_oxys.append(atom_struct)
-                            elif (atom_type == cfg[PROT_H_TYPE]) and (atom_num not in cfg[PROT_IGNORE]):
-                                excess_proton = atom_struct
-                        if counter == num_atoms:
-                            counter = 0
-                            if len(carboxy_oxys) == 2:
-                                dist_diffs.append(timestep+','+calc_dists(excess_proton,carboxy_oxys,box))
+                        mol_B = int(split_line[4])
+                        # print('state: {}, mol_B: {}'.format(state_count, split_line))
+                        if mol_B == cfg[PROT_RES_MOL_ID]:
+                            if prot_state is None:
+                                prot_state = state_count
                             else:
-                                raise InvalidDataError('Expected to find 2 carboxylic oxgyens. Found {}. '
-                                                       'Check input data.'.format(len(carboxy_oxys)))
+                                print('Multiple protonated states found')
+                        state_count += 1
+                        if state_count == num_states:
                             section = None
-                        counter += 1
+                    elif section == SEC_EIGEN:
+                        eigen_vector = map(float,line.split())
+                        if prot_state is None:
+                            prot_ci_sq = 'nan'
+                        else:
+                            prot_ci_sq = np.square(eigen_vector[prot_state])
+                        print('timestep: {}, states: {}, prot_state: {}, prot_ci_sq {}'.format(timestep, num_states, prot_state, prot_ci_sq))
+                        to_print.append(str(timestep)+','+str(prot_ci_sq))
+                        section = None
                 # Now that finished reading all atom lines...
-            print(dist_diffs)
 
-            d_out = create_out_suf_fname(dump_file, '_oh_dist', ext='.csv')
-            list_to_file(dist_diffs, d_out)
+            d_out = create_out_suf_fname(evb_file, '_prot_ci_sq', ext='.csv')
+            list_to_file(to_print, d_out)
             print('Wrote file: {}'.format(d_out))
     return
 
@@ -262,7 +274,7 @@ def main(argv=None):
     # Read template and dump files
     cfg = args.config
     try:
-        process_dump_files(cfg)
+        process_evb_files(cfg)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
