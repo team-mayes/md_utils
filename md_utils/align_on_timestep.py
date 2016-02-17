@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Grabs selected data from evb output files
+For combining data from multiple files based on a common timestep. All other data will be ignored or, if in logging
+mode, printed to a log file.
 """
 
 from __future__ import print_function
@@ -19,8 +20,8 @@ __author__ = 'mayes'
 
 
 # Logging
-logger = logging.getLogger('process_evb')
-logging.basicConfig(filename='process_evb.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('align_timestep')
+logging.basicConfig(filename='align_timestep.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
@@ -38,22 +39,13 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-EVBS_FILE = 'evb_list_file'
-
-PROT_RES_MOL_ID = 'prot_res_mol_id'
+COMPARE_FILE = 'compare_file_list'
 
 # Defaults
-DEF_CFG_FILE = 'process_evb.ini'
+DEF_CFG_FILE = 'align_timestep.ini'
 # Set notation
-DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt', }
-REQ_KEYS = {PROT_RES_MOL_ID: int, }
-
-# For evb file processing
-SEC_TIMESTEP = 'timestep'
-SEC_COMPLEX = 'complex_section'
-SEC_STATES = 'states_section'
-SEC_EIGEN = 'eigen_vector_section'
-
+DEF_CFG_VALS = {COMPARE_FILE: 'evb_list.txt', }
+REQ_KEYS = { }
 
 def conv_raw_val(param, def_val):
     """
@@ -129,12 +121,12 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='For each timestep, find the protonated state (if appears) and its '
-                                                 'ci^2 value. '
-                                                 'Currently, this script expects only one protonatable residue.')
+    parser = argparse.ArgumentParser(description='Make combine output from two files, printing only common timesteps.'
+                                                 'This program is more efficient if it reads the file with fewer '
+                                                 'timesteps first.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
-                                               "See the example file /test/test_data/evbd2d/process_evb.ini. "
-                                               "The default file name is lammps_dist_pbc.ini, located in the "
+                                               "See the example file /test/test_data/evbd2d/align_timestep.ini. "
+                                               "The default file name is align_timestep.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
@@ -151,83 +143,34 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
-
-def find_section_state(line):
-    time_pat = re.compile(r"^TIMESTEP.*")
-    complex_pat = re.compile(r"^COMPLEX 1:.*")
-    state_pat = re.compile(r"^STATES.*")
-    eigen_pat = re.compile(r"^EIGEN_VECTOR.*")
-    if time_pat.match(line):
-        return SEC_TIMESTEP
-    elif complex_pat.match(line):
-        return SEC_COMPLEX
-    elif state_pat.match(line):
-        return SEC_STATES
-    elif eigen_pat.match(line):
-        return SEC_EIGEN
-    else:
-        return None
-
-
-def process_evb_files(cfg):
+def process_files(cfg):
     """
     Want to grab the timestep, first and 2nd mole found, first and 2nd ci^2
     print the timestep, residue ci^2
     @param cfg: configuration data read from ini file
     @return: @raise InvalidDataError:
     """
-    with open(cfg[EVBS_FILE]) as f:
-        for evb_file in f.readlines():
-            evb_file = evb_file.strip()
-            with open(evb_file) as d:
-                section = None
-                to_print = ['timestep,prot_state_ci_squared']
+    with open(cfg[COMPARE_FILE]) as f:
+        for file_line in f.readlines():
+            files = [x.strip() for x in file_line.split(',')]
+            print(files)
+            time_dict = {}
+            print_lines = []
+            with open(files[0]) as d:
                 for line in d.readlines():
-                    line = line.strip()
-                    if section is None:
-                        section = find_section_state(line)
-                        #logger.debug("In process_dump_files, set section to %s.", section)
-                        # If no state found, advance to next line.
-                        # Also advance to next line if the first line of a state does not contain data needed
-                        #   otherwise, go to next if block to get data from that line
-                        if section in [None, SEC_STATES, SEC_EIGEN]:
-                            continue
-                    if section == SEC_TIMESTEP:
-                        split_line = line.split()
-                        timestep = split_line[1]
-                        # Reset variables
-                        # Start with an entry so the atom-id = index
-                        num_states = 0
-                        state_count = 0
-                        prot_state = []
-                        prot_ci_sq = 0.0
-                        section = None
-                    elif section == SEC_COMPLEX:
-                        split_line = line.split()
-                        num_states = int(split_line[2])
-                        section = None
-                    elif section == SEC_STATES:
-                        split_line = line.split()
-                        mol_B = int(split_line[4])
-                        # print('state: {}, mol_B: {}'.format(state_count, split_line))
-                        if mol_B == cfg[PROT_RES_MOL_ID]:
-                            prot_state.append(state_count)
-                        state_count += 1
-                        if state_count == num_states:
-                            section = None
-                    elif section == SEC_EIGEN:
-                        eigen_vector = map(float,line.split())
-                        eigen_sq = np.square(eigen_vector)
-                        for state in prot_state:
-                            if eigen_sq[state] > prot_ci_sq:
-                                prot_ci_sq = eigen_sq[state]
-                        #print('timestep: {}, states: {}, prot_state: {}, prot_ci_sq {}'.format(timestep, num_states, prot_state, prot_ci_sq))
-                        to_print.append(str(timestep)+','+str(prot_ci_sq))
-                        section = None
-                # Now that finished reading all atom lines...
+                    split_line = [x.strip() for x in line.split(',')]
+                    time_dict[split_line[0]] = split_line[1:]
+            with open(files[1]) as e:
+                for line in e.readlines():
+                    split_line = [x.strip() for x in line.split(',')]
+                    if split_line[0] in time_dict:
+                        print_lines.append(','.join([split_line[0]] + time_dict[split_line[0]] + split_line[1:]))
+                    else:
+                        logger.debug("Timestep {} found in second file, but not first. Will discard second file "
+                                     "line {}.".format(split_line[0], line.strip()))
 
-            d_out = create_out_suf_fname(evb_file, '_prot_ci_sq', ext='.csv')
-            list_to_file(to_print, d_out)
+            d_out = create_out_suf_fname(files[0], '_plus', ext='.csv')
+            list_to_file(print_lines, d_out)
             print('Wrote file: {}'.format(d_out))
     return
 
@@ -239,12 +182,13 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
-    # TODO: in generated data files, print atom types and provide new header based on where this came from
+    # TODO: Make so can combine multiple files
+    # TODO: Make user specify the file with fewer lines
 
     # Read template and dump files
     cfg = args.config
     try:
-        process_evb_files(cfg)
+        process_files(cfg)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

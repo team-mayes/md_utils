@@ -18,8 +18,8 @@ __author__ = 'mayes'
 
 
 # Logging
-logger = logging.getLogger('hydroxyl_oh_dist')
-logging.basicConfig(filename='hydroxyl_oh_dist.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('hydroxyl_key_props')
+logging.basicConfig(filename='hydroxyl_key_props.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
@@ -43,6 +43,9 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
 PROT_O_IDS = 'prot_carboxy_oxy_atom_nums'
+OO_CUTOFF = 'O-O distance cutoff'
+OO_CUTOFF = 'O-O distance cutoff'
+
 
 # Defaults
 DEF_CFG_FILE = 'hydroxyl_oh_dist.ini'

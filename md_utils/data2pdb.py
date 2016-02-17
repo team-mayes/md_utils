@@ -45,12 +45,14 @@ ATOM_TYPE_DICT_FILE = 'atom_type_dict_file'
 # PDB file info
 PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
 PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
-PDB_ATOM_RES_TYPE_LAST_CHAR = 'pdb_atom+res_type_last_char'
+PDB_ATOM_TYPE_LAST_CHAR = 'pdb_atom_type_last_char'
+PDB_RES_TYPE_LAST_CHAR = 'pdb_res_type_last_char'
 PDB_MOL_NUM_LAST_CHAR = 'pdb_mol_num_last_char'
 PDB_X_LAST_CHAR = 'pdb_x_last_char'
 PDB_Y_LAST_CHAR = 'pdb_y_last_char'
 PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
+LAST_PROT_ID = 'last_prot_atom'
 #The below must have the correct number of characters! See default values
 
 
@@ -60,14 +62,16 @@ PDB_FORMAT = 'pdb_print_format'
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
 DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv',
-                PDB_FORMAT: '%s%s%s%4d    %8.3f%8.3f%8.3f%s',
+                PDB_FORMAT: '%s%s%s%s%4d    %8.3f%8.3f%8.3f%s',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
-                PDB_ATOM_RES_TYPE_LAST_CHAR: 22,
+                PDB_ATOM_TYPE_LAST_CHAR: 17,
+                PDB_RES_TYPE_LAST_CHAR: 22,
                 PDB_MOL_NUM_LAST_CHAR: 28,
                 PDB_X_LAST_CHAR: 38,
                 PDB_Y_LAST_CHAR: 46,
                 PDB_Z_LAST_CHAR: 54,
+                LAST_PROT_ID: 0,
 }
 REQ_KEYS = {PDB_TPL_FILE: str,
 }
@@ -210,6 +214,66 @@ def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
     list_to_file(tail_data, file_name, mode='a')
     return
 
+def make_atom_type_element_dict(atom_section, last_prot_atom):
+    """
+    To make a lists of PDB atom types according to element type
+
+    @param atom_section: assumes the atom type is in entry index 2
+    @return:
+    """
+    prot_atom_types = set()
+
+    c_pat = re.compile(r"^C.*")
+    c_atoms = []
+    h_pat = re.compile(r"^H.*")
+    h_atoms = []
+    o_pat = re.compile(r"^O.*")
+    o_atoms = []
+    n_pat = re.compile(r"^N.*")
+    n_atoms = []
+    s_pat = re.compile(r"^S.*")
+    s_atoms = []
+
+
+    for id,entry in enumerate(atom_section):
+        if id < last_prot_atom:
+            prot_atom_types.add(entry[2])
+
+    for atom in prot_atom_types:
+        atom_strip = atom.strip()
+        c_match = c_pat.match(atom_strip)
+        o_match = o_pat.match(atom_strip)
+        h_match = h_pat.match(atom_strip)
+        n_match = n_pat.match(atom_strip)
+        s_match = s_pat.match(atom_strip)
+        if c_match:
+            c_atoms.append(atom)
+        elif o_match:
+            o_atoms.append(atom)
+        elif h_match:
+            h_atoms.append(atom)
+        elif n_match:
+            n_atoms.append(atom)
+        elif s_match:
+            s_atoms.append(atom)
+        else:
+            raise InvalidDataError('Please add atom type {} to a dictionary of elements.'.format(atom))
+        # atom_type_dict
+
+    # This printing is to check with VMD
+    print(' '.join(c_atoms))
+    print(' '.join(o_atoms))
+    print(' '.join(h_atoms))
+    print(' '.join(n_atoms))
+    print(' '.join(s_atoms))
+    # lists for python
+    print(c_atoms)
+    print(o_atoms)
+    print(h_atoms)
+    print(n_atoms)
+    print(s_atoms)
+
+    return
 
 def process_pdb_tpl(cfg):
     tpl_loc = cfg[PDB_TPL_FILE]
@@ -218,7 +282,16 @@ def process_pdb_tpl(cfg):
     tpl_data[ATOMS_CONTENT] = []
     tpl_data[TAIL_CONTENT] = []
 
+    last_prot_atom = cfg[LAST_PROT_ID]
+
     atom_id = 0
+
+    # Added this because my template did not have these types....
+    c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ', '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ']
+    o_atoms = ['  OG1 ', '  OT2 ', '  OG  ', '  OE1 ', '  OH  ', '  OD1 ', '  OT1 ', '  O   ', '  OE2 ', '  OD2 ']
+    h_atoms = ['  HZ1 ', ' HD23 ', ' HG12 ', '  HD1 ', '  HE3 ', '  HA2 ', ' HD21 ', ' HH11 ', '  HG  ', '  HB2 ', '  HE  ', '  HE1 ', '  HT1 ', '  HT2 ', '  HA  ', ' HG11 ', ' HE21 ', '  HG2 ', '  HD3 ', '  HZ3 ', ' HG22 ', '  HB  ', '  HN  ', ' HD22 ', '  HA1 ', '  HE2 ', ' HE22 ', '  HB3 ', ' HD13 ', '  HD2 ', ' HH12 ', '  HH  ', ' HH22 ', '  HB1 ', ' HD11 ', '  HH2 ', '  HG1 ', '  HT3 ', ' HD12 ', ' HH21 ', ' HG21 ', '  HZ  ', '  HZ2 ', ' HG13 ', ' HG23 ']
+    n_atoms = ['  ND1 ', '  NH2 ', '  N   ', '  NE2 ', '  ND2 ', '  NE1 ', '  NH1 ', '  NE  ', '  NZ  ']
+    s_atoms = ['  SD  ', '  SG  ']
 
     with open(tpl_loc) as f:
         for line in f.readlines():
@@ -245,14 +318,30 @@ def process_pdb_tpl(cfg):
                 else:
                     atom_num = '{:5d}'.format(atom_id)
 
-                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_RES_TYPE_LAST_CHAR]]
+                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
+                res_type = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_RES_TYPE_LAST_CHAR]]
                 # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
                 # There is already a try when calling the subroutine, so maybe I don't need to?
-                mol_num = int(line[cfg[PDB_ATOM_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
+                mol_num = int(line[cfg[PDB_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
                 pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
                 pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
                 pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
+                element = ''
+
+                if atom_id <= last_prot_atom:
+                    if atom_type in c_atoms:
+                        element = '   C'
+                    elif atom_type in o_atoms:
+                        element = '   O'
+                    elif atom_type in h_atoms:
+                        element = '   H'
+                    elif atom_type in n_atoms:
+                        element = '   N'
+                    elif atom_type in s_atoms:
+                        element = '   S'
+                    else:
+                        raise InvalidDataError('Please add atom type {} to a dictionary of elements.'.format(atom_type))
 
                 # # For renumbering molecules
                 # # If this is wanted, need to handle when molid must switch to hex; probably make
@@ -270,8 +359,12 @@ def process_pdb_tpl(cfg):
                 # last_mol_num = mol_num
                 # mol_num = new_mol_num
 
-                line_struct = [line_head, atom_num, atom_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+                line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols + element]
                 tpl_data[ATOMS_CONTENT].append(line_struct)
+
+                if atom_id < 10:
+                    print(line_struct)
+
 
             # tail_content to contain everything after the 'Atoms' section
             else:
@@ -314,7 +407,7 @@ def make_dict(cfg, data_tpl_content):
                         split_line = line.split()
 
                         lammps_atom_type = int(split_line[2])
-                        charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+                        charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2] + data_tpl_content[ATOMS_CONTENT][atom_id][3]
 
                         # Making the dictionary; use charmm as unique key. Do this first to verify library.
                         if charmm_atom_type in matched_atom_types:
@@ -389,7 +482,7 @@ def process_data_files(cfg, data_tpl_content):
                         # For now, the checking was in making the dictionary.
                         # atom_type = int(split_line[2])
 
-                        pdb_data_section[atom_id][4:7] = map(float, split_line[4:7])
+                        pdb_data_section[atom_id][5:8] = map(float, split_line[4:7])
                         atom_id += 1
                         # Check after increment because the counter started at 0
                         if atom_id == num_atoms:

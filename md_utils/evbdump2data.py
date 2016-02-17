@@ -493,20 +493,20 @@ def process_dump_files(cfg, data_tpl_content):
                         if counter == data_tpl_content[NUM_ATOMS]:
                             counter = 0
                             section = None
+                            # Now that finished reading all atom lines...
+                            # Deprotonated if necessary
+                            if len(h3o_mol) == 0:
+                                deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
+                            # Change H3O mol_id if necessary
+                            target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
+                            if h3o_mol[-1][1] != target_h3o_mol_id:
+                                change_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
+                            check_h3o_atom_id(cfg, h3o_mol, dump_atom_data, data_tpl_content)
+                            check_all_atom_id(dump_atom_data, data_tpl_content[ATOMS_CONTENT])
+                            d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
+                            print_data(data_tpl_content[HEAD_CONTENT], dump_atom_data[1:], data_tpl_content[TAIL_CONTENT], d_out)
+                            print('Wrote file: {}'.format(d_out))
                         counter += 1
-                # Now that finished reading all atom lines...
-                # Deprotonated if necessary
-                if len(h3o_mol) == 0:
-                    deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                # Change H3O mol_id if necessary
-                target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
-                if h3o_mol[-1][1] != target_h3o_mol_id:
-                    change_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
-                check_h3o_atom_id(cfg, h3o_mol, dump_atom_data, data_tpl_content)
-                check_all_atom_id(dump_atom_data, data_tpl_content[ATOMS_CONTENT])
-                d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
-                print_data(data_tpl_content[HEAD_CONTENT], dump_atom_data[1:], data_tpl_content[TAIL_CONTENT], d_out)
-                print('Wrote file: {}'.format(d_out))
     return
 
 
