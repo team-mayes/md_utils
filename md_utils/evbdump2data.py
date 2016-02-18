@@ -202,6 +202,21 @@ def process_data_tpl(cfg):
     x = 0.0
     y = 0.0
     z = 0.0
+
+
+    total_charge = 0.0
+
+    # For debugging total charge
+    key_atom_ids = {}
+    key_atom_ids['last_p1']    = 15436
+    key_atom_ids[15436] = 'last_p1'
+    key_atom_ids[16327] = 'last_p2'
+    key_atom_ids[16328] = 'lone_pot'
+    key_atom_ids[65640] = 'last_lipid'
+    key_atom_ids[65644] = 'last_hyd'
+    key_atom_ids[213877] = 'last_water'
+    key_atom_ids[213992] = 'last_pot'
+
     with open(tpl_loc) as f:
         for line in f.readlines():
             line = line.strip()
@@ -229,6 +244,9 @@ def process_data_tpl(cfg):
                 descrip = ' '.join(split_line[7:])
                 atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, descrip]
                 tpl_data[ATOMS_CONTENT].append(atom_struct)
+                total_charge += charge
+
+
                 if atom_type == cfg[H3O_O_TYPE]:
                     tpl_data[H3O_MOL].append(atom_struct)
                     tpl_data[H3O_O_CHARGE] = charge
@@ -243,6 +261,11 @@ def process_data_tpl(cfg):
                     tpl_data[WATER_MOLS][mol_num].append(atom_struct)
                 if atom_num == tpl_data[NUM_ATOMS]:
                     section = SEC_TAIL
+                    ## Also check total charge
+                    print('Total charge is: {}'.format(total_charge))
+                elif atom_num in key_atom_ids:
+                    print('After atom {} ({}), the total charge is: {}'.format(atom_num, key_atom_ids[atom_num], total_charge))
+
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
@@ -517,7 +540,9 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
-    # TODO: in generated data files, print atom types and provide new header based on where this came from
+    # TODO: in generated data files, provide new header based on where this came from
+    # TODO: specify output directory
+    # TODO: make a job list to feed to next step
 
     # Read template and dump files
     cfg = args.config

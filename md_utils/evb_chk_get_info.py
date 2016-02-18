@@ -10,7 +10,7 @@ import copy
 import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname
 import sys
 import argparse
 
@@ -37,8 +37,9 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-CHK_FILE = 'evb_chk_file'
+CHK_FILE_LIST = 'evb_chk_file_list'
 LAST_EXCLUDE_ID = 'last_exclude_id'
+OUT_BASE_DIR = 'output_base_directory'
 
 # data file info
 
@@ -46,9 +47,9 @@ LAST_EXCLUDE_ID = 'last_exclude_id'
 # Defaults
 DEF_CFG_FILE = 'evb_chk_get_info.ini'
 # Set notation
-DEF_CFG_VALS = { LAST_EXCLUDE_ID: 0
+DEF_CFG_VALS = { LAST_EXCLUDE_ID: 0, OUT_BASE_DIR: None,
 }
-REQ_KEYS = {CHK_FILE: str,
+REQ_KEYS = {CHK_FILE_LIST: str,
 }
 
 # Sections
@@ -166,92 +167,114 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+def print_qm_kind(int_list, element_name, fname, mode='w'):
+    """
+    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
 
-def print_qm_kind(int_list, element_name):
-    print('    &QM_KIND {}'.format(element_name))
-    print('        MM_INDEX {}'.format(' '.join(map(str,int_list))))
-    print('    &END QM_KIND')
+    :param list_val: The list to write.
+    :param element_name: element type to designate
+    :param fname: The location of the file to write.
+    :param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(fname, mode) as myfile:
+        myfile.write('    &QM_KIND {} \n'.format(element_name))
+        myfile.write('        MM_INDEX {} \n'.format(' '.join(map(str,int_list))))
+        myfile.write('    &END QM_KIND \n')
     return
 
 
 def print_qm_links(resid, dict):
+    """
+    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
+    @param resid: protein residue to be broken. Only used for comment line.
+    @param dict: atom ids of CA and CB to be broken
+    @return: not acutally needed.
+    """
+    print('! Break resid {} between CA and CB, and cap CB with hydrogen'.format(resid))
     print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n    &END LINK '.format(dict['CA'],dict['CB']))
     return
 
 
-def process_data_tpl(cfg):
+def print_vmd_list(atom_ids, fname, mode='w'):
+    # Change to base zero for VMD
+    vmd_atom_ids = [ id - 1 for id in atom_ids ]
+    with open(fname, mode) as myfile:
+        myfile.write('{}'.format(' '.join(map(str,vmd_atom_ids))))
+    #print('index {}'.format(' '.join(map(str,vmd_atom_ids))))
+    return
 
-    chk_loc = cfg[CHK_FILE]
-    chk_data = {}
-    chk_data[HEAD_CONTENT] = []
-    chk_data[ATOMS_CONTENT] = []
-    chk_data[TAIL_CONTENT] = []
+
+def process_file(cfg):
+
+    chk_list_loc = cfg[CHK_FILE_LIST]
+    num_atoms_pat = re.compile(r"^ATOMS (\d+).*")
     last_exclude_id = cfg[LAST_EXCLUDE_ID]
 
-    section = SEC_HEAD
-    num_atoms_pat = re.compile(r"^ATOMS (\d+).*")
+    with open(chk_list_loc) as f:
+        for data_file in f.readlines():
+            data_file = data_file.strip()
+            with open(data_file) as d:
+                chk_data = {}
+                chk_data[HEAD_CONTENT] = []
+                chk_data[ATOMS_CONTENT] = []
+                chk_data[TAIL_CONTENT] = []
 
-    o_ids = []
-    h_ids = []
+                section = SEC_HEAD
+                o_ids = []
+                h_ids = []
 
-    vmd_atom_ids = []
+                for line in d.readlines():
+                    line = line.strip()
+                    # head_content to contain Everything before 'Atoms' section
+                    # also capture the number of atoms
+                    if section == SEC_HEAD:
+                        chk_data[HEAD_CONTENT].append(line)
 
-    with open(chk_loc) as f:
-        for line in f.readlines():
-            line = line.strip()
-            # head_content to contain Everything before 'Atoms' section
-            # also capture the number of atoms
-            if section == SEC_HEAD:
-                chk_data[HEAD_CONTENT].append(line)
+                        atoms_match = num_atoms_pat.match(line)
+                        if atoms_match:
+                            # regex is 1-based
+                            # print(atoms_match.group(1))
+                            chk_data[NUM_ATOMS] = int(atoms_match.group(1))
+                            section = SEC_ATOMS
 
-                atoms_match = num_atoms_pat.match(line)
-                if atoms_match:
-                    # regex is 1-based
-                    print(atoms_match.group(1))
-                    chk_data[NUM_ATOMS] = int(atoms_match.group(1))
-                    section = SEC_ATOMS
+                    elif section == SEC_ATOMS:
+                        if len(line) == 0:
+                            continue
+                        split_line = line.split()
+                        index = int(split_line[0])
+                        atom_num = int(split_line[1])
+                        x, y, z = map(float,split_line[2:5])
+                        atom_type = split_line[5]
+                        atom_struct = [index, atom_num, x, y, z, atom_type]
+                        chk_data[ATOMS_CONTENT].append(atom_struct)
+                        if atom_num > last_exclude_id:
+                            if atom_type == 'O':
+                                o_ids.append(atom_num)
+                            elif atom_type == 'H':
+                                h_ids.append(atom_num)
+                            else:
+                                raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}.'.format(atom_type,line))
 
-            elif section == SEC_ATOMS:
-                if len(line) == 0:
-                    continue
-                split_line = line.split()
-                index = int(split_line[0])
-                atom_num = int(split_line[1])
-                x, y, z = map(float,split_line[2:5])
-                atom_type = split_line[5]
-                atom_struct = [index, atom_num, x, y, z, atom_type]
-                chk_data[ATOMS_CONTENT].append(atom_struct)
-                if atom_num > last_exclude_id:
-                    vmd_atom_ids.append(atom_num -1)
-                    if atom_type == 'O':
-                        o_ids.append(atom_num)
-                    elif atom_type == 'H':
-                        h_ids.append(atom_num)
-                    else:
-                        raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}.'.format(atom_type,line))
+                        if len(chk_data[ATOMS_CONTENT]) == chk_data[NUM_ATOMS]:
+                            section = SEC_TAIL
+                    # tail_content to contain everything after the 'Atoms' section
+                    elif section == SEC_TAIL:
+                        break
 
-                if len(chk_data[ATOMS_CONTENT]) == chk_data[NUM_ATOMS]:
-                    section = SEC_TAIL
-            # tail_content to contain everything after the 'Atoms' section
-            elif section == SEC_TAIL:
-                chk_data[TAIL_CONTENT].append(line)
 
-    # if logger.isEnabledFor(logging.DEBUG):
-    #     print_data(chk_data[HEAD_CONTENT], chk_data[ATOMS_CONTENT], chk_data[TAIL_CONTENT], 'reproduced.data')
-
-    print_qm_kind(h_ids,'H')
-    print_qm_kind(o_ids,'O')
-
-    print('index {}'.format(' '.join(map(str,vmd_atom_ids))))
-
-    print(chk_data)
-    return chk_data
+            f_name = create_out_fname(data_file, 'water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            print_qm_kind(h_ids,'H',f_name)
+            print_qm_kind(o_ids,'O',f_name,mode='a')
+            f_name = create_out_fname(data_file, 'vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            print_vmd_list(o_ids+h_ids, f_name)
+    return
 
 def print_data(head, data, tail, f_name):
     list_to_file(head, f_name)
     seq_list_to_file(data, f_name, mode='a')
     list_to_file(tail, f_name, mode='a')
     return
+
 
 def main(argv=None):
     # Read input
@@ -265,7 +288,7 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        psf_data_content = process_data_tpl(cfg)
+        psf_data_content = process_file(cfg)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

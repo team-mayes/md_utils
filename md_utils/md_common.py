@@ -441,6 +441,13 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise"):
 
 # Conversions #
 
+def to_int_list(raw_val):
+    return_vals = []
+    for val in raw_val.split(','):
+        return_vals.append(int(val.strip()))
+    return return_vals
+
+
 def str_to_bool(s):
     """
     Basic converter for Python boolean values written as a str.

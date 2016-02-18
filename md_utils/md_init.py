@@ -12,7 +12,7 @@ import sys
 
 import os
 
-import md_common
+from md_utils import md_common
 
 logger = logging.getLogger(__name__)
 
