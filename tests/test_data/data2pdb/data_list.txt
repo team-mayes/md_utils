@@ -1,5 +1,5 @@
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/31_3_506000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/31_3_508000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/31_3_510000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/31_3_512000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/31_3_514000.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_512000.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_514000.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_516000.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_518000.data
+/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_520000.data

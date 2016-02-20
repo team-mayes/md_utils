@@ -53,8 +53,8 @@ PDB_Y_LAST_CHAR = 'pdb_y_last_char'
 PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
 LAST_PROT_ID = 'last_prot_atom'
-#The below must have the correct number of characters! See default values
-
+OUT_BASE_DIR = 'output_directory'
+MAKE_DICT_BOOL = 'make_dictionary_flag'
 
 # data file info
 
@@ -72,6 +72,8 @@ DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv
                 PDB_Y_LAST_CHAR: 46,
                 PDB_Z_LAST_CHAR: 54,
                 LAST_PROT_ID: 0,
+                OUT_BASE_DIR: None,
+                MAKE_DICT_BOOL: False,
 }
 REQ_KEYS = {PDB_TPL_FILE: str,
 }
@@ -362,10 +364,6 @@ def process_pdb_tpl(cfg):
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols + element]
                 tpl_data[ATOMS_CONTENT].append(line_struct)
 
-                if atom_id < 10:
-                    print(line_struct)
-
-
             # tail_content to contain everything after the 'Atoms' section
             else:
                 tpl_data[TAIL_CONTENT].append(line)
@@ -496,7 +494,7 @@ def process_data_files(cfg, data_tpl_content):
                 raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
                                        'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
             # Now make new file
-            f_name = create_out_fname(data_file, '', ext='.pdb')
+            f_name = create_out_fname(data_file, '', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
             print_pdb(data_tpl_content[HEAD_CONTENT], pdb_data_section, data_tpl_content[TAIL_CONTENT],
                       f_name, cfg[PDB_FORMAT])
             print('Completed writing {}'.format(f_name))
@@ -515,7 +513,9 @@ def main(argv=None):
     # Read template and data files
     try:
         pdb_tpl_content = process_pdb_tpl(cfg)
-        lammps_charmm_dict = make_dict(cfg, pdb_tpl_content)
+        if cfg[ MAKE_DICT_BOOL]:
+            atom_type_dict = make_dict(cfg, pdb_tpl_content)
+            print(atom_type_dict)
         process_data_files(cfg, pdb_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
