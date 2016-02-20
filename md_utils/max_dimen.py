@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """
-Get selected info from the file
+Given a file with an xyz vector (space separated, no other data), return the maximum x, y, and z coordinates, plus the
+values after a buffer distance is added
 """
 
 from __future__ import print_function
 
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname
+from md_utils.md_common import InvalidDataError, warning
 import sys
 import argparse
 
@@ -35,10 +36,9 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Reads in space-separated dimensions and returns the largest value'
+    parser = argparse.ArgumentParser(description='Reads in space-separated xyz dimensions and returns the largest value'
                                                  'in each dimension.')
-    parser.add_argument("-f", "--file", help="The location of the file with the dimensions. One line per"
-                                             "vector; space-separated.",
+    parser.add_argument("-f", "--file", help="The location of the file with the dimensions with one line per vector, space-separated.",
                         default=DEF_DIMEN_FILE)
     args = None
     try:
@@ -63,17 +63,10 @@ def process_file(data_file):
     print("With 6 A buffer: {}".format(max_vector+6))
     return
 
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
-
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
