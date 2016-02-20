@@ -54,7 +54,7 @@ def warning(*objs):
     print("WARNING: ", *objs, file=sys.stderr)
 
 
-# Test utiliites
+# Test utilities
 
 ## From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
 @contextmanager
@@ -73,6 +73,21 @@ def capture_stderr(command, *args, **kwargs):
   sys.stderr.seek(0)
   yield sys.stderr.read()
   sys.stderr = err
+
+
+def diff_lines(floc1, floc2):
+    difflines = []
+    with open(floc1, 'r') as file1:
+        with open(floc2, 'r') as file2:
+            diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
+            for line in diff:
+                if line.startswith('-'):
+                    logger.debug(line)
+                    difflines.append(line)
+                elif line.startswith('+'):
+                    logger.debug(line)
+                    pass
+    return difflines
 
 # Calculations #
 
