@@ -5,19 +5,12 @@ Adds a string to the beginning and end of a file.
 
 from __future__ import print_function
 
-import numpy as np
-import logging
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname
-import sys
 import argparse
+import sys
+
+from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('max_dimen')
-logging.basicConfig(filename='max_dimen.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 
@@ -72,20 +65,13 @@ def parse_cmdline(argv):
 def process_file(f_name, b_str, e_str, new_f_name):
 
     if new_f_name is None:
-        new_f_name = create_out_suf_fname(f_name, '_ammend')
+        new_f_name = create_out_suf_fname(f_name, '_amend')
 
     with open(new_f_name, 'w') as myfile:
         with open(f_name) as f:
             for line in f.readlines():
-                # string2 = string1.strip('\n')
                 line = line.strip()
                 myfile.write(b_str + line + e_str + "\n")
-
-    # with open(f_name) as myfile:
-    #     for line in list_val:
-    #         myfile.write(line + "\n")
-
-
     return
 
 
@@ -93,7 +79,6 @@ def process_file(f_name, b_str, e_str, new_f_name):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
