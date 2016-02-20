@@ -10,8 +10,9 @@ import sys
 
 from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning
 
-__author__ = 'hmayes'
+MISSING_FILE = "missing_file"
 
+__author__ = 'hmayes'
 
 
 # Error Codes
@@ -29,6 +30,13 @@ DEF_END_STR = ''
 DEF_NEW_FNAME = None
 
 
+class ArgumentParserError(Exception): pass
+
+
+class ThrowingArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise ArgumentParserError(message)
+
 
 def parse_cmdline(argv):
     """
@@ -39,8 +47,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Reads in a file and adds a begging and/or end to each line.')
-    parser.add_argument("-f", "--file", help="The location of the file to be ammended.")
+    parser = ThrowingArgumentParser(description='Reads in a file and adds a begging and/or end to each line. '
+                                                 'The first argument must be the name of the file to be read.')
+    # Below, it is a positional argument, that is required.
+    parser.add_argument("file", help="The location of the file to be amended.", default=MISSING_FILE)
     parser.add_argument("-b", "--begin", help="String to add to the beginning of a line.",
                         default=DEF_BEGIN_STR)
     parser.add_argument("-e", "--end", help="String to add to the end of a line.",
@@ -48,14 +58,20 @@ def parse_cmdline(argv):
     parser.add_argument("-n", "--new_name", help="Name of amended file.",
                         default=DEF_NEW_FNAME)
     args = None
+
     try:
         args = parser.parse_args(argv)
+        if args.file == MISSING_FILE:
+            parser.print_help()
+            return args, INPUT_ERROR
+        if args.begin == DEF_BEGIN_STR and args.end == DEF_END_STR:
+            warning("Return file will be the same as the input, as no begin or end strings were passed. Use -h for help.")
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
+    except ArgumentParserError as e:
+        warning("Argument Parser Error:", e)
         parser.print_help()
         return args, INPUT_ERROR
 
@@ -73,7 +89,6 @@ def process_file(f_name, b_str, e_str, new_f_name):
                 line = line.strip()
                 myfile.write(b_str + line + e_str + "\n")
     return
-
 
 
 def main(argv=None):

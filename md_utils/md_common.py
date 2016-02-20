@@ -23,6 +23,9 @@ import os
 import sys
 from shutil import copy2, Error, copystat
 import six
+import sys
+from cStringIO import StringIO
+from contextlib import contextmanager
 
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
@@ -50,6 +53,26 @@ def warning(*objs):
     """Writes a message to stderr."""
     print("WARNING: ", *objs, file=sys.stderr)
 
+
+# Test utiliites
+
+## From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
+@contextmanager
+def capture_stdout(command, *args, **kwargs):
+  out, sys.stdout = sys.stdout, StringIO()
+  command(*args, **kwargs)
+  sys.stdout.seek(0)
+  yield sys.stdout.read()
+  sys.stdout = out
+
+
+@contextmanager
+def capture_stderr(command, *args, **kwargs):
+  err, sys.stderr = sys.stderr, StringIO()
+  command(*args, **kwargs)
+  sys.stderr.seek(0)
+  yield sys.stderr.read()
+  sys.stderr = err
 
 # Calculations #
 
