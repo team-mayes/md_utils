@@ -16,13 +16,12 @@ from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_l
 import sys
 import argparse
 
-__author__ = 'mayes'
+__author__ = 'hmayes'
 
 
 # Logging
 logger = logging.getLogger('align_timestep')
 logging.basicConfig(filename='align_timestep.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes

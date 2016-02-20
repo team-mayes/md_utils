@@ -4,28 +4,13 @@
 Tests for add_head_tail.py.
 """
 
-import logging
 import unittest
 
-import os
 from md_utils import add_head_tail
-import sys
-from cStringIO import StringIO
-from contextlib import contextmanager
-from md_utils.md_common import capture_stdout, capture_stderr
+from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
 __author__ = 'hmayes'
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-ADD_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
-GOOD_ADD_PATH = os.path.join(ADD_DATA_DIR, 'rad_PMFlast2ns3_1.txt')
-
-# Shared Methods #
-
 
 
 class TestAddHeadTail(unittest.TestCase):
@@ -35,14 +20,28 @@ class TestAddHeadTail(unittest.TestCase):
         with capture_stderr(add_head_tail.main,[]) as output:
             self.assertTrue("too few arguments" in output)
     def testAddHead(self):
-        pass
+        try:
+            add_head_tail.main(["add_head_tail_input.txt", "-b", "../"])
+            self.assertFalse(diff_lines("add_head_tail_input_amend.txt", "add_head_tail_prefixed.txt"))
+        finally:
+            silent_remove("add_head_tail_input_amend.txt")
     def testAddTail(self):
-        pass
+        try:
+            add_head_tail.main(["add_head_tail_input.txt", "-e", ".txt"])
+            self.assertFalse(diff_lines("add_head_tail_input_amend.txt", "add_head_tail_suffix.txt"))
+        finally:
+            silent_remove("add_head_tail_input_amend.txt")
     def testAddBoth(self):
-        with capture_stderr(add_head_tail.main,["job_list.txt"]) as output:
-            self.assertTrue("Return file will be the same as the input" in output)
-
+        try:
+            add_head_tail.main(["add_head_tail_input.txt", "-b", "../", "-e", ".txt"])
+            self.assertFalse(diff_lines("add_head_tail_input_amend.txt", "add_head_tail_prefix_suffix.txt"))
+        finally:
+            print("hello")
+            # silent_remove("add_head_tail_input_amend.txt")
     def testAddNothing(self):
-        pass
-
-
+        try:
+            with capture_stderr(add_head_tail.main,["add_head_tail_input.txt"]) as output:
+                self.assertTrue("Return file will be the same as the input" in output)
+            self.assertFalse(diff_lines("add_head_tail_input.txt", "add_head_tail_input_amend.txt"))
+        finally:
+            silent_remove("add_head_tail_input_amend.txt")

@@ -6,19 +6,11 @@ Get selected info from the file
 from __future__ import print_function
 
 import numpy as np
-import logging
 from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname
 import sys
 import argparse
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('max_dimen')
-logging.basicConfig(filename='max_dimen.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes
