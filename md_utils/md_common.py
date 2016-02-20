@@ -603,3 +603,29 @@ def unique_list(alist):
             mmap[item] = 1
             oset.append(item)
     return oset
+
+
+# Reading configs #
+
+def conv_raw_val(param, def_val):
+    """
+    Converts the given parameter into the given type (default returns the raw value).  Returns the default value
+    if the param is None.
+    :param param: The value to convert.
+    :param def_val: The value that determines the type to target.
+    :return: The converted parameter value.
+    """
+    if param is None:
+        return def_val
+    if isinstance(def_val, bool):
+        return bool(param)
+    if isinstance(def_val, int):
+        return int(param)
+    if isinstance(def_val, long):
+        return long(param)
+    if isinstance(def_val, float):
+        return float(param)
+    if isinstance(def_val, list):
+        return to_int_list(param)
+    return param
+

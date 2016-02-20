@@ -10,7 +10,7 @@ import logging
 import re
 import os
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname
+from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname, conv_raw_val
 
 import sys
 import argparse
@@ -53,29 +53,6 @@ SEC_TIMESTEP = 'timestep'
 SEC_COMPLEX = 'complex_section'
 SEC_STATES = 'states_section'
 SEC_EIGEN = 'eigen_vector_section'
-
-
-def conv_raw_val(param, def_val):
-    """
-    Converts the given parameter into the given type (default returns the raw value).  Returns the default value
-    if the param is None.
-    :param param: The value to convert.
-    :param def_val: The value that determines the type to target.
-    :return: The converted parameter value.
-    """
-    if param is None:
-        return def_val
-    if isinstance(def_val, bool):
-        return bool(param)
-    if isinstance(def_val, int):
-        return int(param)
-    if isinstance(def_val, long):
-        return long(param)
-    if isinstance(def_val, float):
-        return float(param)
-    if isinstance(def_val, list):
-        return to_int_list(param)
-    return param
 
 
 def process_cfg(raw_cfg):
