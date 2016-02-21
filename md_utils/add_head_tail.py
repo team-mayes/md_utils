@@ -5,10 +5,8 @@ Adds a string to the beginning and end of a file.
 
 from __future__ import print_function
 
-import argparse
 import sys
-
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning
+from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning, ThrowingArgumentParser, ArgumentParserError
 
 MISSING_FILE = "missing_file"
 
@@ -30,14 +28,6 @@ DEF_END_STR = ''
 DEF_NEW_FNAME = None
 
 
-class ArgumentParserError(Exception): pass
-
-
-class ThrowingArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        raise ArgumentParserError(message)
-
-
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
@@ -50,7 +40,7 @@ def parse_cmdline(argv):
     parser = ThrowingArgumentParser(description='Reads in a file and adds a begging and/or end to each line. '
                                                  'The first argument must be the name of the file to be read.')
     # Below, it is a positional argument, that is required.
-    parser.add_argument("file", help="The location of the file to be amended.", default=MISSING_FILE)
+    parser.add_argument("file", help="The location of the file to be amended (required).", default=MISSING_FILE, )
     parser.add_argument("-b", "--begin", help="String to add to the beginning of a line.",
                         default=DEF_BEGIN_STR)
     parser.add_argument("-e", "--end", help="String to add to the end of a line.",

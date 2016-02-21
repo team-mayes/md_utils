@@ -6,11 +6,13 @@ Common methods for this project.
 
 from __future__ import print_function, division
 # Util Methods #
+import argparse
 import csv
 import difflib
 import glob
 import logging
 from datetime import datetime
+import re
 import shutil
 import errno
 import collections
@@ -27,16 +29,22 @@ import sys
 from cStringIO import StringIO
 from contextlib import contextmanager
 
-BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_wham_rad')
 
 # Constants #
 
+BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
+
 # Boltzmann's Constant in kcal/mol Kelvin
 BOLTZ_CONST = 0.0019872041
 
+# Sections for reading files
+SEC_TIMESTEP = 'timestep'
+SEC_NUM_ATOMS = 'dump_num_atoms'
+SEC_BOX_SIZE = 'dump_box_size'
+SEC_ATOMS = 'atoms_section'
 
 # Exceptions #
 
@@ -47,6 +55,13 @@ class InvalidDataError(MdError): pass
 
 
 class NotFoundError(MdError): pass
+
+
+class ArgumentParserError(Exception): pass
+
+class ThrowingArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise ArgumentParserError(message)
 
 
 def warning(*objs):
@@ -467,7 +482,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise"):
     """
     Writes the given data to the given file location.
 
-    :param data: The data to write.
+    :param data: The data to write (list of dicts).
     :param out_fname: The name of the file to write to.
     :param fieldnames: The sequence of field names to use for the header.
     :param extrasaction: What to do when there are extra keys.  Acceptable
@@ -554,15 +569,9 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
             proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
     except Exception as e:
         logger.error('Problem with default config vals on key %s: %s', key, e)
-    try:
-        for key, type_func in req_keys.items():
-            proc_cfg[key] = type_func(raw_cfg[key])
-    except Exception as e:
-        logger.error('Problem with required config vals on key %s: %s', key, e)
+    for key, type_func in req_keys.items():
+        proc_cfg[key] = type_func(raw_cfg[key])
 
-
-    # If I needed to make calculations based on values, get the values as below, and then
-    # assign to calculated config values
     return proc_cfg
 
 
@@ -628,4 +637,18 @@ def conv_raw_val(param, def_val):
     if isinstance(def_val, list):
         return to_int_list(param)
     return param
+
+
+# Processing LAMMPS files #
+
+def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE, sec_atoms=SEC_ATOMS):
+    atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
+    if line == 'ITEM: TIMESTEP':
+        return sec_timestep
+    elif line == 'ITEM: NUMBER OF ATOMS':
+        return sec_num_atoms
+    elif line == 'ITEM: BOX BOUNDS pp pp pp':
+        return sec_box_size
+    elif atoms_pat.match(line):
+        return sec_atoms
 
