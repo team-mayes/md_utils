@@ -12,7 +12,7 @@ import logging
 import re
 import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning, conv_raw_val
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
@@ -103,7 +103,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)))
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     return main_proc
 
 

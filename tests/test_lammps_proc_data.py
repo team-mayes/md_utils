@@ -1,0 +1,54 @@
+# coding=utf-8
+
+"""
+Tests for hydroxyl_oh_dist.py.
+"""
+import os
+import unittest
+
+from md_utils import lammps_proc_data
+from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
+
+
+__author__ = 'hmayes'
+
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
+OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
+DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
+GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
+INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
+GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
+GOOD_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
+DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho.csv')
+
+class TestLammpsProcData(unittest.TestCase):
+    def testNoIni(self):
+        with capture_stdout(lammps_proc_data.main,[]) as output:
+            self.assertTrue("usage:" in output)
+        with capture_stderr(lammps_proc_data.main,[]) as output:
+            self.assertTrue("Problems reading file: Could not read file" in output)
+    def testMissingConfig(self):
+        with capture_stderr(lammps_proc_data.main,["-c", INCOMP_INI_PATH]) as output:
+            self.assertTrue("Input data missing" in output)
+        with capture_stdout(lammps_proc_data.main,["-c", INCOMP_INI_PATH]) as output:
+            self.assertTrue("optional arguments" in output)
+    def testOHDist(self):
+        try:
+            lammps_proc_data.main(["-c", OH_DIST_INI_PATH])
+            self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        finally:
+            silent_remove(DEF_OUT_PATH)
+    def testNegGofR(self):
+        lammps_proc_data.main(["-c", INCOMP_GOFR_INI_PATH])
+        with capture_stderr(lammps_proc_data.main,["-c", INCOMP_GOFR_INI_PATH]) as output:
+            self.assertTrue("a positive value" in output)
+    def testHOGofR(self):
+        try:
+            lammps_proc_data.main(["-c", GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_OUT_PATH)
+

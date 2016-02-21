@@ -135,6 +135,7 @@ def xyz_distance(fir, sec):
 
 
 def pbc_dist(a, b, box):
+    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2))
     dist = a - b
     dist = dist - box * np.asarray(map(round, dist / box))
     return np.linalg.norm(dist)
@@ -225,7 +226,7 @@ def list_to_file(list_val, fname, mode='w'):
             myfile.write(line + "\n")
 
 
-def seq_list_to_file(list_val, fname, mode='w'):
+def seq_list_to_file(list_val, fname, mode='w', header=None):
     """
     Writes the list of sequences to the given file.
 
@@ -233,8 +234,10 @@ def seq_list_to_file(list_val, fname, mode='w'):
     :param fname: The location of the file to write.
     """
     with open(fname, mode) as myfile:
+        if header:
+            myfile.write(','.join(header) + "\n")
         for line in list_val:
-            myfile.write(' '.join(map(str,line)) + "\n")
+            myfile.write(','.join(map(str,line)) + "\n")
 
 
 def create_backup_filename(orig):
@@ -476,6 +479,8 @@ def read_csv(src_file, data_conv=None, all_conv=None):
                     sdict[skey] = sval
             result.append(sdict)
     return result
+
+
 
 
 def write_csv(data, out_fname, fieldnames, extrasaction="raise"):

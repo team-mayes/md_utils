@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 """
-From a dump file, finds the hydroxyl OH distance on the protonateable residue (when protonated)
+From lammps dump file(s), finds key distance, such as:
+CALC_OH_DIST: the hydroxyl OH distance on the protonateable residue (when protonated)
 """
 
 from __future__ import print_function
 
 import ConfigParser
+from collections import defaultdict
 import logging
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file
 
 import sys
 import argparse
 
+GOFR_R = 'gofr_r'
+
+GOFR_HO = 'gofr_ho'
 
 __author__ = 'hmayes'
 
@@ -43,18 +48,39 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
 PROT_O_IDS = 'prot_carboxy_oxy_atom_nums'
+WAT_O_TYPE = 'water_o_type'
+WAT_H_TYPE = 'water_h_type'
 OUT_BASE_DIR = 'output_directory'
 
+# Data needed for g(r) calcs
+GOFR_MAX = 'max_dist_for_gofr'
+GOFR_DR = 'delta_r_for_gofr'
+GOFR_BINS = 'bins_for_gofr'
+GOFR_RAW_HIST = 'raw_histogram_for_gofr'
+HO_BIN_COUNT = 'ho_bin_count'
+STEPS_COUNTED = 'steps_counted'
+
+# Types of calculations allowed
+CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
+CALC_HO_GOFR = 'calc_hstar_o_gofr_flag'
+
 # Defaults
-DEF_CFG_FILE = 'hydroxyl_oh_dist.ini'
+DEF_CFG_FILE = 'lammps_proc_data.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 PROT_IGNORE: [],
                 PROT_O_IDS: [],
                 OUT_BASE_DIR: None,
+                CALC_OH_DIST: False,
+                CALC_HO_GOFR: False,
+                GOFR_MAX: -1.1,
+                GOFR_DR: -1.1,
+                GOFR_BINS: [],
+                GOFR_RAW_HIST: [],
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
+            WAT_O_TYPE: int, WAT_H_TYPE: int,
             }
 
 # For dump file processing
@@ -73,7 +99,8 @@ TIMESTEP = 'timestep'
 OH_MIN = 'oh_min'
 OH_MAX = 'oh_max'
 OH_DIFF = 'oh_diff'
-OUT_FIELDNAMES = [TIMESTEP, OH_MIN, OH_MAX, OH_DIFF]
+OUT_FIELDNAMES = [TIMESTEP]
+OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -112,7 +139,6 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -122,6 +148,12 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, INPUT_ERROR
 
+    if args.config[CALC_HO_GOFR]:
+        if args.config[GOFR_MAX] < 0.0 or args.config[GOFR_DR] < 0.0:
+            warning('For requested g(r) calculation, a positive value for {} must be provided in the '
+                                    'configuration file. Check input data.'.format(GOFR_MAX))
+            return args, INVALID_DATA
+
     return args, GOOD_RET
 
 
@@ -129,18 +161,28 @@ def calc_OH_dists(excess_proton, carboxy_oxys, box):
     if excess_proton is None:
         return {OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'}
     else:
-        dist = np.zeros(2)
+        dist = np.zeros(len(carboxy_oxys))
         for index,atom in enumerate(carboxy_oxys):
             dist[index] = pbc_dist(np.asarray(excess_proton[XYZ_COORDS]), np.asarray(atom[XYZ_COORDS]), box)
-        return {OH_MIN: np.amin(dist),
-                OH_MAX: np.amax(dist),
-                OH_DIFF:  abs(dist[0] - dist[1])}
+        dist_min = np.amin(dist)
+        dist_max = np.amax(dist)
+        return {OH_MIN: dist_min,
+                OH_MAX: dist_max,
+                OH_DIFF: dist_max - dist_min}
 
 
-def process_atom_data(cfg, dump_atom_data, box, timestep):
+def calc_HstarO_dists(excess_proton, water_oxys, box):
+    dist = np.zeros(len(water_oxys))
+    for index,atom in enumerate(water_oxys):
+        dist[index] = pbc_dist(np.asarray(excess_proton[XYZ_COORDS]), np.asarray(atom[XYZ_COORDS]), box)
+    return dist
+
+
+def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     carboxy_oxys = []
+    water_oxys = []
     excess_proton = None
-    results = {}
+    calc_results = {}
     for atom in dump_atom_data:
         # Keep track of carboxylic oxygens.
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
@@ -148,21 +190,35 @@ def process_atom_data(cfg, dump_atom_data, box, timestep):
                 carboxy_oxys.append(atom)
             elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and ( atom[ATOM_NUM] not in cfg[PROT_IGNORE]):
                 excess_proton = atom
-    if len(carboxy_oxys) == 2:
-        return calc_OH_dists(excess_proton,carboxy_oxys,box)
-    else:
-        raise InvalidDataError('Expected to find atom indices {} in resid {} (to be treated as '
-                               'carboxylic oxygens). Found {} such indices at timestep {}. '
-                               'Check input data.'.format(cfg[PROT_O_IDS],cfg[PROT_RES_MOL_ID],
-                                        len(carboxy_oxys),timestep))
+        if atom[ATOM_TYPE] == cfg[WAT_O_TYPE]:
+            water_oxys.append(atom)
+    if cfg[CALC_OH_DIST]:
+        if len(carboxy_oxys) == 2:
+            calc_results.update(calc_OH_dists(excess_proton,carboxy_oxys,box))
+        else:
+            raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
+                                   'carboxylic oxygens). Found {} such indices at timestep {}. '
+                                   'Check input data.'.format(cfg[PROT_O_IDS],cfg[PROT_RES_MOL_ID],
+                                            len(carboxy_oxys),timestep))
+    if cfg[CALC_HO_GOFR]:
+        # skip timesteps when there is no H* (residue deprotonated)
+        if excess_proton is not None:
+            if len(water_oxys) > 0:
+                num_dens = len(water_oxys) / np.prod(box)
+                ho_dists = (calc_HstarO_dists(excess_proton,water_oxys,box))
+                step_his = np.histogram(ho_dists, gofr_data[GOFR_BINS])
+                gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], step_his[0] / num_dens)
+                gofr_data[STEPS_COUNTED] += 1
+            else:
+                raise InvalidDataError('Found no water oxygens at timestep {}. Check input data.'.format(timestep))
+    return calc_results
 
-def read_dump_file(dump_file, cfg, data_to_print):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
     with open(dump_file) as d:
         section = None
         box = np.zeros((3,))
         box_counter = 1
         atom_counter = 1
-        dist_diffs = ['timestep,oh_dist1,oh_dist2,dist_diff']
         for line in d.readlines():
             line = line.strip()
             if section is None:
@@ -172,6 +228,7 @@ def read_dump_file(dump_file, cfg, data_to_print):
                     raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
             elif section == SEC_TIMESTEP:
                 timestep = line
+                print(timestep)
                 # Reset variables
                 dump_atom_data = []
                 result = { TIMESTEP: timestep }
@@ -202,8 +259,7 @@ def read_dump_file(dump_file, cfg, data_to_print):
                                XYZ_COORDS: [x,y,z], }
                 dump_atom_data.append(atom_struct)
                 if atom_counter == num_atoms:
-                    result.update(process_atom_data(cfg, dump_atom_data, box, timestep))
-                    print(result)
+                    result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data))
                     data_to_print.append(result)
                     atom_counter = 0
                     section = None
@@ -215,15 +271,35 @@ def process_dump_files(cfg):
     @param cfg: configuration data read from ini file
     """
     data_to_print = []
+    gofr_data = {}
+
+    if cfg[CALC_HO_GOFR]:
+        g_dr = cfg[GOFR_DR]
+        g_max = cfg[GOFR_MAX]
+        gofr_data[GOFR_BINS] = np.arange(0, g_max+g_dr, g_dr)
+        gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS])-1)
+        gofr_data[STEPS_COUNTED] = 0
+
     with open(cfg[DUMPS_FILE]) as f:
         for dump_file in f.readlines():
             dump_file = dump_file.strip()
-            read_dump_file(dump_file, cfg, data_to_print)
+            read_dump_file(dump_file, cfg, data_to_print, gofr_data)
 
-            #print(dist_diffs)
-    f_out = create_out_suf_fname(dump_file, '_oh_dist', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    write_csv(data_to_print, f_out, OUT_FIELDNAMES)
-    print('Wrote file: {}'.format(f_out))
+    f_out = create_out_suf_fname(dump_file, '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+    if cfg[CALC_OH_DIST]:
+        OUT_FIELDNAMES.extend(OH_FIELDNAMES)
+        write_csv(data_to_print, f_out, OUT_FIELDNAMES, extrasaction="ignore")
+        print('Wrote file: {}'.format(f_out))
+
+    if cfg[CALC_HO_GOFR]:
+        dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
+        normal_fac = np.square(dr_array)* gofr_data[STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_oh = np.divide(gofr_data[HO_BIN_COUNT],normal_fac)
+
+        headers = [GOFR_R, GOFR_HO]
+        f_out = create_out_suf_fname(dump_file, '_gofr_ho', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+        seq_list_to_file(np.column_stack((dr_array,gofr_oh)), f_out, header=headers)
+        print('Wrote file: {}'.format(f_out))
 
     return
 
@@ -237,6 +313,7 @@ def main(argv=None):
 
     # Read template and dump files
     cfg = args.config
+
     try:
         process_dump_files(cfg)
     except IOError as e:

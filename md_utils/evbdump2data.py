@@ -11,7 +11,7 @@ import copy
 import logging
 import re
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, to_int_list, pbc_dist, warning, conv_raw_val
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, to_int_list, pbc_dist, warning, conv_raw_val, process_cfg
 
 import sys
 import argparse
