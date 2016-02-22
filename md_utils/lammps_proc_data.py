@@ -228,7 +228,6 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                     raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
             elif section == SEC_TIMESTEP:
                 timestep = line
-                print(timestep)
                 # Reset variables
                 dump_atom_data = []
                 result = { TIMESTEP: timestep }
@@ -246,6 +245,9 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                 box_counter += 1
             elif section == SEC_ATOMS:
                 split_line = line.split()
+                # If there is an incomplete line in a dump file, move on to the next file
+                if len(split_line) < 7:
+                    break
                 atom_num = int(split_line[0])
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
@@ -264,7 +266,10 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                     atom_counter = 0
                     section = None
                 atom_counter += 1
-
+    if atom_counter == 1:
+        print("Completed reading dumpfile {}.".format(dump_file))
+    else:
+        warning("FYI: dump file {} step {} did not have the full list of atom numbers. Continuing to next dump file.".format(dump_file, timestep))
 
 def process_dump_files(cfg):
     """

@@ -45,6 +45,7 @@ setup(
             'path_bin = md_utils.path_bin:main',
             'press_dups = md_utils.press_dups:main',
             'lammps_dist = md_utils.lammps_dist:main',
+            'lammps_proc_data = md_utils.lammps_proc_data:main',
         ],
     },
     package_dir={'md_utils':

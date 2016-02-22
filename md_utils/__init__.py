@@ -3,6 +3,6 @@
 Molecular dynamics utilities.
 """
 
-__author__ = 'Chris Mayes'
-__email__ = 'cmayes@cmay.es'
-__version__ = '0.6.0'
+__author__ = 'Team Mayes'
+__email__ = 'hmayes@hmayes.com'
+__version__ = '0.7.0'

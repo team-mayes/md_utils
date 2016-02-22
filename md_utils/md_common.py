@@ -226,7 +226,7 @@ def list_to_file(list_val, fname, mode='w'):
             myfile.write(line + "\n")
 
 
-def seq_list_to_file(list_val, fname, mode='w', header=None):
+def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
     """
     Writes the list of sequences to the given file.
 
@@ -237,7 +237,7 @@ def seq_list_to_file(list_val, fname, mode='w', header=None):
         if header:
             myfile.write(','.join(header) + "\n")
         for line in list_val:
-            myfile.write(','.join(map(str,line)) + "\n")
+            myfile.write(delimiter.join(map(str,line)) + "\n")
 
 
 def create_backup_filename(orig):

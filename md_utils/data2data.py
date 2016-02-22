@@ -172,16 +172,7 @@ def process_data_tpl(cfg):
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        print_data(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT], 'reproduced.data')
-
     return tpl_data
-
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
 
 
 def make_atom_dict(cfg, data_tpl_content):

@@ -77,3 +77,4 @@ tests/test_data/pdb2data/*.txt
 tests/test_data/data2data/*.data
 *temp
 tests/test_data/small_tests/add_head_tail_input_amend.txt
+tests/test_data/to_sort/*

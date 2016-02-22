@@ -4,26 +4,26 @@ Creates lammps data files from lammps dump files, given a template lammps data f
 """
 
 from __future__ import print_function
-
 import ConfigParser
 from collections import defaultdict
 import copy
 import logging
 import re
-import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, to_int_list, pbc_dist, warning, conv_raw_val, process_cfg
-
 import sys
 import argparse
 
-__author__ = 'mayes'
+import numpy as np
+
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state
+
+
+__author__ = 'hmayes'
 
 
 # Logging
 logger = logging.getLogger('evbd2d')
 logging.basicConfig(filename='evbd2d.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes
@@ -49,13 +49,38 @@ H3O_H_TYPE = 'h3o_h_type'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
+OUT_BASE_DIR = 'output_directory'
+
+# Config keys to allow calculating charge at intermediate points:
+LAST_P1 = 'last_p1'
+LAST_P2 = 'last_p2'
+LONE_ION = 'lone_ion'
+LAST_LIPID = 'last_lipid'
+LAST_HYD = 'last_hyd'
+LAST_WATER = 'last_water'
+LAST_ION1 = 'last_ion1'
 
 # Defaults
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
-DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt', PROT_IGNORE: [], }
-REQ_KEYS = {DATA_TPL_FILE: str, WAT_O_TYPE: int, WAT_H_TYPE: int, H3O_O_TYPE: int, H3O_H_TYPE: int,
-            PROT_RES_MOL_ID: int, PROT_H_TYPE: int, }
+DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
+                PROT_IGNORE: [],
+                OUT_BASE_DIR: None,
+                LAST_P1: -1,
+                LAST_P2: -1,
+                LONE_ION: -1,
+                LAST_LIPID: -1,
+                LAST_HYD: -1,
+                LAST_WATER: -1,
+                LAST_ION1: -1,
+                }
+REQ_KEYS = {DATA_TPL_FILE: str,
+            WAT_O_TYPE: int,
+            WAT_H_TYPE: int,
+            H3O_O_TYPE: int,
+            H3O_H_TYPE: int,
+            PROT_RES_MOL_ID: int,
+            PROT_H_TYPE: int, }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -80,6 +105,11 @@ SEC_TAIL = 'tail_section'
 SEC_TIMESTEP = 'timestep'
 SEC_NUM_ATOMS = 'dump_num_atoms'
 SEC_BOX_SIZE = 'dump_box_size'
+
+# For deciding if a float is close enough to a value
+TOL = 0.000001
+# Bundle of headers for calculating charge
+CALC_CHARGE_NAMES = [LAST_P1, LAST_P2, LONE_ION, LAST_LIPID, LAST_HYD, LAST_WATER, LAST_ION1]
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -117,9 +147,8 @@ def parse_cmdline(argv):
                                                  'deprotonated, etc.). Currently, this script expects only one '
                                                  'protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/evbd2d/evbd2d.ini. "
-                                               "The default file name is evbd2d.ini, located in the "
-                                               "base directory where the program as run.",
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -136,9 +165,9 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def print_data(head, atoms, tail, f_name):
+def print_lammps_data_file(head, atoms, tail, f_name):
     list_to_file(head, f_name)
-    seq_list_to_file(atoms, f_name, mode='a')
+    seq_list_to_file(atoms, f_name, mode='a', delimiter=' ')
     list_to_file(tail, f_name, mode='a')
     return
 
@@ -155,19 +184,12 @@ def process_data_tpl(cfg):
     y = 0.0
     z = 0.0
 
-
     total_charge = 0.0
 
     # For debugging total charge
-    key_atom_ids = {}
-    key_atom_ids['last_p1']    = 15436
-    key_atom_ids[15436] = 'last_p1'
-    key_atom_ids[16327] = 'last_p2'
-    key_atom_ids[16328] = 'lone_pot'
-    key_atom_ids[65640] = 'last_lipid'
-    key_atom_ids[65644] = 'last_hyd'
-    key_atom_ids[213877] = 'last_water'
-    key_atom_ids[213992] = 'last_pot'
+    calc_charg_atom_nums = {}
+    for name in CALC_CHARGE_NAMES:
+        calc_charg_atom_nums[cfg[name]] = name
 
     with open(tpl_loc) as f:
         for line in f.readlines():
@@ -198,7 +220,6 @@ def process_data_tpl(cfg):
                 tpl_data[ATOMS_CONTENT].append(atom_struct)
                 total_charge += charge
 
-
                 if atom_type == cfg[H3O_O_TYPE]:
                     tpl_data[H3O_MOL].append(atom_struct)
                     tpl_data[H3O_O_CHARGE] = charge
@@ -214,9 +235,12 @@ def process_data_tpl(cfg):
                 if atom_num == tpl_data[NUM_ATOMS]:
                     section = SEC_TAIL
                     ## Also check total charge
-                    print('Total charge is: {}'.format(total_charge))
-                elif atom_num in key_atom_ids:
-                    print('After atom {} ({}), the total charge is: {}'.format(atom_num, key_atom_ids[atom_num], total_charge))
+                    if abs(total_charge) < TOL:
+                        print('FYI: the total system charge is < {}'.format(TOL))
+                    else:
+                        print('FYI: the system is not neutral. Total system charge is: {0:.6f}'.format(total_charge))
+                elif atom_num in calc_charg_atom_nums:
+                    print('After atom {0} ({1}), the total charge is: {2:.3f}'.format(atom_num, calc_charg_atom_nums[atom_num], total_charge))
 
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
@@ -228,23 +252,10 @@ def process_data_tpl(cfg):
                                'the number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT])-1, tpl_data[NUM_ATOMS]))
 
     if logger.isEnabledFor(logging.DEBUG):
-        f_out = 'reproduced.data'
-        print_data(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT][1:], tpl_data[TAIL_CONTENT], f_out)
+        f_out = create_out_suf_fname('reproduced_tpl', '', base_dir=cfg[OUT_BASE_DIR], ext='.data')
+        print_lammps_data_file(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT][1:], tpl_data[TAIL_CONTENT], f_out)
 
     return tpl_data
-
-
-
-def find_section_state(line):
-    atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
-    if line == 'ITEM: TIMESTEP':
-        return SEC_TIMESTEP
-    elif line == 'ITEM: NUMBER OF ATOMS':
-        return SEC_NUM_ATOMS
-    elif line == 'ITEM: BOX BOUNDS pp pp pp':
-        return SEC_BOX_SIZE
-    elif atoms_pat.match(line):
-        return SEC_ATOMS
 
 
 def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_dict, box, tpl_data):
@@ -402,100 +413,110 @@ def check_all_atom_id(dump_atom_data, tpl_atom_data):
     return
 
 
-def process_dump_files(cfg, data_tpl_content):
+def process_dump_file(cfg, data_tpl_content, dump_file):
     section = None
     box = np.zeros((3,))
+    counter = 1
+    with open(dump_file) as d:
+        for line in d.readlines():
+            line = line.strip()
+            if section is None:
+                section = find_dump_section_state(line)
+                #logger.debug("In process_dump_files, set section to %s.", section)
+                if section is None:
+                    raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
+            elif section == SEC_TIMESTEP:
+                timestep = line
+                # Reset variables
+                water_dict = defaultdict(list)
+                # Start with an entry so the atom-id = index
+                dump_atom_data = ['']
+                excess_proton = None
+                h3o_mol = []
+                prot_res = []
+                section = None
+            elif section == SEC_NUM_ATOMS:
+                if data_tpl_content[NUM_ATOMS] != int(line):
+                    raise InvalidDataError('At timestep {} in file {}, the listed number of atoms ({}) does '
+                                           'not equal the number of atoms in the template data file '
+                                           '({}).'.format(timestep, d, line, data_tpl_content[NUM_ATOMS]))
+                section = None
+            elif section == SEC_BOX_SIZE:
+                split_line = line.split()
+                diff = float(split_line[1]) - float(split_line[0])
+                box[counter - 1] = diff
+                if counter == 3:
+                    counter = 0
+                    section = None
+                counter += 1
+            elif section == SEC_ATOMS:
+                split_line = line.split()
+                # If there is an incomplete line in a dump file, move on to the next file
+                if len(split_line) < 7:
+                    continue
+                atom_num = int(split_line[0])
+                mol_num = int(split_line[1])
+                atom_type = int(split_line[2])
+                charge = float(split_line[3])
+                x, y, z = map(float, split_line[4:7])
+                # Here, the atoms counting starts at 1. However, the template counted from zero
+                descrip = ' '.join(data_tpl_content[ATOMS_CONTENT][counter][7:])
+                atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, descrip]
+                dump_atom_data.append(atom_struct)
+                # See if protonatable residue is protonated. If so, keep track of excess proton.
+                # Else, keep track of hydronium molecule.
+                if not (not (mol_num == cfg[PROT_RES_MOL_ID]) or not (atom_type == cfg[PROT_H_TYPE]) or not (
+                        atom_num not in cfg[PROT_IGNORE])):
+                    # subtract 1 from counter because counter starts at 1, index starts at zero
+                    excess_proton = atom_struct
+                elif mol_num == cfg[PROT_RES_MOL_ID]:
+                    prot_res.append(atom_struct)
+                elif atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[H3O_H_TYPE]:
+                    h3o_mol.append(atom_struct)
+                elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
+                    water_dict[mol_num].append(atom_struct)
+                if counter == data_tpl_content[NUM_ATOMS]:
+                    counter = 0
+                    section = None
+                    # Now that finished reading all atom lines...
+                    # Deprotonated if necessary
+                    if len(h3o_mol) == 0:
+                        deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
+                    # Change H3O mol_id if necessary
+                    target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
+                    if h3o_mol[-1][1] != target_h3o_mol_id:
+                        change_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
+                    check_h3o_atom_id(cfg, h3o_mol, dump_atom_data, data_tpl_content)
+                    check_all_atom_id(dump_atom_data, data_tpl_content[ATOMS_CONTENT])
+                    d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data', base_dir=cfg[OUT_BASE_DIR])
+                    data_tpl_content[HEAD_CONTENT][0]="Created by evbdump2data from {} timestep {} ".format(dump_file,timestep)
+                    print_lammps_data_file(data_tpl_content[HEAD_CONTENT], dump_atom_data[1:], data_tpl_content[TAIL_CONTENT], d_out)
+                    print('Wrote file: {}'.format(d_out))
+                counter += 1
+    if counter == 1:
+        print("Completed reading dumpfile {}.".format(dump_file))
+    else:
+        warning("Dump file {} step {} did not have the full list of atom numbers. Continuing program.".format(dump_file, timestep))
+
+
+def process_dump_files(cfg, data_tpl_content):
     with open(cfg[DUMPS_FILE]) as f:
         for dump_file in f.readlines():
             dump_file = dump_file.strip()
-            data_file_num = 0
-            with open(dump_file) as d:
-                counter = 1
-                for line in d.readlines():
-                    line = line.strip()
-                    if section is None:
-                        section = find_section_state(line)
-                        #logger.debug("In process_dump_files, set section to %s.", section)
-                        if section is None:
-                            raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
-                    elif section == SEC_TIMESTEP:
-                        timestep = line
-                        # Reset variables
-                        water_dict = defaultdict(list)
-                        # Start with an entry so the atom-id = index
-                        dump_atom_data = ['']
-                        excess_proton = None
-                        h3o_mol = []
-                        prot_res = []
-                        data_file_num += 1
-                        section = None
-                    elif section == SEC_NUM_ATOMS:
-                        if data_tpl_content[NUM_ATOMS] != int(line):
-                            raise InvalidDataError('At timestep {} in file {}, the listed number of atoms ({}) does '
-                                                   'not equal the number of atoms in the template data file '
-                                                   '({}).'.format(timestep, d, line, data_tpl_content[NUM_ATOMS]))
-                        section = None
-                    elif section == SEC_BOX_SIZE:
-                        split_line = line.split()
-                        diff = float(split_line[1]) - float(split_line[0])
-                        box[counter - 1] = diff
-                        if counter == 3:
-                            counter = 0
-                            section = None
-                        counter += 1
-                    elif section == SEC_ATOMS:
-                        split_line = line.split()
-                        atom_num = int(split_line[0])
-                        mol_num = int(split_line[1])
-                        atom_type = int(split_line[2])
-                        charge = float(split_line[3])
-                        x, y, z = map(float, split_line[4:7])
-                        # Here, the atoms counting starts at 1. However, the template counted from zero
-                        descrip = ' '.join(data_tpl_content[ATOMS_CONTENT][counter][7:])
-                        atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, descrip]
-                        dump_atom_data.append(atom_struct)
-                        # See if protonatable residue is protonated. If so, keep track of excess proton.
-                        # Else, keep track of hydronium molecule.
-                        if not (not (mol_num == cfg[PROT_RES_MOL_ID]) or not (atom_type == cfg[PROT_H_TYPE]) or not (
-                                atom_num not in cfg[PROT_IGNORE])):
-                            # subtract 1 from counter because counter starts at 1, index starts at zero
-                            excess_proton = atom_struct
-                        elif mol_num == cfg[PROT_RES_MOL_ID]:
-                            prot_res.append(atom_struct)
-                        elif atom_type == cfg[H3O_O_TYPE] or atom_type == cfg[H3O_H_TYPE]:
-                            h3o_mol.append(atom_struct)
-                        elif atom_type == cfg[WAT_O_TYPE] or atom_type == cfg[WAT_H_TYPE]:
-                            water_dict[mol_num].append(atom_struct)
-                        if counter == data_tpl_content[NUM_ATOMS]:
-                            counter = 0
-                            section = None
-                            # Now that finished reading all atom lines...
-                            # Deprotonated if necessary
-                            if len(h3o_mol) == 0:
-                                deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
-                            # Change H3O mol_id if necessary
-                            target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
-                            if h3o_mol[-1][1] != target_h3o_mol_id:
-                                change_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
-                            check_h3o_atom_id(cfg, h3o_mol, dump_atom_data, data_tpl_content)
-                            check_all_atom_id(dump_atom_data, data_tpl_content[ATOMS_CONTENT])
-                            d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data')
-                            print_data(data_tpl_content[HEAD_CONTENT], dump_atom_data[1:], data_tpl_content[TAIL_CONTENT], d_out)
-                            print('Wrote file: {}'.format(d_out))
-                        counter += 1
-    return
+            # ignore blank lines in dump file list
+            if len(dump_file) == 0:
+                continue
+            else:
+                process_dump_file(cfg, data_tpl_content, dump_file)
 
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
     # TODO: in generated data files, provide new header based on where this came from
-    # TODO: specify output directory
-    # TODO: make a job list to feed to next step
 
     # Read template and dump files
     cfg = args.config

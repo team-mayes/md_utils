@@ -47,31 +47,6 @@ DEF_CFG_VALS = {COMPARE_FILE: 'evb_list.txt', }
 REQ_KEYS = { }
 
 
-def process_cfg(raw_cfg):
-    """
-    Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
-    default value's type.
-    :param raw_cfg: The configuration map.
-    :return: The processed configuration.
-    """
-    proc_cfg = {}
-    try:
-        for key, def_val in DEF_CFG_VALS.items():
-            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
-    except Exception as e:
-        logger.error('Problem with default config vals on key %s: %s', key, e)
-    try:
-        for key, type_func in REQ_KEYS.items():
-            proc_cfg[key] = type_func(raw_cfg[key])
-    except Exception as e:
-        logger.error('Problem with required config vals on key %s: %s', key, e)
-
-
-    # If I needed to make calculations based on values, get the values as below, and then
-    # assign to calculated config values
-    return proc_cfg
-
-
 def read_cfg(floc, cfg_proc=process_cfg):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
@@ -85,7 +60,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)))
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     return main_proc
 
 
@@ -102,9 +77,8 @@ def parse_cmdline(argv):
                                                  'This program is more efficient if it reads the file with fewer '
                                                  'timesteps first.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
-                                               "See the example file /test/test_data/evbd2d/align_timestep.ini. "
-                                               "The default file name is align_timestep.ini, located in the "
-                                               "base directory where the program as run.",
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:

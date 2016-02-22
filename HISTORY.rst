@@ -3,6 +3,11 @@
 History
 -------
 
+0.7.0 (2016-02-20)
+------------------
+
+* Added lammps_proc_data.py to calculate g(r) from a lammps dump file
+
 0.6.0 (2015-11-22)
 ------------------
 

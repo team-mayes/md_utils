@@ -20,9 +20,11 @@ OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
+INCOMP_DUMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_incomp_dump.ini')
 GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
 GOOD_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
 DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho.csv')
+DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofr_ho.csv')
 
 class TestLammpsProcData(unittest.TestCase):
     def testNoIni(self):
@@ -41,6 +43,15 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
+    def testIncompDump(self):
+        try:
+            with capture_stderr(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
+                self.assertTrue("WARNING" in output)
+            with capture_stdout(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
+                self.assertTrue("Wrote file" in output)
+            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT_PATH, GOOD_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_INCOMP_OUT_PATH)
     def testNegGofR(self):
         lammps_proc_data.main(["-c", INCOMP_GOFR_INI_PATH])
         with capture_stderr(lammps_proc_data.main,["-c", INCOMP_GOFR_INI_PATH]) as output:
