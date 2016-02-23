@@ -5,19 +5,15 @@ CALC_OH_DIST: the hydroxyl OH distance on the protonateable residue (when proton
 """
 
 from __future__ import print_function
-
 import ConfigParser
-from collections import defaultdict
 import logging
-import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file
-
 import sys
 import argparse
 
-GOFR_R = 'gofr_r'
+import numpy as np
 
-GOFR_HO = 'gofr_ho'
+from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file
+
 
 __author__ = 'hmayes'
 
@@ -52,11 +48,13 @@ WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 OUT_BASE_DIR = 'output_directory'
 
-# Data needed for g(r) calcs
+# for g(r) calcs
 GOFR_MAX = 'max_dist_for_gofr'
 GOFR_DR = 'delta_r_for_gofr'
 GOFR_BINS = 'bins_for_gofr'
 GOFR_RAW_HIST = 'raw_histogram_for_gofr'
+GOFR_R = 'gofr_r'
+GOFR_HO = 'gofr_ho'
 HO_BIN_COUNT = 'ho_bin_count'
 STEPS_COUNTED = 'steps_counted'
 

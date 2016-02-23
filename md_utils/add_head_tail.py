@@ -8,8 +8,6 @@ from __future__ import print_function
 import sys
 from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning, ThrowingArgumentParser, ArgumentParserError
 
-MISSING_FILE = "missing_file"
-
 __author__ = 'hmayes'
 
 
@@ -26,7 +24,7 @@ INVALID_DATA = 3
 DEF_BEGIN_STR = ''
 DEF_END_STR = ''
 DEF_NEW_FNAME = None
-
+MISSING_FILE = "missing_file"
 
 def parse_cmdline(argv):
     """

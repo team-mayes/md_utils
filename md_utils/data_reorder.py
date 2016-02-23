@@ -9,7 +9,7 @@ import ConfigParser
 import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, warning, conv_raw_val
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
@@ -85,31 +85,6 @@ def to_int_list(raw_val):
     return return_vals
 
 
-def process_cfg(raw_cfg):
-    """
-    Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
-    default value's type.
-    :param raw_cfg: The configuration map.
-    :return: The processed configuration.
-    """
-    proc_cfg = {}
-    try:
-        for key, def_val in DEF_CFG_VALS.items():
-            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
-    except Exception as e:
-        logger.error('Problem with default config vals on key %s: %s', key, e)
-    try:
-        for key, type_func in REQ_KEYS.items():
-            proc_cfg[key] = type_func(raw_cfg[key])
-    except Exception as e:
-        logger.error('Problem with required config vals on key %s: %s', key, e)
-
-
-    # If I needed to make calculations based on values, get the values as below, and then
-    # assign to calculated config values
-    return proc_cfg
-
-
 def read_cfg(floc, cfg_proc=process_cfg):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
@@ -123,7 +98,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)))
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     return main_proc
 
 
