@@ -46,6 +46,7 @@ setup(
             'press_dups = md_utils.press_dups:main',
             'lammps_dist = md_utils.lammps_dist:main',
             'lammps_proc_data = md_utils.lammps_proc_data:main',
+            'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
         ],
     },
     package_dir={'md_utils':

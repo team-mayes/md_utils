@@ -23,7 +23,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file, ThrowingArgumentParser
+from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file, ThrowingArgumentParser, create_out_fname
 
 
 __author__ = 'hmayes'
@@ -51,31 +51,14 @@ au_to_N = 1185.820922
 # # Config keys
 # DUMPS_FILE = 'dump_list_file'
 
-# PROT_RES_MOL_ID = 'prot_res_mol_id'
-# PROT_H_TYPE = 'prot_h_type'
-# PROT_IGNORE = 'prot_ignore_atom_nums'
-# PROT_O_IDS = 'prot_carboxy_oxy_atom_nums'
-# WAT_O_TYPE = 'water_o_type'
-# WAT_H_TYPE = 'water_h_type'
-# OUT_BASE_DIR = 'output_directory'
-#
-# # for g(r) calcs
-# GOFR_MAX = 'max_dist_for_gofr'
-# GOFR_DR = 'delta_r_for_gofr'
-# GOFR_BINS = 'bins_for_gofr'
-# GOFR_RAW_HIST = 'raw_histogram_for_gofr'
-# GOFR_R = 'gofr_r'
-# GOFR_HO = 'gofr_ho'
-# HO_BIN_COUNT = 'ho_bin_count'
-# STEPS_COUNTED = 'steps_counted'
-#
-# # Types of calculations allowed
-# CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
-# CALC_HO_GOFR = 'calc_hstar_o_gofr_flag'
 
 # # Defaults
 DEF_FILE_LIST = 'cp2k_force_list.txt'
 OUT_FILE_PREFIX = 'REF_'
+DEF_OUT_DIR = None
+
+OUT_FORMAT = '%d %.3f%.3f%.f'
+
 # DEF_CFG_FILE = 'lammps_proc_data.ini'
 # # Set notation
 # DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
@@ -132,6 +115,9 @@ def parse_cmdline(argv):
                                                   "process. The default file name is {}, located in the base "
                                                   "directory where the program as run.".format(DEF_FILE_LIST),
                         default=DEF_FILE_LIST, )
+    parser.add_argument("-d", "--out_dir", help="Directory for output files. The default option is the "
+                                                         "same location as the cp2k output file.",
+                        default=DEF_OUT_DIR, )
     args = None
 
     try:
@@ -153,89 +139,30 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, INPUT_ERROR
 
+    if args.out_dir:
+        if not os.path.isdir(args.out_dir):
+            warning("Cannot find specified output directory {}. Check input.".format(args.out_dir))
+            parser.print_help()
+            return args, INPUT_ERROR
+
     return args, GOOD_RET
 
+def process_cp2k_force_file(file, out_dir):
+    """
 
-def read_dump_file(dump_file):
-    with open(dump_file) as d:
-        section = None
-        box = np.zeros((3,))
-        box_counter = 1
-        atom_counter = 1
-    #     for line in d.readlines():
-    #         line = line.strip()
-    #         if section is None:
-    #             section = find_dump_section_state(line)
-    #             #logger.debug("In process_dump_files, set section to %s.", section)
-    #             if section is None:
-    #                 raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
-    #         elif section == SEC_TIMESTEP:
-    #             timestep = line
-    #             # Reset variables
-    #             dump_atom_data = []
-    #             result = { TIMESTEP: timestep }
-    #             section = None
-    #         elif section == SEC_NUM_ATOMS:
-    #             num_atoms = int(line)
-    #             section = None
-    #         elif section == SEC_BOX_SIZE:
-    #             split_line = line.split()
-    #             diff = float(split_line[1]) - float(split_line[0])
-    #             box[box_counter - 1] = diff
-    #             if box_counter == 3:
-    #                 box_counter = 0
-    #                 section = None
-    #             box_counter += 1
-    #         elif section == SEC_ATOMS:
-    #             split_line = line.split()
-    #             # If there is an incomplete line in a dump file, move on to the next file
-    #             if len(split_line) < 7:
-    #                 break
-    #             atom_num = int(split_line[0])
-    #             mol_num = int(split_line[1])
-    #             atom_type = int(split_line[2])
-    #             charge = float(split_line[3])
-    #             x, y, z = map(float, split_line[4:7])
-    #             # Here, the atoms counting starts at 1. However, the template counted from zero
-    #             atom_struct = {ATOM_NUM: atom_num,
-    #                            MOL_NUM: mol_num,
-    #                            ATOM_TYPE: atom_type,
-    #                            CHARGE: charge,
-    #                            XYZ_COORDS: [x,y,z], }
-    #             dump_atom_data.append(atom_struct)
-    #             if atom_counter == num_atoms:
-    #                 result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data))
-    #                 data_to_print.append(result)
-    #                 atom_counter = 0
-    #                 section = None
-    #             atom_counter += 1
-    # if atom_counter == 1:
-    #     print("Completed reading dumpfile {}.".format(dump_file))
-    # else:
-    #     warning("FYI: dump file {} step {} did not have the full list of atom numbers. Continuing to next dump file.".format(dump_file, timestep))
-
-
-def convert_forces(xyz):
-    print(xyz)
-
-
-def read_cp2k_force_file(file):
+    @param file: cp2k force output file to read and process (convert last section to kcal/(mol-Angstrom) )
+    @param out_dir: where to create the new output file (last section, converted)
+    @return: if a valid cp2k file, return a string with the total number of atoms and converted total forces
+    """
     forces_pat = re.compile(r"^ATOMIC FORCES in .*")
     comment_pat = re.compile(r"^#.*")
     sum_pat = re.compile(r"^SUM.*")
-    sums = np.zeros(4)
-    # if line == 'ITEM: TIMESTEP':
-    #     return sec_timestep
-    # elif line == 'ITEM: NUMBER OF ATOMS':
-    #     return sec_num_atoms
-    # elif line == 'ITEM: BOX BOUNDS pp pp pp':
-    #     return sec_box_size
-    # elif atoms_pat.match(line):
-    #     return sec_atoms
+
     force_count = 0
     keep_lines = False
     line_count = 0
-    f_out = OUT_FILE_PREFIX
+    to_print = []
+
     with open(file) as f:
         print('Reading file {}'.format(file))
         for line in f.readlines():
@@ -254,36 +181,40 @@ def read_cp2k_force_file(file):
                 try:
                     if sum_pat.match(split_line[0]):
                         sums = np.asarray(map(float,split_line[4:])) * au_to_N
-                        print('Summed forces (X Y Z Total) in kcal/mol are: {}'.format(' '.join('%6.3f'%F for F in sums)))
-                        return
+                        # sums_str = ' '.join([str(atom_num)] + ['%8.3f'%F for F in sums])
+                        f_out = create_out_fname(file, OUT_FILE_PREFIX, base_dir=out_dir, ext='')
+                        seq_list_to_file(to_print, f_out, delimiter=' ')
+                                            # outfile.write(' '.join(map(str, [atom_num] + xyz)))
+                        return np.append([atom_num], sums)
                 except ValueError as e:
                     warning('Check file {} sum line in the third ATOMIC FORCES section, as it does not '
                                           'appear to contain the expected data: \n {}\n'
                                           'Continuing to the next line in the file list'.format(file, line), e)
-                    return
-
+                    return None
 
                 try:
                     atom_num = int(split_line[0])
-                    kind = int(split_line[1])
-                    element = split_line[2]
-                    xyz = np.asarray(map(float,split_line[3:]))
-                    if atom_num < 4:
-                        convert_forces(xyz)
+                    # kind = int(split_line[1])
+                    # element = split_line[2]
+                    xyz = np.asarray(map(float,split_line[3:])) * au_to_N
+                    to_print.append([atom_num] + xyz.tolist())
                 except ValueError as e:
                     warning('Check file {} line {} in the third ATOMIC FORCES section, as it does not '
                                           'appear to contain all six expected columns of data '
                                           '(Atom Kind Element X Y Z): \n {}\n'
                                           'Continuing to the next line in the file list'.format(file, line_count, line), e)
-                    return
+                    return None
     warning('Reached end of file {} without encountering a third SUM OF ATOMIC FORCES section. '
             'Continuing to the next line in the file list.'.format(file))
+    return None
 
 
-def read_file_list(file_list):
+def read_file_list(file_list, out_dir):
     """
     @param file_list: the list of files to be read
     """
+    summary_header = ['num_atoms', 'sum_x', 'sum_y', 'sum_z', 'total']
+    summary_array = None
 
     with open(file_list) as f:
         for file in f.readlines():
@@ -291,10 +222,37 @@ def read_file_list(file_list):
             if len(file) == 0:
                 continue
             elif os.path.isfile(file):
-                read_cp2k_force_file(file)
+                summary = process_cp2k_force_file(file, out_dir)
+                if summary is not None:
+                    if summary_array is None:
+                        summary_array = summary
+                    else:
+                        summary_array = np.vstack((summary, summary_array))
             else:
                 warning('Could not read file {} in file list {}. '
                         'Continuing to the next line in file list.'.format(file,file_list))
+    # print(np.amax(summary_array, axis=1))
+    if summary_array is None:
+        warning("No valid cp2k force output files were read.")
+    elif (summary_array.size) == 5:
+        print('For the one CP2K force file read:')
+        print(' ' + '      '.join(summary_header))
+        print(' '.join(['%10.0f'%summary_array[0]] + ['%10.3f'%F for F in summary_array[1:]]))
+    else:
+        f_out = create_out_fname(file_list, 'force_sums_', base_dir=out_dir, ext='.csv')
+        seq_list_to_file(summary_array, f_out, delimiter=' ')
+        with open(f_out, 'w') as logfile:
+            logfile.write(','.join(summary_header) + "\n")
+            for line in summary_array:
+                logfile.write(','.join(['%d'%line[0]] + ['%f'%F for F in line[1:]]) + "\n")
+        print('Finished reading all cp2k force files. Printed each atomic force sum to: {}'.format(f_out))
+
+        min_vals = np.amin(summary_array, axis=0)
+        max_vals = np.amax(summary_array, axis=0)
+
+        print('           ' + '      '.join(summary_header))
+        print('min_vals: ' + ' '.join(['%10.0f'%min_vals[0]] + ['%10.3f'%F for F in min_vals[1:]]))
+        print('max_vals: ' + ' '.join(['%10.0f'%max_vals[0]] + ['%10.3f'%F for F in max_vals[1:]]))
 
 def main(argv=None):
     # Read input
@@ -306,7 +264,7 @@ def main(argv=None):
     # Read template and dump files
 
     try:
-        read_file_list(args.file_list)
+        read_file_list(args.file_list, args.out_dir)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

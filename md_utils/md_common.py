@@ -235,7 +235,7 @@ def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
     """
     with open(fname, mode) as myfile:
         if header:
-            myfile.write(','.join(header) + "\n")
+            myfile.write(delimiter.join(header) + "\n")
         for line in list_val:
             myfile.write(delimiter.join(map(str,line)) + "\n")
 

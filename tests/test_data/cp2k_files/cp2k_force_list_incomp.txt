@@ -1,5 +1,5 @@
-15_2_502000.dat
+ /Users/Heather/bee/code/python/md_utils/tests/test_data/cp2k_files/15_2_502000.dat
 
-8_3_520000_incomp.dat
+/Users/Heather/bee/code/python/md_utils/tests/test_data/cp2k_files/8_3_520000_incomp.dat
 12.dat
 
