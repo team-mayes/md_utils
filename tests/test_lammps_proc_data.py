@@ -15,9 +15,10 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
-DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
+DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
 INCOMP_DUMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_incomp_dump.ini')
@@ -27,6 +28,11 @@ DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho.csv')
 DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofr_ho.csv')
 
 class TestLammpsProcData(unittest.TestCase):
+    def testNoAction(self):
+        with capture_stderr(lammps_proc_data.main,["-c", NO_ACTION_INI_PATH]) as output:
+            self.assertTrue("No calculations have been requested" in output)
+        with capture_stdout(lammps_proc_data.main,["-c", NO_ACTION_INI_PATH]) as output:
+            self.assertTrue("optional arguments" in output)
     def testNoIni(self):
         with capture_stdout(lammps_proc_data.main,[]) as output:
             self.assertTrue("usage:" in output)
@@ -62,4 +68,3 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
-
