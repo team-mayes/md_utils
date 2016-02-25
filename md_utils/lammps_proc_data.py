@@ -475,12 +475,22 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                 dump_file, timestep))
 
 
+def setup_per_frame_output(cfg):
+    out_fieldnames = [TIMESTEP]
+    if cfg[CALC_OH_DIST]:
+        out_fieldnames.extend(OH_FIELDNAMES)
+    if cfg[CALC_HIJ_AMINO_FORM]:
+        out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
+    if cfg[CALC_HIJ_WATER_FORM]:
+        out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
+    return out_fieldnames
+
+
 def process_dump_files(cfg):
     """
     @param cfg: configuration data read from ini file
     """
     global dump_file
-    data_to_print = []
     gofr_data = {}
 
     if cfg[CALC_HO_GOFR]:
@@ -490,25 +500,20 @@ def process_dump_files(cfg):
         gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
         gofr_data[STEPS_COUNTED] = 0
 
+    if cfg[PER_FRAME_OUTPUT]:
+        out_fieldnames = setup_per_frame_output(cfg)
+
     with open(cfg[DUMPS_FILE]) as f:
         for dump_file in f:
+            data_to_print = []
             dump_file = dump_file.strip()
             # skip any excess blank lines
             if len(dump_file) > 0:
                 read_dump_file(dump_file, cfg, data_to_print, gofr_data)
-
-    if cfg[PER_FRAME_OUTPUT]:
-        f_out = create_out_suf_fname(cfg[DUMPS_FILE], '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-        out_fieldnames = [TIMESTEP]
-        if cfg[CALC_OH_DIST]:
-            out_fieldnames.extend(OH_FIELDNAMES)
-        if cfg[CALC_HIJ_AMINO_FORM]:
-            out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
-        if cfg[CALC_HIJ_WATER_FORM]:
-            out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
-        print("out fieldnames", out_fieldnames)
-        write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
-        print('Wrote file: {}'.format(f_out))
+                if cfg[PER_FRAME_OUTPUT]:
+                    f_out = create_out_suf_fname(dump_file, '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
+                    print('Wrote file: {}'.format(f_out))
     if cfg[CALC_HO_GOFR]:
         dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
         normal_fac = np.square(dr_array) * gofr_data[STEPS_COUNTED] * 4 * np.pi * g_dr
