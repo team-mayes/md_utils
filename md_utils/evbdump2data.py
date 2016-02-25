@@ -418,7 +418,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
     box = np.zeros((3,))
     counter = 1
     with open(dump_file) as d:
-        for line in d.readlines():
+        for line in d:
             line = line.strip()
             if section is None:
                 section = find_dump_section_state(line)
@@ -501,7 +501,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
 
 def process_dump_files(cfg, data_tpl_content):
     with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f.readlines():
+        for dump_file in f:
             dump_file = dump_file.strip()
             # ignore blank lines in dump file list
             if len(dump_file) == 0:

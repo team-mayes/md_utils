@@ -71,6 +71,10 @@ CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 CALC_HIJ_AMINO_FORM = 'calc_hij_amino_form_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 
+# Added so I don't have to read all of a really big file
+# TODO: Set up so produces output every 1000 lines
+MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
+
 # TODO: Maybe move PER_FRAME_OUTPUT; something set by reading other configs; is it still a config?
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
 PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_AMINO_FORM, CALC_HIJ_WATER_FORM]
@@ -92,14 +96,15 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 GOFR_DR: -1.1,
                 GOFR_BINS: [],
                 GOFR_RAW_HIST: [],
-                }
+                MAX_TIMESTEPS: 1000000000000, # Default max timestesps in 1E12
+}
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
             WAT_O_TYPE: int,
             WAT_H_TYPE: int,
             H3O_O_TYPE: int,
             H3O_H_TYPE: int,
-            }
+}
 
 # For dump file processing
 SEC_TIMESTEP = 'timestep'
@@ -123,12 +128,14 @@ HIJ_AMINO = 'hij_amino'
 HIJ_ASP = 'hij_asp_params'
 HIJ_GLU = 'hij_glu_params'
 HIJ_WATER = 'hij_water_params'
+HIJ_A1 = 'hij_water_termA1'
+HIJ_A2 = 'hij_water_termA2'
+HIJ_A3 = 'hij_water_termA3'
 # OSTARH_MIN = 'o_star_h_min'
-OUT_FIELDNAMES = [TIMESTEP]
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
-HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER]
+HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3 ]
 
 ## EVB Params
 # asp/glu common parameters
@@ -150,8 +157,8 @@ c_asp = 0.931593
 Vii_asp = -150.505417
 
 c1_asp = -25.099920
-c2_asp =   2.799262
-c3_asp =   1.299994
+c2_asp = 2.799262
+c3_asp = 1.299994
 
 # Glu params
 
@@ -165,7 +172,7 @@ c1_glu = -25.013330
 c2_glu = 3.018957
 c3_glu = 1.280649
 
-Vii_glu =-150.291915
+Vii_glu = -150.291915
 
 # 3.2 water params from http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.5b09466
 gamma = 1.783170  # Angstrom^-2
@@ -182,19 +189,23 @@ V_ij_water = -21.064268  # kcal/mol
 # EVB Formulas
 
 def U_morse(r):
-    return D * ( 1 - np.exp(-alpha * (r - r_0)) )**2
+    return D * ( 1 - np.exp(-alpha * (r - r_0)) ) ** 2
+
 
 def hij_amino(r, c1, c2, c3):
-    return c1 * np.exp(-c2 * (r - c3)**2)
+    return c1 * np.exp(-c2 * (r - c3) ** 2)
+
 
 def calc_q(r_o, r_op, r_h):
     return np.add(r_o, r_op) / 2.0 - r_h
 
+
 def hij_water(r_OO, q_vec):
-    Aterm1 = np.exp(-gamma * np.dot(q_vec, q_vec))
-    Aterm2 = 1 + P * np.exp(-k_water * (r_OO - D_OO_water)**2)
-    Aterm3 = 0.5 * (1 - np.tanh( beta * (r_OO - R_0_OO))) + Pp * np.exp(-a_water * (r_OO - r_0_OO))
-    return V_ij_water * 1.1 * Aterm1 * Aterm2 * Aterm3
+    termA1 = np.exp(-gamma * np.dot(q_vec, q_vec))
+    termA2 = 1 + P * np.exp(-k_water * (r_OO - D_OO_water) ** 2)
+    termA3 = 0.5 * (1 - np.tanh(beta * (r_OO - R_0_OO))) + Pp * np.exp(-a_water * (r_OO - r_0_OO))
+    return V_ij_water * 1.1 * termA1 * termA2 * termA3, termA1, termA2, termA3
+
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -251,7 +262,7 @@ def parse_cmdline(argv):
     if args.config[CALC_HO_GOFR]:
         if args.config[GOFR_MAX] < 0.0 or args.config[GOFR_DR] < 0.0:
             warning('For requested g(r) calculation, a positive value for {} must be provided in the '
-                                    'configuration file. Check input data.'.format(GOFR_MAX))
+                    'configuration file. Check input data.'.format(GOFR_MAX))
             return args, INVALID_DATA
 
     if not args.config[CALC_HO_GOFR] and not args.config[PER_FRAME_OUTPUT]:
@@ -263,20 +274,22 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+
 def calc_HstarO_dists(prot_h, water_oxys, box):
     dist = np.zeros(len(water_oxys))
-    for index,atom in enumerate(water_oxys):
+    for index, atom in enumerate(water_oxys):
         dist[index] = pbc_dist(np.asarray(prot_h[XYZ_COORDS]), np.asarray(atom[XYZ_COORDS]), box)
     return dist
+
 
 def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
     # initialize smallest distance to the closest distance
     min_dist = np.zeros(len(carboxy_oxys))
     closest_H = {}
-    for index,oxy in enumerate(carboxy_oxys):
+    for index, oxy in enumerate(carboxy_oxys):
         if prot_h is None:
             # initialize minimum distance to maximum distance allowed in the PBC
-            min_dist[index] = np.linalg.norm(box/2 - np.zeros(3))
+            min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
             for atom in hydronium:
                 if atom[ATOM_TYPE] == cfg[H3O_H_TYPE]:
                     dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
@@ -291,25 +304,25 @@ def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
     excess_H = closest_H[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
-    for index,oxy in enumerate(carboxy_oxys):
+    for index, oxy in enumerate(carboxy_oxys):
         if index != index_min:
             alt_dist = pbc_dist(np.asarray(excess_H[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
     alt_min = np.amin(alt_dist)
-    return excess_H,\
+    return excess_H, \
            {OH_MIN: min_min,
             OH_MAX: alt_min,
             OH_DIFF: alt_min - min_min,
-            }
+           }
 
 
 def find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg):
     # initialize smallest distance to the closest distance
     min_dist = np.zeros(len(carboxy_oxys))
     closest_o = {}
-    for index,co in enumerate(carboxy_oxys):
+    for index, co in enumerate(carboxy_oxys):
         if not hydronium:
             # initialize minimum distance to maximum distance allowed in the PBC
-            min_dist[index] = np.linalg.norm(box/2 - np.zeros(3))
+            min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
             for wat_o in water_oxys:
                 dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
                 if dist < min_dist[index]:
@@ -326,7 +339,7 @@ def find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg):
     close_o = closest_o[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
-    for index,co in enumerate(carboxy_oxys):
+    for index, co in enumerate(carboxy_oxys):
         if index != index_min:
             alt_dist = pbc_dist(np.asarray(close_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
     alt_min = np.amin(alt_dist)
@@ -358,12 +371,13 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         if len(carboxy_oxys) != 2:
             raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
                                    'carboxylic oxygens). Found {} such indices at timestep {}. '
-                                   'Check input data.'.format(cfg[PROT_O_IDS],cfg[PROT_RES_MOL_ID],
-                                            len(carboxy_oxys),timestep))
+                                   'Check input data.'.format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
+                                                              len(carboxy_oxys), timestep))
     if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_AMINO_FORM] or cfg[CALC_HIJ_WATER_FORM]:
         closest_excess_h, oh_dist_dict = find_closest_excessH(carboxy_oxys, prot_H, hydronium, box, cfg)
     if cfg[CALC_HIJ_WATER_FORM]:
-        closest_o_to_ostar, prot_o, o_ostar_dist, alt_ostar_dist = find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg)
+        closest_o_to_ostar, prot_o, o_ostar_dist, alt_ostar_dist = find_closest_o_to_ostar(carboxy_oxys, water_oxys,
+                                                                                           hydronium, box, cfg)
     if cfg[CALC_OH_DIST]:
         if prot_H is None:
             calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
@@ -376,15 +390,15 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
     if cfg[CALC_HIJ_WATER_FORM]:
         q_vec = calc_q(closest_o_to_ostar[XYZ_COORDS], prot_o[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
-        hij_wat = hij_water(o_ostar_dist, q_vec)
-        calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat})
+        hij_wat, termA1, termA2, termA3 = hij_water(o_ostar_dist, q_vec)
+        calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat, HIJ_A1: termA1, HIJ_A2: termA2, HIJ_A3: termA3, })
 
     if cfg[CALC_HO_GOFR]:
         # skip timesteps when there is no H* (residue deprotonated)
         if prot_H is not None:
             if len(water_oxys) > 0:
                 num_dens = len(water_oxys) / np.prod(box)
-                ho_dists = (calc_HstarO_dists(prot_H,water_oxys,box))
+                ho_dists = (calc_HstarO_dists(prot_H, water_oxys, box))
                 step_his = np.histogram(ho_dists, gofr_data[GOFR_BINS])
                 gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], step_his[0] / num_dens)
                 gofr_data[STEPS_COUNTED] += 1
@@ -392,13 +406,15 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 raise InvalidDataError('Found no water oxygens at timestep {}. Check input data.'.format(timestep))
     return calc_results
 
+
 def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
     with open(dump_file) as d:
         section = None
         box = np.zeros((3,))
         box_counter = 1
         atom_counter = 1
-        for line in d.readlines():
+        timesteps_read = 0
+        for line in d:
             line = line.strip()
             if section is None:
                 section = find_dump_section_state(line)
@@ -406,11 +422,17 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                 if section is None:
                     raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
             elif section == SEC_TIMESTEP:
-                timestep = line
                 # Reset variables
-                dump_atom_data = []
-                result = { TIMESTEP: timestep }
                 section = None
+                dump_atom_data = []
+                timestep = line
+                timesteps_read += 1
+                if timesteps_read > cfg[MAX_TIMESTEPS]:
+                    warning("FYI: dump file {} contains more than the maximum timesteps per dumpfile to read ({}). "
+                            "To increase this number, set a larger value for {}. "
+                            "Continuing program.".format(dump_file, cfg[MAX_TIMESTEPS], MAX_TIMESTEPS))
+                    break
+                result = {TIMESTEP: timestep}
             elif section == SEC_NUM_ATOMS:
                 num_atoms = int(line)
                 section = None
@@ -437,7 +459,7 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                                MOL_NUM: mol_num,
                                ATOM_TYPE: atom_type,
                                CHARGE: charge,
-                               XYZ_COORDS: [x,y,z], }
+                               XYZ_COORDS: [x, y, z], }
                 dump_atom_data.append(atom_struct)
                 if atom_counter == num_atoms:
                     result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data))
@@ -448,24 +470,28 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
     if atom_counter == 1:
         print("Completed reading dumpfile {}.".format(dump_file))
     else:
-        warning("FYI: dump file {} step {} did not have the full list of atom numbers. Continuing to next dump file.".format(dump_file, timestep))
+        warning(
+            "FYI: dump file {} step {} did not have the full list of atom numbers. Continuing to next dump file.".format(
+                dump_file, timestep))
+
 
 def process_dump_files(cfg):
     """
     @param cfg: configuration data read from ini file
     """
+    global dump_file
     data_to_print = []
     gofr_data = {}
 
     if cfg[CALC_HO_GOFR]:
         g_dr = cfg[GOFR_DR]
         g_max = cfg[GOFR_MAX]
-        gofr_data[GOFR_BINS] = np.arange(0, g_max+g_dr, g_dr)
-        gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS])-1)
+        gofr_data[GOFR_BINS] = np.arange(0, g_max + g_dr, g_dr)
+        gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
         gofr_data[STEPS_COUNTED] = 0
 
     with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f.readlines():
+        for dump_file in f:
             dump_file = dump_file.strip()
             # skip any excess blank lines
             if len(dump_file) > 0:
@@ -473,22 +499,24 @@ def process_dump_files(cfg):
 
     if cfg[PER_FRAME_OUTPUT]:
         f_out = create_out_suf_fname(cfg[DUMPS_FILE], '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+        out_fieldnames = [TIMESTEP]
         if cfg[CALC_OH_DIST]:
-            OUT_FIELDNAMES.extend(OH_FIELDNAMES)
+            out_fieldnames.extend(OH_FIELDNAMES)
         if cfg[CALC_HIJ_AMINO_FORM]:
-            OUT_FIELDNAMES.extend(HIJ_AMINO_FIELDNAMES)
+            out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
         if cfg[CALC_HIJ_WATER_FORM]:
-            OUT_FIELDNAMES.extend(HIJ_WATER_FIELDNAMES)
-        write_csv(data_to_print, f_out, OUT_FIELDNAMES, extrasaction="ignore")
+            out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
+        print("out fieldnames", out_fieldnames)
+        write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
         print('Wrote file: {}'.format(f_out))
     if cfg[CALC_HO_GOFR]:
         dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
-        normal_fac = np.square(dr_array)* gofr_data[STEPS_COUNTED] * 4 * np.pi * g_dr
-        gofr_oh = np.divide(gofr_data[HO_BIN_COUNT],normal_fac)
+        normal_fac = np.square(dr_array) * gofr_data[STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_oh = np.divide(gofr_data[HO_BIN_COUNT], normal_fac)
 
         headers = [GOFR_R, GOFR_HO]
         f_out = create_out_suf_fname(dump_file, '_gofr_ho', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-        seq_list_to_file(np.column_stack((dr_array,gofr_oh)), f_out, header=headers)
+        seq_list_to_file(np.column_stack((dr_array, gofr_oh)), f_out, header=headers)
         print('Wrote file: {}'.format(f_out))
 
     return

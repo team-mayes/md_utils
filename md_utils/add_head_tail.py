@@ -73,7 +73,7 @@ def process_file(f_name, b_str, e_str, new_f_name):
 
     with open(new_f_name, 'w') as myfile:
         with open(f_name) as f:
-            for line in f.readlines():
+            for line in f:
                 line = line.strip()
                 myfile.write(b_str + line + e_str + "\n")
     return

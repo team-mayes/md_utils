@@ -11,7 +11,7 @@ import logging
 import re
 import os
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname, conv_raw_val
+from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname, conv_raw_val, process_cfg
 
 import sys
 import argparse
@@ -102,17 +102,17 @@ def process_files(cfg):
     @return: @raise InvalidDataError:
     """
     with open(cfg[COMPARE_FILE]) as f:
-        for file_line in f.readlines():
+        for file_line in f:
             files = [x.strip() for x in file_line.split(',')]
             print(files)
             time_dict = {}
             print_lines = []
             with open(files[0]) as d:
-                for line in d.readlines():
+                for line in d:
                     split_line = [x.strip() for x in line.split(',')]
                     time_dict[split_line[0]] = split_line[1:]
             with open(files[1]) as e:
-                for line in e.readlines():
+                for line in e:
                     split_line = [x.strip() for x in line.split(',')]
                     if split_line[0] in time_dict:
                         print_lines.append(','.join([split_line[0]] + time_dict[split_line[0]] + split_line[1:]))

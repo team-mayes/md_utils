@@ -77,7 +77,7 @@ def print_data(head, data, tail, f_name):
 def proc_file(file_name):
     with open(file_name) as d:
         nodups_lines = ['']
-        for line in d.readlines():
+        for line in d:
             line = line.strip()
             if len(line) == 0:
                 continue

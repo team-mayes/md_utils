@@ -165,7 +165,7 @@ def process_cp2k_force_file(file, out_dir):
 
     with open(file) as f:
         print('Reading file {}'.format(file))
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             if len(line) == 0:
                 continue
@@ -217,7 +217,7 @@ def read_file_list(file_list, out_dir):
     summary_array = None
 
     with open(file_list) as f:
-        for file in f.readlines():
+        for file in f:
             file = file.strip()
             if len(file) == 0:
                 continue

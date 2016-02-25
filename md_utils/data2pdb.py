@@ -241,7 +241,7 @@ def process_pdb_tpl(cfg):
     s_atoms = ['  SD  ', '  SG  ']
 
     with open(tpl_loc) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             if len(line) == 0:
                 continue
@@ -326,13 +326,13 @@ def make_dict(cfg, data_tpl_content):
     atom_type_dict = defaultdict(list)
     non_unique_charmm = []
     with open(cfg[DATAS_FILE]) as f:
-        for data_file in f.readlines():
+        for data_file in f:
             data_file = data_file.strip()
             with open(data_file) as d:
                 section = SEC_HEAD
                 atom_id = 0
                 num_atoms = None
-                for line in d.readlines():
+                for line in d:
                     line = line.strip()
                     # not currently keeping anything from the header; just check num atoms
                     if section == SEC_HEAD:
@@ -387,14 +387,14 @@ def process_data_files(cfg, data_tpl_content):
     # Don't want to change the original template data when preparing to print the new file:
     pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
     with open(cfg[DATAS_FILE]) as f:
-        for data_file in f.readlines():
+        for data_file in f:
             data_file = data_file.strip()
             with open(data_file) as d:
                 section = SEC_HEAD
                 atom_id = 0
                 num_atoms = None
 
-                for line in d.readlines():
+                for line in d:
                     line = line.strip()
                     # not currently keeping anything from the header; just check num atoms
                     if section == SEC_HEAD:

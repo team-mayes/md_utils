@@ -133,7 +133,7 @@ def process_data_file(cfg):
     key_atom_ids[213992] = 'last_pot'
 
     with open(tpl_loc) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
@@ -197,7 +197,7 @@ def process_cp2k_out_file(cfg, num_atoms):
     ignore_line = True
 
     with open(cp2k_loc) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms

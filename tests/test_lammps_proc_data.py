@@ -26,6 +26,9 @@ GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
 GOOD_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
 DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho.csv')
 DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofr_ho.csv')
+HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
+DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
+GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
 class TestLammpsProcData(unittest.TestCase):
     def testNoAction(self):
@@ -49,6 +52,13 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
+    def testMaxTimestepsCalcHIJ(self):
+        with capture_stderr(lammps_proc_data.main,["-c", HIJ_INI_PATH]) as output:
+            try:
+                self.assertTrue("more than the maximum" in output)
+                self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
+            finally:
+                silent_remove(DEF_HIJ_OUT_PATH)
     def testIncompDump(self):
         try:
             with capture_stderr(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
@@ -59,7 +69,6 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(DEF_GOFR_INCOMP_OUT_PATH)
     def testNegGofR(self):
-        lammps_proc_data.main(["-c", INCOMP_GOFR_INI_PATH])
         with capture_stderr(lammps_proc_data.main,["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
     def testHOGofR(self):

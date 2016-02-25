@@ -163,7 +163,7 @@ def process_file(cfg):
     last_exclude_id = cfg[LAST_EXCLUDE_ID]
 
     with open(chk_list_loc) as f:
-        for data_file in f.readlines():
+        for data_file in f:
             data_file = data_file.strip()
             with open(data_file) as d:
                 chk_data = {}
@@ -175,7 +175,7 @@ def process_file(cfg):
                 o_ids = []
                 h_ids = []
 
-                for line in d.readlines():
+                for line in d:
                     line = line.strip()
                     # head_content to contain Everything before 'Atoms' section
                     # also capture the number of atoms
