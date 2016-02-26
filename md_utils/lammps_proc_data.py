@@ -58,13 +58,25 @@ GOFR_DR = 'delta_r_for_gofr'
 GOFR_BINS = 'bins_for_gofr'
 GOFR_RAW_HIST = 'raw_histogram_for_gofr'
 GOFR_R = 'gofr_r'
-GOFR_HO = 'gofr_ho'
+GOFR_HO = 'gofr_hsow'
+GOFR_OO = 'gofr_osow'
+GOFR_HH = 'gofr_hshw'
+GOFR_OH = 'gofr_oshw'
 HO_BIN_COUNT = 'ho_bin_count'
-STEPS_COUNTED = 'steps_counted'
+OO_BIN_COUNT = 'oo_bin_count'
+HH_BIN_COUNT = 'hh_bin_count'
+OH_BIN_COUNT = 'oh_bin_count'
+HO_STEPS_COUNTED = 'ho_steps_counted'
+OO_STEPS_COUNTED = 'oo_steps_counted'
+HH_STEPS_COUNTED = 'hh_steps_counted'
+OH_STEPS_COUNTED = 'oh_steps_counted'
 
 # Types of calculations allowed
 # g(r) types
-CALC_HO_GOFR = 'calc_hstar_o_gofr_flag'
+CALC_HO_GOFR = 'calc_hstar_owat_gofr_flag'
+CALC_OO_GOFR = 'calc_ostar_owat_gofr_flag'
+CALC_HH_GOFR = 'calc_hstar_hwat_gofr_flag'
+CALC_OH_GOFR = 'calc_ostar_hwat_gofr_flag'
 # with output from every frame types
 CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
@@ -78,6 +90,9 @@ MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 # TODO: Maybe move PER_FRAME_OUTPUT; something set by reading other configs; is it still a config?
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
 PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_AMINO_FORM, CALC_HIJ_WATER_FORM]
+GOR_OUTPUT = 'flag_for_gofr_output'
+GOR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR]
+
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -91,7 +106,11 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 # CALC_ALL_OH_DIST: False,
                 CALC_HIJ_AMINO_FORM: False,
                 CALC_HIJ_WATER_FORM: False,
+                GOR_OUTPUT: False,
                 CALC_HO_GOFR: False,
+                CALC_OO_GOFR: False,
+                CALC_HH_GOFR: False,
+                CALC_OH_GOFR: False,
                 GOFR_MAX: -1.1,
                 GOFR_DR: -1.1,
                 GOFR_BINS: [],
@@ -258,14 +277,17 @@ def parse_cmdline(argv):
     for flag in PER_FRAME_OUTPUT_FLAGS:
         if args.config[flag]:
             args.config[PER_FRAME_OUTPUT] = True
+    for flag in GOR_OUTPUT_FLAGS:
+        if args.config[flag]:
+            args.config[GOR_OUTPUT] = True
 
-    if args.config[CALC_HO_GOFR]:
+    if args.config[GOR_OUTPUT]:
         if args.config[GOFR_MAX] < 0.0 or args.config[GOFR_DR] < 0.0:
             warning('For requested g(r) calculation, a positive value for {} must be provided in the '
                     'configuration file. Check input data.'.format(GOFR_MAX))
             return args, INVALID_DATA
 
-    if not args.config[CALC_HO_GOFR] and not args.config[PER_FRAME_OUTPUT]:
+    if not args.config[GOR_OUTPUT] and not args.config[PER_FRAME_OUTPUT]:
         warning('No calculations have been requested. Program exiting without action.\n '
                 'Set at least one of the following option flags to be True: \n  '
                 '{}'.format('  \n'.join(PER_FRAME_OUTPUT_FLAGS)))
@@ -275,10 +297,13 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def calc_HstarO_dists(prot_h, water_oxys, box):
-    dist = np.zeros(len(water_oxys))
-    for index, atom in enumerate(water_oxys):
-        dist[index] = pbc_dist(np.asarray(prot_h[XYZ_COORDS]), np.asarray(atom[XYZ_COORDS]), box)
+def calc_pair_dists(atom_a_list, atom_b_list, box):
+    dist = np.zeros(len(atom_a_list) * len(atom_b_list))
+    dist_index = 0
+    for atom_a in atom_a_list:
+        for atom_b in atom_b_list:
+            dist[dist_index] = pbc_dist(np.asarray(atom_a[XYZ_COORDS]), np.asarray(atom_b[XYZ_COORDS]), box)
+            dist_index += 1
     return dist
 
 
@@ -393,21 +418,46 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         hij_wat, termA1, termA2, termA3 = hij_water(o_ostar_dist, q_vec)
         calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat, HIJ_A1: termA1, HIJ_A2: termA2, HIJ_A3: termA3, })
 
-    if cfg[CALC_HO_GOFR]:
-        # skip timesteps when there is no H* (residue deprotonated)
-        if prot_H is not None:
-            if len(water_oxys) > 0:
-                num_dens = len(water_oxys) / np.prod(box)
-                ho_dists = (calc_HstarO_dists(prot_H, water_oxys, box))
-                step_his = np.histogram(ho_dists, gofr_data[GOFR_BINS])
-                gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], step_his[0] / num_dens)
-                gofr_data[STEPS_COUNTED] += 1
-            else:
-                raise InvalidDataError('Found no water oxygens at timestep {}. Check input data.'.format(timestep))
+
+    # Checks for required data
+    if cfg[CALC_HO_GOFR] or cfg[CALC_OO_GOFR]:
+        if len(water_oxys) < 1:
+            raise InvalidDataError('Found no water oxygens at timestep {}. Check input data.'.format(timestep))
+    if cfg[CALC_HH_GOFR] or cfg[CALC_OH_GOFR]:
+        if len(water_hs) < 1:
+            raise InvalidDataError('Found no water hydrogens at timestep {}. Check input data.'.format(timestep))
+
+    # For calcs requiring H* (proton on protonated residue) skip timesteps when there is no H* (residue deprotonated)
+    if prot_H is not None:
+        if cfg[CALC_HO_GOFR]:
+            num_dens = len(water_oxys) / np.prod(box)
+            ho_dists = (calc_pair_dists([prot_H], water_oxys, box))
+            step_his = np.histogram(ho_dists, gofr_data[GOFR_BINS])
+            gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], step_his[0] / num_dens)
+            gofr_data[HO_STEPS_COUNTED] += 1
+        if cfg[CALC_HH_GOFR]:
+            num_dens = len(water_hs) / np.prod(box)
+            hh_dists = (calc_pair_dists([prot_H], water_hs, box))
+            step_his = np.histogram(hh_dists, gofr_data[GOFR_BINS])
+            gofr_data[HH_BIN_COUNT] = np.add(gofr_data[HH_BIN_COUNT], step_his[0] / num_dens)
+            gofr_data[HH_STEPS_COUNTED] += 1
+    if cfg[CALC_OO_GOFR]:
+        num_dens = (len(carboxy_oxys) * len(water_oxys)) / np.prod(box)
+        oo_dists = (calc_pair_dists(carboxy_oxys, water_oxys, box))
+        step_his = np.histogram(oo_dists, gofr_data[GOFR_BINS])
+        gofr_data[OO_BIN_COUNT] = np.add(gofr_data[OO_BIN_COUNT], step_his[0] / num_dens)
+        gofr_data[OO_STEPS_COUNTED] += 1
+    if cfg[CALC_OH_GOFR]:
+        num_dens = (len(carboxy_oxys) * len(water_hs)) / np.prod(box)
+        oh_dists = (calc_pair_dists(carboxy_oxys, water_hs, box))
+        step_his = np.histogram(oh_dists, gofr_data[GOFR_BINS])
+        gofr_data[OH_BIN_COUNT] = np.add(gofr_data[OH_BIN_COUNT], step_his[0] / num_dens)
+        gofr_data[OH_STEPS_COUNTED] += 1
+
     return calc_results
 
 
-def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
     with open(dump_file) as d:
         section = None
         box = np.zeros((3,))
@@ -490,15 +540,25 @@ def process_dump_files(cfg):
     """
     @param cfg: configuration data read from ini file
     """
-    global dump_file
     gofr_data = {}
+    out_fieldnames = None
 
-    if cfg[CALC_HO_GOFR]:
+    if cfg[GOR_OUTPUT]:
         g_dr = cfg[GOFR_DR]
         g_max = cfg[GOFR_MAX]
         gofr_data[GOFR_BINS] = np.arange(0, g_max + g_dr, g_dr)
+    if cfg[CALC_HO_GOFR]:
         gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-        gofr_data[STEPS_COUNTED] = 0
+        gofr_data[HO_STEPS_COUNTED] = 0
+    if cfg[CALC_OO_GOFR]:
+        gofr_data[OO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
+        gofr_data[OO_STEPS_COUNTED] = 0
+    if cfg[CALC_HH_GOFR]:
+        gofr_data[HH_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
+        gofr_data[HH_STEPS_COUNTED] = 0
+    if cfg[CALC_OH_GOFR]:
+        gofr_data[OH_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
+        gofr_data[OH_STEPS_COUNTED] = 0
 
     if cfg[PER_FRAME_OUTPUT]:
         out_fieldnames = setup_per_frame_output(cfg)
@@ -509,20 +569,41 @@ def process_dump_files(cfg):
             dump_file = dump_file.strip()
             # skip any excess blank lines
             if len(dump_file) > 0:
-                read_dump_file(dump_file, cfg, data_to_print, gofr_data)
+                read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames)
                 if cfg[PER_FRAME_OUTPUT]:
                     f_out = create_out_suf_fname(dump_file, '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                     write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
                     print('Wrote file: {}'.format(f_out))
-    if cfg[CALC_HO_GOFR]:
-        dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
-        normal_fac = np.square(dr_array) * gofr_data[STEPS_COUNTED] * 4 * np.pi * g_dr
-        gofr_oh = np.divide(gofr_data[HO_BIN_COUNT], normal_fac)
 
-        headers = [GOFR_R, GOFR_HO]
-        f_out = create_out_suf_fname(dump_file, '_gofr_ho', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-        seq_list_to_file(np.column_stack((dr_array, gofr_oh)), f_out, header=headers)
+    if cfg[GOR_OUTPUT]:
+        dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
+        gofr_out_fieldnames = [GOFR_R]
+        gofr_output = dr_array
+    if cfg[CALC_HO_GOFR]:
+        normal_fac = np.square(dr_array) * gofr_data[HO_STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_ho = np.divide(gofr_data[HO_BIN_COUNT], normal_fac)
+        gofr_out_fieldnames.append(GOFR_HO)
+        gofr_output = np.column_stack((gofr_output, gofr_ho))
+    if cfg[CALC_OO_GOFR]:
+        normal_fac = np.square(dr_array) * gofr_data[OO_STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_oo = np.divide(gofr_data[OO_BIN_COUNT], normal_fac)
+        gofr_out_fieldnames.append(GOFR_OO)
+        gofr_output = np.column_stack((gofr_output, gofr_oo))
+    if cfg[CALC_HH_GOFR]:
+        normal_fac = np.square(dr_array) * gofr_data[HH_STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_hh = np.divide(gofr_data[HH_BIN_COUNT], normal_fac)
+        gofr_out_fieldnames.append(GOFR_HH)
+        gofr_output = np.column_stack((gofr_output, gofr_hh))
+    if cfg[CALC_OH_GOFR]:
+        normal_fac = np.square(dr_array) * gofr_data[OH_STEPS_COUNTED] * 4 * np.pi * g_dr
+        gofr_oh = np.divide(gofr_data[OH_BIN_COUNT], normal_fac)
+        gofr_out_fieldnames.append(GOFR_OH)
+        gofr_output = np.column_stack((gofr_output, gofr_oh))
+    if cfg[GOR_OUTPUT]:
+        f_out = create_out_suf_fname(dump_file, '_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+        seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
         print('Wrote file: {}'.format(f_out))
+
 
     return
 

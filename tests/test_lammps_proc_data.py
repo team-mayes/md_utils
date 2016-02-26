@@ -15,17 +15,36 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
+
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
+
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
 INCOMP_DUMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_incomp_dump.ini')
-GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
-GOOD_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
-DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho.csv')
-DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofr_ho.csv')
+
+HO_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
+GOOD_HO_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
+
+OO_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ostar_o_gofr.ini')
+GOOD_OO_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_oo_good.csv')
+
+HH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_h_gofr.ini')
+GOOD_HH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_hh_good.csv')
+
+OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ostar_h_gofr.ini')
+GOOD_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_oh_good.csv')
+
+HO_OO_HH_OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr.ini')
+GOOD_HO_OO_HH_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_oo_hh_oh_good.csv')
+
+
+DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofrs.csv')
+DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofrs.csv')
+
 HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
 GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
@@ -65,7 +84,7 @@ class TestLammpsProcData(unittest.TestCase):
                 self.assertTrue("WARNING" in output)
             with capture_stdout(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("Wrote file" in output)
-            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT_PATH, GOOD_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_INCOMP_OUT_PATH)
     def testNegGofR(self):
@@ -73,7 +92,31 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertTrue("a positive value" in output)
     def testHOGofR(self):
         try:
-            lammps_proc_data.main(["-c", GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_GOFR_OUT_PATH))
+            lammps_proc_data.main(["-c", HO_GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_OUT_PATH)
+    def testOOGofR(self):
+        try:
+            lammps_proc_data.main(["-c", OO_GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OO_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_OUT_PATH)
+    def testHHGofR(self):
+        try:
+            lammps_proc_data.main(["-c", HH_GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HH_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_OUT_PATH)
+    def testOHGofR(self):
+        try:
+            lammps_proc_data.main(["-c", OH_GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OH_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_OUT_PATH)
+    def testHO_OO_HH_OHGofR(self):
+        try:
+            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI_PATH])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
