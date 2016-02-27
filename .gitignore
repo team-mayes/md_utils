@@ -80,3 +80,5 @@ tests/test_data/small_tests/add_head_tail_input_amend.txt
 tests/test_data/to_sort/*
 tests/test_data/lammps_proc/glu_prot_deprot_proc_data.csv
 tests/test_data/lammps_proc/glue_dump_proc_data.csv
+tests/test_data/lammps_proc/glue_dump_gofrs.csv
+tests/test_data/lammps_proc/glu_prot_deprot_gofrs.csv
