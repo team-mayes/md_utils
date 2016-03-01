@@ -15,7 +15,8 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    'argparse', 'six', 'numpy',
+#    'argparse', 'six', 'numpy',
+    'argparse', 'six',
 ]
 
 test_requirements = [
@@ -47,6 +48,8 @@ setup(
             'lammps_dist = md_utils.lammps_dist:main',
             'lammps_proc_data = md_utils.lammps_proc_data:main',
             'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
+            'per_col_stats = md_utils.per_col_stats:main',
+            'evb_get_info = md_utils.evb_get_info:main',
         ],
     },
     package_dir={'md_utils':
