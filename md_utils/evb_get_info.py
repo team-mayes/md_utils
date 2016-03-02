@@ -209,6 +209,8 @@ def process_evb_file(evb_file, cfg):
                 num_states = 0
                 state_count = 0
                 state_list = []
+                prot_state_list = []
+                hyd_state_list = []
                 max_prot_ci_sq = 0.0
                 max_hyd_ci_sq = 0.0
                 max_prot_state = None
@@ -225,13 +227,12 @@ def process_evb_file(evb_file, cfg):
                 section = None
             elif section == SEC_STATES:
                 split_line = line.split()
-                state_list.append({MOL_A: int(split_line[3]), MOL_B: int(split_line[4])})
                 mol_B = int(split_line[4])
-                # print('state: {}, mol_B: {}'.format(state_count, split_line))
-                # if mol_B == cfg[PROT_RES_MOL_ID]:
-                #     prot_state.append(state_count)
-                # else:
-                #     hyd_state.append(state_count)
+                if mol_B == cfg[PROT_RES_MOL_ID]:
+                    prot_state_list.append(state_count)
+                else:
+                    hyd_state_list.append(state_count)
+                state_list.append({MOL_A: int(split_line[3]), MOL_B: mol_B})
                 state_count += 1
                 if state_count == num_states:
                     section = None
@@ -246,19 +247,25 @@ def process_evb_file(evb_file, cfg):
                 if state_count == num_states:
                     section = None
                     state_count = 0
+                    if len(diag_array.shape) == 1:
+                        one_state = True
+                    else:
+                        one_state = False
             elif section == SEC_EIGEN:
                 eigen_vector = map(float,line.split())
                 eigen_sq = np.square(eigen_vector)
-                for index, state in enumerate(state_list):
-                    if state[MOL_B] == cfg[PROT_RES_MOL_ID]:
-                        if eigen_sq[index] > max_prot_ci_sq:
-                            max_prot_ci_sq = eigen_sq[index]
-                            max_prot_state = index
-                    else:
-                        if state[MOL_A] == cfg[PROT_RES_MOL_ID]:
-                            if eigen_sq[index] > max_hyd_ci_sq:
-                                max_hyd_ci_sq = eigen_sq[index]
-                                max_hyd_state = index
+                for state in prot_state_list:
+                    if eigen_sq[state] > max_prot_ci_sq:
+                        max_prot_ci_sq = eigen_sq[state]
+                        max_prot_state = state
+                        # don't need to (and can't) match a neighboring water if only 1 state found
+                        if not one_state:
+                            max_prot_mol_A = state_list[state][MOL_A]
+                for state in hyd_state_list:
+                        if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or state_list[state][MOL_B] == max_prot_mol_A:
+                            if eigen_sq[state] > max_hyd_ci_sq:
+                                max_hyd_ci_sq = eigen_sq[state]
+                                max_hyd_state = state
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq})
                 section = None
@@ -271,13 +278,13 @@ def process_evb_file(evb_file, cfg):
                 if max_prot_state is None:
                     prot_coul = np.nan
                 # sometimes, there is only one state, so the diagonal array is a vector
-                elif len(diag_array.shape) == 1:
+                elif one_state:
                     prot_coul = diag_array[3] + diag_array[8]
                 else:
                     prot_coul = diag_array[max_prot_state][3] + diag_array[max_prot_state][8]
                 if max_hyd_state is None:
                     hyd_coul = np.nan
-                elif len(diag_array.shape) == 1:
+                elif one_state:
                     hyd_coul = diag_array[3] + diag_array[3]
                 else:
                     hyd_coul = diag_array[max_hyd_state][3] + diag_array[max_hyd_state][8]
