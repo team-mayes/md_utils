@@ -483,7 +483,7 @@ def read_csv(src_file, data_conv=None, all_conv=None):
 
 
 
-def write_csv(data, out_fname, fieldnames, extrasaction="raise"):
+def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
     """
     Writes the given data to the given file location.
 
@@ -493,9 +493,10 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise"):
     :param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
     """
-    with open(out_fname, 'w') as csvfile:
+    with open(out_fname, mode) as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames, extrasaction=extrasaction)
-        writer.writeheader()
+        if mode == 'w':
+            writer.writeheader()
         writer.writerows(data)
 
 
@@ -551,7 +552,10 @@ def conv_raw_val(param, def_val):
     if param is None:
         return def_val
     if isinstance(def_val, bool):
-        return bool(param)
+        if param in ['T', 't', 'true', 'TRUE', 'True']:
+            return True
+        else:
+            return False
     if isinstance(def_val, int):
         return int(param)
     if isinstance(def_val, long):
@@ -617,31 +621,6 @@ def unique_list(alist):
             mmap[item] = 1
             oset.append(item)
     return oset
-
-
-# Reading configs #
-
-def conv_raw_val(param, def_val):
-    """
-    Converts the given parameter into the given type (default returns the raw value).  Returns the default value
-    if the param is None.
-    :param param: The value to convert.
-    :param def_val: The value that determines the type to target.
-    :return: The converted parameter value.
-    """
-    if param is None:
-        return def_val
-    if isinstance(def_val, bool):
-        return bool(param)
-    if isinstance(def_val, int):
-        return int(param)
-    if isinstance(def_val, long):
-        return long(param)
-    if isinstance(def_val, float):
-        return float(param)
-    if isinstance(def_val, list):
-        return to_int_list(param)
-    return param
 
 
 # Processing LAMMPS files #

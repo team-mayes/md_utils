@@ -38,7 +38,7 @@ import sys
 import argparse
 
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, create_out_suf_fname, process_cfg, write_csv
+from md_utils.md_common import InvalidDataError, warning, create_out_suf_fname, process_cfg, write_csv
 
 
 __author__ = 'hmayes'
@@ -65,6 +65,8 @@ OUT_BASE_DIR = 'output_directory'
 PRINT_CI_SUBSET = 'print_ci_subset_flag'
 PRINT_CEC = 'print_cec_coords_flag'
 MIN_MAX_CI_SQ = 'min_max_ci_sq'
+PRINT_PER_FILE = 'print_output_each_file'
+PRINT_PER_LIST = 'print_output_file_list'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -72,8 +74,10 @@ DEF_CFG_FILE = 'evb_get_info.ini'
 DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt',
                 OUT_BASE_DIR: None,
                 PRINT_CI_SUBSET: False,
-                PRINT_CEC: False, 
+                PRINT_CEC: False,
                 MIN_MAX_CI_SQ: 0.475,
+                PRINT_PER_FILE: True,
+                PRINT_PER_LIST: False,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -251,9 +255,10 @@ def process_evb_file(evb_file, cfg):
                             max_prot_ci_sq = eigen_sq[index]
                             max_prot_state = index
                     else:
-                        if eigen_sq[index] > max_hyd_ci_sq:
-                            max_hyd_ci_sq = eigen_sq[index]
-                            max_hyd_state = index
+                        if state[MOL_A] == cfg[PROT_RES_MOL_ID]:
+                            if eigen_sq[index] > max_hyd_ci_sq:
+                                max_hyd_ci_sq = eigen_sq[index]
+                                max_hyd_state = index
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq})
                 section = None
@@ -267,16 +272,16 @@ def process_evb_file(evb_file, cfg):
                     prot_coul = np.nan
                 # sometimes, there is only one state, so the diagonal array is a vector
                 elif len(diag_array.shape) == 1:
-                    prot_coul = diag_array[3]
+                    prot_coul = diag_array[3] + diag_array[8]
                 else:
-                    prot_coul = diag_array[max_prot_state][3]
+                    prot_coul = diag_array[max_prot_state][3] + diag_array[max_prot_state][8]
                 if max_hyd_state is None:
                     hyd_coul = np.nan
                 elif len(diag_array.shape) == 1:
-                    hyd_coul = diag_array[3]
+                    hyd_coul = diag_array[3] + diag_array[3]
                 else:
-                    hyd_coul = diag_array[max_hyd_state][3]
-                result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul, COUL_DIFF: prot_coul-hyd_coul})
+                    hyd_coul = diag_array[max_hyd_state][3] + diag_array[max_hyd_state][8]
+                result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul, COUL_DIFF: hyd_coul - prot_coul})
                 data_to_print.append(result)
                 if cfg[PRINT_CI_SUBSET]:
                     if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
@@ -291,22 +296,38 @@ def process_evb_files(cfg):
     @param cfg: configuration data read from ini file
     @return: @raise InvalidDataError:
     """
+    first_file_flag = True
     with open(cfg[EVBS_FILE]) as f:
         for evb_file in f:
             evb_file = evb_file.strip()
             if len(evb_file) > 0:
                 data_to_print, subset_to_print = process_evb_file(evb_file, cfg)
-                f_out = create_out_suf_fname(evb_file, '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
-                print('Wrote file: {}'.format(f_out))
-                if cfg[PRINT_CI_SUBSET]:
-                    f_out = create_out_suf_fname(evb_file, '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                if cfg[PRINT_PER_FILE] is True:
+                    f_out = create_out_suf_fname(evb_file, '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                     print('Wrote file: {}'.format(f_out))
-                if cfg[PRINT_CEC]:
-                    f_out = create_out_suf_fname(evb_file, '_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
+                    if cfg[PRINT_CI_SUBSET]:
+                        f_out = create_out_suf_fname(evb_file, '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                        print('Wrote file: {}'.format(f_out))
+                    if cfg[PRINT_CEC]:
+                        f_out = create_out_suf_fname(evb_file, '_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
+                        print('Wrote file: {}'.format(f_out))
+                if cfg[PRINT_PER_LIST]:
+                    if first_file_flag:
+                        print_mode = 'w'
+                        first_file_flag = False
+                    else:
+                        print_mode = 'a'
+                    f_out = create_out_suf_fname(cfg[EVBS_FILE], '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
                     print('Wrote file: {}'.format(f_out))
+                    if cfg[PRINT_CI_SUBSET]:
+                        f_out = create_out_suf_fname(cfg[EVBS_FILE], '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                        print('Wrote file: {}'.format(f_out))
+
 
 
 def main(argv=None):
