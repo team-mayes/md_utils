@@ -13,12 +13,7 @@ STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
             4      0      1    352      2      2      4      0
             5      1      2     84    353      1      2      0
             6      2      2    363    393      1      2      0
-            7      2      2    363     93      1      3      0
-            8      5      3    353    242      1      2      0
-            9      5      3    353     82      1      3      0
-           10      6      3    393    377      1      2      0
-           11      7      3     93    114      1      2      0
-           12      7      3     93    435      1      3      0
+
 
 8.7995E-01 1.6785E-01 1.4918E-01 2.3097E-02 4.1799E-01 5.2724E-04 5.4624E-04 7.6832E-04 1.0254E-06 5.0091E-06 5.0375E-06 1.4359E-07 7.1592E-07
 
@@ -68,6 +63,7 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 IN_BASE_DIR = 'output_directory'
 OUT_BASE_DIR = 'output_directory'
 PRINT_CI_SUBSET = 'print_ci_subset_flag'
+PRINT_CEC = 'print_cec_coords_flag'
 MIN_MAX_CI_SQ = 'min_max_ci_sq'
 
 # Defaults
@@ -76,6 +72,7 @@ DEF_CFG_FILE = 'evb_get_info.ini'
 DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt',
                 OUT_BASE_DIR: None,
                 PRINT_CI_SUBSET: False,
+                PRINT_CEC: False, 
                 MIN_MAX_CI_SQ: 0.475,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
@@ -203,19 +200,15 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 timestep = split_line[1]
                 result = {TIMESTEP: timestep}
-                # result.update({TIMESTEP: timestep})
                 # Reset variables
                 # Start with an entry so the atom-id = index
                 num_states = 0
                 state_count = 0
                 state_list = []
-                prot_state = []
-                hyd_state = []
                 max_prot_ci_sq = 0.0
                 max_hyd_ci_sq = 0.0
                 max_prot_state = None
                 max_hyd_state = None
-                # diag_energies = []
                 section = None
             elif section == SEC_COMPLEX:
                 split_line = line.split()
@@ -271,18 +264,23 @@ def process_evb_file(evb_file, cfg):
                 section = None
             elif section == SEC_END:
                 if max_prot_state is None:
-                    prot_coul = 'nan'
+                    prot_coul = np.nan
+                # sometimes, there is only one state, so the diagonal array is a vector
+                elif len(diag_array.shape) == 1:
+                    prot_coul = diag_array[3]
                 else:
                     prot_coul = diag_array[max_prot_state][3]
-                hyd_coul = diag_array[max_hyd_state][3]
+                if max_hyd_state is None:
+                    hyd_coul = np.nan
+                elif len(diag_array.shape) == 1:
+                    hyd_coul = diag_array[3]
+                else:
+                    hyd_coul = diag_array[max_hyd_state][3]
                 result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul, COUL_DIFF: prot_coul-hyd_coul})
                 data_to_print.append(result)
                 if cfg[PRINT_CI_SUBSET]:
                     if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
                         subset_to_print.append(result)
-                        # result.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
-                #print('timestep: {}, states: {}, prot_state: {}, max_prot_ci_sq {}'.format(timestep, num_states, prot_state, max_prot_ci_sq))
-                # to_print.append(str(timestep)+','+str(max_prot_ci_sq))
                 section = None
     return data_to_print, subset_to_print
 
@@ -305,6 +303,11 @@ def process_evb_files(cfg):
                     f_out = create_out_suf_fname(evb_file, '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                     write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                     print('Wrote file: {}'.format(f_out))
+                if cfg[PRINT_CEC]:
+                    f_out = create_out_suf_fname(evb_file, '_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
+                    print('Wrote file: {}'.format(f_out))
+
 
 def main(argv=None):
     # Read input

@@ -28,6 +28,11 @@ CI_SUBSET_INI_PATH = os.path.join(SUB_DATA_DIR, 'evb_get_info_subset.ini')
 DEF_CI_SUBSET_OUT_PATH = os.path.join(SUB_DATA_DIR, '1.500_20c_short_ci_sq_ts.csv')
 GOOD_CI_SUBSET_OUT_PATH = os.path.join(SUB_DATA_DIR, '1.500_20c_short_ci_sq_ts_good.csv')
 
+CI_ONE_STATE_INI_PATH = os.path.join(SUB_DATA_DIR, 'serca_evb_get_info.ini')
+DEF_ONE_STATE_OUT_PATH = os.path.join(SUB_DATA_DIR, '0_3_ci_sq.csv')
+GOOD_ONE_STATE_OUT_PATH = os.path.join(SUB_DATA_DIR, '0_3_ci_sq_good.csv')
+
+
 class TestEVBGetInfo(unittest.TestCase):
     def testNoIni(self):
         with capture_stdout(evb_get_info.main,[]) as output:
@@ -57,6 +62,12 @@ class TestEVBGetInfo(unittest.TestCase):
             silent_remove(DEF_CI_SUBSET_OUT_PATH)
             silent_remove(DEF_CI_OUT_PATH1)
             silent_remove(DEF_CI_OUT_PATH2)
+    def testOneStateCiInfo(self):
+        try:
+            evb_get_info.main(["-c", CI_ONE_STATE_INI_PATH])
+            self.assertFalse(diff_lines(DEF_ONE_STATE_OUT_PATH, GOOD_ONE_STATE_OUT_PATH))
+        finally:
+            silent_remove(DEF_ONE_STATE_OUT_PATH)
 
     # def testNegGofR(self):
     #     with capture_stderr(evb_get_info.main,["-c", INCOMP_GOFR_INI_PATH]) as output:

@@ -1,0 +1,3929 @@
+
+******************************************************
+
+TIMESTEP 510000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515511.866190
+ENE_COMPLEX            -364.091593
+ENE_TOTAL           -515875.957783
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93674.462507 1401907.821790 73975.950727 73206.886079 29563.333785   765.581869 -2188605.902946
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -358.181644   -11.996325   -53.173193    10.960540     6.403537     0.830522     0.229258  -175.626366  -135.809617
+        1  -310.886536   -12.756806  -213.241837    70.712714     9.650927     1.196197     0.220088  -167.587674     0.919856
+        2    82.768452   -12.524817  -226.830520   460.458392    19.732342     1.196197     0.220088  -162.888546     3.405317
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.650819   -17.650819     1.000000     1.000000
+           2   -14.776476     0.576463   -21.064268   -25.633001
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4821E-01 3.1748E-01 1.0498E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+-0.114813 -6.552547 -3.609824
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514582.902352
+ENE_COMPLEX            -370.272515
+ENE_TOTAL           -514953.174867
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94292.797701 1401600.092651 74254.075591 73553.254708 29565.110402   780.534956 -2188628.768360
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -365.936044   -17.976368   -45.586641     4.584716     2.658708     1.396469     0.091602  -175.294912  -135.809617
+        1  -301.833192   -17.404289  -195.791749    61.954325    12.691417     1.252830     0.087938  -165.158182     0.534519
+        2   -10.794565   -16.993880  -217.759693   370.693378     6.118689     1.252830     0.087938  -159.275469     5.081641
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.164030   -17.164030     1.000000     1.000000
+           2   -13.446823     0.518503   -21.064268   -25.933955
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6949E-01 2.4494E-01 9.1624E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.153662 -6.853680 -3.897384
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514097.896475
+ENE_COMPLEX            -358.950972
+ENE_TOTAL           -514456.847448
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94415.772716 1401553.289857 74243.343237 73987.419199 29520.492396   789.601535 -2188607.815415
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -353.147014   -19.566633   -38.361203     5.839373     6.048730     0.402533     3.518608  -175.218804  -135.809617
+        1  -304.300229   -20.199532  -185.654777    55.654335     4.503150     1.581091     3.377864  -163.922956     0.360596
+        2   -36.297145   -18.659126  -210.407958   322.989246    16.682811     1.581091     3.377864  -156.986816     5.125744
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.768545   -17.768545     1.000000     1.000000
+           2    -9.038279     0.360337   -21.064268   -25.082822
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5054E-01 3.1049E-01 8.6974E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.186139 -6.770015 -4.171448
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513930.081773
+ENE_COMPLEX            -369.189661
+ENE_TOTAL           -514299.271434
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94085.991089 1402107.831388 74429.234579 73612.415440 29635.634929   802.673225 -2188603.862422
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -364.389922   -12.292129   -55.825504     4.968314     7.338470     2.342086     0.211104  -175.322646  -135.809617
+        1  -310.554463   -13.202362  -209.459549    62.390573    12.102900     1.627133     0.202659  -164.687453     0.471636
+        2   -60.515576   -12.066212  -226.782738   315.136669    15.380380     1.627133     0.202659  -157.806182     3.792714
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.699085   -16.699085     1.000000     1.000000
+           2   -12.866535     0.511249   -21.064268   -25.166843
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6102E-01 2.7622E-01 1.1514E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.113111 -6.759588 -3.882517
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513916.788279
+ENE_COMPLEX            -367.990874
+ENE_TOTAL           -514284.779153
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93976.926038 1401893.623423 74606.145131 73850.858615 29595.395856   761.560406 -2188601.297749
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -363.205997   -10.333363   -51.811918     5.562629     4.797784     0.728643     0.104362  -176.444516  -135.809617
+        1  -312.107945   -10.143366  -206.485255    64.201572     6.449203     1.797588     0.100187  -168.205493     0.177618
+        2     2.686038   -11.517917  -222.319491   387.898745     6.239560     1.797588     0.100187  -163.694763     4.182129
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.308640   -16.308640     1.000000     1.000000
+           2   -10.492746     0.401279   -21.064268   -26.148271
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5952E-01 2.8152E-01 7.9690E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.497964 -6.938588 -3.955184
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514033.209241
+ENE_COMPLEX            -367.436183
+ENE_TOTAL           -514400.645424
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94197.973625 1402184.974244 74097.524644 73688.007340 29606.195919   790.934471 -2188598.819484
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -361.975086    -7.943978   -52.782694     4.447543     5.340012     0.498006     0.079802  -175.804159  -135.809617
+        1  -317.290919    -8.970165  -216.471708    60.881564    10.911760     1.665028     0.076610  -167.044891     1.660884
+        2   -59.588912    -6.471801  -237.864023   325.550419    11.585723     1.665028     0.076610  -162.362261     8.231395
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.443940   -16.443940     1.000000     1.000000
+           2   -13.935467     0.543985   -21.064268   -25.617371
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4894E-01 3.1515E-01 1.4266E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.534352 -6.876356 -4.363020
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514331.350252
+ENE_COMPLEX            -369.318179
+ENE_TOTAL           -514700.668431
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94291.067764 1402163.510605 74167.101910 73331.679993 29524.074449   813.858247 -2188622.643220
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -364.877475   -14.903848   -50.147446     4.948437     5.006874     1.026015     0.331018  -175.328909  -135.809617
+        1  -304.682727   -14.759296  -202.164135    62.704976    12.884912     1.171553     0.317777  -164.838591     0.000077
+        2    14.571466   -14.504273  -215.232040   372.748206    23.229813     1.171553     0.317777  -158.186729     5.027158
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.938618   -16.938618     1.000000     1.000000
+           2    -3.086031     0.118605   -21.064268   -26.019311
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6731E-01 2.5359E-01 2.0386E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.271631 -6.694532 -3.734040
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514545.319389
+ENE_COMPLEX            -348.533599
+ENE_TOTAL           -514893.852988
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94398.504397 1401831.381548 73944.345309 73526.722469 29595.872818   805.181416 -2188647.327347
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.303189   -16.543900   -62.307296     2.510954     2.649098     1.374060     0.647950  -135.824438  -135.809617
+        1  -294.388691   -17.436891  -216.299596    53.035789    11.194161     1.247349     0.622032  -126.751534     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.828549   -16.828549     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5494E-01 2.9680E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.273806 -6.809403 -3.607382
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514478.964103
+ENE_COMPLEX            -351.661078
+ENE_TOTAL           -514830.625181
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94117.737572 1401293.067430 74411.449519 74015.962853 29626.567639   740.908339 -2188684.657454
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -345.341639   -12.919951   -68.064323     3.512495     2.431681     1.297695     0.034183  -135.823802  -135.809617
+        1  -307.467033   -13.344280  -224.260970    51.355454     3.369951     1.815921     0.032815  -126.435925     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.711720   -16.711720     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.3536E-01 3.5370E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.543581 -6.840128 -4.267262
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 510900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513394.487574
+ENE_COMPLEX            -353.411921
+ENE_TOTAL           -513747.899495
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94004.940673 1402463.812691 74547.508912 73805.850596 29674.968432   761.444933 -2188653.013810
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -347.815183    -9.357466   -74.894591     2.920343     3.736704     1.516286     0.005655  -135.932495  -135.809617
+        1  -301.694986   -10.383805  -226.877117    53.892964     6.200259     1.216759     0.005429  -125.749474     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.013118   -17.013118     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4992E-01 3.1249E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.453886 -6.620692 -3.940937
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513966.066448
+ENE_COMPLEX            -350.724316
+ENE_TOTAL           -514316.790764
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94037.860160 1402209.784846 74504.649446 73551.393746 29594.767734   784.133439 -2188648.655819
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -345.525280   -12.381558   -69.604656     3.484682     3.245074     0.515171     0.253745  -135.228122  -135.809617
+        1  -296.014015   -14.464477  -220.619191    53.939680     7.485201     1.554814     0.243595  -124.153637     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.865372   -16.865372     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5562E-01 2.9459E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.591773 -6.856851 -4.226584
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513634.222094
+ENE_COMPLEX            -353.581611
+ENE_TOTAL           -513987.803705
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94157.057330 1402321.378595 74162.675436 74038.962471 29558.334997   769.623459 -2188642.254382
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -348.748215   -16.119954   -67.216841     1.919887     3.595110     0.827244     0.166489  -136.110535  -135.809617
+        1  -295.131680   -16.504030  -219.928685    57.515862     9.738209     1.335421     0.159830  -127.448286     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.808083   -16.808083     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6105E-01 2.7636E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.438351 -6.844133 -3.639645
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514176.104326
+ENE_COMPLEX            -352.742355
+ENE_TOTAL           -514528.846681
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94216.423483 1402158.158890 73963.023644 73926.396599 29446.052824   746.980412 -2188633.140178
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -347.413018   -16.836312   -67.540267     1.938364     5.302016     1.052571     0.002601  -135.522374  -135.809617
+        1  -301.996168   -17.030887  -221.763345    53.202006     8.895481     1.669642     0.002497  -126.971562     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.445168   -16.445168     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5129E-01 3.0828E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.492321 -7.107470 -3.684141
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514813.339136
+ENE_COMPLEX            -367.259935
+ENE_TOTAL           -515180.599071
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94296.634700 1402245.950830 73791.047345 73318.785125 29440.645570   723.995735 -2188630.398441
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -361.785533    -9.447003   -52.953280     4.896063     5.474526     1.508458     0.032805  -175.487484  -135.809617
+        1  -317.011523   -10.644074  -208.678123    59.454952     7.058671     1.373272     0.031492  -165.607715     0.000001
+        2     3.625250   -10.013665  -224.695199   352.321106    40.575550     1.373272     0.031492  -159.346083     3.378777
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.585490   -16.585490     1.000000     1.000000
+           2    -0.323346     0.011849   -21.064268   -27.289980
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4961E-01 3.1344E-01 2.7326E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.596566 -7.160177 -4.122390
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514535.849828
+ENE_COMPLEX            -366.941095
+ENE_TOTAL           -514902.790923
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93751.471641 1402010.424402 74340.517873 73641.555439 29542.359644   780.660364 -2188602.839190
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -363.036010   -18.474752   -43.483636     4.930003     4.145485     0.455420     0.368384  -175.167298  -135.809617
+        1  -299.779449   -17.708036  -204.263992    67.107265    19.533076     1.213944     0.353649  -166.015358     0.000004
+        2    61.674919   -17.105943  -229.136056   409.460897    51.665627     1.213944     0.353649  -159.280523     4.503325
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.194763   -16.194763     1.000000     1.000000
+           2    -0.415792     0.015777   -21.064268   -26.354915
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.7214E-01 2.3441E-01 2.2740E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.220582 -7.125233 -3.550773
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514316.987421
+ENE_COMPLEX            -371.462069
+ENE_TOTAL           -514688.449490
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93421.843905 1402712.236537 74108.652186 73736.669028 29542.320665   777.578491 -2188616.288234
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -366.698329   -18.033844   -48.276998     3.965616     6.108014     0.346721     0.430251  -175.428472  -135.809617
+        1  -313.754016   -17.200694  -200.517050    57.239064    10.134296     1.266217     0.413041  -165.088891     0.000000
+        2     8.205070   -17.267956  -214.710330   366.866536    26.526675     1.266217     0.413041  -158.508319     3.619204
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.580293   -16.580293     1.000000     1.000000
+           2    -0.050097     0.001917   -21.064268   -26.132286
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6112E-01 2.7614E-01 3.6437E-05 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.259371 -7.047284 -3.756387
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513883.517687
+ENE_COMPLEX            -349.736053
+ENE_TOTAL           -514233.253740
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93876.737902 1402096.484197 74376.408346 74051.911390 29594.460803   751.361802 -2188630.882127
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -344.972280   -15.481129   -65.659549     2.563549     2.498688     1.507185     0.606224  -135.197631  -135.809617
+        1  -294.785418   -15.460278  -220.355801    58.784535     4.394613     1.781284     0.581975  -124.511745     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.179381   -16.179381     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5928E-01 2.8245E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.015190 -6.787658 -3.895045
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514097.067705
+ENE_COMPLEX            -373.170617
+ENE_TOTAL           -514470.238321
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93905.274406 1402426.445026 74171.896831 73667.799486 29566.351279   773.946204 -2188608.780937
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -368.688460   -15.354029   -48.620046     2.759776     2.522961     1.067852     0.242549  -175.497905  -135.809617
+        1  -306.952793   -15.152381  -201.842553    59.931557    12.585072     1.749779     0.232847  -164.464576     0.007461
+        2    15.395522   -14.661346  -224.305333   392.422773    13.841749     1.749779     0.232847  -157.983593     4.098647
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.209365   -17.209365     1.000000     1.000000
+           2    -7.427904     0.289812   -21.064268   -25.630052
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6771E-01 2.5204E-01 4.8180E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.334493 -6.773506 -3.821934
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514045.492059
+ENE_COMPLEX            -366.561882
+ENE_TOTAL           -514412.053941
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93962.730721 1401861.310067 74487.590605 73849.490591 29612.747352   791.904277 -2188611.265673
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.990930   -14.603192   -49.088926     3.022930     7.450801     2.270647     1.009841  -175.243414  -135.809617
+        1  -310.692955   -16.029896  -204.105280    66.583392     5.927174     1.343750     0.969448  -165.853437     0.471894
+        2    -9.961384   -14.150020  -229.966106   356.296550    29.262135     1.343750     0.969448  -159.283202     5.566061
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.577517   -17.577517     1.000000     1.000000
+           2   -12.064888     0.472937   -21.064268   -25.510552
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5322E-01 3.0211E-01 1.0221E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.255828 -7.060714 -3.636922
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 511900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514378.304895
+ENE_COMPLEX            -369.526481
+ENE_TOTAL           -514747.831376
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94294.825800 1401334.368021 74494.313915 73804.440287 29585.514672   764.188084 -2188655.955673
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -365.146000    -9.663926   -51.365371     2.949191     4.612381     0.208865     0.011461  -176.088984  -135.809617
+        1  -305.121577   -10.254016  -205.061384    63.249489    10.052192     1.573505     0.011003  -166.927502     2.235136
+        2   -15.371178   -11.386346  -227.600819   370.196423     8.381315     1.573505     0.011003  -161.829403     5.283146
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.755763   -16.755763     1.000000     1.000000
+           2   -10.520061     0.403543   -21.064268   -26.069213
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6746E-01 2.5292E-01 7.5130E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.514968 -7.045268 -3.747573
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514733.084115
+ENE_COMPLEX            -366.423001
+ENE_TOTAL           -515099.507116
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93918.304366 1401884.071135 74208.193805 73471.597221 29618.340365   782.987455 -2188616.578462
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.835571   -10.839632   -48.416025     2.600687     6.015910     0.923594     0.070393  -175.380881  -135.809617
+        1  -317.823871   -10.212324  -205.092656    55.368140     5.778162     1.293903     0.067578  -165.556892     0.530218
+        2   -25.933536    -9.175113  -226.667507   352.293144    10.437354     1.293903     0.067578  -159.781204     5.598309
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.426114   -16.426114     1.000000     1.000000
+           2   -10.258782     0.404047   -21.064268   -25.390101
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4668E-01 3.2202E-01 9.7023E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.704106 -6.811418 -3.870045
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514195.631042
+ENE_COMPLEX            -370.871118
+ENE_TOTAL           -514566.502160
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93600.851730 1402531.302881 74341.314982 73557.596334 29630.964761   755.184219 -2188612.845950
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -363.562202    -9.514100   -56.047115     7.084576     5.501647     0.286694     0.250686  -175.314973  -135.809617
+        1  -324.208537   -11.994823  -208.561710    53.092502     3.905236     1.194365     0.240659  -165.701822     3.617057
+        2  -138.075305   -10.988050  -224.173155   246.253160     3.407215     1.194365     0.240659  -160.140044     6.130546
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.109880   -18.109880     1.000000     1.000000
+           2   -20.415016     0.824808   -21.064268   -24.751239
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.2683E-01 3.7406E-01 3.2803E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.608643 -6.542762 -4.050995
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514425.550339
+ENE_COMPLEX            -373.921777
+ENE_TOTAL           -514799.472117
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94066.577247 1401884.945429 74099.454147 73828.851577 29561.748844   754.772805 -2188621.900390
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -369.359041   -16.253846   -48.787803     3.338333     2.333861     1.365197     0.345357  -175.890523  -135.809617
+        1  -302.670590   -17.658556  -197.338352    52.966799    21.166071     1.358793     0.331543  -166.273719     2.776832
+        2  -100.262859   -15.879837  -222.551168   279.730013     9.596387     1.358793     0.331543  -160.831606     7.983017
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.859666   -17.859666     1.000000     1.000000
+           2   -19.178681     0.751974   -21.064268   -25.504447
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6874E-01 2.4749E-01 1.7345E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.652940 -6.500304 -3.927655
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514015.295415
+ENE_COMPLEX            -373.931594
+ENE_TOTAL           -514389.227008
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93916.929509 1402328.326896 73945.403765 74104.423275 29511.967250   763.121305 -2188585.467415
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -368.900757   -15.291675   -49.401426     3.618159     3.608329     0.142181     0.359188  -176.125897  -135.809617
+        1  -313.287872   -15.990218  -198.551939    60.122877     5.831603     1.741961     0.344821  -166.787130     0.000153
+        2   -10.612202   -15.202803  -223.901052   371.593011    12.299467     1.741961     0.344821  -160.936807     3.449201
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.461357   -17.461357     1.000000     1.000000
+           2    -3.700832     0.143110   -21.064268   -25.860136
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6091E-01 2.7685E-01 2.8200E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.686527 -6.533859 -4.068476
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514087.032574
+ENE_COMPLEX            -375.788506
+ENE_TOTAL           -514462.821080
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93990.090424 1401785.317012 74345.655651 73980.306428 29634.444184   789.806393 -2188612.652666
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -368.765814    -7.008563   -60.766400     2.652226     6.990742     0.640210     0.002156  -175.466566  -135.809617
+        1  -330.181638   -10.840461  -213.238661    46.425019    10.858563     1.665957     0.002070  -166.477845     1.423721
+        2  -139.949444    -8.528059  -220.915786   231.655394    10.719921     1.665957     0.002070  -160.285796     5.736855
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.662915   -17.662915     1.000000     1.000000
+           2   -16.699809     0.649060   -21.064268   -25.729220
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.2893E-01 3.6934E-01 2.6153E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.364276 -6.716880 -4.106238
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514323.494841
+ENE_COMPLEX            -347.262588
+ENE_TOTAL           -514670.757429
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93777.248506 1401594.395396 74644.349035 73894.408251 29612.665122   793.238650 -2188639.799801
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.152379   -16.833208   -64.497756     3.217811     5.032798     1.841199     0.110418  -135.214024  -135.809617
+        1  -291.756404   -15.995915  -216.976478    55.290782     9.288249     1.263616     0.106001  -124.732659     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.841857   -16.841857     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5692E-01 2.9035E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.430699 -7.212882 -3.830496
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514305.777529
+ENE_COMPLEX            -346.571903
+ENE_TOTAL           -514652.349432
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93898.144848 1401886.981444 74447.869319 73696.624065 29618.910228   776.630846 -2188630.938279
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.153867   -11.171336   -71.591586     4.444678     7.149480     0.654984     0.786780  -135.617250  -135.809617
+        1  -286.255966   -13.594876  -215.778925    55.148529    11.187051     1.228846     0.755309  -125.201899     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.077443   -18.077443     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5790E-01 2.8710E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.252983 -7.300249 -3.622991
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514754.055066
+ENE_COMPLEX            -345.684948
+ENE_TOTAL           -515099.740014
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93087.679811 1402760.708942 73987.701442 73651.963151 29610.372952   790.563305 -2188643.044670
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -340.113521   -15.126572   -66.277244     3.922099     6.691938     0.648362     1.212710  -135.375197  -135.809617
+        1  -288.585314   -16.303839  -210.719038    54.079821     7.977301     1.479513     1.164202  -126.263274     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.836100   -17.836100     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5452E-01 2.9816E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.127780 -7.505945 -3.601419
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514677.811437
+ENE_COMPLEX            -347.923492
+ENE_TOTAL           -515025.734928
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94150.531321 1401900.358554 73988.195781 73479.834364 29656.270338   770.240272 -2188623.242068
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.573477   -16.775510   -63.825414     2.971857     5.042673     0.889508     0.635342  -135.702316  -135.809617
+        1  -288.580897   -17.921623  -209.402135    55.008902     7.288134     1.576052     0.609928  -125.740156     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.818074   -17.818074     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5776E-01 2.8757E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.259748 -7.688150 -3.592610
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 512900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513895.796374
+ENE_COMPLEX            -345.229020
+ENE_TOTAL           -514241.025394
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93558.486527 1402621.622252 74210.391685 73966.860607 29630.131030   781.891115 -2188665.179590
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -340.270722   -16.357685   -64.772792     3.192531     8.034631     0.710272     0.002687  -135.270748  -135.809617
+        1  -282.670883   -15.580230  -209.930940    57.580697    10.116112     1.411894     0.002579  -126.270996     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.611981   -17.611981     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6258E-01 2.7100E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.521096 -7.890208 -3.626719
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513571.367251
+ENE_COMPLEX            -349.998986
+ENE_TOTAL           -513921.366237
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93569.666336 1403007.109634 74258.732427 73893.167917 29597.802412   752.203347 -2188650.049324
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -345.454847   -15.264958   -70.036564     4.200731     5.456875     0.815754     0.544580  -135.361648  -135.809617
+        1  -284.777217   -14.742983  -220.918717    64.043354    10.791620     1.309735     0.522797  -125.783022     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.215597   -17.215597     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6688E-01 2.5521E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.535639 -7.827929 -3.814017
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513900.794425
+ENE_COMPLEX            -349.890739
+ENE_TOTAL           -514250.685164
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93685.214180 1402391.674168 74244.779244 74056.038955 29617.187948   793.853650 -2188689.542570
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -345.048528   -17.554318   -67.232640     2.179430     8.329219     0.148873     0.563268  -135.672743  -135.809617
+        1  -288.680021   -17.791183  -213.616062    58.891928     7.530453     1.662151     0.540737  -125.898045     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.216132   -17.216132     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6265E-01 2.7075E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.290360 -7.537413 -3.552858
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514439.601243
+ENE_COMPLEX            -348.865194
+ENE_TOTAL           -514788.466437
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94031.168702 1402065.980227 74125.550541 73629.654339 29589.218208   759.064565 -2188640.237825
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.325916   -11.603702   -69.217353     6.089003     2.264362     0.729493     0.488414  -135.266517  -135.809617
+        1  -297.889364   -14.004113  -216.592211    47.786268     8.055774     1.423684     0.468877  -125.027644     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.257740   -18.257740     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4144E-01 3.3719E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.070112 -6.974436 -3.612583
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514261.691620
+ENE_COMPLEX            -347.193807
+ENE_TOTAL           -514608.885427
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94002.124369 1401838.592900 74361.660370 73893.855607 29503.643640   777.155052 -2188638.723558
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -338.687018   -11.161988   -68.071427     7.947812     3.671552     0.192877     0.101068  -135.557294  -135.809617
+        1  -307.222541   -15.467354  -217.227443    43.976562     5.877025     1.627539     0.097025  -126.105895     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.439825   -18.439825     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.0803E-01 4.1890E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.110593 -6.290638 -4.204063
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513733.311022
+ENE_COMPLEX            -361.786693
+ENE_TOTAL           -514095.097716
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93404.530812 1402431.858128 74689.589929 74024.596090 29558.287432   790.549328 -2188632.722741
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -352.238430    -3.729879   -47.133303     7.406521     2.347085     0.135415     0.651997  -176.106647  -135.809617
+        1  -326.808975   -10.284932  -196.764707    39.034589     4.621794     1.689133     0.625917  -165.730772     0.000003
+        2  -178.222696    -5.559391  -215.908663   189.494456     5.918267     1.689133     0.625917  -160.463444     5.981029
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.274964   -18.274964     1.000000     1.000000
+           2    -0.204366     0.008086   -21.064268   -25.275212
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+8.8632E-01 4.6308E-01 5.1556E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.061757 -6.192602 -4.169208
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514041.739384
+ENE_COMPLEX            -366.359295
+ENE_TOTAL           -514408.098679
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93423.495499 1402448.051564 74408.764470 73828.138780 29663.583934   784.791363 -2188598.564994
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.329558   -11.798224   -51.830618     7.224843     6.723717     0.942285     0.513551  -176.295494  -135.809617
+        1  -312.604333   -14.017597  -203.442145    55.864828    12.666218     1.441678     0.493009  -167.645209     2.034884
+        2   -85.689790   -13.369804  -212.426906   268.329946    27.634105     1.441678     0.493009  -162.933532     5.141714
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.853464   -17.853464     1.000000     1.000000
+           2   -15.827964     0.631893   -21.064268   -25.048486
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4727E-01 3.1993E-01 1.8042E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.181544 -6.900437 -3.801401
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514173.083997
+ENE_COMPLEX            -367.750409
+ENE_TOTAL           -514540.834405
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93029.439477 1403475.106028 73825.616082 73824.834644 29545.466412   759.512957 -2188633.059597
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.928078   -19.043281   -42.569531     5.553612     4.781280     0.581292     0.039463  -176.461296  -135.809617
+        1  -302.975503   -18.148128  -195.950883    72.329052     5.083098     1.232153     0.037884  -167.558893     0.000215
+        2   368.228219   -17.272375  -218.754778   736.800413    24.349498     1.232153     0.037884  -162.089984     3.925409
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.670901   -17.670901     1.000000     1.000000
+           2    -4.007891     0.154811   -21.064268   -25.888885
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6472E-01 2.6327E-01 1.4337E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.293716 -7.536042 -3.638928
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514103.365409
+ENE_COMPLEX            -369.801907
+ENE_TOTAL           -514473.167316
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93192.914843 1403233.079171 73625.766112 74042.173345 29620.329924   792.489943 -2188610.118747
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -364.766736   -17.097854   -47.332986     1.825695     7.786973     1.246070     0.401007  -175.786023  -135.809617
+        1  -312.508932   -16.931335  -205.240354    63.299454    11.300001     1.552217     0.384967  -167.100511     0.226630
+        2    44.703844   -15.832412  -236.378004   419.401939    32.917716     1.552217     0.384967  -163.099638     5.757058
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.981331   -16.981331     1.000000     1.000000
+           2    -3.067893     0.115712   -21.064268   -26.513277
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5874E-01 2.8428E-01 2.1040E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.287655 -7.422639 -4.122268
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514639.611828
+ENE_COMPLEX            -345.952487
+ENE_TOTAL           -514985.564314
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93511.391687 1402036.929395 74296.197822 73932.825677 29428.268396   784.199162 -2188629.423965
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -338.659055   -13.278930   -66.538093     5.045330     3.736431     0.620403     2.937217  -135.371795  -135.809617
+        1  -309.613216   -15.478760  -221.986472    45.190755     5.345567     1.331271     2.819728  -126.835306     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.279988   -16.279988     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.1260E-01 4.0885E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.272903 -7.017008 -3.858113
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 513900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514575.066049
+ENE_COMPLEX            -363.830404
+ENE_TOTAL           -514938.896453
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93434.764873 1401520.941955 74929.765513 73882.407361 29498.486843   775.369131 -2188616.801726
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -357.765363    -5.767091   -53.115886     5.595766     5.312731     1.552450     0.259916  -175.793632  -135.809617
+        1  -319.181909    -7.804320  -210.580676    55.457542     7.482611     1.600493     0.249519  -166.129451     0.542373
+        2  -123.653803    -8.864388  -220.380982   254.091484     6.637292     1.600493     0.249519  -160.964935     3.977713
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.322417   -16.322417     1.000000     1.000000
+           2   -13.160432     0.506409   -21.064268   -25.987740
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.3721E-01 3.4825E-01 1.9082E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.087734 -6.545280 -4.000666
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514707.687970
+ENE_COMPLEX            -367.372426
+ENE_TOTAL           -515075.060395
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94358.265119 1400808.309990 74407.849460 73969.394557 29581.795936   788.067865 -2188621.370895
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.026322   -15.380055   -44.982224     4.910774     4.611661     0.582918     0.009400  -175.969178  -135.809617
+        1  -315.805928   -16.451005  -202.828376    56.110220    11.963121     1.763826     0.009024  -166.554727     0.181989
+        2   -54.983262   -14.636733  -220.138969   312.181197    22.077801     1.763826     0.009024  -161.015687     4.776278
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.541234   -16.541234     1.000000     1.000000
+           2   -10.991165     0.430475   -21.064268   -25.532619
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5148E-01 3.0752E-01 1.0820E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.388009 -6.282093 -4.350435
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515108.091094
+ENE_COMPLEX            -369.723754
+ENE_TOTAL           -515477.814848
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93439.905992 1402433.510859 74291.855458 73143.019265 29445.274747   776.851703 -2188638.509118
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -365.306327   -13.501518   -48.560203     3.548491     3.753426     0.528912     0.318487  -175.584305  -135.809617
+        1  -308.911007   -13.445085  -208.997741    64.721538    12.767933     1.482132     0.305747  -165.805286     0.059755
+        2   -26.449914   -13.637679  -231.528847   343.473973    28.656805     1.482132     0.305747  -159.670713     4.468668
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.353575   -16.353575     1.000000     1.000000
+           2    -9.642461     0.378368   -21.064268   -25.484366
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6537E-01 2.6077E-01 7.3249E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.417031 -6.495569 -4.213284
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514523.355321
+ENE_COMPLEX            -364.177912
+ENE_TOTAL           -514887.533233
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93636.368417 1402883.939881 73721.593693 73520.358705 29509.203413   777.395517 -2188572.214947
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -359.523655    -7.956463   -55.856882     8.961084     5.446183     1.597240     0.124775  -176.029975  -135.809617
+        1  -307.059483    -8.687934  -216.275149    64.225475    11.548116     1.270540     0.119784  -166.255127     6.994811
+        2    -3.879538    -9.414493  -224.913882   367.907584    12.669542     1.270540     0.119784  -160.806895     9.288283
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.059478   -16.059478     1.000000     1.000000
+           2   -24.787574     0.970817   -21.064268   -25.532699
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6030E-01 2.7831E-01 1.9147E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.308433 -6.539657 -3.985451
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513705.512189
+ENE_COMPLEX            -384.162862
+ENE_TOTAL           -514089.675051
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94117.770835 1402508.699248 73978.467471 73969.026243 29525.193711   764.631646 -2188569.301343
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -378.856209    -6.665009   -34.399681     5.251947     7.563101     0.345027     0.043433  -215.185409  -135.809617
+        1  -333.074605    -7.931544  -198.648914    60.030992    13.581159     1.746662     0.041695  -206.296229     4.401575
+        2   -51.764821    -7.366330  -215.169815   346.060185    14.072696     1.746662     0.041695  -201.113787     9.963874
+        3   192.559070   -10.098510  -243.343754   597.298984    37.514921     1.746662     0.041695  -197.130644     6.529716
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.238871   -16.238871     1.000000     1.000000
+           2   -21.523569     0.853440   -21.064268   -25.219784
+           3   -16.740259     0.637140   -21.064268   -26.274049
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5034E-01 3.1056E-01 2.0139E-02 5.8456E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.593850 -6.791020 -4.253154
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513961.513838
+ENE_COMPLEX            -379.466602
+ENE_TOTAL           -514340.980440
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 95048.533017 1400231.240408 74738.631283 74179.140116 29600.251928   785.112120 -2188544.422709
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -374.257541   -10.874465   -31.043571     8.090943    10.185673     0.957302     0.011838  -215.775646  -135.809617
+        1  -321.422628   -12.526388  -181.235432    60.211525    14.521995     1.495371     0.011365  -205.637852     1.736789
+        2   -34.906395   -11.636932  -201.883814   355.761915    16.593948     1.495371     0.011365  -200.036298     4.788049
+        3   290.552256   -13.571730  -235.357841   698.627563    31.869816     1.495371     0.011365  -197.195688     4.673400
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.283383   -17.283383     1.000000     1.000000
+           2   -15.513317     0.626301   -21.064268   -24.769747
+           3    -7.492574     0.292889   -21.064268   -25.581633
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5738E-01 2.8855E-01 1.2994E-02 1.4531E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.552694 -6.756020 -3.736169
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514005.870483
+ENE_COMPLEX            -378.691871
+ENE_TOTAL           -514384.562354
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93748.344975 1401961.764746 74922.878345 73597.943496 29528.475974   786.388423 -2188551.666442
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -373.178826   -10.387330   -23.358596     6.170842     5.434623     0.046135     0.229369  -215.504251  -135.809617
+        1  -318.438900   -10.805968  -182.324176    66.805865    12.764356     1.256687     0.220194  -206.404344     0.048488
+        2   -23.564984   -11.132922  -213.301151   365.012986    26.480848     1.256687     0.220194  -201.698507     9.596882
+        3   535.900497   -14.035006  -241.580827   947.324342    31.493998     1.256687     0.220194  -197.453270     8.674379
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -18.210721   -18.210721     1.000000     1.000000
+           2    -5.931634     0.235437   -21.064268   -25.194164
+           3   -21.355824     0.833720   -21.064268   -25.615093
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5709E-01 2.8975E-01 4.8464E-03 1.1316E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.510912 -6.880302 -3.782691
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514097.513637
+ENE_COMPLEX            -382.871947
+ENE_TOTAL           -514480.385584
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94359.709774 1401635.909459 74282.586094 73892.450884 29562.774671   752.543931 -2188583.488450
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -376.991896   -10.240758   -31.497062     5.585972     7.568236     1.277076     0.854308  -214.730050  -135.809617
+        1  -330.583093   -12.066702  -183.009486    52.157262    11.962824     1.603492     0.820135  -203.633732     1.583114
+        2  -111.795475    -9.865750  -199.883614   276.066148     9.447814     1.603492     0.820135  -196.859962     6.876262
+        3   278.568692   -14.907973  -236.877425   667.863516    49.502957     1.603492     0.820135  -192.968795     3.532785
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.399009   -17.399009     1.000000     1.000000
+           2   -14.775524     0.598193   -21.064268   -24.700248
+           3    -0.296178     0.011142   -21.064268   -26.582458
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4722E-01 3.2012E-01 1.7448E-02 7.8130E-06 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.560000 -6.781848 -3.987592
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514794.709758
+ENE_COMPLEX            -380.701566
+ENE_TOTAL           -515175.411323
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93500.603152 1402618.505412 73751.599001 73616.093644 29541.415870   761.402199 -2188584.329035
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -375.649831    -8.621285   -33.543780     5.147781    11.131223     1.369315     0.000029  -215.323495  -135.809617
+        1  -326.442494    -9.529373  -197.673502    60.673474    19.208161     1.588243     0.000028  -205.519893     4.810368
+        2   -86.465247    -9.782485  -213.995233   313.068266    13.918006     1.588243     0.000028  -199.644517     8.382445
+        3   138.532306   -12.544123  -237.661788   541.565131    38.103963     1.588243     0.000028  -196.031101     3.511954
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.300711   -16.300711     1.000000     1.000000
+           2   -22.091784     0.863898   -21.064268   -25.572202
+           3   -13.487715     0.521137   -21.064268   -25.881340
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5495E-01 2.9595E-01 2.2247E-02 5.7788E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.241575 -6.730065 -3.817593
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514032.480534
+ENE_COMPLEX            -388.733349
+ENE_TOTAL           -514421.213883
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94813.874458 1401910.688123 74004.383863 73422.360484 29591.044908   775.452343 -2188550.284712
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -384.168489   -11.023067   -34.777504     6.309058     5.935203     0.998902     0.062755  -215.864219  -135.809617
+        1  -330.311408   -11.287785  -186.742940    58.059035    13.322211     1.602328     0.060245  -205.324581     0.000078
+        2   -65.480107   -11.650819  -210.045216   337.153286    12.222921     1.602328     0.060245  -199.839667     5.016814
+        3   590.908102   -13.994623  -248.427493  1001.542548    43.418860     1.602328     0.060245  -197.128060     3.834296
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.329253   -16.329253     1.000000     1.000000
+           2    -1.754267     0.066527   -21.064268   -26.369140
+           3   -12.743223     0.470609   -21.064268   -27.078141
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6308E-01 2.6923E-01 1.4618E-03 1.9016E-05 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.508051 -6.866248 -3.986701
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 514900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513792.874723
+ENE_COMPLEX            -387.428186
+ENE_TOTAL           -514180.302909
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94372.943104 1402031.971813 74337.396216 73638.924491 29604.096080   782.442552 -2188560.648978
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -382.510812   -15.009797   -31.678552     6.607390     8.268729     0.908804     0.211168  -216.008936  -135.809617
+        1  -328.867455   -16.209127  -185.473578    61.437029    15.368380     1.475639     0.202722  -206.455537     0.787018
+        2   -64.837854   -16.109571  -210.041275   341.700915    10.751349     1.475639     0.202722  -200.797371     7.979739
+        3   339.399220   -17.581371  -241.684968   748.993329    39.291288     1.475639     0.202722  -197.994469     6.697050
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.898433   -16.898433     1.000000     1.000000
+           2   -12.559440     0.492198   -21.064268   -25.517070
+           3   -18.467999     0.711105   -21.064268   -25.970850
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6012E-01 2.7939E-01 1.0893E-02 2.7679E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.260769 -7.085670 -3.832339
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514023.855405
+ENE_COMPLEX            -378.343059
+ENE_TOTAL           -514402.198464
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93229.028293 1402681.786785 74647.454200 73639.810208 29551.461310   791.157609 -2188564.553809
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -373.436177    -7.784501   -28.965800     6.976692     5.508657     0.595001     0.060166  -214.016776  -135.809617
+        1  -316.517332    -7.054036  -187.570781    72.757044     6.713198     1.653785     0.057760  -203.113315     0.039013
+        2    91.923716    -7.754228  -211.204030   485.809744    16.801182     1.653785     0.057760  -196.623034     3.182537
+        3   597.605463   -11.884197  -248.174726   981.897766    61.658982     1.653785     0.057760  -191.695780     4.091873
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.398998   -17.398998     1.000000     1.000000
+           2    -7.870811     0.312822   -21.064268   -25.160640
+           3    -0.148587     0.005454   -21.064268   -27.242823
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6245E-01 2.7143E-01 4.5429E-03 6.9165E-07 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.628476 -7.595562 -3.805712
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513651.332780
+ENE_COMPLEX            -354.365022
+ENE_TOTAL           -514005.697802
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94028.836415 1401847.638543 74784.262180 73935.073206 29580.625396   785.048608 -2188612.817127
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -349.004473   -15.374979   -42.638164     5.973712    13.374724     0.456315     0.000206  -174.986671  -135.809617
+        1  -295.627299   -16.654778  -188.003592    53.221771    18.721546     1.386210     0.000198  -165.146801     0.848147
+        2   -15.358701   -14.740287  -203.847829   332.122792    23.227642     1.386210     0.000198  -158.968835     5.461407
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.676889   -17.676889     1.000000     1.000000
+           2   -12.304393     0.492566   -21.064268   -24.980207
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5691E-01 2.9019E-01 1.0532E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.412082 -7.677962 -3.601680
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514627.542889
+ENE_COMPLEX            -341.737169
+ENE_TOTAL           -514969.280058
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94066.827838 1401831.569626 74123.562250 73651.700706 29578.741806   759.060174 -2188639.005289
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -337.194824   -17.031621   -61.729106     3.360714     8.869942     0.115887     0.279073  -135.250096  -135.809617
+        1  -273.227347   -16.502095  -206.596809    63.864534     9.451745     1.678197     0.267910  -125.390828     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.640728   -17.640728     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6841E-01 2.4936E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.554130 -7.683433 -3.470998
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515131.551624
+ENE_COMPLEX            -341.910643
+ENE_TOTAL           -515473.462266
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93960.441368 1401683.667427 74048.575303 73578.106190 29417.676036   797.024489 -2188617.042437
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -336.152256   -16.752804   -63.881212     6.678220     8.110421     0.584242     0.000292  -135.081797  -135.809617
+        1  -286.032813   -16.956121  -211.725738    54.655219    12.058820     1.268450     0.000280  -125.333722     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.937841   -17.937841     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5214E-01 3.0566E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.549903 -7.578552 -3.720371
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514703.506531
+ENE_COMPLEX            -346.517061
+ENE_TOTAL           -515050.023592
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93512.666639 1402369.332411 74096.351208 73698.679573 29507.929635   780.954222 -2188669.420219
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.381430   -19.137674   -66.309400     3.652664     9.045801     0.714827     0.156045  -134.694077  -135.809617
+        1  -272.070164   -19.397167  -213.441012    65.530106    17.836919     1.323518     0.149803  -124.072330     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.546647   -17.546647     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.7333E-01 2.2941E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.661265 -7.403632 -3.622679
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514470.059863
+ENE_COMPLEX            -344.853772
+ENE_TOTAL           -514814.913635
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93778.480267 1401986.861729 74495.183847 73557.948716 29537.711273   833.525820 -2188659.771515
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -339.003147   -13.385005   -69.757433     5.245424     9.682632     0.195676     0.003375  -135.178198  -135.809617
+        1  -294.496152   -12.940002  -222.471266    57.964611     6.454765     1.246401     0.003240  -124.753902     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.164602   -17.164602     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4653E-01 3.2263E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.439608 -6.925305 -4.011174
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513861.362937
+ENE_COMPLEX            -348.209313
+ENE_TOTAL           -514209.572250
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93995.909410 1401392.602548 74695.958228 74343.799466 29570.211917   795.512269 -2188655.356775
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.256993   -14.090407   -64.871652     2.641180     4.641946     0.367627     0.002669  -136.138739  -135.809617
+        1  -289.295719   -15.483040  -215.822492    57.513252     9.717032     1.418207     0.002562  -126.641241     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.080953   -17.080953     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6045E-01 2.7846E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.491626 -6.761370 -3.967261
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514305.496272
+ENE_COMPLEX            -365.251160
+ENE_TOTAL           -514670.747432
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93817.333977 1402256.036410 74228.289533 73710.783818 29500.897427   774.659854 -2188593.497290
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -359.120557   -11.689410   -52.940467     6.243564     7.072440     3.076906     0.963687  -176.037661  -135.809617
+        1  -314.559924   -13.594907  -200.718137    52.570283    10.901649     1.416645     0.925140  -166.060862     0.000265
+        2   -83.198014   -10.682621  -221.091136   282.953596    19.393781     1.416645     0.925140  -161.217332     5.103913
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.609539   -17.609539     1.000000     1.000000
+           2    -5.560201     0.217126   -21.064268   -25.608190
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4438E-01 3.2878E-01 6.4813E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.437167 -6.568644 -3.813952
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514154.102670
+ENE_COMPLEX            -366.143704
+ENE_TOTAL           -514520.246373
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93784.498886 1401915.888816 74382.221992 74052.219003 29505.212044   804.516778 -2188598.660189
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.352808    -5.938713   -54.725344     5.668251     4.578100     1.227708     0.177427  -175.530620  -135.809617
+        1  -311.173608    -7.935192  -208.110072    58.203675     8.338576     1.198840     0.170330  -166.004251     2.964487
+        2   -84.879361    -7.681797  -226.921590   290.782009    11.737684     1.198840     0.170330  -160.330938     6.166102
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.676665   -17.676665     1.000000     1.000000
+           2   -16.872993     0.665566   -21.064268   -25.351359
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5014E-01 3.1127E-01 1.8673E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.426535 -6.956059 -4.190605
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 515900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515177.199190
+ENE_COMPLEX            -340.641336
+ENE_TOTAL           -515517.840526
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94367.655637 1401170.891440 74051.164099 73650.009362 29484.484532   777.184462 -2188678.588722
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -336.343729   -17.937487   -56.406334     5.177648     3.580976     0.020503     0.073362  -135.042781  -135.809617
+        1  -277.357430   -16.994569  -213.752212    65.686467    11.679340     1.247621     0.070427  -125.294504     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.491493   -16.491493     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6768E-01 2.5217E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.297039 -7.135529 -3.671117
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514804.632049
+ENE_COMPLEX            -345.925768
+ENE_TOTAL           -515150.557817
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94216.550581 1401324.344757 74146.330087 73938.170193 29473.470501   786.023231 -2188689.521397
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.031580   -18.052976   -61.063321     3.636028     3.732720     0.709313     1.168649  -135.352376  -135.809617
+        1  -286.583542   -17.955405  -207.717073    51.730289    11.364636     1.296625     1.121903  -126.424517     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.042065   -17.042065     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6115E-01 2.7603E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.287667 -7.300998 -3.566604
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515173.578906
+ENE_COMPLEX            -345.555755
+ENE_TOTAL           -515519.134661
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 95232.033120 1399651.104176 74339.774638 73878.494749 29555.903428   815.429907 -2188646.318924
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -339.556135   -15.096974   -61.719343     3.394315     3.897788     1.217721     0.002040  -135.442064  -135.809617
+        1  -297.794371   -16.851621  -211.832993    48.036018     6.472624     1.375318     0.001958  -124.995677     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.927793   -16.927793     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4255E-01 3.3406E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.127897 -7.517191 -3.857824
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515105.004684
+ENE_COMPLEX            -349.582754
+ENE_TOTAL           -515454.587438
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94323.897023 1400552.068898 74259.691583 74066.666837 29546.192128   796.165796 -2188649.686949
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -345.172400   -21.092651   -60.317260     4.032254     2.363087     0.090562     0.378567  -134.817343  -135.809617
+        1  -284.939700   -20.445402  -213.116348    65.309912     6.819407     1.212720     0.363425  -125.083414     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.884869   -16.884869     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6754E-01 2.5272E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.080882 -7.533959 -3.395009
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514584.561835
+ENE_COMPLEX            -349.431459
+ENE_TOTAL           -514933.993294
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94729.237557 1400873.796986 74176.052801 73934.253753 29559.494908   798.318880 -2188655.716720
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.678467   -14.624271   -66.518501     2.261013     5.189123     0.759964     0.181884  -135.118062  -135.809617
+        1  -298.173193   -15.853400  -221.509728    55.655808     8.272904     1.304392     0.174609  -126.217777     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.172314   -17.172314     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4820E-01 3.1766E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.418822 -7.707823 -3.753219
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514618.133071
+ENE_COMPLEX            -345.959485
+ENE_TOTAL           -514964.092556
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94352.944558 1401529.382056 74108.560748 73740.382247 29493.425352   780.031057 -2188622.859090
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.422929   -16.952943   -63.378122     4.116406     1.908070     1.190462     2.190053  -134.687238  -135.809617
+        1  -279.928356   -16.824457  -210.347986    55.648107    11.542250     1.619129     2.102451  -123.667851     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.307626   -17.307626     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6732E-01 2.5355E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.519106 -7.573395 -3.795112
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514476.258987
+ENE_COMPLEX            -349.968296
+ENE_TOTAL           -514826.227283
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94076.253480 1401255.213124 74365.354923 74235.546394 29525.619811   756.857185 -2188691.103903
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -344.651297   -14.871209   -69.000245     4.058648     3.985408     1.652338     0.074217  -134.740837  -135.809617
+        1  -291.146465   -16.083577  -218.220491    54.434497    12.736925     1.315000     0.071248  -125.400067     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.684899   -17.684899     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5765E-01 2.8792E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.307122 -7.405262 -3.696564
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514669.948751
+ENE_COMPLEX            -346.552289
+ENE_TOTAL           -515016.501040
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93907.480544 1401379.005210 74478.029948 73909.688744 29545.832465   760.684099 -2188650.669760
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.242196    -9.415689   -69.042227     4.522596     2.895319     0.135484     0.837541  -135.365603  -135.809617
+        1  -287.868090    -9.285697  -220.345220    55.668230     8.808957     1.601995     0.804039  -125.120394     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.652721   -17.652721     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5761E-01 2.8806E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.235962 -7.327802 -3.897155
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514478.049332
+ENE_COMPLEX            -348.195658
+ENE_TOTAL           -514826.244990
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94830.853629 1401048.699434 74217.519262 73799.205894 29502.110180   782.711783 -2188659.149514
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.621206   -20.351716   -60.030025     1.986724     3.352068     0.696697     2.240234  -135.705572  -135.809617
+        1  -282.322585   -19.918847  -210.469975    61.421069     8.608247     1.596329     2.150625  -125.710032     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.358951   -17.358951     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6699E-01 2.5482E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.322672 -7.088874 -3.946731
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513964.261124
+ENE_COMPLEX            -347.565023
+ENE_TOTAL           -514311.826147
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93843.241611 1402662.753778 74067.662935 73705.561180 29600.695305   823.901253 -2188668.077186
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.572061   -11.525531   -68.849011     4.620898     4.887094     0.399490     0.432707  -135.728091  -135.809617
+        1  -297.970315   -12.702811  -218.193607    51.092036     5.632782     1.622100     0.415399  -125.836213     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.240046   -17.240046     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4456E-01 3.2835E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.295365 -7.014400 -3.762168
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 516900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513907.112597
+ENE_COMPLEX            -372.350768
+ENE_TOTAL           -514279.463365
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94172.159895 1401778.773134 74594.084075 73791.817165 29555.015050   791.090925 -2188590.052840
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -367.509781   -16.837465   -46.745147     3.023925     2.454252     1.307058     0.021048  -174.923835  -135.809617
+        1  -311.547495   -16.312278  -201.784809    61.978332     6.943390     1.757625     0.020206  -164.149966     0.000006
+        2    31.726006   -16.302558  -226.065970   413.654753    12.256864     1.757625     0.020206  -158.170338     4.575424
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.156412   -17.156412     1.000000     1.000000
+           2    -0.670236     0.025413   -21.064268   -26.374076
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6242E-01 2.7156E-01 4.5044E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.281163 -7.036400 -3.789575
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514489.776732
+ENE_COMPLEX            -365.653725
+ENE_TOTAL           -514855.430456
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94282.298647 1401502.988619 74241.342761 73714.338805 29618.044490   759.396023 -2188608.186077
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -361.055306   -15.960488   -47.763492     3.103847     9.564664     0.815044     0.077784  -175.083050  -135.809617
+        1  -304.644104   -17.193068  -200.188275    54.954287    20.844499     1.513910     0.074673  -164.650576     0.000445
+        2   -28.724996   -15.754723  -213.630679   315.921405    36.369252     1.513910     0.074673  -157.503676     4.284843
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.733124   -16.733124     1.000000     1.000000
+           2    -6.350123     0.253183   -21.064268   -25.081148
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6424E-01 2.6498E-01 4.9941E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.313061 -7.277554 -4.077671
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514557.813208
+ENE_COMPLEX            -366.886415
+ENE_TOTAL           -514924.699623
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94347.221938 1400915.101458 74307.136822 74014.445598 29693.877621   775.515463 -2188611.112109
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -361.629349   -16.446616   -42.106705     2.757131     3.086526     2.185892     0.349166  -175.645126  -135.809617
+        1  -311.854256   -17.926013  -195.116229    57.116619     6.425688     1.674494     0.335200  -165.093917     0.729902
+        2   -67.850200   -16.226900  -214.954969   307.435813     7.117737     1.674494     0.335200  -158.918346     5.686772
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.930680   -16.930680     1.000000     1.000000
+           2   -12.300270     0.497573   -21.064268   -24.720511
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5495E-01 2.9652E-01 1.2197E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.115704 -7.100629 -3.876731
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514604.210662
+ENE_COMPLEX            -363.406667
+ENE_TOTAL           -514967.617329
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93644.194792 1401919.109184 74046.560689 73994.909045 29647.587222   770.385859 -2188626.957453
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -358.549453   -15.246213   -41.322307     4.084474     3.723469     1.358166     0.305866  -175.643292  -135.809617
+        1  -304.018837   -17.226539  -195.562649    53.844392    16.806868     1.523396     0.293631  -165.824047     2.126109
+        2   -35.251115   -14.976196  -223.700516   309.163154    46.322479     1.523396     0.293631  -160.937547     7.060483
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.881680   -16.881680     1.000000     1.000000
+           2   -15.307499     0.605607   -21.064268   -25.276274
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6093E-01 2.7648E-01 1.2897E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.352811 -6.924506 -3.642686
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514691.709674
+ENE_COMPLEX            -366.114011
+ENE_TOTAL           -515057.823685
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94387.376424 1401456.260086 74143.726842 73646.465765 29530.405357   731.020919 -2188586.965067
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.879451   -17.736645   -46.886499     5.215209     8.869596     0.489282     0.005338  -175.026116  -135.809617
+        1  -310.356273   -18.809907  -199.619876    63.388577     8.804200     1.217101     0.005125  -165.341870     0.000377
+        2    -0.565878   -17.566036  -211.902922   363.805157    19.576885     1.217101     0.005125  -158.363766     2.662579
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.070584   -17.070584     1.000000     1.000000
+           2    -5.682562     0.222334   -21.064268   -25.558689
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5605E-01 2.9317E-01 4.5574E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.326098 -7.009477 -3.854229
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514032.682022
+ENE_COMPLEX            -368.048230
+ENE_TOTAL           -514400.730251
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93856.630141 1402142.955070 74470.167879 73703.316260 29621.438150   775.340829 -2188602.530351
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.996001   -14.815384   -45.424427     4.751443     3.279163     0.289019     0.841301  -176.107498  -135.809617
+        1  -308.577944   -15.279124  -205.418731    57.080151    20.915565     1.309939     0.807649  -168.277652     0.284259
+        2   -45.568175   -15.539036  -221.311702   329.186144    19.415556     1.309939     0.807649  -162.884724     3.447998
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.297506   -17.297506     1.000000     1.000000
+           2    -8.945892     0.334540   -21.064268   -26.740904
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5986E-01 2.8036E-01 7.7773E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.235398 -6.952778 -4.036709
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513650.549960
+ENE_COMPLEX            -349.168841
+ENE_TOTAL           -513999.718800
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94146.461773 1402402.715053 74373.435434 73749.304384 29552.699527   778.281775 -2188653.447905
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.124895    -8.304509   -69.552534     4.463824     2.795886     0.677910     0.324872  -135.720726  -135.809617
+        1  -308.900618   -10.798386  -218.165185    42.412029     3.775920     1.222909     0.311877  -127.659783     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.997650   -17.997650     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.1296E-01 4.0804E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.218267 -6.814108 -3.816795
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514439.807750
+ENE_COMPLEX            -366.771572
+ENE_TOTAL           -514806.579322
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93993.259703 1401094.045468 74617.412005 74013.213846 29645.991798   804.631047 -2188608.361617
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.047076   -18.951660   -42.749125     3.658090     6.725707     0.631248     0.274449  -175.826168  -135.809617
+        1  -303.982788   -19.389995  -197.389662    61.424050    17.319947     1.097280     0.263471  -167.307985     0.000107
+        2    41.893679   -18.640243  -225.257409   382.302459    61.167442     1.097280     0.263471  -162.929781     3.890461
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.220461   -17.220461     1.000000     1.000000
+           2    -2.956843     0.111368   -21.064268   -26.550176
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6436E-01 2.6458E-01 1.9143E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.349996 -7.284822 -3.673001
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514274.413586
+ENE_COMPLEX            -366.802804
+ENE_TOTAL           -514641.216390
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94695.324190 1401015.455785 74431.345774 73886.905491 29527.805204   751.277718 -2188582.527748
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.048377   -11.447777   -47.086124     3.337395     4.454921     0.169075     0.468008  -176.134258  -135.809617
+        1  -304.016890   -12.006565  -198.749991    57.336585    11.304391     1.671253     0.449288  -166.932048     2.910197
+        2    21.962271   -10.423746  -227.275693   374.325311    37.319559     1.671253     0.449288  -161.955384     7.851683
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.146884   -17.146884     1.000000     1.000000
+           2   -19.172552     0.759522   -21.064268   -25.242909
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6356E-01 2.6717E-01 1.3176E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.559506 -7.172467 -4.161684
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -515094.390502
+ENE_COMPLEX            -365.384931
+ENE_TOTAL           -515459.775433
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94147.195579 1401120.097473 74298.099653 73722.274868 29434.206731   789.491341 -2188605.756147
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.883799   -19.674970   -39.523400     2.655086     2.775448     2.184558     2.439575  -175.930479  -135.809617
+        1  -297.787704   -20.323746  -186.159548    61.078873     9.823431     1.546061     2.341992  -166.094865     0.000098
+        2   -34.780409   -18.153371  -217.779289   317.178807    34.727021     1.546061     2.341992  -160.904959     6.263328
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.435233   -17.435233     1.000000     1.000000
+           2    -4.508448     0.179058   -21.064268   -25.178674
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6825E-01 2.4997E-01 3.4088E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.462243 -7.034481 -3.690465
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 517900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514678.951257
+ENE_COMPLEX            -363.322795
+ENE_TOTAL           -515042.274052
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94052.226533 1401368.814228 74309.178916 73887.605510 29524.847592   790.387246 -2188612.011283
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -357.003819   -11.746294   -44.879793     4.996753     4.678678     0.694092     0.241759  -175.179396  -135.809617
+        1  -314.359696   -15.139955  -191.885306    47.551892     8.703648     1.603488     0.232088  -165.436954     0.011403
+        2  -117.064870   -12.294245  -205.154026   243.449457     8.896169     1.603488     0.232088  -159.543665     5.745864
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.575537   -17.575537     1.000000     1.000000
+           2    -4.401656     0.170911   -21.064268   -25.754054
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4101E-01 3.3832E-01 6.0473E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.405906 -6.977568 -3.740259
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514484.684937
+ENE_COMPLEX            -376.415827
+ENE_TOTAL           -514861.100764
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93783.710207 1401598.973870 74452.671051 74003.111226 29499.122586   773.224987 -2188595.498863
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 4 state(s) = 1 + 1 + 1 + 1
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+            3      2      3  50534   3706      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -372.056998   -14.455678   -15.521507     4.970174     3.493238     0.685366     0.002247  -215.421220  -135.809617
+        1  -308.396902   -14.620760  -164.783503    67.520975     6.396809     1.703480     0.002157  -204.616064     0.000003
+        2    51.744892   -11.440833  -199.021068   445.915975     6.712530     1.703480     0.002157  -198.278977     6.151628
+        3   986.799066   -16.602643  -245.197632  1416.996249    20.541354     1.703480     0.002157  -195.109332     4.465433
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.218374   -17.218374     1.000000     1.000000
+           2    -1.014424     0.040294   -21.064268   -25.175507
+           3    -0.059212     0.002182   -21.064268   -27.131464
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6942E-01 2.4541E-01 5.8144E-04 2.5255E-08 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.371187 -7.091388 -3.835610
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513777.119045
+ENE_COMPLEX            -363.697854
+ENE_TOTAL           -514140.816899
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94316.369856 1401121.189675 74842.176378 74226.985538 29558.164051   770.270394 -2188612.274937
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -358.454186    -9.352097   -53.587530     3.936749    10.934075     1.362484     0.000330  -175.938579  -135.809617
+        1  -308.509808    -9.904716  -200.435114    51.145386    14.500321     1.607368     0.000317  -165.423370     0.000000
+        2   -63.491352    -9.619568  -225.739571   300.376634    23.260819     1.607368     0.000317  -160.367019     6.989669
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.011392   -17.011392     1.000000     1.000000
+           2    -0.140737     0.005347   -21.064268   -26.319897
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5563E-01 2.9457E-01 1.3809E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.494877 -7.291699 -3.915121
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514262.827686
+ENE_COMPLEX            -340.007238
+ENE_TOTAL           -514602.834924
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93392.231145 1402913.455205 73986.936856 73768.674886 29533.008283   785.611798 -2188642.745860
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -336.691437   -20.829624   -54.805805     2.821084     3.700146     1.144324     2.190174  -135.102119  -135.809617
+        1  -256.222987   -19.555572  -207.014831    81.773909    10.132785     1.524515     2.102567  -125.186360     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.667690   -16.667690     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.8078E-01 1.9511E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.490469 -7.552257 -3.522075
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514041.215824
+ENE_COMPLEX            -368.901753
+ENE_TOTAL           -514410.117578
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93571.668574 1402530.946922 73880.847601 74260.633758 29502.722749   828.708078 -2188616.743507
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.284679   -13.581438   -49.962823     6.680465     4.848758     0.595689     0.669952  -175.725667  -135.809617
+        1  -323.430957   -14.268953  -203.415519    52.984458     5.410123     1.718101     0.643154  -166.857756     0.355433
+        2   -31.305254   -12.481892  -225.296714   336.273504    23.421409     1.718101     0.643154  -161.551378     5.968561
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.300075   -17.300075     1.000000     1.000000
+           2    -9.009566     0.349208   -21.064268   -25.800008
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.3397E-01 3.5723E-01 9.5336E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.564546 -7.099327 -3.985786
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513679.270913
+ENE_COMPLEX            -368.142355
+ENE_TOTAL           -514047.413269
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94445.419006 1401783.267074 74450.694927 74033.997096 29454.600746   762.136857 -2188609.386620
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -363.865112   -12.596908   -55.375462     3.531537     9.470111     0.578496     2.797291  -176.460561  -135.809617
+        1  -300.860366   -12.489921  -214.528579    68.474384    17.251731     1.298676     2.685399  -167.710533     4.158476
+        2   108.224363   -12.397258  -236.529718   468.466557    39.249349     1.298676     2.685399  -162.821412     8.272770
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.839548   -16.839548     1.000000     1.000000
+           2   -21.656338     0.851914   -21.064268   -25.420804
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6916E-01 2.4617E-01 1.1191E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.375229 -6.998827 -3.630831
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514314.860026
+ENE_COMPLEX            -368.155812
+ENE_TOTAL           -514683.015838
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93288.017308 1402402.297738 74279.008123 73948.817093 29602.698604   784.094688 -2188619.793580
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.738986   -15.393045   -44.545383     3.374996     4.343049     0.744002     0.138394  -175.591383  -135.809617
+        1  -312.402401   -15.974529  -194.876912    53.144644     8.059371     1.722769     0.132859  -165.314247     0.703644
+        2   -16.382479   -14.877544  -212.139608   333.395981    28.545649     1.722769     0.132859  -158.700038     5.537453
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.320866   -17.320866     1.000000     1.000000
+           2   -11.379917     0.444725   -21.064268   -25.588674
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5437E-01 2.9846E-01 9.6554E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.426319 -7.132254 -3.914170
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513974.771008
+ENE_COMPLEX            -341.714565
+ENE_TOTAL           -514316.485573
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93255.866150 1402869.516896 74537.932871 73741.574207 29514.511338   802.956801 -2188697.129271
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -335.918743    -2.927948   -72.510570     2.277406     4.079588     2.671529     1.626236  -135.325367  -135.809617
+        1  -290.764863   -10.527152  -218.103707    47.054359    13.321209     1.610723     1.561187  -125.681482     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.184161   -17.184161     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4756E-01 3.1959E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.636888 -6.656609 -4.359275
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514551.597304
+ENE_COMPLEX            -368.282289
+ENE_TOTAL           -514919.879593
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93655.648573 1402029.685137 74235.676158 73822.061021 29497.996500   807.642768 -2188600.307462
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -362.771769   -15.196667   -52.032171     5.869821     9.815848     0.264359     0.302799  -175.986143  -135.809617
+        1  -316.989420   -16.110611  -206.925273    59.972491    11.004637     1.635346     0.290687  -166.985426     0.128727
+        2    19.225921   -16.322737  -222.619774   379.916264    34.769351     1.635346     0.290687  -162.237236     3.794019
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.800749   -16.800749     1.000000     1.000000
+           2    -5.204307     0.198796   -21.064268   -26.179115
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5019E-01 3.1165E-01 4.1856E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.386916 -6.890600 -4.050761
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513899.968508
+ENE_COMPLEX            -359.743461
+ENE_TOTAL           -514259.711969
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93500.208769 1402593.923521 74189.848814 74002.359320 29637.426211   776.060942 -2188599.796084
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -355.474830   -14.326159   -48.912780     7.223229     9.410924     0.817192     1.805339  -175.682957  -135.809617
+        1  -290.009059   -13.883987  -203.764804    69.878264    21.251292     1.189341     1.733126  -167.137805     0.725515
+        2    74.077271   -13.555854  -222.551248   453.353380    12.070833     1.189341     1.733126  -162.075433     3.913126
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.211823   -17.211823     1.000000     1.000000
+           2   -12.028373     0.478009   -21.064268   -25.163493
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.7057E-01 2.4071E-01 6.6740E-03 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.471075 -7.031426 -3.709151
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 518900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514249.583585
+ENE_COMPLEX            -366.294701
+ENE_TOTAL           -514615.878286
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93859.804120 1402677.572333 73817.249355 73596.781042 29647.780036   746.076986 -2188594.847457
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -360.094146   -14.757330   -47.669167     5.986391     6.113119     0.629972     0.981524  -175.569038  -135.809617
+        1  -317.386010   -16.224233  -199.064717    54.064918     6.668917     1.247286     0.942263  -165.526424     0.505980
+        2   -63.946722   -13.584533  -207.208982   300.466840     8.963743     1.247286     0.942263  -160.182314     5.408975
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.351174   -17.351174     1.000000     1.000000
+           2   -10.352171     0.411483   -21.064268   -25.158191
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.4162E-01 3.3649E-01 1.1521E-02 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.064648 -6.813478 -3.949873
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513554.272184
+ENE_COMPLEX            -359.610321
+ENE_TOTAL           -513913.882505
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93656.979655 1402695.043584 74300.043368 73984.362926 29634.398702   785.865797 -2188610.966216
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 3 state(s) = 1 + 1 + 1 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+            2      1      2   1416  50534      1      2      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -355.035950    -9.522150   -44.803523     5.502309     1.639710     0.795311     2.045542  -174.883532  -135.809617
+        1  -292.271238   -10.067110  -198.176795    61.223949    17.241006     1.249436     1.963720  -165.705449     0.000004
+        2   -62.679478   -10.589745  -225.622554   294.754280    30.658440     1.249436     1.963720  -159.655001     4.561946
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.550877   -17.550877     1.000000     1.000000
+           2    -0.208829     0.008077   -21.064268   -25.855850
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6767E-01 2.5221E-01 1.7738E-04 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.123290 -6.878496 -3.989189
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519100
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514345.519311
+ENE_COMPLEX            -348.170167
+ENE_TOTAL           -514693.689478
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93602.531395 1401872.260301 74432.537125 74007.222206 29592.936110   780.010936 -2188633.017385
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -341.517082   -13.781653   -66.288293     4.944147     2.909508     1.496909     0.313677  -135.301760  -135.809617
+        1  -301.883003   -15.130131  -217.740041    51.093294     4.700708     1.668233     0.301130  -126.776195     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.548574   -17.548574     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.3506E-01 3.5450E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.419098 -6.719664 -4.110670
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519200
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514806.571284
+ENE_COMPLEX            -349.017405
+ENE_TOTAL           -515155.588689
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93686.880240 1401784.903861 74130.860060 73894.244786 29601.691562   760.752298 -2188665.904091
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.810896   -15.848413   -66.315032     3.706990     3.745122     2.405021     0.205252  -135.900219  -135.809617
+        1  -291.375904   -16.575522  -213.104465    56.284322     6.484778     1.753465     0.197042  -126.415524     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.323712   -17.323712     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5768E-01 2.8782E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.285506 -6.654106 -3.699490
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519300
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514420.865908
+ENE_COMPLEX            -346.925710
+ENE_TOTAL           -514767.791618
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94053.841269 1401574.448504 74706.333125 73554.391937 29567.792418   766.339694 -2188644.012855
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.178310   -12.970148   -66.418535     2.304510     4.179627     0.343629     1.605283  -135.413059  -135.809617
+        1  -284.555430   -13.213883  -220.677659    64.733951     7.963661     1.580245     1.541072  -126.482818     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.207459   -17.207459     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6399E-01 2.6596E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.407056 -7.053278 -3.912501
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519400
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514094.950382
+ENE_COMPLEX            -347.419796
+ENE_TOTAL           -514442.370178
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93856.801157 1402185.426109 74400.433406 73758.530139 29551.662960   777.606389 -2188625.410542
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -342.955614   -17.514334   -59.794732     2.250337     1.019845     1.205585     1.138357  -135.451054  -135.809617
+        1  -284.564087   -18.459738  -204.284024    54.836982     5.184942     1.750333     1.092822  -124.685403     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.751100   -16.751100     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6627E-01 2.5751E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.460016 -7.259180 -4.324577
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519500
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513889.747311
+ENE_COMPLEX            -327.887895
+ENE_TOTAL           -514217.635206
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93247.198759 1403300.356586 74019.077106 73793.858042 29666.627654   769.043448 -2188685.908905
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 1 state(s) = 1 + 0 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -327.887895   -14.681084   -92.229030     4.143881     5.107221     0.148525     0.348285   -94.916077  -135.809617
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+1.0000E+00 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.320854 -7.485557 -3.264960
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519600
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513846.614532
+ENE_COMPLEX            -344.153429
+ENE_TOTAL           -514190.767961
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94018.175678 1401748.017145 74613.359089 73921.361394 29699.316727   788.700286 -2188635.544849
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -338.639848   -10.911302   -61.916356     2.769851     1.999420     0.536290     0.182560  -135.490695  -135.809617
+        1  -291.238105   -12.670583  -209.351893    47.683714     7.358171     1.561480     0.175258  -125.994252     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.080776   -17.080776     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5165E-01 3.0719E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.302752 -7.177188 -4.033048
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519700
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513804.289167
+ENE_COMPLEX            -347.443093
+ENE_TOTAL           -514151.732261
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 93981.214830 1402421.518605 74559.231301 73438.929231 29668.760027   800.469297 -2188674.412459
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.032508   -18.767550   -62.783540     1.694632     4.592517     3.393896     0.218003  -135.570848  -135.809617
+        1  -279.452283   -19.790429  -212.074478    60.666845    16.477140     1.455846     0.209283  -126.396491     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.317023   -17.317023     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6906E-01 2.4682E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.314763 -7.409240 -3.808432
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519800
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513229.540745
+ENE_COMPLEX            -353.075595
+ENE_TOTAL           -513582.616340
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94228.202409 1402097.346251 74795.779294 73840.642209 29650.223588   813.974190 -2188655.708686
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -348.668952   -15.700860   -68.971222     2.947881     3.533403     0.982690     0.156281  -135.807507  -135.809617
+        1  -287.227672   -14.456006  -222.450890    71.630333     4.491238     1.343416     0.150029  -127.935793     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -17.034326   -17.034326     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6813E-01 2.5045E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.439518 -7.291050 -3.681676
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 519900
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -513763.797397
+ENE_COMPLEX            -348.501437
+ENE_TOTAL           -514112.298834
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94788.922143 1401237.297463 74389.788670 74073.430222 29614.743226   795.868211 -2188663.847331
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -343.342096   -13.513915   -70.899443     3.605058     7.816684     0.853025     0.204200  -135.598088  -135.809617
+        1  -298.012724   -12.490207  -228.865030    63.702501     3.896512     1.632946     0.196032  -126.085478     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.139657   -16.139657     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.5252E-01 3.0449E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.507193 -7.111592 -3.844526
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
+
+******************************************************
+
+TIMESTEP 520000
+COMPLEX_COUNT 1
+REACTION_CENTER_LOCATION [ center_id | molecule_id | location_rank ]
+1   908   9
+ENERGY_SUMMARY
+ENE_ENVIRONMENT     -514097.864204
+ENE_COMPLEX            -352.214795
+ENE_TOTAL           -514450.078999
+DECOMPOSED_ENV_ENERGY 
+ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+ 94534.861873 1401139.285297 74818.923700 73616.794665 29658.201171   807.026784 -2188672.957694
+LOOP_ALL_COMPLEX
+START_OF_COMPLEX 1
+STATE_SEARCH
+COMPLEX 1: 2 state(s) = 1 + 1 + 0 + 0
+STATES [ id | parent | shell | mol_A | mol_B | react | path | extra_cpl ]
+            0     -1      0     -1    908     -1     -1     -1
+            1      0      1    908   1416      3      1      0
+DECOMPOSED_COMPLEX_ENERGY
+DIAGONAL [id|total|vdw|coul|bond|angle|dihedral|improper|kspace|repulsive]
+        0  -347.878764   -19.291053   -64.799075     2.325076     4.001538     1.170721     0.071636  -135.547990  -135.809617
+        1  -287.151466   -19.480619  -213.193089    59.554493    10.171633     1.636174     0.068771  -125.908829     0.000000
+OFF-DIAGONAL [ id | energy |  A_Rq  | Vij_const |   Vij   ]
+           1   -16.796328   -16.796328     1.000000     1.000000
+EXTRA-COUPLING 0 [ I | J | energy ]
+DIAGONALIZATION
+EIGEN_VECTOR
+9.6826E-01 2.4996E-01 
+NEXT_PIVOT_STATE 0
+CEC_COORDINATE
+0.542817 -7.367835 -3.633579
+CEC_V2_COORDINATE
+0.000000 0.000000 0.000000
+END_OF_COMPLEX 1
