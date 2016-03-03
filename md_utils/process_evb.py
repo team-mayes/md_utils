@@ -39,7 +39,6 @@ MAIN_SEC = 'main'
 
 # Config keys
 EVBS_FILE = 'evb_list_file'
-
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 
 # Defaults
