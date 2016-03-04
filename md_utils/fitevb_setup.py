@@ -26,11 +26,19 @@ INVALID_DATA = 3
 
 # Config File Sections
 MAIN_SEC = 'main'
+DA_GAUSS_SEC = 'DA_Gaussian'
 
 # Config keys
+SECTIONS = 'sections'
+GROUP_NAMES = 'group_names'
+VALS = 'vals'
+
+DEF_CFG_VALS = {}
+REQ_KEY_DEFS = {GROUP_NAMES: str, VALS: str}
 
 
-VII_FIT = 'fit_vii_flag'
+# Config keys
+VII_FIT = 'vii_fit_flag'
 DA_GAUSS_GROUPS = 'DA_Gaussian_group_names'
 C1_LOW = 'c1_low'
 C1_HIGH = 'c1_high'
@@ -85,15 +93,14 @@ LOW = 'low'
 HIGH = 'high'
 DESCRIP = 'descrip'
 PROP_LIST = [LOW, HIGH, DESCRIP]
-NEW_PARAM_LIST = [C1, C2, C3,
-                  VII,
-                  CAP_B, B, B_PRIME, D_OO, CAP_C, C, D_OH,
+
+DA_GAUSS_KEYS = [C1, C2, C3]
+VII_KEYS = [VII]
+REP1_KEYS =  [CAP_B, B, B_PRIME, D_OO, CAP_C, C, D_OH,
                   CUTOFF_OO_LOW, CUTOFF_OO_HIGH,
                   CUTOFF_HO_LOW, CUTOFF_HO_HIGH, ]
-NEW_NOT_VII_LIST = [C1, C2, C3,
-                  CAP_B, B, B_PRIME, D_OO, CAP_C, C, D_OH,
-                  CUTOFF_OO_LOW, CUTOFF_OO_HIGH,
-                  CUTOFF_HO_LOW, CUTOFF_HO_HIGH, ]
+
+
 
 PARAM_LIST = [C1_LOW, C1_HIGH,
               C2_LOW, C2_HIGH,
@@ -129,49 +136,47 @@ NOT_VII_PARAM_LIST = [C1_LOW, C1_HIGH,
 INP_FILE = 'new_input_file_name'
 FORMAT = '%12.6f  %12.6f  : %s\n'
 
-DEF_CFG_VALS = {VII_FIT: False,
-                DA_GAUSS_GROUPS: 'GLU-P_H2O H3O_GLU-E',
-                C1_LOW: -50.00,
-                C1_HIGH: -15.00,
-                C2_LOW: 2.00,
-                C2_HIGH: 6.00,
-                C3_LOW: 1.00,
-                C3_HIGH: 2.00,
-                VII_GROUP: 'GLU-P',
-                VII_LOW: -30.0,
-                VII_HIGH: 10.0,
-                REP1_GROUP: 'GLU-E',
-                CAP_B_LOW: 0.001,
-                CAP_B_HIGH: 0.100,
-                B_LOW: 0.1,
-                B_HIGH: 2.000,
-                B_PRIME_LOW: 0.001,
-                B_PRIME_HIGH: 2.000,
-                D_OO_LOW: 2.400,
-                D_OO_HIGH: 2.400,
-                CAP_C_LOW: 0.010,
-                CAP_C_HIGH: 5.00,
-                C_LOW: 0.05,
-                C_HIGH: 5.00,
-                D_OH_LOW: 1.00,
-                D_OH_HIGH: 1.00,
-                CUTOFF_OO_LOW_LOW: 3.500,
-                CUTOFF_OO_LOW_HIGH: 3.500,
-                CUTOFF_OO_HIGH_LOW: 4.000,
-                CUTOFF_OO_HIGH_HIGH: 4.000,
-                CUTOFF_HO_LOW_LOW: 3.500,
-                CUTOFF_HO_LOW_HIGH: 3.500,
-                CUTOFF_HO_HIGH_LOW: 4.000,
-                CUTOFF_HO_HIGH_HIGH: 4.000,
-                INP_FILE: 'fit.inp',
-                }
-
-REQ_KEYS = { }
+# DEF_CFG_VALS = {VII_FIT: False,
+#                 DA_GAUSS_GROUPS: 'GLU-P_H2O H3O_GLU-E',
+#                 C1_LOW: -50.00,
+#                 C1_HIGH: -15.00,
+#                 C2_LOW: 2.00,
+#                 C2_HIGH: 6.00,
+#                 C3_LOW: 1.00,
+#                 C3_HIGH: 2.00,
+#                 VII_GROUP: 'GLU-P',
+#                 VII_LOW: -30.0,
+#                 VII_HIGH: 10.0,
+#                 REP1_GROUP: 'GLU-E',
+#                 CAP_B_LOW: 0.001,
+#                 CAP_B_HIGH: 0.100,
+#                 B_LOW: 0.1,
+#                 B_HIGH: 2.000,
+#                 B_PRIME_LOW: 0.001,
+#                 B_PRIME_HIGH: 2.000,
+#                 D_OO_LOW: 2.400,
+#                 D_OO_HIGH: 2.400,
+#                 CAP_C_LOW: 0.010,
+#                 CAP_C_HIGH: 5.00,
+#                 C_LOW: 0.05,
+#                 C_HIGH: 5.00,
+#                 D_OH_LOW: 1.00,
+#                 D_OH_HIGH: 1.00,
+#                 CUTOFF_OO_LOW_LOW: 3.500,
+#                 CUTOFF_OO_LOW_HIGH: 3.500,
+#                 CUTOFF_OO_HIGH_LOW: 4.000,
+#                 CUTOFF_OO_HIGH_HIGH: 4.000,
+#                 CUTOFF_HO_LOW_LOW: 3.500,
+#                 CUTOFF_HO_LOW_HIGH: 3.500,
+#                 CUTOFF_HO_HIGH_LOW: 4.000,
+#                 CUTOFF_HO_HIGH_HIGH: 4.000,
+#                 INP_FILE: 'fit.inp',
+#                 }
 
 # Defaults
 DEF_CFG_FILE = 'fit_evb_setup.ini'
 DEF_BEST_FILE = 'fit.best'
-
+DEF_VII_FIT_FLAG = False
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -186,8 +191,18 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
-    return main_proc
+    proc = {}
+    for section in config.sections():
+        temp = config.items(section)
+        print(temp)
+        # proc[section] = cfg_proc(dict(config.items(section), DEF_CFG_VALS, REQ_KEY_DEFS))
+    # main_proc = cfg_proc(dict(config.items(MAIN_SEC)), MAIN_DEF_CFGS, MAIN_REQ_KEY_DEFS)
+    # for each in sections():
+
+    print(proc)
+
+    # main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+    return proc
 
 
 def parse_cmdline(argv):
@@ -208,6 +223,9 @@ def parse_cmdline(argv):
                                                "The default file name is lammps_dist_pbc.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
+    # parser.add_argument("-v", "--fit_vii", help="If flag is false (default), fits everything but Vii. Otherwise, "
+    #                                             "the reverse.",
+    #                     default=DEF_VII_FIT_FLAG)
     args = None
     try:
         args = parser.parse_args(argv)
@@ -225,14 +243,10 @@ def parse_cmdline(argv):
 
 def process_file(data_file):
     raw_vals = np.loadtxt(data_file,dtype=np.float64)
-    print(raw_vals)
     vals = {}
-    print(len(PARAM_LIST))
-    print(len(raw_vals))
     for index, val in enumerate(raw_vals):
         vals[PARAM_LIST[index*2]] = val
         vals[PARAM_LIST[index*2+1]] = val
-    print(vals)
     return vals
 
 
@@ -245,26 +259,29 @@ def make_diag_inp(initial_vals, cfg):
             inp_vals[param] = cfg[param]
     else:
         for param in NOT_VII_PARAM_LIST:
-            inp_vals[param] = initial_vals[param]
-        for param in VII_PARAM_LIST:
             inp_vals[param] = cfg[param]
+        for param in VII_PARAM_LIST:
+            inp_vals[param] = initial_vals[param]
     to_print = []
-    to_print.append([inp_vals[C1_LOW], inp_vals[C1_HIGH], C1])
-    to_print.append([inp_vals[C2_LOW], inp_vals[C2_HIGH], C2])
-    to_print.append([inp_vals[C3_LOW], inp_vals[C3_HIGH], C3])
-    to_print.append([inp_vals[VII_LOW], inp_vals[VII_HIGH], VII])
-
-    to_print.append([inp_vals[CAP_B_LOW], inp_vals[CAP_B_HIGH], CAP_B])
-    to_print.append([inp_vals[B_LOW], inp_vals[B_HIGH], B])
-    to_print.append([inp_vals[B_PRIME_LOW], inp_vals[B_PRIME_HIGH], B_PRIME])
-    to_print.append([inp_vals[D_OO_LOW], inp_vals[D_OO_HIGH], D_OO])
-    to_print.append([inp_vals[CAP_C_LOW], inp_vals[CAP_C_HIGH], C])
-    to_print.append([inp_vals[C_LOW], inp_vals[C_HIGH], C])
-    to_print.append([inp_vals[D_OH_LOW], inp_vals[D_OH_HIGH], D_OH])
-    to_print.append([inp_vals[CUTOFF_OO_LOW_LOW], inp_vals[CUTOFF_OO_LOW_HIGH], CUTOFF_OO_LOW])
-    to_print.append([inp_vals[CUTOFF_OO_HIGH_LOW], inp_vals[CUTOFF_OO_HIGH_HIGH], CUTOFF_OO_HIGH])
-    to_print.append([inp_vals[CUTOFF_HO_LOW_LOW], inp_vals[CUTOFF_HO_LOW_HIGH], CUTOFF_HO_LOW])
-    to_print.append([inp_vals[CUTOFF_HO_HIGH_LOW], inp_vals[CUTOFF_HO_HIGH_HIGH], CUTOFF_HO_HIGH])
+    # print(NEW_PARAM_LIST)
+    # for item in NEW_PARAM_LIST:
+    #     to_print.append([inp_vals["{}_LOW".format(item)], inp_vals["{}_HIGH".format(item)], item])
+    # to_print.append([inp_vals[C1_LOW], inp_vals[C1_HIGH], C1])
+    # to_print.append([inp_vals[C2_LOW], inp_vals[C2_HIGH], C2])
+    # to_print.append([inp_vals[C3_LOW], inp_vals[C3_HIGH], C3])
+    # to_print.append([inp_vals[VII_LOW], inp_vals[VII_HIGH], VII])
+    #
+    # to_print.append([inp_vals[CAP_B_LOW], inp_vals[CAP_B_HIGH], CAP_B])
+    # to_print.append([inp_vals[B_LOW], inp_vals[B_HIGH], B])
+    # to_print.append([inp_vals[B_PRIME_LOW], inp_vals[B_PRIME_HIGH], B_PRIME])
+    # to_print.append([inp_vals[D_OO_LOW], inp_vals[D_OO_HIGH], D_OO])
+    # to_print.append([inp_vals[CAP_C_LOW], inp_vals[CAP_C_HIGH], C])
+    # to_print.append([inp_vals[C_LOW], inp_vals[C_HIGH], C])
+    # to_print.append([inp_vals[D_OH_LOW], inp_vals[D_OH_HIGH], D_OH])
+    # to_print.append([inp_vals[CUTOFF_OO_LOW_LOW], inp_vals[CUTOFF_OO_LOW_HIGH], CUTOFF_OO_LOW])
+    # to_print.append([inp_vals[CUTOFF_OO_HIGH_LOW], inp_vals[CUTOFF_OO_HIGH_HIGH], CUTOFF_OO_HIGH])
+    # to_print.append([inp_vals[CUTOFF_HO_LOW_LOW], inp_vals[CUTOFF_HO_LOW_HIGH], CUTOFF_HO_LOW])
+    # to_print.append([inp_vals[CUTOFF_HO_HIGH_LOW], inp_vals[CUTOFF_HO_HIGH_HIGH], CUTOFF_HO_HIGH])
     with open(cfg[INP_FILE], 'w') as inpfile:
         inpfile.write('FIT  DA_Gaussian {}\n'.format(cfg[DA_GAUSS_GROUPS]))
         for line in to_print[0:3]:
@@ -284,15 +301,15 @@ def main(argv=None):
         return ret
 
     cfg = args.config
-    try:
-        initial_vals = process_file(args.file)
-        make_diag_inp(initial_vals, cfg)
-    except IOError as e:
-        warning("Problems reading file:", e)
-        return IO_ERROR
-    except InvalidDataError as e:
-        warning("Problems reading data:", e)
-        return INVALID_DATA
+    # try:
+    #     initial_vals = process_file(args.file)
+    #     make_diag_inp(initial_vals, cfg)
+    # except IOError as e:
+    #     warning("Problems reading file:", e)
+    #     return IO_ERROR
+    # except InvalidDataError as e:
+    #     warning("Problems reading data:", e)
+    #     return INVALID_DATA
 
     return GOOD_RET  # success
 

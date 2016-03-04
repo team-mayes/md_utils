@@ -4,7 +4,7 @@ FIT  DA_Gaussian GLU-P_H2O H3O_GLU-E
     1.000000      2.000000  : _c3
 
 FIT  VII GLU-P
-    -30.0000   10.000  : Vii
+  -22.051465    -22.051465  : Vii
 
 FIT  REP1 GLU-E
     0.001000      0.100000  : B MS-EVB3 diabatic-correction
