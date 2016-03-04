@@ -50,6 +50,7 @@ setup(
             'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
             'per_col_stats = md_utils.per_col_stats:main',
             'evb_get_info = md_utils.evb_get_info:main',
+            'fitevb_setup = md_utils.fitevb_setup:main',
         ],
     },
     package_dir={'md_utils':
