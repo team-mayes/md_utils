@@ -28,9 +28,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-
-
-VII_FIT = 'fit_vii_flag'
+VII_FIT = 'vii_fit_flag'
 DA_GAUSS_GROUPS = 'DA_Gaussian_group_names'
 C1_LOW = 'c1_low'
 C1_HIGH = 'c1_high'
@@ -171,7 +169,7 @@ REQ_KEYS = { }
 # Defaults
 DEF_CFG_FILE = 'fit_evb_setup.ini'
 DEF_BEST_FILE = 'fit.best'
-
+DEF_VII_FIT_FLAG = False
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -208,6 +206,9 @@ def parse_cmdline(argv):
                                                "The default file name is lammps_dist_pbc.ini, located in the "
                                                "base directory where the program as run.",
                         default=DEF_CFG_FILE, type=read_cfg)
+    # parser.add_argument("-v", "--fit_vii", help="If flag is false (default), fits everything but Vii. Otherwise, "
+    #                                             "the reverse.",
+    #                     default=DEF_VII_FIT_FLAG)
     args = None
     try:
         args = parser.parse_args(argv)
@@ -225,14 +226,10 @@ def parse_cmdline(argv):
 
 def process_file(data_file):
     raw_vals = np.loadtxt(data_file,dtype=np.float64)
-    print(raw_vals)
     vals = {}
-    print(len(PARAM_LIST))
-    print(len(raw_vals))
     for index, val in enumerate(raw_vals):
         vals[PARAM_LIST[index*2]] = val
         vals[PARAM_LIST[index*2+1]] = val
-    print(vals)
     return vals
 
 
@@ -245,9 +242,9 @@ def make_diag_inp(initial_vals, cfg):
             inp_vals[param] = cfg[param]
     else:
         for param in NOT_VII_PARAM_LIST:
-            inp_vals[param] = initial_vals[param]
-        for param in VII_PARAM_LIST:
             inp_vals[param] = cfg[param]
+        for param in VII_PARAM_LIST:
+            inp_vals[param] = initial_vals[param]
     to_print = []
     to_print.append([inp_vals[C1_LOW], inp_vals[C1_HIGH], C1])
     to_print.append([inp_vals[C2_LOW], inp_vals[C2_HIGH], C2])
