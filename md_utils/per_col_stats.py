@@ -60,7 +60,6 @@ def parse_cmdline(argv):
 def process_file(data_file):
 
     dim_vectors = np.loadtxt(data_file,dtype=np.float64)
-    max_vector =  dim_vectors.max(axis=0)
     print("Min value per column: {}".format(str(dim_vectors.min(axis=0)).strip('[]')))
     print("Max value per column: {}".format(str(dim_vectors.max(axis=0)).strip('[]')))
     print("Avg value per column: {}".format(str(dim_vectors.mean(axis=0)).strip('[]')))

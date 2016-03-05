@@ -84,3 +84,6 @@ tests/test_data/lammps_proc/glue_dump_gofrs.csv
 tests/test_data/lammps_proc/glu_prot_deprot_gofrs.csv
 tests/test_data/evb_info/serca_evb_list_ci_sq.csv
 tests/test_data/fitevb/all_best.dat
+tests/test_data/fitevb/all_best.csv
+tests/test_data/fitevb/all_best_perc_diff.csv
+tests/test_data/fitevb/fit.inp

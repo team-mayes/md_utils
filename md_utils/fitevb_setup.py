@@ -9,7 +9,7 @@ import ConfigParser
 import os
 
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, process_cfg
+from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_suf_fname, write_csv
 import sys
 import argparse
 
@@ -44,6 +44,7 @@ FIT_PARAMS = {DA_GAUSS_SEC: ['c1', 'c2', 'c3'],
               }
 SEC_PARAMS = 'parameters'
 INP_FILE = 'new_input_file_name'
+OUT_BASE_DIR = 'output_directory'
 
 LOW = 'low'
 HIGH = 'high'
@@ -52,11 +53,12 @@ PROP_LIST = [LOW, HIGH, DESCRIP]
 
 # Defaults
 MAIN_SEC_DEF_CFG_VALS = {INP_FILE: 'fit.inp',
+                         OUT_BASE_DIR: None,
                 }
 PARAM_SEC_DEF_CFG_VALS = {GROUP_NAMES: 'NOT_SPECIFIED',
                 }
 DEF_FIT_VII = False
-DEF_CFG_FILE = 'fit_evb_setup.ini'
+DEF_CFG_FILE = 'fitevb_setup.ini'
 DEF_BEST_FILE = 'fit.best'
 DEF_GROUP_NAME = ''
 DEF_DESCRIP = ''
@@ -244,49 +246,66 @@ def process_raw_cfg(raw_cfg):
 
 def get_param_info(cfg):
     headers = []
+    low = []
+    high = []
     for section in PARAM_SECS:
         for param in FIT_PARAMS[section]:
-            # print(cfg[section][param])
-            headers.append(cfg[section][param])
-    return headers
+            low.append(cfg[section][param][LOW])
+            high.append(cfg[section][param][HIGH])
+            headers.append(cfg[section][param][DESCRIP].rjust(8))
+    return np.array(low), np.array(high), headers
 
 
 def make_summary(output_file, summary_file, cfg):
-    param_info = get_param_info(cfg)
+    low, high, headers = get_param_info(cfg)
     latest_output = np.loadtxt(output_file,dtype=np.float64)
-    headers = []
-    percent_diffs = {}
-    max_percent_diff = 0.0
+
     if os.path.isfile(summary_file):
+        last_row = None
+        percent_diffs = []
         previous_output = np.loadtxt(summary_file,dtype=np.float64)
         all_output = np.vstack((previous_output, latest_output))
-        for index, col in enumerate(all_output.T):
-            last_val = None
-            col_name = param_info[index][DESCRIP]
-            print("analyzing {}:".format(col_name))
-            headers.append(col_name)
-            for val in col:
-                if last_val is not None:
+        for row in all_output:
+            if last_row is not None:
+                diff = row - last_row
+                perc_diff = {}
+                # Check data for small values, hitting upper or lower bound, and calc % diff
+                for index, val in enumerate(np.nditer(row)):
                     if abs(val) < TOL:
-                        warning("Small value ({}) encountered for parameter {} (col {}).".format(val, col_name, index))
-                        percent_diffs[col_name] = np.nan
-                    elif abs(val - last_val) > TOL:
-                        percent_diffs[col_name] = (val - last_val) / last_val * 100
-                        print("    value = {:8.2f}   percent diff = {:8.2f}".format(val, percent_diffs[col_name]))
-                        upper_bound = param_info[index][HIGH]
-                        lower_bound = param_info[index][LOW]
-                        if abs(val-upper_bound) < TOL:
-                            warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {}).".format(val, upper_bound, col_name, index))
-                        if abs(val-lower_bound) < TOL:
-                            warning("Value ({}) near lower bound ({}) encountered for parameter {} (col {}).".format(val, lower_bound, col_name, index))
-                last_val = val
-        np.savetxt(summary_file, all_output)
-        print("Latest round::")
-        for index, header in enumerate(headers):
-            if header in percent_diffs:
-                print("    {}: {:8.2f}   percent diff: {:8.2f}".format(header.rjust(5), latest_output[index], percent_diffs[header]))
+                        warning("Small value ({}) encountered for parameter {} (col {}).".format(val, headers[index], index))
+                    if abs(diff[index]) > TOL:
+                        if abs(last_row[index]) > TOL:
+                            perc_diff[headers[index]] = "%8.2f" % (diff[index] / last_row[index] * 100)
+                        else:
+                            perc_diff[headers[index]] = '        '
+                        if abs(val-low[index]) < TOL:
+                            warning("Value ({}) near lower bound ({}) encountered for parameter {} (col {}).".format(val, low[index], headers[index], index))
+                        if abs(val-high[index]) < TOL:
+                            warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {}).".format(val, high[index], headers[index], index))
+                    else:
+                        perc_diff[headers[index]] = '        '
+                percent_diffs.append(perc_diff)
+            last_row = row
+
+        # format for gnuplot and np.loadtxt
+        f_out = create_out_suf_fname(summary_file, '_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
+        write_csv(percent_diffs, f_out, headers, extrasaction="ignore")
+        print('Wrote file: {}'.format(f_out))
+
+        f_out = create_out_suf_fname(summary_file, '', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
+        with open(f_out, 'w') as s_file:
+            s_file.write(','.join(headers)+'\n')
+            np.savetxt(s_file, all_output, fmt='%8.6f', delimiter=',')
+        print('Wrote file: {}'.format(f_out))
+
+        # in adddition to csv (above), print format for gnuplot and np.loadtxt
+        with open(summary_file, 'w') as s_file:
+            np.savetxt(s_file, all_output, fmt='%12.6f')
+        print("Wrote summary file {}".format(summary_file))
     else:
-        np.savetxt(summary_file, latest_output, newline=' ')
+        # have this as sep statement, because now printing a 1D array, handled differently than 2D array (newline=' ')
+        with open(summary_file, 'w') as s_file:
+            np.savetxt(s_file, latest_output, fmt='%12.6f', newline=' ')
         print("Wrote results from {} to new summary file {}".format(output_file, summary_file))
 
 
