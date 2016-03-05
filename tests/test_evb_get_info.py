@@ -77,37 +77,3 @@ class TestEVBGetInfo(unittest.TestCase):
         finally:
             # silent_remove(DEF_ONE_STATE_OUT_PATH)
             silent_remove(DEF_LIST_OUT_PATH)
-
-    # def testNegGofR(self):
-    #     with capture_stderr(evb_get_info.main,["-c", INCOMP_GOFR_INI_PATH]) as output:
-    #         self.assertTrue("a positive value" in output)
-    # def testHOGofR(self):
-    #     try:
-    #         evb_get_info.main(["-c", HO_GOFR_INI_PATH])
-    #         self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
-    #     finally:
-    #         silent_remove(DEF_GOFR_OUT_PATH)
-    # def testOOGofR(self):
-    #     try:
-    #         evb_get_info.main(["-c", OO_GOFR_INI_PATH])
-    #         self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OO_GOFR_OUT_PATH))
-    #     finally:
-    #         silent_remove(DEF_GOFR_OUT_PATH)
-    # def testHHGofR(self):
-    #     try:
-    #         evb_get_info.main(["-c", HH_GOFR_INI_PATH])
-    #         self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HH_GOFR_OUT_PATH))
-    #     finally:
-    #         silent_remove(DEF_GOFR_OUT_PATH)
-    # def testOHGofR(self):
-    #     try:
-    #         evb_get_info.main(["-c", OH_GOFR_INI_PATH])
-    #         self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OH_GOFR_OUT_PATH))
-    #     finally:
-    #         silent_remove(DEF_GOFR_OUT_PATH)
-    # def testHO_OO_HH_OHGofR(self):
-    #     try:
-    #         evb_get_info.main(["-c", HO_OO_HH_OH_GOFR_INI_PATH])
-    #         self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
-    #     finally:
-    #         silent_remove(DEF_GOFR_OUT_PATH)

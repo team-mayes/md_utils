@@ -56,7 +56,6 @@ def parse_cmdline(argv):
 
 
 def process_file(data_file):
-
     dim_vectors = np.loadtxt(data_file,dtype=np.float64)
     max_vector =  dim_vectors.max(axis=0)
     print("Maximum value in each dimension: {}".format(max_vector))
