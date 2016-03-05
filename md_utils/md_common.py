@@ -15,14 +15,12 @@ from datetime import datetime
 import re
 import shutil
 import errno
-import collections
 import fnmatch
 from itertools import chain, islice
 
 import math
 import numpy as np
 import os
-import sys
 from shutil import copy2, Error, copystat
 import six
 import sys
