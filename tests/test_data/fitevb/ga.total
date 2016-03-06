@@ -1,0 +1,32 @@
+================================================================================
+=============================  GENETIC ALGORITHM  ==============================
+================================================================================
+
+--- General Information ---
+
+Number of Generation: 93
+
+--- Fitting Progress ---
+
+Best Solution (Rank 1): Residue = 77717.347124
+Best Solution (Rank 2): Residue = 77717.347124
+Best Solution (Rank 3): Residue = 77717.347124
+Best Solution (Rank 4): Residue = 77717.347124
+Best Solution (Rank 5): Residue = 77717.347124
+Best Solution (Rank 395): Residue = 77717.347124
+Best Solution (Rank 396): Residue = 77717.347124
+Best Solution (Rank 397): Residue = 77717.347124
+Best Solution (Rank 398): Residue = 77717.347124
+Best Solution (Rank 399): Residue = 77717.347124
+Best Solution (Rank 400): Residue = 77717.347124
+
+--- Timing Statistics ---
+
+Total: 90.0753 Sec. ( 1 min 30 sec )
+EVAL:  99.5849%
+COMM:   0.0178%
+EVOL:   0.3304%
+OUTP:   0.0670%
+OTHE:   0.0000%
+AVERAGE GENERATIONS PER SECOND: 1.032469
+

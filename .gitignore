@@ -87,3 +87,4 @@ tests/test_data/fitevb/all_best.dat
 tests/test_data/fitevb/all_best.csv
 tests/test_data/fitevb/all_best_perc_diff.csv
 tests/test_data/fitevb/fit.inp
+tests/test_data/evb_info/1.250_0a_4.0_c2*

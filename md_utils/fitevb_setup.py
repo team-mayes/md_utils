@@ -256,9 +256,32 @@ def get_param_info(cfg):
     return np.array(low), np.array(high), headers
 
 
+def get_resid(base_dir, base_name='ga.total', ):
+    ga_total_file = os.path.abspath(os.path.join(base_dir, base_name))
+    resid = np.nan
+    if os.path.isfile(ga_total_file):
+        with open(ga_total_file) as g:
+            for line in reversed(g.readlines()):
+                if "Best" in line:
+                    splitline = line.split()
+                    try:
+                        resid = float(splitline[-1])
+                        break
+                    except:
+                        continue
+    return resid
+
+
 def make_summary(output_file, summary_file, cfg):
     low, high, headers = get_param_info(cfg)
     latest_output = np.loadtxt(output_file,dtype=np.float64)
+
+    # append last best resid
+    low = np.append(low, np.nan)
+    high = np.append(high, np.nan)
+    headers.append('resid')
+    base_dir = os.path.dirname(output_file)
+    latest_output = np.append(latest_output, get_resid(base_dir))
 
     if os.path.isfile(summary_file):
         last_row = None
@@ -301,6 +324,7 @@ def make_summary(output_file, summary_file, cfg):
         # in adddition to csv (above), print format for gnuplot and np.loadtxt
         with open(summary_file, 'w') as s_file:
             np.savetxt(s_file, all_output, fmt='%12.6f')
+            print(summary_file)
         print("Wrote summary file {}".format(summary_file))
     else:
         # have this as sep statement, because now printing a 1D array, handled differently than 2D array (newline=' ')
