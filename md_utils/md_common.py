@@ -134,9 +134,60 @@ def xyz_distance(fir, sec):
 
 def pbc_dist(a, b, box):
     # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2))
-    dist = a - b
-    dist = dist - box * np.asarray(map(round, dist / box))
-    return np.linalg.norm(dist)
+    return np.linalg.norm(pbc_vector_diff(a, b, box))
+
+
+def pbc_vector_diff(a, b, box):
+    # TODO: test pbc
+    vec = a - b
+    return vec - box * np.asarray(map(round, vec / box))
+
+
+# def dotproduct(v1, v2):
+#   return sum((a*b) for a, b in zip(v1, v2))
+#
+# def length(v):
+#   return math.sqrt(dotproduct(v, v))
+#
+# def angle(v1, v2):
+#   return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2)))
+
+def pbc_angle(p0, p1, p2, box):
+    pass
+
+def pbc_dihedral(p0, p1, p2, p3, box):
+    """
+    From http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
+    khouli formula
+    1 sqrt, 1 cross product
+    @param p0: xyz coordinates of point 0, etc.
+    @param p1:
+    @param p2:
+    @param p3:
+    @param box: periodic box lengths
+    @return: dihedral angle in degrees
+    """
+    b0 = -1.0*(pbc_vector_diff(p1, p0, box))
+    b1 = pbc_vector_diff(p2, p1, box)
+    b2 = pbc_vector_diff(p3, p2, box)
+
+    # normalize b1 so that it does not influence magnitude of vector
+    # rejections that come next
+    b1 /= np.linalg.norm(b1)
+
+    # vector rejections
+    # v = projection of b0 onto plane perpendicular to b1
+    #   = b0 minus component that aligns with b1
+    # w = projection of b2 onto plane perpendicular to b1
+    #   = b2 minus component that aligns with b1
+    v = b0 - np.dot(b0, b1)*b1
+    w = b2 - np.dot(b2, b1)*b1
+
+    # angle between v and w in a plane is the torsion angle
+    # v and w may not be normalized but that's fine since tan is y/x
+    x = np.dot(v, w)
+    y = np.dot(np.cross(b1, v), w)
+    return np.degrees(np.arctan2(y, x))
 
 
 # Other #

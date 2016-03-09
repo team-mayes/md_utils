@@ -89,6 +89,14 @@ CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 CALC_HIJ_AMINO_FORM = 'calc_hij_amino_form_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 
+
+# TODO: talk to Chris about listing many angles, dihedrals
+CALC_COORD_NUM = 'calc_coord_number'
+CALC_ANG_OCO = 'calc_carbox_o_c_o_ang'          # 18 17 19
+CALC_ANG_COH = 'calc_carbox_c_o_h_ang'          # 17 ?? ??
+CALC_ANG_COH = 'calc_carbox_ca_cb_cg_cd_dihed'  # 9 11 14 17
+CALC_ANG_COH = 'calc_carbox_cg_cd_o_h_dihed'  # 14 17 ?? ??
+
 # Added so I don't have to read all of a really big file
 # TODO: Set up so produces output every 1000 lines
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
@@ -225,10 +233,12 @@ def hij_amino(r, c1, c2, c3):
 
 
 def calc_q(r_o, r_op, r_h):
+    print(r_o, r_op, r_h)
     return np.add(r_o, r_op) / 2.0 - r_h
 
 
 def hij_water(r_OO, q_vec):
+    print(np.exp(-gamma * .1))
     termA1 = np.exp(-gamma * np.dot(q_vec, q_vec))
     termA2 = 1 + P * np.exp(-k_water * (r_OO - D_OO_water) ** 2)
     termA3 = 0.5 * (1 - np.tanh(beta * (r_OO - R_0_OO))) + Pp * np.exp(-a_water * (r_OO - r_0_OO))

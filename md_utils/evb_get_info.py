@@ -62,24 +62,28 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 # TODO: allow specify input base directory
 IN_BASE_DIR = 'output_directory'
 OUT_BASE_DIR = 'output_directory'
+PRINT_CI_SQ = 'print_ci_summary_flag'
 PRINT_CI_SUBSET = 'print_ci_subset_flag'
 PRINT_WAT_MOL = 'print_ci_water_molid_flag'
 PRINT_CEC = 'print_cec_coords_flag'
 MIN_MAX_CI_SQ = 'min_max_ci_sq'
 PRINT_PER_FILE = 'print_output_each_file'
 PRINT_PER_LIST = 'print_output_file_list'
+PRINT_KEY_PROPS = 'print_key_props_flag'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
 # Set notation
 DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt',
                 OUT_BASE_DIR: None,
+                PRINT_CI_SQ: False,
                 PRINT_CI_SUBSET: False,
                 PRINT_WAT_MOL: False,
                 PRINT_CEC: False,
                 MIN_MAX_CI_SQ: 0.475,
                 PRINT_PER_FILE: True,
                 PRINT_PER_LIST: False,
+                PRINT_KEY_PROPS: False,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -108,9 +112,14 @@ MAX_PROT_CLOSE_WAT = 'max_prot_close_water_mol'
 CEC_X = 'cec_x'
 CEC_Y = 'cec_y'
 CEC_Z = 'cec_z'
+STATES_TOT = 'evb_states_total'
+STATES_SHELL1 = 'evb_states_shell_1'
+STATES_SHELL2 = 'evb_states_shell_2'
+STATES_SHELL3 = 'evb_states_shell_3'
 PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ,]
 CI_FIELDNAMES = [TIMESTEP, MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, MAX_CI_SQ_DIFF, COUL_DIFF]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
+KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3, MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -225,6 +234,8 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 num_states = int(split_line[2])
                 states_per_shell = np.array(itemgetter(2, 5,7,9,11)(split_line), dtype=int)
+                result.update({STATES_TOT: states_per_shell[0], STATES_SHELL1: states_per_shell[2],
+                               STATES_SHELL2: states_per_shell[3], STATES_SHELL3: states_per_shell[4]})
                 if states_array is None:
                     states_array =  states_per_shell
                 else:
@@ -331,12 +342,17 @@ def process_evb_files(cfg):
             if len(evb_file) > 0:
                 data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
                 if cfg[PRINT_PER_FILE] is True:
-                    f_out = create_out_suf_fname(evb_file, '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
-                    print('Wrote file: {}'.format(f_out))
+                    if cfg[PRINT_KEY_PROPS]:
+                        f_out = create_out_suf_fname(evb_file, '_evb_info', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
+                        print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CI_SUBSET]:
                         f_out = create_out_suf_fname(evb_file, '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                        print('Wrote file: {}'.format(f_out))
+                    if cfg[PRINT_CI_SQ]:
+                        f_out = create_out_suf_fname(evb_file, '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CEC]:
                         f_out = create_out_suf_fname(evb_file, '_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
