@@ -14,7 +14,8 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file
+from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, \
+    find_dump_section_state, write_csv, seq_list_to_file
 
 
 __author__ = 'hmayes'
@@ -94,8 +95,8 @@ CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 CALC_COORD_NUM = 'calc_coord_number'
 CALC_ANG_OCO = 'calc_carbox_o_c_o_ang'          # 18 17 19
 CALC_ANG_COH = 'calc_carbox_c_o_h_ang'          # 17 ?? ??
-CALC_ANG_COH = 'calc_carbox_ca_cb_cg_cd_dihed'  # 9 11 14 17
-CALC_ANG_COH = 'calc_carbox_cg_cd_o_h_dihed'  # 14 17 ?? ??
+CALC_DIH_CCCC = 'calc_carbox_ca_cb_cg_cd_dihed'  # 9 11 14 17
+CALC_DIH_CCOH = 'calc_carbox_cg_cd_o_h_dihed'  # 14 17 ?? ??
 
 # Added so I don't have to read all of a really big file
 # TODO: Set up so produces output every 1000 lines
@@ -133,14 +134,14 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 GOFR_BINS: [],
                 GOFR_RAW_HIST: [],
                 MAX_TIMESTEPS: 1000000000000, # Default max timestesps in 1E12
-}
+                }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
             WAT_O_TYPE: int,
             WAT_H_TYPE: int,
             H3O_O_TYPE: int,
             H3O_H_TYPE: int,
-}
+            }
 
 # For dump file processing
 SEC_TIMESTEP = 'timestep'
@@ -171,7 +172,7 @@ HIJ_A3 = 'hij_water_termA3'
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
-HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3 ]
+HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
 
 ## EVB Params
 # asp/glu common parameters
@@ -222,6 +223,7 @@ a_water = 7.4062624
 r_0_OO = 1.8
 V_ij_water = -21.064268  # kcal/mol
 
+
 # EVB Formulas
 
 def U_morse(r):
@@ -258,7 +260,7 @@ def switch_func(rc, rs, r_array):
         if r <= rs:
             switches[index] = 1.00
         elif r < rc:
-            switches[index] = 1 - (rc - rs)**(-3) * (r - rs)**2 * (3 * rc - rs - 2*r)
+            switches[index] = 1 - (rc - rs) ** (-3) * (r - rs) ** 2 * (3 * rc - rs - 2 * r)
     return switches
 
 
@@ -353,7 +355,7 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
 def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
     # initialize smallest distance to the closest distance
     min_dist = np.zeros(len(carboxy_oxys))
-    closest_H = {}
+    closest_h = {}
     for index, oxy in enumerate(carboxy_oxys):
         if prot_h is None:
             # initialize minimum distance to maximum distance allowed in the PBC
@@ -363,13 +365,13 @@ def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
                     dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
                     if dist < min_dist[index]:
                         min_dist[index] = dist
-                        closest_H[index] = atom
+                        closest_h[index] = atom
         else:
             min_dist[index] = pbc_dist(np.asarray(prot_h[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
-            closest_H[index] = prot_h
+            closest_h[index] = prot_h
     index_min = np.argmin(min_dist)
     min_min = min_dist[index_min]
-    excess_H = closest_H[index_min]
+    excess_H = closest_h[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
     for index, oxy in enumerate(carboxy_oxys):
@@ -410,8 +412,12 @@ def find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg):
     for index, co in enumerate(carboxy_oxys):
         if index != index_min:
             alt_dist = pbc_dist(np.asarray(close_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
-    alt_min = np.amin(alt_dist)
+    if alt_dist:
+        alt_min = np.amin(alt_dist)
+    else:
+        alt_min = np.nan
     return close_o, prot_o, min_min, alt_min
+
 
 
 def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
@@ -668,12 +674,12 @@ def process_dump_files(cfg):
             gofr_out_fieldnames.append(GOFR_TYPE)
             gofr_output = np.column_stack((gofr_output, gofr_type))
         else:
-            warning("Did not find any timesteps with the pairs in {}. This output will not be printed.".config(CALC_TYPE_GOFR))
+            warning("Did not find any timesteps with the pairs in {}. This output will not be printed.".config(
+                CALC_TYPE_GOFR))
     if cfg[GOFR_OUTPUT]:
         f_out = create_out_suf_fname(cfg[DUMPS_FILE], '_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
         seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
         print('Wrote file: {}'.format(f_out))
-
 
     return
 

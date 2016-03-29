@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Creates pdb data files from lammps data files, given a template pdb file.
+Edit a pdb file to provide missing data
 """
 
 from __future__ import print_function
@@ -20,8 +20,8 @@ __author__ = 'hmayes'
 
 
 # Logging
-logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('fixpdb')
+logging.basicConfig(filename='fixpdb.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
@@ -59,7 +59,7 @@ MAKE_DICT_BOOL = 'make_dictionary_flag'
 # data file info
 
 # Defaults
-DEF_CFG_FILE = 'data2pdb.ini'
+DEF_CFG_FILE = 'fixpdb.ini'
 # Set notation
 DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv',
                 PDB_FORMAT: '%s%s%s%s%4d    %8.3f%8.3f%8.3f%s',
@@ -116,17 +116,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file and'
-                                                 'a dictionary of CHARMM and LAMMPS types for verying that the atom'
-                                                 'types on the corresponding lines align.'
-                                                 'The required input file provides the location of the '
-                                                 'template file, the file with a list of data files to convert, and '
-                                                 'the dictionary file (CSV, with charmm type (exactly as it in the PDB)'
-                                                 'followed by the lammps type (int).')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/data2pdb/data2pdb.ini. "
-                                               "The default file name is pdb2data.ini, located in the "
-                                               "base directory where the program as run.",
+    parser = argparse.ArgumentParser(description='Creates a new version of a pdb file to provide missing data.')
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -150,9 +143,9 @@ def pdb_atoms_to_file(pdb_format, list_val, fname, mode='w'):
     :param list_val: The list of sequences to write.
     :param fname: The location of the file to write.
     """
-    with open(fname, mode) as myfile:
+    with open(fname, mode) as w_file:
         for line in list_val:
-            myfile.write(pdb_format % tuple(line) + '\n')
+            w_file.write(pdb_format % tuple(line) + '\n')
 
 
 def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
@@ -232,6 +225,9 @@ def process_pdb_tpl(cfg):
     last_prot_atom = cfg[LAST_PROT_ID]
 
     atom_id = 0
+    wat_o_type = set()
+
+    wat_h_type = '  39  '
 
     # Added this because my template did not have these types....
     # c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ', '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ']
@@ -241,6 +237,7 @@ def process_pdb_tpl(cfg):
     # s_atoms = ['  SD  ', '  SG  ']
 
     with open(tpl_loc) as f:
+        wat_count = 0
         for line in f:
             line = line.strip()
             if len(line) == 0:
@@ -267,6 +264,7 @@ def process_pdb_tpl(cfg):
 
                 atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
                 res_type = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_RES_TYPE_LAST_CHAR]]
+                # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
                 # There is already a try when calling the subroutine, so maybe I don't need to?
                 mol_num = int(line[cfg[PDB_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
                 pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
@@ -275,8 +273,28 @@ def process_pdb_tpl(cfg):
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
                 element = ''
 
+
+                # if atom_id < last_prot_atom:
+                #     print([last_cols])
                 if atom_id > last_prot_atom:
-                    print(atom_type)
+                    if (wat_count % 3) == 0:
+                        current_mol = mol_num
+                        if atom_type != '  OH2 ':
+                            print("erzrors!")
+                        last_cols = '  0.00  0.00      S2   O'
+                    else:
+                        if mol_num != current_mol:
+                            print('water not in order', line_struct)
+                        if (wat_count % 3) == 1:
+                            atom_type = '  H1  '
+                        else:
+                            atom_type = '  H2  '
+                        last_cols = '  0.00  0.00      S2   H'
+                    wat_count += 1
+
+
+                # if atom_id <= last_prot_atom:
+                #     print(atom_type)
                     # if atom_type in c_atoms:
                     #     element = '   C'
                     # elif atom_type in o_atoms:
@@ -309,9 +327,13 @@ def process_pdb_tpl(cfg):
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols + element]
                 tpl_data[ATOMS_CONTENT].append(line_struct)
 
+
+
+
             # tail_content to contain everything after the 'Atoms' section
             else:
                 tpl_data[TAIL_CONTENT].append(line)
+    print(wat_o_type)
 
     if logger.isEnabledFor(logging.DEBUG):
         print_pdb(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT],
@@ -458,10 +480,10 @@ def main(argv=None):
     # Read template and data files
     try:
         pdb_tpl_content = process_pdb_tpl(cfg)
-        if cfg[ MAKE_DICT_BOOL]:
-            atom_type_dict = make_dict(cfg, pdb_tpl_content)
-            print(atom_type_dict)
-        process_data_files(cfg, pdb_tpl_content)
+        # if cfg[ MAKE_DICT_BOOL]:
+        #     atom_type_dict = make_dict(cfg, pdb_tpl_content)
+        #     print(atom_type_dict)
+        # process_data_files(cfg, pdb_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

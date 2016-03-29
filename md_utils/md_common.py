@@ -26,10 +26,10 @@ import six
 import sys
 from cStringIO import StringIO
 from contextlib import contextmanager
-
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('test_wham_rad')
+logger = logging.getLogger('test_md_utils')
 
 # Constants #
 
@@ -530,8 +530,6 @@ def read_csv(src_file, data_conv=None, all_conv=None):
     return result
 
 
-
-
 def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
     """
     Writes the given data to the given file location.
@@ -548,6 +546,8 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
             writer.writeheader()
         writer.writerows(data)
 
+def save_fig(name, base_dir=None):
+    plt.savefig(base_dir + name, bbox_inches='tight')
 
 # Conversions #
 

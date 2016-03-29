@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Creates pdb data files from lammps data files, given a template pdb file.
+Reorders a lammps data file
 """
 
 from __future__ import print_function
@@ -17,8 +17,8 @@ __author__ = 'hmayes'
 
 
 # Logging
-logger = logging.getLogger('data_reorder')
-logging.basicConfig(filename='data_reorder.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('reorder_lammps_data')
+logging.basicConfig(filename='reorder_lammps_data.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 

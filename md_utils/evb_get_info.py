@@ -70,6 +70,7 @@ MIN_MAX_CI_SQ = 'min_max_ci_sq'
 PRINT_PER_FILE = 'print_output_each_file'
 PRINT_PER_LIST = 'print_output_file_list'
 PRINT_KEY_PROPS = 'print_key_props_flag'
+SKIP_ONE_STATE = 'skip_one_state_flag'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -84,6 +85,7 @@ DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt',
                 PRINT_PER_FILE: True,
                 PRINT_PER_LIST: False,
                 PRINT_KEY_PROPS: False,
+                SKIP_ONE_STATE: True
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -234,6 +236,9 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 num_states = int(split_line[2])
                 states_per_shell = np.array(itemgetter(2, 5,7,9,11)(split_line), dtype=int)
+                if cfg[SKIP_ONE_STATE] and states_per_shell[0] ==1:
+                    section = None
+                    continue
                 result.update({STATES_TOT: states_per_shell[0], STATES_SHELL1: states_per_shell[2],
                                STATES_SHELL2: states_per_shell[3], STATES_SHELL3: states_per_shell[4]})
                 if states_array is None:

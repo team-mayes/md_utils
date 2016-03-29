@@ -51,6 +51,8 @@ setup(
             'per_col_stats = md_utils.per_col_stats:main',
             'evb_get_info = md_utils.evb_get_info:main',
             'fitevb_setup = md_utils.fitevb_setup:main',
+            'process_cv_file = md_utils.process_cv_file:main',
+            'align_on_timestep = md_utils.align_on_timestep:main'
         ],
     },
     package_dir={'md_utils':
