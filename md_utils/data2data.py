@@ -10,7 +10,7 @@ import copy
 import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, conv_raw_val, process_cfg
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
@@ -312,7 +312,7 @@ def process_data_files(cfg, data_tpl_content):
                 raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
                                        'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
             # Now make new file
-            f_name = create_out_suf_fname(data_file, '_new', ext='.data')
+            f_name = create_out_fname(data_file, suffix='_new', ext='.data')
             print_data(data_tpl_content[HEAD_CONTENT], new_data_section, data_tpl_content[TAIL_CONTENT],
                        f_name)
             print('Completed writing {}'.format(f_name))

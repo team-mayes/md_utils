@@ -6,7 +6,7 @@ Adds a string to the beginning and end of a file.
 from __future__ import print_function
 
 import sys
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, warning, ThrowingArgumentParser, ArgumentParserError
+from md_utils.md_common import InvalidDataError, create_out_fname, warning, ThrowingArgumentParser, ArgumentParserError
 
 __author__ = 'hmayes'
 
@@ -69,7 +69,7 @@ def parse_cmdline(argv):
 def process_file(f_name, b_str, e_str, new_f_name):
 
     if new_f_name is None:
-        new_f_name = create_out_suf_fname(f_name, '_amend')
+        new_f_name = create_out_fname(f_name, suffix='_amend')
 
     with open(new_f_name, 'w') as myfile:
         with open(f_name) as f:

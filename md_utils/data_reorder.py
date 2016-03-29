@@ -9,7 +9,7 @@ import ConfigParser
 import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_suf_fname, warning, conv_raw_val, process_cfg
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
@@ -462,7 +462,7 @@ def process_data_files(cfg):
             #     for line in new_mapping:
             #         myfile.write('%d,%d' % tuple(line) + '\n')
 
-            f_name = create_out_suf_fname(data_file, '_ord', ext='.data')
+            f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
             list_to_file(head_content+renumbered+tail_content, f_name)
             print('Completed writing {}'.format(f_name))
     return

@@ -4,17 +4,14 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
-
 import ConfigParser
 from collections import defaultdict
-import copy
 import logging
 import re
-import numpy as np
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, warning, process_cfg
 
 __author__ = 'hmayes'
 

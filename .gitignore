@@ -90,3 +90,5 @@ tests/test_data/fitevb/fit.inp
 tests/test_data/evb_info/1.250_0a_4.0_c2*
 tests/test_data/path_make/100th_CEC_z2_4_2016*
 tests/test_data/evb_info/c2_5/
+tests/new.pdb
+tests/test_data/evb_info/1.500_20c_short_ci_sq_ts.csv

@@ -10,7 +10,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file)
+from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, write_csv, list_to_file)
 
 __author__ = 'hmayes'
 
@@ -120,7 +120,7 @@ def main(argv=None):
 
     if args.src_file is not None:
         proc_data = calc_for_wham(args.src_file)
-        write_csv(proc_data, create_out_fname(args.src_file, OUT_PFX), COLVAR_WHAM_KEY_SEQ)
+        write_csv(proc_data, create_prefix_out_fname(args.src_file, OUT_PFX), COLVAR_WHAM_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
@@ -130,7 +130,7 @@ def main(argv=None):
                 continue
             for colvar_path in ([os.path.join(fdir, tgt) for tgt in files]):
                 proc_data = calc_for_wham(colvar_path)
-                out_fname = create_out_fname(colvar_path, OUT_PFX)
+                out_fname = create_prefix_out_fname(colvar_path, OUT_PFX)
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue

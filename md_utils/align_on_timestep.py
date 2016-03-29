@@ -11,7 +11,7 @@ import logging
 import re
 import os
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname, conv_raw_val, process_cfg
+from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_fname, conv_raw_val, process_cfg
 
 import sys
 import argparse
@@ -120,7 +120,7 @@ def process_files(cfg):
                         logger.debug("Timestep {} found in second file, but not first. Will discard second file "
                                      "line {}.".format(split_line[0], line.strip()))
 
-            d_out = create_out_suf_fname(files[0], '_plus', ext='.csv')
+            d_out = create_out_fname(files[0], suffix='_plus', ext='.csv')
             list_to_file(print_lines, d_out)
             print('Wrote file: {}'.format(d_out))
     return

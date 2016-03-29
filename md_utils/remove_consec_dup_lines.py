@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import ConfigParser
 import logging
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning
 import sys
 import argparse
 
@@ -87,7 +87,7 @@ def proc_file(file_name):
                 nodups_lines.append(line)
     print('Completed reading',file_name)
     print('')
-    f_out_name = create_out_suf_fname(file_name, '_nodups')
+    f_out_name = create_out_fname(file_name, suffix='_nodups')
     list_to_file(nodups_lines[1:], f_out_name)
     return
 

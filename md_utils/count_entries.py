@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import numpy as np
 import logging
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, create_prefix_out_fname
 import sys
 import argparse
 
@@ -84,7 +84,7 @@ def process_file(f_list, new_f_name):
                         value_dict[water_mol_number] = 1
 
     if new_f_name is None:
-        new_f_name = create_out_suf_fname(f_list, '_count')
+        new_f_name = create_out_fname(f_list, suffix='_count')
 
     with open(new_f_name, 'w') as myfile:
         for key in value_dict:

@@ -14,7 +14,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, pbc_dist, warning, process_cfg, find_dump_section_state
 
 
 __author__ = 'hmayes'
@@ -252,7 +252,7 @@ def process_data_tpl(cfg):
                                'the number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT])-1, tpl_data[NUM_ATOMS]))
 
     if logger.isEnabledFor(logging.DEBUG):
-        f_out = create_out_suf_fname('reproduced_tpl', '', base_dir=cfg[OUT_BASE_DIR], ext='.data')
+        f_out = create_out_fname('reproduced_tpl', base_dir=cfg[OUT_BASE_DIR], ext='.data')
         print_lammps_data_file(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT][1:], tpl_data[TAIL_CONTENT], f_out)
 
     return tpl_data
@@ -488,7 +488,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                         change_h3o_mol_id(cfg, h3o_mol, water_dict, data_tpl_content[H3O_MOL], data_tpl_content[WATER_MOLS])
                     check_h3o_atom_id(cfg, h3o_mol, dump_atom_data, data_tpl_content)
                     check_all_atom_id(dump_atom_data, data_tpl_content[ATOMS_CONTENT])
-                    d_out = create_out_suf_fname(dump_file, '_' + str(timestep), ext='.data', base_dir=cfg[OUT_BASE_DIR])
+                    d_out = create_out_fname(dump_file, suffix='_' + str(timestep), ext='.data', base_dir=cfg[OUT_BASE_DIR])
                     data_tpl_content[HEAD_CONTENT][0]="Created by evbdump2data from {} timestep {} ".format(dump_file,timestep)
                     print_lammps_data_file(data_tpl_content[HEAD_CONTENT], dump_atom_data[1:], data_tpl_content[TAIL_CONTENT], d_out)
                     print('Wrote file: {}'.format(d_out))

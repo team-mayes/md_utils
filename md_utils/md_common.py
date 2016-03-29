@@ -345,7 +345,7 @@ def move_existing_file(floc):
         shutil.move(floc, create_backup_filename(floc))
 
 
-def create_out_fname(src_file, prefix, base_dir=None, ext=None):
+def create_prefix_out_fname(src_file, prefix, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
     :param src_file: The file to process.
@@ -367,11 +367,12 @@ def create_out_fname(src_file, prefix, base_dir=None, ext=None):
         os.path.join(base_dir, prefix + os.path.basename(tgt_file)))
 
 
-def create_out_suf_fname(src_file, suffix, base_dir=None, ext=None):
+def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
     :param src_file: The file to process.
-    :param suffix: The file suffix to append.
+    :param suffix: The file prefix to add, if specified.
+    :param suffix: The file suffix to append, if specified.
     :param base_dir: The base directory to use; defaults to `src_file`'s directory.
     :param ext: The extension to use instead of the source file's extension;
         defaults to the `scr_file`'s extension.
@@ -385,7 +386,7 @@ def create_out_suf_fname(src_file, suffix, base_dir=None, ext=None):
     if ext is None:
         ext = os.path.splitext(src_file)[1]
 
-    return os.path.abspath(os.path.join(base_dir, base_name + suffix + ext ))
+    return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext ))
 
 
 def find_files_by_dir(tgt_dir, pat):

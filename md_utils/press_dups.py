@@ -100,7 +100,7 @@ def main(argv=None):
 
     deduped = compress_dups(md_common.read_csv(args.file, all_conv=float), args.column)
     fmt_deduped = md_common.fmt_row_data(deduped, "{:.6f}")
-    md_common.write_csv(fmt_deduped, md_common.create_out_fname(args.file, PREFIX),
+    md_common.write_csv(fmt_deduped, md_common.create_prefix_out_fname(args.file, PREFIX),
                         md_common.read_csv_header(args.file))
 
     return 0  # success

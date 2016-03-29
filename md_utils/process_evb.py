@@ -10,7 +10,7 @@ import logging
 import re
 import os
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_suf_fname, conv_raw_val, process_cfg
+from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_fname, conv_raw_val, process_cfg
 
 import sys
 import argparse
@@ -177,7 +177,7 @@ def process_evb_files(cfg):
                         section = None
                 # Now that finished reading all atom lines...
 
-            d_out = create_out_suf_fname(evb_file, '_prot_ci_sq', ext='.csv')
+            d_out = create_out_fname(evb_file, suffix='_prot_ci_sq', ext='.csv')
             list_to_file(to_print, d_out)
             print('Wrote file: {}'.format(d_out))
     return

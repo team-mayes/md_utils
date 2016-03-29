@@ -4,27 +4,21 @@ Edit a pdb file to provide missing data
 """
 
 from __future__ import print_function
-
 import ConfigParser
-from collections import defaultdict
-import copy
+import csv
 import logging
 import re
-import numpy as np
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
+from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname
+
 __author__ = 'hmayes'
 
-
 # Logging
-logger = logging.getLogger('fixpdb')
-logging.basicConfig(filename='fixpdb.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('pdb_edit')
+logging.basicConfig(filename='pdb_edit.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
-
-
 
 # Error Codes
 # The good status code
@@ -40,8 +34,8 @@ MAIN_SEC = 'main'
 
 # Config keys
 PDB_TPL_FILE = 'pdb_tpl_file'
-DATAS_FILE = 'data_list_file'
-ATOM_TYPE_DICT_FILE = 'atom_type_dict_file'
+PDB_NEW_FILE = 'pdb_new_file'
+ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 # PDB file info
 PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
 PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
@@ -54,14 +48,14 @@ PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
 LAST_PROT_ID = 'last_prot_atom'
 OUT_BASE_DIR = 'output_directory'
-MAKE_DICT_BOOL = 'make_dictionary_flag'
 
 # data file info
 
 # Defaults
-DEF_CFG_FILE = 'fixpdb.ini'
+DEF_CFG_FILE = 'pdb_edit.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv',
+DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
+                PDB_NEW_FILE: 'new.pdb',
                 PDB_FORMAT: '%s%s%s%s%4d    %8.3f%8.3f%8.3f%s',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
@@ -73,36 +67,28 @@ DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv
                 PDB_Z_LAST_CHAR: 54,
                 LAST_PROT_ID: 0,
                 OUT_BASE_DIR: None,
-                MAKE_DICT_BOOL: False,
-}
+                }
 REQ_KEYS = {PDB_TPL_FILE: str,
-}
+            }
 
-# From data template file
-NUM_ATOMS = 'num_atoms'
 HEAD_CONTENT = 'head_content'
 ATOMS_CONTENT = 'atoms_content'
 TAIL_CONTENT = 'tail_content'
 
-# For data template file processing
-SEC_HEAD = 'head_section'
-SEC_ATOMS = 'atoms_section'
-SEC_TAIL = 'tail_section'
 
-
-def read_cfg(floc, cfg_proc=process_cfg):
+def read_cfg(f_loc, cfg_proc=process_cfg):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
 
-    :param floc: The location of the file to read.
+    :param f_loc: The location of the file to read.
     :param cfg_proc: The processor to use for the raw configuration values.  Uses default values when the raw
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
     config = ConfigParser.ConfigParser()
-    good_files = config.read(floc)
+    good_files = config.read(f_loc)
     if not good_files:
-        raise IOError('Could not read file {}'.format(floc))
+        raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     return main_proc
 
@@ -116,7 +102,7 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates a new version of a pdb file to provide missing data.')
+    parser = argparse.ArgumentParser(description='Creates a new version of a pdb file.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
@@ -154,12 +140,13 @@ def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
     list_to_file(tail_data, file_name, mode='a')
     return
 
+
 def make_atom_type_element_dict(atom_section, last_prot_atom):
     """
     To make a lists of PDB atom types according to element type
+    Used if need to fill in the last column of a PDB
 
     @param atom_section: assumes the atom type is in entry index 2
-    @return:
     """
     prot_atom_types = set()
 
@@ -174,9 +161,8 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
     s_pat = re.compile(r"^S.*")
     s_atoms = []
 
-
-    for id,entry in enumerate(atom_section):
-        if id < last_prot_atom:
+    for atom_id, entry in enumerate(atom_section):
+        if atom_id < last_prot_atom:
             prot_atom_types.add(entry[2])
 
     for atom in prot_atom_types:
@@ -198,7 +184,7 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
             s_atoms.append(atom)
         else:
             raise InvalidDataError('Please add atom type {} to a dictionary of elements.'.format(atom))
-        # atom_type_dict
+            # atom_type_dict
 
     # This printing is to check with VMD
     print(' '.join(c_atoms))
@@ -213,26 +199,26 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
     print(n_atoms)
     print(s_atoms)
 
-    return
 
-def process_pdb_tpl(cfg):
+# noinspection PyUnboundLocalVariable
+def process_pdb_tpl(cfg, atom_num_dict):
     tpl_loc = cfg[PDB_TPL_FILE]
-    tpl_data = {}
-    tpl_data[HEAD_CONTENT] = []
-    tpl_data[ATOMS_CONTENT] = []
-    tpl_data[TAIL_CONTENT] = []
+    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
+    atoms_content = []
 
     last_prot_atom = cfg[LAST_PROT_ID]
 
-    atom_id = 0
-    wat_o_type = set()
-
-    wat_h_type = '  39  '
+    atom_count = 0
 
     # Added this because my template did not have these types....
-    # c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ', '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ']
+    # c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ',
+    #            '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ']
     # o_atoms = ['  OG1 ', '  OT2 ', '  OG  ', '  OE1 ', '  OH  ', '  OD1 ', '  OT1 ', '  O   ', '  OE2 ', '  OD2 ']
-    # h_atoms = ['  HZ1 ', ' HD23 ', ' HG12 ', '  HD1 ', '  HE3 ', '  HA2 ', ' HD21 ', ' HH11 ', '  HG  ', '  HB2 ', '  HE  ', '  HE1 ', '  HT1 ', '  HT2 ', '  HA  ', ' HG11 ', ' HE21 ', '  HG2 ', '  HD3 ', '  HZ3 ', ' HG22 ', '  HB  ', '  HN  ', ' HD22 ', '  HA1 ', '  HE2 ', ' HE22 ', '  HB3 ', ' HD13 ', '  HD2 ', ' HH12 ', '  HH  ', ' HH22 ', '  HB1 ', ' HD11 ', '  HH2 ', '  HG1 ', '  HT3 ', ' HD12 ', ' HH21 ', ' HG21 ', '  HZ  ', '  HZ2 ', ' HG13 ', ' HG23 ']
+    # h_atoms = ['  HZ1 ', ' HD23 ', ' HG12 ', '  HD1 ', '  HE3 ', '  HA2 ', ' HD21 ', ' HH11 ', '  HG  ', '  HB2 ',
+    #            '  HE  ', '  HE1 ', '  HT1 ', '  HT2 ', '  HA  ', ' HG11 ', ' HE21 ', '  HG2 ', '  HD3 ', '  HZ3 ',
+    #            ' HG22 ', '  HB  ', '  HN  ', ' HD22 ', '  HA1 ', '  HE2 ', ' HE22 ', '  HB3 ', ' HD13 ', '  HD2 ',
+    #            ' HH12 ', '  HH  ', ' HH22 ', '  HB1 ', ' HD11 ', '  HH2 ', '  HG1 ', '  HT3 ', ' HD12 ', ' HH21 ',
+    #            ' HG21 ', '  HZ  ', '  HZ2 ', ' HG13 ', ' HG23 ']
     # n_atoms = ['  ND1 ', '  NH2 ', '  N   ', '  NE2 ', '  ND2 ', '  NE1 ', '  NH1 ', '  NE  ', '  NZ  ']
     # s_atoms = ['  SD  ', '  SG  ']
 
@@ -252,10 +238,16 @@ def process_pdb_tpl(cfg):
             # atoms_content to contain everything but the xyz
             elif line_head == 'ATOM  ':
 
-                # My template PDB has ***** after atom_id 99999. Thus, I'm renumbering. Otherise, this this:
+                # My template PDB has ***** after atom_count 99999. Thus, I'm renumbering. Otherwise, this this:
                 # atom_num = line[cfg[PDB_LINE_TYPE_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
                 # For renumbering, making sure prints in the correct format, including num of characters:
-                atom_id += 1
+                atom_count += 1
+
+                # Allow for reordering
+                if atom_count in atom_num_dict:
+                    atom_id = atom_num_dict[atom_count]
+                else:
+                    atom_id = atom_count
 
                 if atom_id > 99999:
                     atom_num = format(atom_id, 'x')
@@ -264,8 +256,6 @@ def process_pdb_tpl(cfg):
 
                 atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
                 res_type = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_RES_TYPE_LAST_CHAR]]
-                # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
-                # There is already a try when calling the subroutine, so maybe I don't need to?
                 mol_num = int(line[cfg[PDB_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
                 pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
                 pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
@@ -273,28 +263,29 @@ def process_pdb_tpl(cfg):
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
                 element = ''
 
-
-                # if atom_id < last_prot_atom:
+                # if atom_count < last_prot_atom:
                 #     print([last_cols])
-                if atom_id > last_prot_atom:
+                if atom_count > last_prot_atom:
                     if (wat_count % 3) == 0:
                         current_mol = mol_num
                         if atom_type != '  OH2 ':
-                            print("erzrors!")
-                        last_cols = '  0.00  0.00      S2   O'
+                            print("erzors!")
+                        # last_cols = '  0.00  0.00      S2   O'
                     else:
-                        if mol_num != current_mol:
+                        if current_mol != mol_num:
                             print('water not in order', line_struct)
                         if (wat_count % 3) == 1:
-                            atom_type = '  H1  '
+                            if atom_type != '  H1  ':
+                                print("erzors!")
                         else:
-                            atom_type = '  H2  '
-                        last_cols = '  0.00  0.00      S2   H'
+                            if atom_type != '  H2  ':
+                                print("erzors!")
+                        # last_cols = '  0.00  0.00      S2   H'
                     wat_count += 1
 
 
-                # if atom_id <= last_prot_atom:
-                #     print(atom_type)
+                    # if atom_count <= last_prot_atom:
+                    #     print(atom_type)
                     # if atom_type in c_atoms:
                     #     element = '   C'
                     # elif atom_type in o_atoms:
@@ -306,7 +297,7 @@ def process_pdb_tpl(cfg):
                     # elif atom_type in s_atoms:
                     #     element = '   S'
                     # else:
-                    #     raise InvalidDataError('Please add atom type {} to a dictionary of elements.'.format(atom_type))
+                    #     raise InvalidDataError('Please add atom type {} to dictionary of elements.'.format(atom_type))
 
                 # # For renumbering molecules
                 # # If this is wanted, need to handle when molid must switch to hex; probably make
@@ -324,171 +315,76 @@ def process_pdb_tpl(cfg):
                 # last_mol_num = mol_num
                 # mol_num = new_mol_num
 
-                line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols + element]
-                tpl_data[ATOMS_CONTENT].append(line_struct)
-
-
-
+                line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z,
+                               last_cols + element]
+                atoms_content.append(line_struct)
 
             # tail_content to contain everything after the 'Atoms' section
             else:
                 tpl_data[TAIL_CONTENT].append(line)
-    print(wat_o_type)
 
-    if logger.isEnabledFor(logging.DEBUG):
-        print_pdb(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT],
-                  'reproduced_tpl.pdb', cfg[PDB_FORMAT])
+    if len(atom_num_dict) > 0:
+        tpl_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda line: line[1])
+    else:
+        tpl_data[ATOMS_CONTENT] = atoms_content
 
-    return tpl_data
+    f_name = create_out_fname(cfg[PDB_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
+    print_pdb(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT],
+              f_name, cfg[PDB_FORMAT])
 
-def make_dict(cfg, data_tpl_content):
-    atoms_pat = re.compile(r"^Atoms.*")
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    matched_atom_types = {}
-    atom_type_dict = defaultdict(list)
-    non_unique_charmm = []
-    with open(cfg[DATAS_FILE]) as f:
-        for data_file in f:
-            data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-                for line in d:
-                    line = line.strip()
-                    # not currently keeping anything from the header; just check num atoms
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
-
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
-
-                        lammps_atom_type = int(split_line[2])
-                        charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2] + data_tpl_content[ATOMS_CONTENT][atom_id][3]
-
-                        # Making the dictionary; use charmm as unique key. Do this first to verify library.
-                        if charmm_atom_type in matched_atom_types:
-                            # Check that we don't have conflicting matching
-                            if lammps_atom_type != matched_atom_types[charmm_atom_type]:
-                                if charmm_atom_type not in non_unique_charmm:
-                                    print('Verify that this charmm type can have multiple lammps types: ', charmm_atom_type)
-                                    print('First collision for this charmm type occurred on atom:', atom_id + 1)
-                                    non_unique_charmm.append(charmm_atom_type)
-                        else:
-                            matched_atom_types[charmm_atom_type] = lammps_atom_type
-
-                        atom_type_dict[lammps_atom_type].append(charmm_atom_type)
-
-                        atom_id += 1
-                        # Check after increment because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
-            print('Finished looking for dictionary values in file ', data_file)
-    # # Write dictionary
-    # # TODO: Save dictionary as a JASON file, then use it in processing the data files. For now, just do the check above.
-    # with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as myfile:
-    #     for line in atom_type_dict.items():
-    #         print(line)
-    #         # myfile.write('%s,%d' % line + '\n')
-
-    print('Completed making dictionary.')
-    return atom_type_dict
-
-def process_data_files(cfg, data_tpl_content):
-    atoms_pat = re.compile(r"^Atoms.*")
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    # Don't want to change the original template data when preparing to print the new file:
-    pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
-    with open(cfg[DATAS_FILE]) as f:
-        for data_file in f:
-            data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-
-                for line in d:
-                    line = line.strip()
-                    # not currently keeping anything from the header; just check num atoms
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
-                                if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
-                                    raise InvalidDataError('The number of atoms listed in the data file {} ({}) does ' \
-                                                    'not equal the number of atoms in the template file ({}).'.format(
-                                        num_atoms, len(data_tpl_content[ATOMS_CONTENT]), data_file))
-
-                    # atoms_content to contain only xyz; also perform some checking
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
-
-                        # Not currently checking molecule number; the number may be wrong and the data still correct,
-                        # as PDB numbering starts over at zero a few times (due to restrictions on number of digits in
-                        # mol_num) but not the data file
-                        # mol_num = int(split_line[1])
-
-                        # TODO: Later, do a check on atom_type based on reading the dictionary.
-                        # For now, the checking was in making the dictionary.
-                        # atom_type = int(split_line[2])
-
-                        pdb_data_section[atom_id][5:8] = map(float, split_line[4:7])
-                        atom_id += 1
-                        # Check after increment because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
-
-            # Now that finished reading the file...
-            # Check total length
-            # (will be wrong if got to tail before reaching num_atoms)
-            if atom_id != num_atoms:
-                raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
-                                       'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
-            # Now make new file
-            f_name = create_out_fname(data_file, '', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
-            print_pdb(data_tpl_content[HEAD_CONTENT], pdb_data_section, data_tpl_content[TAIL_CONTENT],
-                      f_name, cfg[PDB_FORMAT])
-            print('Completed writing {}'.format(f_name))
     return
+
+
+def read_atom_dict(d_file):
+    """
+    If an atom dictionary file is given, read it and return the dict[old]=new.
+    While add it, make sure that there is a 1:1 mapping of all values.
+    @param d_file: the files with csv of old_id,new_id
+    @return: atom_num_dict
+    """
+    atom_num_dict = {}
+    # If d_file is None, return the empty dictionary, as no dictionary file was specified
+    if d_file is not None:
+        keys = set()
+        vals = set()
+        with open(d_file) as csv_file:
+            reader = csv.reader(csv_file)
+            for row in reader:
+                if len(row) == 0:
+                    continue
+                if len(row) == 2:
+                    key = int(row[0])
+                    val = int(row[1])
+                    keys.add(key)
+                    vals.add(val)
+                    atom_num_dict[key] = int(row[1])
+                else:
+                    warning('Expected exactly two comma-separated values per row in file {}. '
+                            'Skipping row containing: {}.'.format(d_file, row))
+    if keys <= vals and keys >= vals:
+        return atom_num_dict
+    else:
+        raise InvalidDataError('Did not find a 1:1 mapping of old,new atom ids in {}'.format(d_file))
+
 
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
     cfg = args.config
 
-    # Read template and data files
+    # Read and process pdb files
     try:
-        pdb_tpl_content = process_pdb_tpl(cfg)
-        # if cfg[ MAKE_DICT_BOOL]:
-        #     atom_type_dict = make_dict(cfg, pdb_tpl_content)
-        #     print(atom_type_dict)
-        # process_data_files(cfg, pdb_tpl_content)
+        atom_num_dict = read_atom_dict(cfg[ATOM_REORDER_FILE])
+        process_pdb_tpl(cfg,atom_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems with input information:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

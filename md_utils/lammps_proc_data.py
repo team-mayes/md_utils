@@ -14,7 +14,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, \
+from md_utils.md_common import InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg, \
     find_dump_section_state, write_csv, seq_list_to_file
 
 
@@ -639,7 +639,7 @@ def process_dump_files(cfg):
             if len(dump_file) > 0:
                 read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames)
                 if cfg[PER_FRAME_OUTPUT]:
-                    f_out = create_out_suf_fname(dump_file, '_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                     write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
                     print('Wrote file: {}'.format(f_out))
 
@@ -677,7 +677,7 @@ def process_dump_files(cfg):
             warning("Did not find any timesteps with the pairs in {}. This output will not be printed.".config(
                 CALC_TYPE_GOFR))
     if cfg[GOFR_OUTPUT]:
-        f_out = create_out_suf_fname(cfg[DUMPS_FILE], '_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+        f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
         seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
         print('Wrote file: {}'.format(f_out))
 

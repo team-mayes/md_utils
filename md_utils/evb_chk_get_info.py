@@ -4,15 +4,13 @@ Get selected info from the file
 """
 
 from __future__ import print_function
-
 import ConfigParser
-import copy
 import logging
 import re
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, warning, create_out_fname, conv_raw_val, process_cfg
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, warning, create_prefix_out_fname, process_cfg
 
 __author__ = 'hmayes'
 
@@ -214,10 +212,10 @@ def process_file(cfg):
                         break
 
 
-            f_name = create_out_fname(data_file, 'water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_prefix_out_fname(data_file, 'water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_qm_kind(h_ids,'H',f_name)
             print_qm_kind(o_ids,'O',f_name,mode='a')
-            f_name = create_out_fname(data_file, 'vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_prefix_out_fname(data_file, 'vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_vmd_list(o_ids+h_ids, f_name)
     return
 

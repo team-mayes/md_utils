@@ -38,7 +38,7 @@ import sys
 import argparse
 
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, create_out_suf_fname, process_cfg, write_csv
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, write_csv
 
 
 __author__ = 'hmayes'
@@ -348,23 +348,23 @@ def process_evb_files(cfg):
                 data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
                 if cfg[PRINT_PER_FILE] is True:
                     if cfg[PRINT_KEY_PROPS]:
-                        f_out = create_out_suf_fname(evb_file, '_evb_info', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CI_SUBSET]:
-                        f_out = create_out_suf_fname(evb_file, '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CI_SQ]:
-                        f_out = create_out_suf_fname(evb_file, '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(evb_file, suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CEC]:
-                        f_out = create_out_suf_fname(evb_file, '_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(evb_file, suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_WAT_MOL]:
-                        f_out = create_out_suf_fname(evb_file, '_wat_mols', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore")
                         print('Wrote file: {}'.format(f_out))
                 if cfg[PRINT_PER_LIST]:
@@ -373,11 +373,11 @@ def process_evb_files(cfg):
                         first_file_flag = False
                     else:
                         print_mode = 'a'
-                    f_out = create_out_suf_fname(cfg[EVBS_FILE], '_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    f_out = create_out_fname(cfg[EVBS_FILE], suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                     write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
                     print('Wrote file: {}'.format(f_out))
                     if cfg[PRINT_CI_SUBSET]:
-                        f_out = create_out_suf_fname(cfg[EVBS_FILE], '_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                        f_out = create_out_fname(cfg[EVBS_FILE], suffix='_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                         write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
                         print('Wrote file: {}'.format(f_out))
 

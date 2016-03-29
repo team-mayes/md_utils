@@ -14,7 +14,6 @@ CALC_OH_DIST: the hydroxyl OH distance on the protonateable residue (when proton
 """
 
 from __future__ import print_function
-import ConfigParser
 import logging
 import os
 import re
@@ -23,7 +22,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, create_out_suf_fname, pbc_dist, warning, process_cfg, find_dump_section_state, write_csv, seq_list_to_file, ThrowingArgumentParser, create_out_fname
+from md_utils.md_common import InvalidDataError, warning, seq_list_to_file, create_prefix_out_fname
 
 
 __author__ = 'hmayes'
@@ -182,7 +181,7 @@ def process_cp2k_force_file(file, out_dir):
                     if sum_pat.match(split_line[0]):
                         sums = np.asarray(map(float,split_line[4:])) * au_to_N
                         # sums_str = ' '.join([str(atom_num)] + ['%8.3f'%F for F in sums])
-                        f_out = create_out_fname(file, OUT_FILE_PREFIX, base_dir=out_dir, ext='')
+                        f_out = create_prefix_out_fname(file, OUT_FILE_PREFIX, base_dir=out_dir, ext='')
                         seq_list_to_file(to_print, f_out, delimiter=' ')
                                             # outfile.write(' '.join(map(str, [atom_num] + xyz)))
                         return np.append([atom_num], sums)
@@ -239,7 +238,7 @@ def read_file_list(file_list, out_dir):
         print(' ' + '      '.join(summary_header))
         print(' '.join(['%10.0f'%summary_array[0]] + ['%10.3f'%F for F in summary_array[1:]]))
     else:
-        f_out = create_out_fname(file_list, 'force_sums_', base_dir=out_dir, ext='.csv')
+        f_out = create_prefix_out_fname(file_list, 'force_sums_', base_dir=out_dir, ext='.csv')
         seq_list_to_file(summary_array, f_out, delimiter=' ')
         with open(f_out, 'w') as logfile:
             logfile.write(','.join(summary_header) + "\n")

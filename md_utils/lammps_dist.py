@@ -16,7 +16,7 @@ import itertools
 import numpy as np
 from md_utils import md_common
 from md_utils.lammps import find_atom_data
-from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_out_fname
+from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_prefix_out_fname
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ def main(argv=None):
 
     pairs = parse_pairs(args.pair_files)
     dists = atom_distances(args.file, pairs)
-    write_results(create_out_fname(args.file, 'pairs_', ext='.csv'),
+    write_results(create_prefix_out_fname(args.file, 'pairs_', ext='.csv'),
                   dists, pairs)
 
     return 0  # success

@@ -33,7 +33,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_out_fname,
+from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname,
                                 read_csv, write_csv, calc_kbt)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
@@ -90,7 +90,7 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     :param basedir: The base directory to target (uses the source file's base directory
         if not specified)
     """
-    out_fname = create_out_fname(src_file, OUT_PFX, base_dir=basedir)
+    out_fname = create_prefix_out_fname(src_file, OUT_PFX, base_dir=basedir)
     if os.path.exists(out_fname) and not overwrite:
         logger.warn("Not overwriting existing file '%s'", out_fname)
         return

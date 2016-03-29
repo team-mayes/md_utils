@@ -8,7 +8,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv,
+from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, write_csv,
                                 calc_kbt)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -163,7 +163,7 @@ def main(argv=None):
 
     if args.src_file is not None:
         proc_data = to_zero_point(calc_rad(args.src_file, kbt))
-        write_csv(proc_data, create_out_fname(args.src_file, OUT_PFX), RAD_KEY_SEQ)
+        write_csv(proc_data, create_prefix_out_fname(args.src_file, OUT_PFX), RAD_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
@@ -173,7 +173,7 @@ def main(argv=None):
                 continue
             for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                out_fname = create_out_fname(pmf_path, OUT_PFX)
+                out_fname = create_prefix_out_fname(pmf_path, OUT_PFX)
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue

@@ -4,17 +4,15 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
-
 import ConfigParser
 from collections import defaultdict
 import copy
 import logging
 import re
-import numpy as np
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, create_prefix_out_fname, warning, process_cfg
 
 __author__ = 'hmayes'
 
@@ -439,7 +437,7 @@ def process_data_files(cfg, data_tpl_content):
                 raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
                                        'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
             # Now make new file
-            f_name = create_out_fname(data_file, '', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_prefix_out_fname(data_file, '', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
             print_pdb(data_tpl_content[HEAD_CONTENT], pdb_data_section, data_tpl_content[TAIL_CONTENT],
                       f_name, cfg[PDB_FORMAT])
             print('Completed writing {}'.format(f_name))

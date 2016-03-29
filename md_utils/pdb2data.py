@@ -16,7 +16,7 @@ import logging
 import re
 import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_suf_fname, str_to_file, create_out_fname, process_cfg, warning, write_csv
+from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, str_to_file, create_prefix_out_fname, process_cfg, warning, write_csv
 
 import sys
 import argparse
@@ -235,7 +235,7 @@ def process_pdb_files(cfg, data_tpl_content):
                 raise InvalidDataError('The length of the "Atoms" section ({}) in the pdb does not equal ' \
                            'the number of atoms in the data template file ({}).'.format(len(atom_num),
                             data_tpl_content[NUM_ATOMS]))
-            d_out = create_out_suf_fname(pdb_file, '_from_py' , ext='.data')
+            d_out = create_out_fname(pdb_file, suffix='_from_py' , ext='.data')
             list_to_file(data_tpl_content[HEAD_CONTENT], d_out)
             seq_list_to_file(pdb_atom_line, d_out, mode='a')
             list_to_file(data_tpl_content[TAIL_CONTENT], d_out, mode='a')

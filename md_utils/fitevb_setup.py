@@ -9,7 +9,7 @@ import ConfigParser
 import os
 
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_suf_fname, write_csv
+from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, write_csv
 import sys
 import argparse
 
@@ -311,11 +311,11 @@ def make_summary(output_file, summary_file, cfg):
             last_row = row
 
         # format for gnuplot and np.loadtxt
-        f_out = create_out_suf_fname(summary_file, '_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
+        f_out = create_out_fname(summary_file, suffix='_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
         write_csv(percent_diffs, f_out, headers, extrasaction="ignore")
         print('Wrote file: {}'.format(f_out))
 
-        f_out = create_out_suf_fname(summary_file, '', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
+        f_out = create_out_fname(summary_file, ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
         with open(f_out, 'w') as s_file:
             s_file.write(','.join(headers)+'\n')
             np.savetxt(s_file, all_output, fmt='%8.6f', delimiter=',')
