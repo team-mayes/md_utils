@@ -547,8 +547,43 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
             writer.writeheader()
         writer.writerows(data)
 
+
+# Other input/output files
+
 def save_fig(name, base_dir=None):
     plt.savefig(base_dir + name, bbox_inches='tight')
+
+
+def read_int_dict(d_file):
+    """
+    If an dictionary file is given, read it and return the dict[old]=new.
+    Checks that there 1:1 mapping of keys and values and that all keys are unique.
+    @param d_file: the files with csv of old_id,new_id
+    @return: int_dict
+    """
+    int_dict = {}
+    # If d_file is None, return the empty dictionary, as no dictionary file was specified
+    if d_file is not None:
+        with open(d_file) as csv_file:
+            reader = csv.reader(csv_file)
+            key_count = 0
+            for row in reader:
+                if len(row) == 0:
+                    continue
+                if len(row) == 2:
+                    int_dict[int(row[0])] = int(row[1])
+                    key_count +=1
+                else:
+                    warning('Expected exactly two comma-separated values per row in file {}. '
+                            'Skipping row containing: {}.'.format(d_file, row))
+        if key_count == len(int_dict):
+            for key in int_dict:
+                if not (key in int_dict.values()):
+                    raise InvalidDataError('Did not find a 1:1 mapping of old,new atom ids in {}'.format(d_file))
+        else:
+            raise InvalidDataError('An old atom id appeared more than once in the file: {}\n'.format(d_file))
+    return int_dict
+
 
 # Conversions #
 

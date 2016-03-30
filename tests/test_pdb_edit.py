@@ -12,6 +12,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'pdb_edit')
 ATOM_DICT_FILE = os.path.join(SUB_DATA_DIR, 'atom_reorder.csv')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit.ini')
 ATOM_DICT_BAD_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_bad_reorder.ini')
+ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'new.pdb')
 GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_good.pdb')
 
@@ -22,7 +23,7 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
 
 class TestPDBEdit(unittest.TestCase):
     def testReadAtomNumDict(self):
-        dict = pdb_edit.read_atom_dict(ATOM_DICT_FILE)
+        dict = pdb_edit.read_int_dict(ATOM_DICT_FILE)
         assert cmp(dict, GOOD_ATOM_DICT) == 0
 
     def testReadBadAtomNumDict(self):
@@ -30,6 +31,11 @@ class TestPDBEdit(unittest.TestCase):
             self.assertTrue("xx" in output)
             self.assertTrue("26" in output)
             self.assertTrue("Problems with input information" in output)
+
+    def testRepeatKeyNumDict(self):
+        with capture_stderr(pdb_edit.main,["-c", ATOM_DICT_REPEAT_INI]) as output:
+            self.assertTrue("Problems with input information" in output)
+
 
     def testReorderAtoms(self):
         try:

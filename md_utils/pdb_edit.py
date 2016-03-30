@@ -11,7 +11,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname
+from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_int_dict
 
 __author__ = 'hmayes'
 
@@ -283,7 +283,6 @@ def process_pdb_tpl(cfg, atom_num_dict):
                         # last_cols = '  0.00  0.00      S2   H'
                     wat_count += 1
 
-
                     # if atom_count <= last_prot_atom:
                     #     print(atom_type)
                     # if atom_type in c_atoms:
@@ -314,7 +313,6 @@ def process_pdb_tpl(cfg, atom_num_dict):
                 #     print(mol_num,new_mol_num)
                 # last_mol_num = mol_num
                 # mol_num = new_mol_num
-
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z,
                                last_cols + element]
                 atoms_content.append(line_struct)
@@ -335,37 +333,6 @@ def process_pdb_tpl(cfg, atom_num_dict):
     return
 
 
-def read_atom_dict(d_file):
-    """
-    If an atom dictionary file is given, read it and return the dict[old]=new.
-    While add it, make sure that there is a 1:1 mapping of all values.
-    @param d_file: the files with csv of old_id,new_id
-    @return: atom_num_dict
-    """
-    atom_num_dict = {}
-    # If d_file is None, return the empty dictionary, as no dictionary file was specified
-    if d_file is not None:
-        keys = set()
-        vals = set()
-        with open(d_file) as csv_file:
-            reader = csv.reader(csv_file)
-            for row in reader:
-                if len(row) == 0:
-                    continue
-                if len(row) == 2:
-                    key = int(row[0])
-                    val = int(row[1])
-                    keys.add(key)
-                    vals.add(val)
-                    atom_num_dict[key] = int(row[1])
-                else:
-                    warning('Expected exactly two comma-separated values per row in file {}. '
-                            'Skipping row containing: {}.'.format(d_file, row))
-    if keys <= vals and keys >= vals:
-        return atom_num_dict
-    else:
-        raise InvalidDataError('Did not find a 1:1 mapping of old,new atom ids in {}'.format(d_file))
-
 
 
 def main(argv=None):
@@ -378,7 +345,7 @@ def main(argv=None):
 
     # Read and process pdb files
     try:
-        atom_num_dict = read_atom_dict(cfg[ATOM_REORDER_FILE])
+        atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
         process_pdb_tpl(cfg,atom_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
