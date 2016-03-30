@@ -5,7 +5,6 @@ Edit a pdb file to provide missing data
 
 from __future__ import print_function
 import ConfigParser
-import csv
 import logging
 import re
 import sys
@@ -322,7 +321,7 @@ def process_pdb_tpl(cfg, atom_num_dict):
                 tpl_data[TAIL_CONTENT].append(line)
 
     if len(atom_num_dict) > 0:
-        tpl_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda line: line[1])
+        tpl_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda entry: entry[1])
     else:
         tpl_data[ATOMS_CONTENT] = atoms_content
 
@@ -331,8 +330,6 @@ def process_pdb_tpl(cfg, atom_num_dict):
               f_name, cfg[PDB_FORMAT])
 
     return
-
-
 
 
 def main(argv=None):
@@ -346,7 +343,7 @@ def main(argv=None):
     # Read and process pdb files
     try:
         atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        process_pdb_tpl(cfg,atom_num_dict)
+        process_pdb_tpl(cfg, atom_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
