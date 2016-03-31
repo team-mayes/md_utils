@@ -15,12 +15,12 @@ REPRODUCE_INI = os.path.join(SUB_DATA_DIR, 'dump_edit_reproduce.ini')
 SHORTER_INI = os.path.join(SUB_DATA_DIR, 'dump_shorter.ini')
 SKIP_INI = os.path.join(SUB_DATA_DIR, 'dump_every_2every3.ini')
 REORDER_INI = os.path.join(SUB_DATA_DIR, 'dump_edit.ini')
-# ATOM_DICT_BAD_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_bad_reorder.ini')
-# ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
+REORDER_RENUM_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol.ini')
 DUMP_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short.dump')
 DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder.dump')
 SHORT_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_4steps.dump')
 SKIP_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_2every3.dump')
+GOOD_ATOM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
 GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
 
 # GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_good.pdb')
@@ -54,9 +54,16 @@ class TestDumpEdit(unittest.TestCase):
         finally:
             silent_remove(DEF_OUT)
 
-    def testReorder(self):
+    def testReorderAtoms(self):
         try:
             dump_edit.main(["-c", REORDER_INI])
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_ATOM_OUT_FILE))
+        finally:
+            silent_remove(DEF_OUT)
+
+    def testReorderAtomRenumMol(self):
+        try:
+            dump_edit.main(["-c", REORDER_RENUM_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)

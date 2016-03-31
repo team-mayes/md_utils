@@ -35,6 +35,13 @@ MAIN_SEC = 'main'
 PDB_TPL_FILE = 'pdb_tpl_file'
 PDB_NEW_FILE = 'pdb_new_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
+MOL_RENUM_FILE = 'mol_renum_old_new_file'
+RENUM_MOL = 'mol_renum_flag'
+LAST_PROT_ID = 'last_prot_atom'
+FIRST_WAT_ID = 'first_wat_atom'
+LAST_WAT_ID = 'last_wat_atom'
+OUT_BASE_DIR = 'output_directory'
+
 # PDB file info
 PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
 PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
@@ -45,17 +52,19 @@ PDB_X_LAST_CHAR = 'pdb_x_last_char'
 PDB_Y_LAST_CHAR = 'pdb_y_last_char'
 PDB_Z_LAST_CHAR = 'pdb_z_last_char'
 PDB_FORMAT = 'pdb_print_format'
-LAST_PROT_ID = 'last_prot_atom'
-OUT_BASE_DIR = 'output_directory'
-
-# data file info
 
 # Defaults
 DEF_CFG_FILE = 'pdb_edit.ini'
 # Set notation
 DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
+                MOL_RENUM_FILE: None,
+                RENUM_MOL: False,
+                LAST_PROT_ID: 0,
+                FIRST_WAT_ID: 0,
+                LAST_WAT_ID: 0,
+                OUT_BASE_DIR: None,
                 PDB_NEW_FILE: 'new.pdb',
-                PDB_FORMAT: '%s%s%s%s%4d    %8.3f%8.3f%8.3f%s',
+                PDB_FORMAT: '%s%s%s%s%4s    %8.3f%8.3f%8.3f%s',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
                 PDB_ATOM_TYPE_LAST_CHAR: 17,
@@ -64,8 +73,6 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PDB_X_LAST_CHAR: 38,
                 PDB_Y_LAST_CHAR: 46,
                 PDB_Z_LAST_CHAR: 54,
-                LAST_PROT_ID: 0,
-                OUT_BASE_DIR: None,
                 }
 REQ_KEYS = {PDB_TPL_FILE: str,
             }
@@ -101,7 +108,8 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates a new version of a pdb file.')
+    parser = argparse.ArgumentParser(description='Creates a new version of a pdb file. Atoms will be numbered '
+                                                 'starting from one. Options include renumbering molecules.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
@@ -199,17 +207,11 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
     print(s_atoms)
 
 
-# noinspection PyUnboundLocalVariable
-def process_pdb_tpl(cfg, atom_num_dict):
-    tpl_loc = cfg[PDB_TPL_FILE]
-    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
-    atoms_content = []
+def process_pdb_tpl(cfg, atom_num_dict, mol_num_dict):
+    pdb_loc = cfg[PDB_TPL_FILE]
+    pdb_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
-    last_prot_atom = cfg[LAST_PROT_ID]
-
-    atom_count = 0
-
-    # Added this because my template did not have these types....
+    # This is used when need ot add atom types to PDB file
     # c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ',
     #            '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ']
     # o_atoms = ['  OG1 ', '  OT2 ', '  OG  ', '  OE1 ', '  OH  ', '  OD1 ', '  OT1 ', '  O   ', '  OE2 ', '  OD2 ']
@@ -221,8 +223,16 @@ def process_pdb_tpl(cfg, atom_num_dict):
     # n_atoms = ['  ND1 ', '  NH2 ', '  N   ', '  NE2 ', '  ND2 ', '  NE1 ', '  NH1 ', '  NE  ', '  NZ  ']
     # s_atoms = ['  SD  ', '  SG  ']
 
-    with open(tpl_loc) as f:
+    with open(pdb_loc) as f:
         wat_count = 0
+        atom_count = 0
+        mol_count = 1
+
+        current_mol = None
+        last_mol_num = None
+        new_mol_num = 0
+        atoms_content = []
+
         for line in f:
             line = line.strip()
             if len(line) == 0:
@@ -232,7 +242,7 @@ def process_pdb_tpl(cfg, atom_num_dict):
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
             if line_head == 'REMARK' or line_head == 'CRYST1':
-                tpl_data[HEAD_CONTENT].append(line)
+                pdb_data[HEAD_CONTENT].append(line)
 
             # atoms_content to contain everything but the xyz
             elif line_head == 'ATOM  ':
@@ -242,7 +252,7 @@ def process_pdb_tpl(cfg, atom_num_dict):
                 # For renumbering, making sure prints in the correct format, including num of characters:
                 atom_count += 1
 
-                # Allow for reordering
+                # For reordering atoms
                 if atom_count in atom_num_dict:
                     atom_id = atom_num_dict[atom_count]
                 else:
@@ -250,6 +260,9 @@ def process_pdb_tpl(cfg, atom_num_dict):
 
                 if atom_id > 99999:
                     atom_num = format(atom_id, 'x')
+                    if len(atom_num) > 5:
+                        warning("Hex representation of {} is {}, which is greater than 5 characters. This"
+                                "will affect the PDB output formatting.".format(atom_id, atom_num))
                 else:
                     atom_num = '{:5d}'.format(atom_id)
 
@@ -262,23 +275,29 @@ def process_pdb_tpl(cfg, atom_num_dict):
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
                 element = ''
 
-                # if atom_count < last_prot_atom:
-                #     print([last_cols])
-                if atom_count > last_prot_atom:
+                # For user-specified changing of molecule number
+                if mol_num in mol_num_dict:
+                    mol_num = mol_num_dict[mol_num]
+
+                # If doing water molecule checking...
+                if cfg[FIRST_WAT_ID] <= atom_count <= cfg[LAST_WAT_ID]:
                     if (wat_count % 3) == 0:
                         current_mol = mol_num
                         if atom_type != '  OH2 ':
-                            print("erzors!")
+                                warning('Expected an OH2 atom to be the first atom of a water molecule. '
+                                        'Check line: {}'.format(line))
                         # last_cols = '  0.00  0.00      S2   O'
                     else:
                         if current_mol != mol_num:
-                            print('water not in order', line_struct)
+                            warning('Water not in order on line:', line)
                         if (wat_count % 3) == 1:
                             if atom_type != '  H1  ':
-                                print("erzors!")
+                                warning('Expected an H1 atom to be the second atom of a water molecule. '
+                                        'Check line: {}'.format(line))
                         else:
                             if atom_type != '  H2  ':
-                                print("erzors!")
+                                warning('Expected an H2 atom to be the second atom of a water molecule. '
+                                        'Check line: {}'.format(line))
                         # last_cols = '  0.00  0.00      S2   H'
                     wat_count += 1
 
@@ -297,36 +316,42 @@ def process_pdb_tpl(cfg, atom_num_dict):
                     # else:
                     #     raise InvalidDataError('Please add atom type {} to dictionary of elements.'.format(atom_type))
 
-                # # For renumbering molecules
-                # # If this is wanted, need to handle when molid must switch to hex; probably make
-                # # a new variable for sending to line structure that is a string, as done with atom
-                # # number, switch to hex at 9999 molecules.
-                # if last_mol_num is None:
-                #     last_mol_num = mol_num
-                #     new_mol_num = mol_num
-                #     print(new_mol_num)
-                # if mol_num == last_mol_num:
-                #     continue
-                # else:
-                #     new_mol_num += 1
-                #     print(mol_num,new_mol_num)
-                # last_mol_num = mol_num
-                # mol_num = new_mol_num
+                # For numbering molecules from 1 to end
+                if cfg[RENUM_MOL]:
+                    if last_mol_num is None:
+                        last_mol_num = mol_num
+
+                    if mol_num != last_mol_num:
+                        last_mol_num = mol_num
+                        mol_count += 1
+                        if mol_count == 10000:
+                            warning("Molecule numbers greater than 9999 will be printed in hex")
+
+                    # Due to PDB format constraints, need to print in hex starting at 9999 molecules.
+                    if mol_count > 9999:
+                        mol_num = format(mol_count, 'x')
+                        if len(new_mol_num) > 4:
+                            warning("Hex representation of {} is {}, which is greater than 4 characters. This"
+                                    "will affect the PDB output formatting.".format(atom_id, atom_num))
+                    else:
+                        mol_num = '{:4d}'.format(mol_count)
+
+
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z,
                                last_cols + element]
                 atoms_content.append(line_struct)
 
             # tail_content to contain everything after the 'Atoms' section
             else:
-                tpl_data[TAIL_CONTENT].append(line)
+                pdb_data[TAIL_CONTENT].append(line)
 
     if len(atom_num_dict) > 0:
-        tpl_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda entry: entry[1])
+        pdb_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda entry: entry[1])
     else:
-        tpl_data[ATOMS_CONTENT] = atoms_content
+        pdb_data[ATOMS_CONTENT] = atoms_content
 
     f_name = create_out_fname(cfg[PDB_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
-    print_pdb(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT], tpl_data[TAIL_CONTENT],
+    print_pdb(pdb_data[HEAD_CONTENT], pdb_data[ATOMS_CONTENT], pdb_data[TAIL_CONTENT],
               f_name, cfg[PDB_FORMAT])
 
     return
@@ -343,7 +368,8 @@ def main(argv=None):
     # Read and process pdb files
     try:
         atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        process_pdb_tpl(cfg, atom_num_dict)
+        mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
+        process_pdb_tpl(cfg, atom_num_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

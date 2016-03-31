@@ -554,10 +554,11 @@ def save_fig(name, base_dir=None):
     plt.savefig(base_dir + name, bbox_inches='tight')
 
 
-def read_int_dict(d_file):
+def read_int_dict(d_file, one_to_one=True):
     """
     If an dictionary file is given, read it and return the dict[old]=new.
-    Checks that there 1:1 mapping of keys and values and that all keys are unique.
+    Checks that all keys are unique.
+    If one_to_one=True, checks that there 1:1 mapping of keys and values.
     @param d_file: the files with csv of old_id,new_id
     @return: int_dict
     """
@@ -577,11 +578,12 @@ def read_int_dict(d_file):
                     warning('Expected exactly two comma-separated values per row in file {}. '
                             'Skipping row containing: {}.'.format(d_file, row))
         if key_count == len(int_dict):
-            for key in int_dict:
-                if not (key in int_dict.values()):
-                    raise InvalidDataError('Did not find a 1:1 mapping of old,new atom ids in {}'.format(d_file))
+            if one_to_one:
+                for key in int_dict:
+                    if not (key in int_dict.values()):
+                        raise InvalidDataError('Did not find a 1:1 mapping of key,val ids in {}'.format(d_file))
         else:
-            raise InvalidDataError('An old atom id appeared more than once in the file: {}\n'.format(d_file))
+            raise InvalidDataError('A non-unique key value (first column) found in file: {}\n'.format(d_file))
     return int_dict
 
 

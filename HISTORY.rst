@@ -3,6 +3,12 @@
 History
 -------
 
+0.7.1 (2016-03-31)
+------------------
+
+* Added dump_edit.py, pdb_edit; these allow changes to, for example, the atom numbers
+
+
 0.7.0 (2016-02-20)
 ------------------
 

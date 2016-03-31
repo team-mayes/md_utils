@@ -44,6 +44,7 @@ ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 OUT_BASE_DIR = 'output_directory'
 MAX_STEPS = 'max_steps'
 OUT_FREQ = 'output_every_n_steps'
+RENUM_MOL = 'renumber_molecule_flag'
 
 # Defaults
 DEF_CFG_FILE = 'dump_edit.ini'
@@ -53,6 +54,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
                 ATOM_REORDER_FILE: None,
                 MAX_STEPS: -1,
                 OUT_FREQ: 1,
+                RENUM_MOL: False,
                 }
 REQ_KEYS = {}
 
@@ -163,6 +165,12 @@ def process_dump_file(cfg, dump_file, atom_num_dict):
                 if atom_num in atom_num_dict:
                     atom_num = atom_num_dict[atom_num]
                 mol_num = int(split_line[1])
+                # This is poor practice--a one-off fix
+                if cfg[RENUM_MOL]:
+                    if mol_num in [1, 2, 3]:
+                        mol_num = 1
+                    else:
+                        mol_num -= 2
                 atom_type = int(split_line[2])
 
                 charge = float(split_line[3])
