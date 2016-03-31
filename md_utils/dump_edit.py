@@ -41,10 +41,12 @@ MAIN_SEC = 'main'
 # Config keys
 DUMPS_FILE = 'dump_list_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
+MOL_RENUM_FILE = 'mol_renum_old_new_file'
 OUT_BASE_DIR = 'output_directory'
 MAX_STEPS = 'max_steps'
 OUT_FREQ = 'output_every_n_steps'
-RENUM_MOL = 'renumber_molecule_flag'
+RENUM_SHIFT = 'shift_mol_num_by'
+RENUM_START_MOL = 'first_shift_mol_num'
 
 # Defaults
 DEF_CFG_FILE = 'dump_edit.ini'
@@ -52,9 +54,11 @@ DEF_CFG_FILE = 'dump_edit.ini'
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
                 OUT_BASE_DIR: None,
                 ATOM_REORDER_FILE: None,
+                MOL_RENUM_FILE: None,
                 MAX_STEPS: -1,
                 OUT_FREQ: 1,
-                RENUM_MOL: False,
+                RENUM_START_MOL: -1,
+                RENUM_SHIFT: 0,
                 }
 REQ_KEYS = {}
 
@@ -142,7 +146,7 @@ def print_to_dump_file(head_content, atoms_struct, fname, mode='a'):
             w_file.write(' '.join(map(str, line)) + '\n')
 
 
-def process_dump_file(cfg, dump_file, atom_num_dict):
+def process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict):
     section = None
     box = np.zeros((3,))
     counter = 1
@@ -161,18 +165,19 @@ def process_dump_file(cfg, dump_file, atom_num_dict):
                 # If there is an incomplete line in a dump file, move on to the next file
                 if len(split_line) < 7:
                     break
+
                 atom_num = int(split_line[0])
                 if atom_num in atom_num_dict:
                     atom_num = atom_num_dict[atom_num]
-                mol_num = int(split_line[1])
-                # This is poor practice--a one-off fix
-                if cfg[RENUM_MOL]:
-                    if mol_num in [1, 2, 3]:
-                        mol_num = 1
-                    else:
-                        mol_num -= 2
-                atom_type = int(split_line[2])
 
+                mol_num = int(split_line[1])
+                if mol_num in mol_num_dict:
+                    mol_num = mol_num_dict[mol_num]
+                # Default RENUM_START_MOL is neg 1; if still less than zero, user did not specify renumbering
+                if 0 <= cfg[RENUM_START_MOL] <= mol_num:
+                    mol_num += cfg[RENUM_SHIFT]
+
+                atom_type = int(split_line[2])
                 charge = float(split_line[3])
                 x, y, z = map(float, split_line[4:7])
                 atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z]
@@ -222,7 +227,7 @@ def process_dump_file(cfg, dump_file, atom_num_dict):
                 "Continuing program.".format(dump_file, timestep))
 
 
-def process_dump_files(cfg, atom_num_dict):
+def process_dump_files(cfg, atom_num_dict, mol_num_dict):
     with open(cfg[DUMPS_FILE]) as f:
         for dump_file in f:
             dump_file = dump_file.strip()
@@ -230,7 +235,7 @@ def process_dump_files(cfg, atom_num_dict):
             if len(dump_file) == 0:
                 continue
             else:
-                process_dump_file(cfg, dump_file, atom_num_dict)
+                process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict)
 
 
 def main(argv=None):
@@ -243,7 +248,8 @@ def main(argv=None):
     cfg = args.config
     try:
         atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        process_dump_files(cfg, atom_num_dict)
+        mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
+        process_dump_files(cfg, atom_num_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

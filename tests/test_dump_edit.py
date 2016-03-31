@@ -21,9 +21,8 @@ DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder.dump')
 SHORT_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_4steps.dump')
 SKIP_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_2every3.dump')
 GOOD_ATOM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
-GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
+GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_renum_good.dump')
 
-# GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_good.pdb')
 
 class TestDumpEdit(unittest.TestCase):
 
