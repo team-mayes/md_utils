@@ -233,7 +233,7 @@ def read_file_list(file_list, out_dir):
     # print(np.amax(summary_array, axis=1))
     if summary_array is None:
         warning("No valid cp2k force output files were read.")
-    elif (summary_array.size) == 5:
+    elif summary_array.size == 5:
         print('For the one CP2K force file read:')
         print(' ' + '      '.join(summary_header))
         print(' '.join(['%10.0f'%summary_array[0]] + ['%10.3f'%F for F in summary_array[1:]]))

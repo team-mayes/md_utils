@@ -127,18 +127,15 @@ def print_qm_kind(int_list, element_name):
 
 
 def print_qm_links(resid, dict):
-    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n    &END LINK '.format(dict['CA'],dict['CB']))
+    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
+          '    &END LINK '.format(dict['CA'],dict['CB']))
     return
 
 
 def process_data_tpl(cfg):
 
     psf_loc = cfg[PSF_FILE]
-    psf_data = {}
-    psf_data[HEAD_CONTENT] = []
-    psf_data[ATOMS_CONTENT] = []
-    psf_data[TAIL_CONTENT] = []
-
+    psf_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
     prot_seg = 'P1'
     keep_resids = [763, 767, 794, 799, 908, 944]
@@ -151,14 +148,16 @@ def process_data_tpl(cfg):
     res_types = ['HSD', 'TYR', 'SER', 'TRP', 'MET', 'GLU', 'VAL', 'THR']
     tyr_types = ['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1', 'CE1', 'HE1', 'CZ', 'OH', 'HH', 'CD2', 'HD2', 'CE2', 'HE2', ]
     ser_types = ['CB', 'HB1', 'HB2', 'OG', 'HG1']
-    trp_types = ['HH2', 'HE1', 'HD1', 'HE3', 'CZ2', 'CB', 'HZ2', 'CG', 'CH2', 'CE2', 'CE3', 'CD1', 'CD2', 'CZ3', 'NE1', 'HB1', 'HZ3', 'HB2']
+    trp_types = ['HH2', 'HE1', 'HD1', 'HE3', 'CZ2', 'CB', 'HZ2', 'CG', 'CH2', 'CE2', 'CE3', 'CD1', 'CD2', 'CZ3', 'NE1',
+                 'HB1', 'HZ3', 'HB2']
     hsd_types = ['CD2', 'HD2', 'HE1', 'HD1', 'CB', 'CG', 'NE2', 'CE1', 'ND1', 'HB1', 'HB2']
     met_types = ['HE1', 'HE2', 'HE3', 'CB', 'CG', 'CE', 'HG1', 'SD', 'HG2', 'HB1', 'HB2']
     glu_types = ['CB', 'OE1', 'CG', 'HG1', 'CD', 'OE2', 'HG2', 'HB1', 'HB2']
     val_types = ['HG22', 'HG11', 'CB', 'HG21', 'CG1', 'HG12', 'HG13', 'HB', 'HG23', 'CG2']
     thr_types = ['HG22', 'CB', 'OG1', 'HG1', 'HG21', 'HB', 'HG23', 'CG2']
     keep_types = set(tyr_types + ser_types + trp_types + hsd_types + met_types +  glu_types + val_types + thr_types)
-    h_types = ['HH2', 'HE1', 'HE2', 'HE3', 'HG21', 'HB2', 'HG2', 'HG12', 'HG1', 'HG11', 'HH', 'HG13', 'HZ3', 'HZ2', 'HB', 'HD1', 'HG22', 'HB1', 'HG23', 'HD2']
+    h_types = ['HH2', 'HE1', 'HE2', 'HE3', 'HG21', 'HB2', 'HG2', 'HG12', 'HG1', 'HG11', 'HH', 'HG13', 'HZ3', 'HZ2',
+               'HB', 'HD1', 'HG22', 'HB1', 'HG23', 'HD2']
     o_types = ['OG', 'OE2', 'OE1', 'OG1', 'OH']
     c_types = ['CE1', 'CZ2', 'CZ3', 'CG', 'CE', 'CD', 'CZ', 'CH2', 'CE3', 'CD1', 'CD2', 'CB', 'CG1', 'CG2', 'CE2']
     n_types = ['ND1', 'NE2', 'NE1']
@@ -177,7 +176,8 @@ def process_data_tpl(cfg):
 
     for item in keep_types:
         if item not in element_types:
-            raise InvalidDataError('The atom lists may miss some ids because the code will not look for type {}.'.format(item))
+            raise InvalidDataError('The atom lists may miss some ids because the code will not look for type '
+                                   '{}.'.format(item))
 
     # t_pat = re.compile(r"^S.*")
     # for item in keep_types:
@@ -219,8 +219,8 @@ def process_data_tpl(cfg):
                 if segid == prot_seg:
                     if resid in keep_resids:
                         if resname not in res_types:
-                            raise InvalidDataError('Note that the code does not know to look for atom types of the residue'
-                                                   ' {}. Update program and rerun.'.format(resname))
+                            raise InvalidDataError('Note that the code does not know to look for atom types of the '
+                                                   'residue {}. Update program and rerun.'.format(resname))
                             ### This code is useful to find types for a residue type.
                             ## TODO: update for all residue types
                             # if resname == 'THR':
@@ -267,19 +267,19 @@ def process_data_tpl(cfg):
     print(to_print)
     return psf_data
 
+
 def print_data(head, data, tail, f_name):
     list_to_file(head, f_name)
     seq_list_to_file(data, f_name, mode='a')
     list_to_file(tail, f_name, mode='a')
     return
 
+
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
-
 
     # Read template and data files
     cfg = args.config

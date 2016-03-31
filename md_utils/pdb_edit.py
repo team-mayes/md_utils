@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 """
 Edit a pdb file to provide missing data
 """
@@ -32,7 +33,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-PDB_TPL_FILE = 'pdb_file'
+PDB_FILE = 'pdb_file'
 PDB_NEW_FILE = 'pdb_new_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 MOL_RENUM_FILE = 'mol_renum_old_new_file'
@@ -74,7 +75,7 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PDB_Y_LAST_CHAR: 46,
                 PDB_Z_LAST_CHAR: 54,
                 }
-REQ_KEYS = {PDB_TPL_FILE: str,
+REQ_KEYS = {PDB_FILE: str,
             }
 
 HEAD_CONTENT = 'head_content'
@@ -207,8 +208,8 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
     print(s_atoms)
 
 
-def process_pdb_tpl(cfg, atom_num_dict, mol_num_dict):
-    pdb_loc = cfg[PDB_TPL_FILE]
+def process_pdb(cfg, atom_num_dict, mol_num_dict):
+    pdb_loc = cfg[PDB_FILE]
     pdb_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
     # This is used when need ot add atom types to PDB file
@@ -230,7 +231,6 @@ def process_pdb_tpl(cfg, atom_num_dict, mol_num_dict):
 
         current_mol = None
         last_mol_num = None
-        new_mol_num = 0
         atoms_content = []
 
         for line in f:
@@ -238,7 +238,6 @@ def process_pdb_tpl(cfg, atom_num_dict, mol_num_dict):
             if len(line) == 0:
                 continue
             line_head = line[:cfg[PDB_LINE_TYPE_LAST_CHAR]]
-
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
             if line_head == 'REMARK' or line_head == 'CRYST1':
@@ -330,12 +329,11 @@ def process_pdb_tpl(cfg, atom_num_dict, mol_num_dict):
                     # Due to PDB format constraints, need to print in hex starting at 9999 molecules.
                     if mol_count > 9999:
                         mol_num = format(mol_count, 'x')
-                        if len(new_mol_num) > 4:
+                        if len(mol_num) > 4:
                             warning("Hex representation of {} is {}, which is greater than 4 characters. This"
                                     "will affect the PDB output formatting.".format(atom_id, atom_num))
                     else:
                         mol_num = '{:4d}'.format(mol_count)
-
 
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z,
                                last_cols + element]
@@ -369,7 +367,7 @@ def main(argv=None):
     try:
         atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
         mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
-        process_pdb_tpl(cfg, atom_num_dict, mol_num_dict)
+        process_pdb(cfg, atom_num_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

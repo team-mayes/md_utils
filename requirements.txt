@@ -1,3 +1,4 @@
+matplotlib
 argparse==1.2.1
 six==1.9.0
 numpy==1.10.1

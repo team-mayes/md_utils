@@ -57,6 +57,7 @@ class NotFoundError(MdError): pass
 
 class ArgumentParserError(Exception): pass
 
+
 class ThrowingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         raise ArgumentParserError(message)
@@ -72,35 +73,21 @@ def warning(*objs):
 ## From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
 @contextmanager
 def capture_stdout(command, *args, **kwargs):
-  out, sys.stdout = sys.stdout, StringIO()
-  command(*args, **kwargs)
-  sys.stdout.seek(0)
-  yield sys.stdout.read()
-  sys.stdout = out
+    out, sys.stdout = sys.stdout, StringIO()
+    command(*args, **kwargs)
+    sys.stdout.seek(0)
+    yield sys.stdout.read()
+    sys.stdout = out
 
 
 @contextmanager
 def capture_stderr(command, *args, **kwargs):
-  err, sys.stderr = sys.stderr, StringIO()
-  command(*args, **kwargs)
-  sys.stderr.seek(0)
-  yield sys.stderr.read()
-  sys.stderr = err
+    err, sys.stderr = sys.stderr, StringIO()
+    command(*args, **kwargs)
+    sys.stderr.seek(0)
+    yield sys.stderr.read()
+    sys.stderr = err
 
-
-def diff_lines(floc1, floc2):
-    difflines = []
-    with open(floc1, 'r') as file1:
-        with open(floc2, 'r') as file2:
-            diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
-            for line in diff:
-                if line.startswith('-'):
-                    logger.debug(line)
-                    difflines.append(line)
-                elif line.startswith('+'):
-                    logger.debug(line)
-                    pass
-    return difflines
 
 # Calculations #
 
@@ -155,6 +142,7 @@ def pbc_vector_diff(a, b, box):
 def pbc_angle(p0, p1, p2, box):
     pass
 
+
 def pbc_dihedral(p0, p1, p2, p3, box):
     """
     From http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
@@ -167,7 +155,7 @@ def pbc_dihedral(p0, p1, p2, p3, box):
     @param box: periodic box lengths
     @return: dihedral angle in degrees
     """
-    b0 = -1.0*(pbc_vector_diff(p1, p0, box))
+    b0 = -1.0 * (pbc_vector_diff(p1, p0, box))
     b1 = pbc_vector_diff(p2, p1, box)
     b2 = pbc_vector_diff(p3, p2, box)
 
@@ -180,8 +168,8 @@ def pbc_dihedral(p0, p1, p2, p3, box):
     #   = b0 minus component that aligns with b1
     # w = projection of b2 onto plane perpendicular to b1
     #   = b2 minus component that aligns with b1
-    v = b0 - np.dot(b0, b1)*b1
-    w = b2 - np.dot(b2, b1)*b1
+    v = b0 - np.dot(b0, b1) * b1
+    w = b2 - np.dot(b2, b1) * b1
 
     # angle between v and w in a plane is the torsion angle
     # v and w may not be normalized but that's fine since tan is y/x
@@ -286,7 +274,7 @@ def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
         if header:
             myfile.write(delimiter.join(header) + "\n")
         for line in list_val:
-            myfile.write(delimiter.join(map(str,line)) + "\n")
+            myfile.write(delimiter.join(map(str, line)) + "\n")
 
 
 def create_backup_filename(orig):
@@ -386,7 +374,7 @@ def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
     if ext is None:
         ext = os.path.splitext(src_file)[1]
 
-    return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext ))
+    return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext))
 
 
 def find_files_by_dir(tgt_dir, pat):
@@ -573,7 +561,7 @@ def read_int_dict(d_file, one_to_one=True):
                     continue
                 if len(row) == 2:
                     int_dict[int(row[0])] = int(row[1])
-                    key_count +=1
+                    key_count += 1
                 else:
                     warning('Expected exactly two comma-separated values per row in file {}. '
                             'Skipping row containing: {}.'.format(d_file, row))
@@ -585,6 +573,26 @@ def read_int_dict(d_file, one_to_one=True):
         else:
             raise InvalidDataError('A non-unique key value (first column) found in file: {}\n'.format(d_file))
     return int_dict
+
+
+def atoms_to_file(atom_format, list_val, fname, mode='w'):
+    """
+    Writes the list of sequences to the given file in the specified format for a PDB.
+
+    :param atom_format: Specified formatting for the line.
+    :param list_val: The list of sequences to write.
+    :param fname: The location of the file to write.
+    """
+    with open(fname, mode) as w_file:
+        # to_print = 0
+        for line in list_val:
+            w_file.write(atom_format.format(*line) + '\n')
+
+
+def print_head_atoms_tail(head_data, atoms_data, tail_data, file_name, file_format):
+    list_to_file(head_data, file_name)
+    atoms_to_file(file_format, atoms_data, file_name, mode='a')
+    list_to_file(tail_data, file_name, mode='a')
 
 
 # Conversions #
@@ -662,6 +670,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     :return: The processed configuration.
     """
     proc_cfg = {}
+    key = None
     try:
         for key, def_val in def_cfg_vals.items():
             proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
@@ -671,13 +680,6 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
         proc_cfg[key] = type_func(raw_cfg[key])
 
     return proc_cfg
-
-
-def to_int_list(raw_val):
-    return_vals = []
-    for val in raw_val.split(','):
-        return_vals.append(int(val.strip()))
-    return return_vals
 
 
 # Comparisons #
@@ -714,7 +716,8 @@ def unique_list(alist):
 
 # Processing LAMMPS files #
 
-def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE, sec_atoms=SEC_ATOMS):
+def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE,
+                            sec_atoms=SEC_ATOMS):
     atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
     if line == 'ITEM: TIMESTEP':
         return sec_timestep
