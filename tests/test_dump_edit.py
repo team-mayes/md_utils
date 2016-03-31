@@ -16,13 +16,14 @@ SHORTER_INI = os.path.join(SUB_DATA_DIR, 'dump_shorter.ini')
 SKIP_INI = os.path.join(SUB_DATA_DIR, 'dump_every_2every3.ini')
 REORDER_INI = os.path.join(SUB_DATA_DIR, 'dump_edit.ini')
 REORDER_RENUM_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol.ini')
+RETYPE_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol_retype.ini')
 DUMP_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short.dump')
 DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder.dump')
 SHORT_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_4steps.dump')
 SKIP_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_2every3.dump')
 GOOD_ATOM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
-GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_renum_good.dump')
-
+GOOD_RENUM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_renum_good.dump')
+GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_reord_renum_retyp_good.dump')
 
 class TestDumpEdit(unittest.TestCase):
 
@@ -63,6 +64,20 @@ class TestDumpEdit(unittest.TestCase):
     def testReorderAtomRenumMol(self):
         try:
             dump_edit.main(["-c", REORDER_RENUM_INI])
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_RENUM_OUT_FILE))
+        finally:
+            silent_remove(DEF_OUT)
+
+    def testRetypeAtom(self):
+        try:
+            dump_edit.main(["-c", RETYPE_INI])
+            # for debugging:
+            with open(DEF_OUT) as f:
+                with open(GOOD_OUT_FILE) as g:
+                    for d_line, g_line in zip(f, g):
+                        if d_line != g_line:
+                            print(d_line, g_line)
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
+

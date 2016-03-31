@@ -5,14 +5,12 @@ Make a new dump file with a specified max number of timesteps and reorders atoms
 
 from __future__ import print_function
 import ConfigParser
-import copy
 import logging
-import os
 import sys
 import argparse
 import numpy as np
 
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, \
+from md_utils.md_common import InvalidDataError, create_out_fname, warning, \
     process_cfg, find_dump_section_state, read_int_dict, silent_remove
 
 
@@ -41,6 +39,7 @@ MAIN_SEC = 'main'
 # Config keys
 DUMPS_FILE = 'dump_list_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
+ATOM_TYPE_FILE = 'atom_type_old_new_file'
 MOL_RENUM_FILE = 'mol_renum_old_new_file'
 OUT_BASE_DIR = 'output_directory'
 MAX_STEPS = 'max_steps'
@@ -54,6 +53,7 @@ DEF_CFG_FILE = 'dump_edit.ini'
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
                 OUT_BASE_DIR: None,
                 ATOM_REORDER_FILE: None,
+                ATOM_TYPE_FILE: None,
                 MOL_RENUM_FILE: None,
                 MAX_STEPS: -1,
                 OUT_FREQ: 1,
@@ -146,7 +146,7 @@ def print_to_dump_file(head_content, atoms_struct, fname, mode='a'):
             w_file.write(' '.join(map(str, line)) + '\n')
 
 
-def process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict):
+def process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dict):
     section = None
     box = np.zeros((3,))
     counter = 1
@@ -154,6 +154,7 @@ def process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict):
     head_content = []
     steps_count = 0
     step_stop = cfg[MAX_STEPS] * cfg[OUT_FREQ]
+    timestep = None
     with open(dump_file) as d:
         d_out = create_out_fname(dump_file, suffix='_reorder', base_dir=cfg[OUT_BASE_DIR])
         silent_remove(d_out)
@@ -178,13 +179,16 @@ def process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict):
                     mol_num += cfg[RENUM_SHIFT]
 
                 atom_type = int(split_line[2])
+                if atom_type in atom_type_dict:
+                    atom_type = atom_type_dict[atom_type]
+
                 charge = float(split_line[3])
                 x, y, z = map(float, split_line[4:7])
                 atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z]
                 atom_data.append(atom_struct)
                 if counter == num_atoms:
                     if len(atom_num_dict) > 0:
-                        atom_data = sorted(atom_data, key=lambda x: x[0])
+                        atom_data = sorted(atom_data, key=lambda atom: atom[0])
                     steps_count += 1
                     if steps_count % cfg[OUT_FREQ] == 0:
                         print_to_dump_file(head_content, atom_data, d_out)
@@ -227,7 +231,7 @@ def process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict):
                 "Continuing program.".format(dump_file, timestep))
 
 
-def process_dump_files(cfg, atom_num_dict, mol_num_dict):
+def process_dump_files(cfg, atom_num_dict, atom_type_dict, mol_num_dict):
     with open(cfg[DUMPS_FILE]) as f:
         for dump_file in f:
             dump_file = dump_file.strip()
@@ -235,7 +239,7 @@ def process_dump_files(cfg, atom_num_dict, mol_num_dict):
             if len(dump_file) == 0:
                 continue
             else:
-                process_dump_file(cfg, dump_file, atom_num_dict, mol_num_dict)
+                process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dict)
 
 
 def main(argv=None):
@@ -248,8 +252,9 @@ def main(argv=None):
     cfg = args.config
     try:
         atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
+        atom_type_dict = read_int_dict(cfg[ATOM_TYPE_FILE], one_to_one=False)
         mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
-        process_dump_files(cfg, atom_num_dict, mol_num_dict)
+        process_dump_files(cfg, atom_num_dict, atom_type_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

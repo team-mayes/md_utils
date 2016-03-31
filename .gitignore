@@ -93,3 +93,4 @@ tests/test_data/evb_info/c2_5/
 tests/new.pdb
 tests/test_data/evb_info/1.500_20c_short_ci_sq_ts.csv
 tests/test_data/lammps_proc/glue_dump_incomp_gofrs.csv
+tests/reproduced_tpl.data

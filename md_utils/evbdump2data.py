@@ -187,9 +187,9 @@ def process_data_tpl(cfg):
     total_charge = 0.0
 
     # For debugging total charge
-    calc_charg_atom_nums = {}
+    calc_charge_atom_nums = {}
     for name in CALC_CHARGE_NAMES:
-        calc_charg_atom_nums[cfg[name]] = name
+        calc_charge_atom_nums[cfg[name]] = name
 
     with open(tpl_loc) as f:
         for line in f.readlines():
@@ -234,13 +234,26 @@ def process_data_tpl(cfg):
                     tpl_data[WATER_MOLS][mol_num].append(atom_struct)
                 if atom_num == tpl_data[NUM_ATOMS]:
                     section = SEC_TAIL
-                    ## Also check total charge
+                    ## Perform checks total charge
                     if abs(total_charge) < TOL:
-                        print('FYI: the total system charge is < {}'.format(TOL))
+                        print('The data file system is neutral (total charge < {:.2e})'.format(total_charge))
                     else:
-                        print('FYI: the system is not neutral. Total system charge is: {0:.6f}'.format(total_charge))
-                elif atom_num in calc_charg_atom_nums:
-                    print('After atom {0} ({1}), the total charge is: {2:.3f}'.format(atom_num, calc_charg_atom_nums[atom_num], total_charge))
+                        warning('The data file system is not neutral. Total charge: {0:.6f}'.format(total_charge))
+                    if len(tpl_data[PROT_RES_MOL]) == 0:
+                        raise InvalidDataError('Did not find the input {} ({}).'.format(PROT_RES_MOL,
+                                                                                        cfg[PROT_RES_MOL]))
+                    for mol_list in [H3O_MOL, WATER_MOLS]:
+                        if len(tpl_data[mol_list]) ==0:
+                            raise InvalidDataError('In reading the data file, found no {}. Check the data file and'
+                                                   'the input atom types.'.format(mol_list))
+                #
+                #         tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [''], TAIL_CONTENT: [], PROT_RES_MOL: [], H3O_MOL: [],
+                # WATER_MOLS:
+
+                elif atom_num in calc_charge_atom_nums:
+                    print('After atom {0} ({1}), the total charge is: {2:.3f}'.format(atom_num,
+                                                                                      calc_charge_atom_nums[atom_num],
+                                                                                      total_charge))
 
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
@@ -268,7 +281,9 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
     excess_proton[2] = cfg[H3O_H_TYPE]           # type
     excess_proton[3] = tpl_data[H3O_H_CHARGE]    # charge
     dump_h3o_mol.append(excess_proton)
+    min_dist_id = None
     min_dist = np.linalg.norm(box)
+    print("water mol", water_mol_dict)
     for mol_id, molecule in water_mol_dict.items():
         for atom in molecule:
             if atom[2] == cfg[WAT_O_TYPE]:
@@ -293,7 +308,7 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
     # Make the atom type and charge of the protonatable residue the same as for the template file (switching
     # from protonated to deprotonated residue)
     if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
-        raise InvalidDataError('In the current timestep of the current dump file, the number of atoms in the '
+        raise InvalidDataError('Encountered dump file in which the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
     for atom in range(0, len(protonatable_res)):
         if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
@@ -479,8 +494,12 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                     counter = 0
                     section = None
                     # Now that finished reading all atom lines...
-                    # Deprotonated if necessary
+                    # Deprotonate if necessary
                     if len(h3o_mol) == 0:
+                        if len(water_dict) == 0:
+                            raise InvalidDataError('Found no water molecules. Check that the input water_o_type ({}) '
+                                                   'and input water_h_type ({}) are in the dump '
+                                                   'file.'.format(cfg[WAT_O_TYPE], cfg[WAT_H_TYPE]))
                         deprotonate(cfg, prot_res, excess_proton, h3o_mol, water_dict, box, data_tpl_content)
                     # Change H3O mol_id if necessary
                     target_h3o_mol_id = data_tpl_content[H3O_MOL][-1][1]
