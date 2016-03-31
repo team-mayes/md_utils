@@ -32,7 +32,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-PDB_TPL_FILE = 'pdb_tpl_file'
+PDB_TPL_FILE = 'pdb_file'
 PDB_NEW_FILE = 'pdb_new_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 MOL_RENUM_FILE = 'mol_renum_old_new_file'
