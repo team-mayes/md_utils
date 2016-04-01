@@ -84,9 +84,8 @@ def parse_cmdline(argv):
                                                  'ci^2 value. '
                                                  'Currently, this script expects only one protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
-                                               "See the example file /test/test_data/evbd2d/process_evb.ini. "
-                                               "The default file name is lammps_dist_pbc.ini, located in the "
-                                               "base directory where the program as run.",
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:

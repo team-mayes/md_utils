@@ -26,31 +26,39 @@ DEF_OUT_PATH = os.path.join(TEST_DIR, 'fit.inp')
 GOOD_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_vii_good.inp')
 GOOD_NO_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_not_vii_good.inp')
 
+# tests/test_data/fitevb/fitevb_setup.ini
+# tests/test_data/fitevb/fit_evb_setup.ini
 
 class TestFitEVBSetup(unittest.TestCase):
+
     def testNoIni(self):
         with capture_stdout(fitevb_setup.main,[]) as output:
             self.assertTrue("usage:" in output)
         with capture_stderr(fitevb_setup.main,[]) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
+
     def testNoViiFit(self):
         try:
             fitevb_setup.main(["-c", INI_PATH, "-f", FITEVB_OUTPUT_PATH])
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_NO_VII_FIT_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
+
     def testViiFit(self):
         try:
             fitevb_setup.main(["-c", INI_PATH, "-f", FITEVB_OUTPUT_PATH, "-v", "True"])
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_VII_FIT_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
+
     def testMissingSection(self):
         with capture_stderr(fitevb_setup.main,["-c", MISS_SEC_INI_PATH, "-f", FITEVB_OUTPUT_PATH, ]) as output:
             self.assertTrue("missing section" in output)
+
     def testMissingParam(self):
         with capture_stderr(fitevb_setup.main,["-c", MISS_PARAM_INI_PATH, "-f", FITEVB_OUTPUT_PATH, ]) as output:
             self.assertTrue("missing parameter" in output)
+
     def testInputFile(self):
         with capture_stderr(fitevb_setup.main,["-c", INI_PATH, ]) as output:
             self.assertTrue("Problems reading " in output)

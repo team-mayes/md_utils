@@ -159,6 +159,7 @@ def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
     list_to_file(tail_data, file_name, mode='a')
     return
 
+
 def make_atom_type_element_dict(atom_section, last_prot_atom):
     """
     To make a lists of PDB atom types according to element type
@@ -218,14 +219,10 @@ def make_atom_type_element_dict(atom_section, last_prot_atom):
     print(n_atoms)
     print(s_atoms)
 
-    return
 
 def process_pdb_tpl(cfg):
     tpl_loc = cfg[PDB_TPL_FILE]
-    tpl_data = {}
-    tpl_data[HEAD_CONTENT] = []
-    tpl_data[ATOMS_CONTENT] = []
-    tpl_data[TAIL_CONTENT] = []
+    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
     last_prot_atom = cfg[LAST_PROT_ID]
 
@@ -273,8 +270,7 @@ def process_pdb_tpl(cfg):
                 last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
                 element = ''
 
-                if atom_id > last_prot_atom:
-                    print(atom_type)
+                # if atom_id > last_prot_atom:
                     # if atom_type in c_atoms:
                     #     element = '   C'
                     # elif atom_type in o_atoms:

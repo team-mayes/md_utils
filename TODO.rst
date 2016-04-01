@@ -1,4 +1,4 @@
 FIX BROKEN TESTS
 ====
 
-test_evb_get_info.py
+test_fitevb_setup.py

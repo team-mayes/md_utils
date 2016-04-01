@@ -25,6 +25,7 @@ GOOD_DEPROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_deprot_good.data')
 REPROD_TPL = os.path.join(DATA_DIR, 'reproduced_tpl.data')
 REPROD2_TPL = os.path.join(os.path.dirname(__file__), 'reproduced_tpl.data')
 GLU_NEW_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_new_types.ini')
+GLU_BAD_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_bad.ini')
 GLU_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu.ini')
 
 
@@ -80,7 +81,13 @@ class TestEVBDump2Data(unittest.TestCase):
         silent_remove(REPROD_TPL)
 
     def testNoHydData(self):
-        with capture_stderr(evbdump2data.main, ["-c", GLU_INI_PATH]) as output:
+        with capture_stderr(evbdump2data.main, ["-c", GLU_BAD_INI_PATH]) as output:
             self.assertTrue("Check the data file" in output)
         silent_remove(REPROD_TPL)
 
+    def testGlu(self):
+        try:
+            evbdump2data.main(["-c", GLU_INI_PATH])
+            # self.assertFalse(md_utils.md_common.diff_lines(DEF_OUT, GOOD_OUT))
+        finally:
+            silent_remove(REPROD_TPL)
