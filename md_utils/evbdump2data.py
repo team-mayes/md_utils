@@ -244,9 +244,9 @@ def process_data_tpl(cfg):
                     section = SEC_TAIL
                     ## Perform checks total charge
                     if abs(total_charge) < TOL:
-                        print('The data file system is neutral (total charge < {:.2e})'.format(total_charge))
+                        print('The data file system is neutral (total charge {:.2e})'.format(total_charge))
                     else:
-                        warning('The data file system is not neutral. Total charge: {0:.6f}'.format(total_charge))
+                        warning('The data file system is not neutral. Total charge {0:.6f}'.format(total_charge))
                     if len(tpl_data[PROT_RES_MOL]) == 0:
                         raise InvalidDataError('Did not find the input {} ({}).'.format(PROT_RES_MOL,
                                                                                         cfg[PROT_RES_MOL]))
@@ -254,9 +254,6 @@ def process_data_tpl(cfg):
                         if len(tpl_data[mol_list]) ==0:
                             raise InvalidDataError('In reading the data file, found no {}. Check the data file and'
                                                    'the input atom types.'.format(mol_list))
-                #
-                #         tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [''], TAIL_CONTENT: [], PROT_RES_MOL: [], H3O_MOL: [],
-                # WATER_MOLS:
 
                 elif atom_num in calc_charge_atom_nums:
                     print('After atom {0} ({1}), the total charge is: {2:.3f}'.format(atom_num,
@@ -516,7 +513,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                 # Save everything else in three chunks for recombining sections post-processing
                 elif len(atom_lists[PROT_RES]) == 0:
                     atom_lists[PRE_RES].append(atom_struct)
-                elif len(atom_lists[WAT_MOL]) == 0:
+                elif len(water_dict) == 0:
                     atom_lists[POST_RES].append(atom_struct)
                 else:
                     atom_lists[POST_WAT].append(atom_struct)
@@ -548,16 +545,16 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                                                            H3O_H_TYPE, cfg[H3O_H_TYPE]))
                         deprotonate(cfg, atom_lists[PROT_RES], excess_proton, hydronium,
                                     water_dict, box, data_tpl_content)
-                    # Guarantee correct H3O mol_id and atom nums
-                    # data_tpl_content[H3O_MOL]
-                    atom_lists[HYD_MOL] = assign_hyd_mol(cfg, hydronium)
 
+                    # Ensure in correct order for printing
+                    atom_lists[HYD_MOL] = assign_hyd_mol(cfg, hydronium)
                     atom_lists[WAT_MOL] = sort_wat_mols(cfg, water_dict)
+
+
                     for a_list in atom_list_order:
                         dump_atom_data += atom_lists[a_list]
-                    # overwrite atom_num, mol_num, atom_type, charge, then description
 
-                    # overwrite descript
+                    # overwrite atom_num, mol_num, atom_type, charge, then description
                     for index in range(len(dump_atom_data)):
                         dump_atom_data[index][0:4] = data_tpl_content[ATOMS_CONTENT][index][0:4]
                         dump_atom_data[index][7] = ' '.join(data_tpl_content[ATOMS_CONTENT][index][7:])

@@ -67,16 +67,10 @@ class TestEVBGetInfo(unittest.TestCase):
             silent_remove(DEF_CI_OUT_PATH2)
 
     def testSubsetCiInfo(self):
-        try:
-            evb_get_info.main(["-c", CI_SUBSET_INI_PATH])
+        with capture_stderr(evb_get_info.main,["-c", CI_SUBSET_INI_PATH]) as output:
+            self.assertTrue("found no data from" in output)
             self.assertFalse(diff_lines(DEF_CI_SUBSET_OUT_PATH, GOOD_CI_SUBSET_OUT_PATH))
-            # self.assertFalse(diff_lines(DEF_CI_OUT_PATH1, GOOD_CI_OUT_PATH1))
-            # self.assertFalse(diff_lines(DEF_CI_OUT_PATH2, GOOD_CI_OUT_PATH2))
-        finally:
-            print("hello")
-            # silent_remove(DEF_CI_SUBSET_OUT_PATH)
-            # silent_remove(DEF_CI_OUT_PATH1)
-            # silent_remove(DEF_CI_OUT_PATH2)
+            silent_remove(DEF_CI_SUBSET_OUT_PATH)
 
     def testOneStateCiInfo(self):
         try:

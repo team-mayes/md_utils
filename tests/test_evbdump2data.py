@@ -42,15 +42,22 @@ class TestEVBDump2Data(unittest.TestCase):
         with capture_stdout(evbdump2data.main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
 
-    def testMakeData(self):
+    def testProt(self):
         with capture_stdout(evbdump2data.main, ["-c", GOOD_INI_PATH]) as output:
             # Checking intermediate charge calculation
             self.assertTrue("After atom 15436 (last_p1), the total charge is: -26.000" in output)
+        try:
+            self.assertFalse(diff_lines(DEF_PROT_OUT_PATH, GOOD_PROT_OUT_PATH))
+        finally:
+            silent_remove(DEF_PROT_OUT_PATH)
+            silent_remove(DEF_DEPROT_OUT_PATH)
+            silent_remove(REPROD2_TPL)
+
+    def testDeprot(self):
         with capture_stderr(evbdump2data.main, ["-c", GOOD_INI_PATH]) as output:
             # Make sure it handles the extra empty line
             self.assertFalse("WARNING:  Problems reading file" in output)
         try:
-            self.assertFalse(diff_lines(DEF_PROT_OUT_PATH, GOOD_PROT_OUT_PATH))
             self.assertFalse(diff_lines(DEF_DEPROT_OUT_PATH, GOOD_DEPROT_OUT_PATH))
         finally:
             silent_remove(DEF_PROT_OUT_PATH)
