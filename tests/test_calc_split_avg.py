@@ -4,7 +4,6 @@
 Tests for calc_split_avg.
 """
 
-import logging
 import shutil
 import tempfile
 import unittest
@@ -17,18 +16,12 @@ from md_utils.md_common import read_csv
 
 __author__ = 'cmayes'
 
-FILES = ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.01_02', 'rad_PMF.02_03', 'rad_PMF.01_01']
-
-BINNED_FILES = {'02': ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03'], '01': ['rad_PMF.01_02', 'rad_PMF.01_01']}
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data', 'post_rad_wham')
+IN_FILES = [os.path.join(DATA_DIR, radf) for radf in ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03']]
 
-INFILES = [os.path.join(DATA_DIR, radf) for radf in ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03']]
-
-# Logging #
-# logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+FILES = ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.01_02', 'rad_PMF.02_03', 'rad_PMF.01_01']
+BINNED_FILES = {'02': ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03'], '01': ['rad_PMF.01_02', 'rad_PMF.01_01']}
 
 
 class TestBinFileNames(unittest.TestCase):
@@ -37,8 +30,8 @@ class TestBinFileNames(unittest.TestCase):
 
 
 class TestDataProcess(unittest.TestCase):
-    def testAvgStdev(self):
-        results = calc_avg_stdev(INFILES)
+    def testAvgStDev(self):
+        results = calc_avg_stdev(IN_FILES)
         for res_row in results:
             self.assertEqual(3, len(res_row))
             for field in res_row:
@@ -47,7 +40,7 @@ class TestDataProcess(unittest.TestCase):
 
 class TestWriteAvg(unittest.TestCase):
     def testAvgStdev(self):
-        results = calc_avg_stdev(INFILES)
+        results = calc_avg_stdev(IN_FILES)
         directory_name = None
         try:
             directory_name = tempfile.mkdtemp()

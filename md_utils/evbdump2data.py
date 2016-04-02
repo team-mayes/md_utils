@@ -5,7 +5,7 @@ Creates lammps data files from lammps dump files, given a template lammps data f
 
 from __future__ import print_function
 import ConfigParser
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import copy
 import logging
 import re
@@ -120,19 +120,19 @@ TOL = 0.000001
 CALC_CHARGE_NAMES = [LAST_P1, LAST_P2, LONE_ION, LAST_LIPID, LAST_HYD, LAST_WATER, LAST_ION1]
 
 
-def read_cfg(floc, cfg_proc=process_cfg):
+def read_cfg(f_loc, cfg_proc=process_cfg):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
 
-    :param floc: The location of the file to read.
+    :param f_loc: The location of the file to read.
     :param cfg_proc: The processor to use for the raw configuration values.  Uses default values when the raw
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
     config = ConfigParser.ConfigParser()
-    good_files = config.read(floc)
+    good_files = config.read(f_loc)
     if not good_files:
-        raise IOError('Could not read file {}'.format(floc))
+        raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     return main_proc
 
@@ -223,8 +223,8 @@ def process_data_tpl(cfg):
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
-                descrip = ' '.join(split_line[7:])
-                atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, descrip]
+                description = ' '.join(split_line[7:])
+                atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, description]
                 tpl_data[ATOMS_CONTENT].append(atom_struct)
                 total_charge += charge
 
@@ -251,7 +251,7 @@ def process_data_tpl(cfg):
                         raise InvalidDataError('Did not find the input {} ({}).'.format(PROT_RES_MOL,
                                                                                         cfg[PROT_RES_MOL]))
                     for mol_list in [H3O_MOL, WATER_MOLS]:
-                        if len(tpl_data[mol_list]) ==0:
+                        if len(tpl_data[mol_list]) == 0:
                             raise InvalidDataError('In reading the data file, found no {}. Check the data file and'
                                                    'the input atom types.'.format(mol_list))
 
@@ -416,7 +416,7 @@ def sort_wat_mols(cfg, water_dict):
     wat_list = []
     for mol in water_dict:
         h_atoms = []
-        # to make sure oxygen first, add it, then hydrogens
+        # to make sure oxygen first, add it, then hydrogen atoms
         for atom in water_dict[mol]:
             if atom[2] == cfg[WAT_O_TYPE]:
                 wat_list.append(atom)
@@ -438,7 +438,6 @@ def assign_hyd_mol(cfg, hyd_mol):
     for atom in h_atoms:
         ordered_hyd_mol.append(atom)
     return ordered_hyd_mol
-
 
 
 def process_dump_file(cfg, data_tpl_content, dump_file):
@@ -497,8 +496,8 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
                 x, y, z = map(float, split_line[4:7])
-                descrip = ''
-                atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, descrip]
+                description = ''
+                atom_struct = [atom_num, mol_num, atom_type, charge, x, y, z, description]
 
                 # Keep track of separate portions of the system to allow sorting and processing
                 if mol_num == cfg[PROT_RES_MOL_ID]:
@@ -550,7 +549,6 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                     atom_lists[HYD_MOL] = assign_hyd_mol(cfg, hydronium)
                     atom_lists[WAT_MOL] = sort_wat_mols(cfg, water_dict)
 
-
                     for a_list in atom_list_order:
                         dump_atom_data += atom_lists[a_list]
 
@@ -564,7 +562,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                     d_out = create_out_fname(dump_file, suffix='_' + str(timestep),
                                              ext='.data', base_dir=cfg[OUT_BASE_DIR])
                     data_tpl_content[HEAD_CONTENT][0] = "Created by evbdump2data from {} " \
-                                                        "timestep {}".format(dump_file,timestep)
+                                                        "timestep {}".format(dump_file, timestep)
                     print_lammps_data_file(data_tpl_content[HEAD_CONTENT], dump_atom_data,
                                            data_tpl_content[TAIL_CONTENT], d_out)
                     print('Wrote file: {}'.format(d_out))
@@ -572,7 +570,8 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
     if counter == 1:
         print("Completed reading dumpfile {}.".format(dump_file))
     else:
-        warning("Dump file {} step {} did not have the full list of atom numbers. Continuing program.".format(dump_file, timestep))
+        warning("Dump file {} step {} did not have the full list of atom numbers. "
+                "Continuing program.".format(dump_file, timestep))
 
 
 def process_dump_files(cfg, data_tpl_content):
@@ -591,8 +590,6 @@ def main(argv=None):
     args, ret = parse_cmdline(argv)
     if ret != GOOD_RET:
         return ret
-
-    # TODO: in generated data files, provide new header based on where this came from
 
     # Read template and dump files
     cfg = args.config

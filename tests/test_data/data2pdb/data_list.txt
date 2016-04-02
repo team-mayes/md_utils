@@ -1,5 +1,1 @@
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_512000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_514000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_516000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_518000.data
-/Users/Heather/bee/Research/ProtonTransport/SERCA/simulations/8_reus_new/prod_runs/0_3_520000.data
+/Users/Heather/bee/code/python/md_utils/tests/test_data/data2pdb/glue_hm.data

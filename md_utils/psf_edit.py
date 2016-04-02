@@ -11,7 +11,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import InvalidDataError, read_int_dict, warning, create_out_fname, print_head_atoms_tail, process_cfg
+from md_utils.md_common import InvalidDataError, read_int_dict, warning, create_out_fname, process_cfg, list_to_file
 
 __author__ = 'hmayes'
 
@@ -171,8 +171,9 @@ def process_psf(cfg, atom_num_dict, mol_num_dict):
         psf_data[ATOMS_CONTENT] = sorted(psf_data[ATOMS_CONTENT], key=lambda entry: entry[0])
 
     f_name = create_out_fname(cfg[PSF_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
-    print_head_atoms_tail(psf_data[HEAD_CONTENT], psf_data[ATOMS_CONTENT], psf_data[TAIL_CONTENT],
-                          f_name, cfg[PSF_FORMAT])
+    list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT],
+                 f_name,
+                 list_format=cfg[PSF_FORMAT])
 
     return
 

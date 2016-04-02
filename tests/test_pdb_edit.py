@@ -15,6 +15,7 @@ ATOM_DICT_BAD_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_bad_reorder.ini')
 ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
 MOL_CHANGE_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_mol_change.ini')
 MOL_CHANGE_RENUM_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_mol_renum.ini')
+# noinspection PyUnresolvedReferences
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'new.pdb')
 GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_good.pdb')
 GOOD_MOL_CHANGE_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_mol_change_good.pdb')
@@ -25,10 +26,9 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
 
 
 class TestPDBEdit(unittest.TestCase):
-
     def testReadAtomNumDict(self):
-        dict = pdb_edit.read_int_dict(ATOM_DICT_FILE)
-        assert cmp(dict, GOOD_ATOM_DICT) == 0
+        test_dict = pdb_edit.read_int_dict(ATOM_DICT_FILE)
+        self.assertEqual(test_dict, GOOD_ATOM_DICT)
 
     def testReadBadAtomNumDict(self):
         with md_utils.md_common.capture_stderr(pdb_edit.main, ["-c", ATOM_DICT_BAD_INI]) as output:

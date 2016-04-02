@@ -7,6 +7,7 @@ Common methods for this project.
 from __future__ import print_function, division
 # Util Methods #
 import argparse
+import collections
 import csv
 import difflib
 import glob
@@ -251,31 +252,6 @@ def str_to_file(str_val, fname, mode='w'):
         myfile.write(str_val)
 
 
-def list_to_file(list_val, fname, mode='w'):
-    """
-    Writes the list to the given file.
-
-    :param list_val: The list to write.
-    :param fname: The location of the file to write.
-    """
-    with open(fname, mode) as myfile:
-        for line in list_val:
-            myfile.write(line + "\n")
-
-
-def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
-    """
-    Writes the list of sequences to the given file.
-
-    :param list_val: The list of sequences to write.
-    :param fname: The location of the file to write.
-    """
-    with open(fname, mode) as myfile:
-        if header:
-            myfile.write(delimiter.join(header) + "\n")
-        for line in list_val:
-            myfile.write(delimiter.join(map(str, line)) + "\n")
-
 
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)
@@ -309,16 +285,16 @@ def silent_remove(filename):
 
 
 # TODO: Use this instead of duplicate logic in project.
-def allow_write(floc, overwrite=False):
+def allow_write(f_loc, overwrite=False):
     """
     Returns whether to allow writing to the given location.
 
-    :param floc: The location to check.
+    :param f_loc: The location to check.
     :param overwrite: Whether to allow overwriting an exisiting location.
     :return: Whether to allow writing to the given location.
     """
-    if os.path.exists(floc) and not overwrite:
-        logger.warn("Not overwriting existing location '%s'", floc)
+    if os.path.exists(f_loc) and not overwrite:
+        logger.warn("Not overwriting existing location '%s'", f_loc)
         return False
     return True
 
@@ -366,13 +342,15 @@ def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
         defaults to the `scr_file`'s extension.
     :return: The output file name.
     """
+
     if base_dir is None:
         base_dir = os.path.dirname(src_file)
 
-    base_name = os.path.splitext(src_file)[0]
+    file_name = os.path.basename(src_file)
+    base_name = os.path.splitext(file_name)[0]
 
     if ext is None:
-        ext = os.path.splitext(src_file)[1]
+        ext = os.path.splitext(file_name)[1]
 
     return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext))
 
@@ -575,25 +553,38 @@ def read_int_dict(d_file, one_to_one=True):
     return int_dict
 
 
-def atoms_to_file(atom_format, list_val, fname, mode='w'):
+def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'):
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
 
-    :param atom_format: Specified formatting for the line.
+    :param list_format: Specified formatting for the line.
     :param list_val: The list of sequences to write.
     :param fname: The location of the file to write.
     """
     with open(fname, mode) as w_file:
-        # to_print = 0
+        for line in list_to_print:
+            if isinstance(line, six.string_types):
+                w_file.write(line + '\n')
+            elif isinstance(line, collections.Iterable):
+                if list_format is None:
+                    w_file.write(delimiter.join(map(str, line)) + "\n")
+                else:
+                    w_file.write(list_format.format(*line) + '\n')
+
+
+# TODO: Get rid of, eventually
+def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
+    """
+    Writes the list of sequences to the given file.
+
+    :param list_val: The list of sequences to write.
+    :param fname: The location of the file to write.
+    """
+    with open(fname, mode) as myfile:
+        if header:
+            myfile.write(delimiter.join(header) + "\n")
         for line in list_val:
-            w_file.write(atom_format.format(*line) + '\n')
-
-
-def print_head_atoms_tail(head_data, atoms_data, tail_data, file_name, file_format):
-    list_to_file(head_data, file_name)
-    atoms_to_file(file_format, atoms_data, file_name, mode='a')
-    list_to_file(tail_data, file_name, mode='a')
-
+            myfile.write(delimiter.join(map(str, line)) + "\n")
 
 # Conversions #
 
