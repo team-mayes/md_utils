@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-Tests for hydroxyl_oh_dist.py.
+Tests for lammps_proc_data.py.
 """
 import os
 import unittest
@@ -20,6 +20,7 @@ NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
+# noinspection PyUnresolvedReferences
 DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
@@ -41,79 +42,91 @@ GOOD_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_oh_good.csv')
 HO_OO_HH_OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr.ini')
 GOOD_HO_OO_HH_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_oo_hh_oh_good.csv')
 
-
-DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofrs.csv')
-DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_incomp_gofrs.csv')
+DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_gofrs.csv')
+DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
 
 HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
+# noinspection PyUnresolvedReferences
 DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
 GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
+
 class TestLammpsProcData(unittest.TestCase):
     def testNoAction(self):
-        with capture_stderr(lammps_proc_data.main,["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stderr(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("No calculations have been requested" in output)
-        with capture_stdout(lammps_proc_data.main,["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stdout(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
+
     def testNoIni(self):
-        with capture_stdout(lammps_proc_data.main,[]) as output:
+        with capture_stdout(lammps_proc_data.main, []) as output:
             self.assertTrue("usage:" in output)
-        with capture_stderr(lammps_proc_data.main,[]) as output:
+        with capture_stderr(lammps_proc_data.main, []) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
+
     def testMissingConfig(self):
-        with capture_stderr(lammps_proc_data.main,["-c", INCOMP_INI_PATH]) as output:
+        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("Input data missing" in output)
-        with capture_stdout(lammps_proc_data.main,["-c", INCOMP_INI_PATH]) as output:
+        with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
+
     def testOHDist(self):
         try:
             lammps_proc_data.main(["-c", OH_DIST_INI_PATH])
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
+
     def testMaxTimestepsCalcHIJ(self):
-        with capture_stderr(lammps_proc_data.main,["-c", HIJ_INI_PATH]) as output:
+        with capture_stderr(lammps_proc_data.main, ["-c", HIJ_INI_PATH]) as output:
             try:
                 self.assertTrue("more than the maximum" in output)
                 self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
             finally:
                 silent_remove(DEF_HIJ_OUT_PATH)
+
     def testIncompDump(self):
         try:
-            with capture_stderr(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
+            with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("WARNING" in output)
-            with capture_stdout(lammps_proc_data.main,["-c", INCOMP_DUMP_INI_PATH]) as output:
+            with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("Wrote file" in output)
             self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_INCOMP_OUT_PATH)
+
     def testNegGofR(self):
-        with capture_stderr(lammps_proc_data.main,["-c", INCOMP_GOFR_INI_PATH]) as output:
+        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
+
     def testHOGofR(self):
         try:
             lammps_proc_data.main(["-c", HO_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
+
     def testOOGofR(self):
         try:
             lammps_proc_data.main(["-c", OO_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
+
     def testHHGofR(self):
         try:
             lammps_proc_data.main(["-c", HH_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
+
     def testOHGofR(self):
         try:
             lammps_proc_data.main(["-c", OH_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
+
     def testHO_OO_HH_OHGofR(self):
         try:
             lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI_PATH])

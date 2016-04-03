@@ -7,3 +7,4 @@ recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat
 recursive-include md_utils/skel *
+prune dir tests

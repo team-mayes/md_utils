@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
-ORIG_WHAM_FNAME = "PMFlast2ns3_1.txt"
+ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
-SHORT_WHAM_FNAME = "PMFtest.txt"
+SHORT_WHAM_FNAME = "PMF_test.txt"
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
 # Shared Methods #

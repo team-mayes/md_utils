@@ -3,7 +3,7 @@
 import md_utils
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
@@ -28,10 +28,11 @@ setup(
     version=md_utils.__version__,
     description="Utility scripts for MD data",
     long_description=readme + '\n\n' + history,
-    author="Chris Mayes",
-    author_email='cmayes@cmayes.com',
+    author="Team Mayes",
+    author_email='hmayes@hmayes.com',
     url='https://github.com/cmayes/md_utils',
-    packages=find_packages('md_utils', exclude=['tests']),
+    packages=['md_utils',
+              ],
     entry_points={'console_scripts': ['align_on_col = md_utils.align_on_col:main',
                                       'calc_pka = md_utils.calc_pka:main',
                                       'calc_split_avg = md_utils.calc_split_avg:main',

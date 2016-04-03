@@ -150,7 +150,8 @@ def pbc_angle(p0, p1, p2, box):
 # noinspection PyUnresolvedReferences
 def pbc_dihedral(p0, p1, p2, p3, box):
     """
-    From http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
+    From:
+    http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
     khouli formula
     1 sqrt, 1 cross product
     @param p0: xyz coordinates of point 0, etc.
@@ -702,33 +703,33 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
 # Comparisons #
 
 def diff_lines(floc1, floc2):
-    difflines = []
+    diff_lines = []
     with open(floc1) as file1:
         with open(floc2) as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
             for line in diff:
                 if line.startswith('-'):
                     logger.debug(line)
-                    difflines.append(line)
+                    diff_lines.append(line)
                 elif line.startswith('+'):
                     logger.debug(line)
-                    pass
-    return difflines
+                    diff_lines.append(line)
+    return diff_lines
 
 
 # Data Structures #
 
-def unique_list(alist):
+def unique_list(a_list):
     """ Creates an ordered list from a list of tuples or other hashable items.
     From https://code.activestate.com/recipes/576694/#c6
     """
-    mmap = {}
-    oset = []
-    for item in alist:
-        if item not in mmap:
-            mmap[item] = 1
-            oset.append(item)
-    return oset
+    m_map = {}
+    o_set = []
+    for item in a_list:
+        if item not in m_map:
+            m_map[item] = 1
+            o_set.append(item)
+    return o_set
 
 
 # Processing LAMMPS files #

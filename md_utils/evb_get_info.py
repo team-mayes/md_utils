@@ -43,7 +43,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-EVBS_FILE = 'evb_list_file'
+EVB_FILES = 'evb_list_file'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 # IN_BASE_DIR = 'input_directory'
 OUT_BASE_DIR = 'output_directory'
@@ -60,9 +60,9 @@ SKIP_ONE_STATE = 'skip_one_state_flag'
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
 # Set notation
-DEF_CFG_VALS = {EVBS_FILE: 'evb_list.txt',
+DEF_CFG_VALS = {EVB_FILES: 'evb_list.txt',
                 OUT_BASE_DIR: None,
-                PRINT_CI_SQ: False,
+                PRINT_CI_SQ: True,
                 PRINT_CI_SUBSET: False,
                 PRINT_WAT_MOL: False,
                 PRINT_CEC: False,
@@ -103,7 +103,7 @@ STATES_TOT = 'evb_states_total'
 STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
-PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ,]
+PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, ]
 CI_FIELDNAMES = [TIMESTEP, MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, MAX_CI_SQ_DIFF,
                  COUL_DIFF]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
@@ -193,11 +193,13 @@ def process_evb_file(evb_file, cfg):
         data_to_print = []
         subset_to_print = []
         prot_wat_to_print = []
+        state_count = 0
+        one_state = False
+        max_max_prot_mol_a = None
         for line in d:
             line = line.strip()
             if section is None:
                 section = find_section_state(line)
-                # print("hello {}".format(section))
                 # If no state found, advance to next line.
                 # Also advance to next line if the first line of a state does not contain data needed
                 #   otherwise, go to next if block to get data from that line
@@ -224,9 +226,6 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 num_states = int(split_line[2])
                 states_per_shell = np.array(itemgetter(2, 5, 7, 9, 11)(split_line), dtype=int)
-                if cfg[SKIP_ONE_STATE] and states_per_shell[0] == 1:
-                    section = None
-                    continue
                 result.update({STATES_TOT: states_per_shell[0], STATES_SHELL1: states_per_shell[2],
                                STATES_SHELL2: states_per_shell[3], STATES_SHELL3: states_per_shell[4]})
                 if states_array is None:
@@ -236,12 +235,12 @@ def process_evb_file(evb_file, cfg):
                 section = None
             elif section == SEC_STATES:
                 split_line = line.split()
-                mol_B = int(split_line[4])
-                if mol_B == cfg[PROT_RES_MOL_ID]:
+                mol_b = int(split_line[4])
+                if mol_b == cfg[PROT_RES_MOL_ID]:
                     prot_state_list.append(state_count)
                 else:
                     hyd_state_list.append(state_count)
-                state_list.append({MOL_A: int(split_line[3]), MOL_B: mol_B})
+                state_list.append({MOL_A: int(split_line[3]), MOL_B: mol_b})
                 state_count += 1
                 if state_count == num_states:
                     section = None
@@ -269,10 +268,10 @@ def process_evb_file(evb_file, cfg):
                         max_prot_state = state
                         # don't need to (and can't) match a neighboring water if only 1 state found
                         if not one_state:
-                            max_prot_mol_A = state_list[state][MOL_A]
+                            max_max_prot_mol_a = state_list[state][MOL_A]
                 for state in hyd_state_list:
                     water_molid = state_list[state][MOL_B]
-                    if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_prot_mol_A:
+                    if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
                         if eigen_sq[state] > max_hyd_ci_sq:
                             max_hyd_ci_sq = eigen_sq[state]
                             max_hyd_state = state
@@ -287,10 +286,9 @@ def process_evb_file(evb_file, cfg):
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq})
                 if cfg[PRINT_WAT_MOL]:
-                    for state in hyd_state_list:
-                        if state_list[state][MOL_B] == max_hyd_wat_mol:
-                            print(timestep, state_list[state][MOL_A], state_list[state][MOL_B], eigen_sq[state])
-
+                    # for state in hyd_state_list:
+                    #     if state_list[state][MOL_B] == max_hyd_wat_mol:
+                    #         print(timestep, state_list[state][MOL_A], state_list[state][MOL_B], eigen_sq[state])
                     for mol in hyd_state_mol_dict:
                         prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: mol,
                                                   MAX_HYD_CI_SQ: hyd_state_mol_dict[mol]})
@@ -301,6 +299,7 @@ def process_evb_file(evb_file, cfg):
                 result.update({CEC_X: cec_array[0], CEC_Y: cec_array[1], CEC_Z: cec_array[2]})
                 section = None
             elif section == SEC_END:
+                section = None
                 if max_prot_state is None:
                     prot_coul = np.nan
                 # sometimes, there is only one state, so the diagonal array is a vector
@@ -316,11 +315,13 @@ def process_evb_file(evb_file, cfg):
                     hyd_coul = diag_array[max_hyd_state][3] + diag_array[max_hyd_state][8]
                 result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul,
                                COUL_DIFF: hyd_coul - prot_coul})
+                if cfg[SKIP_ONE_STATE] and states_per_shell[0] == 1:
+                    continue
                 data_to_print.append(result)
                 if cfg[PRINT_CI_SUBSET]:
                     if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
                         subset_to_print.append(result)
-                section = None
+
     return data_to_print, subset_to_print, prot_wat_to_print
 
 
@@ -331,7 +332,7 @@ def process_evb_files(cfg):
     @return: @raise InvalidDataError:
     """
     first_file_flag = True
-    with open(cfg[EVBS_FILE]) as f:
+    with open(cfg[EVB_FILES]) as f:
         for evb_file in f:
             evb_file = evb_file.strip()
             if len(evb_file) > 0:
@@ -379,18 +380,21 @@ def process_evb_files(cfg):
                 if cfg[PRINT_PER_LIST]:
                     if first_file_flag:
                         print_mode = 'w'
+                        message = 'Wrote file: {}'
                         first_file_flag = False
                     else:
                         print_mode = 'a'
-                    f_out = create_out_fname(cfg[EVBS_FILE], suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
-                    print('Wrote file: {}'.format(f_out))
+                        message = 'Appended file: {}'
+                    if cfg[PRINT_CI_SQ]:
+                        f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq', ext='.csv',
+                                                 base_dir=cfg[OUT_BASE_DIR])
+                        write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                        print(message.format(f_out))
                     if cfg[PRINT_CI_SUBSET]:
-                        f_out = create_out_fname(cfg[EVBS_FILE], suffix='_ci_sq_ts', ext='.csv',
+                        f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
                                                  base_dir=cfg[OUT_BASE_DIR])
                         write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
-                        print('Wrote file: {}'.format(f_out))
-
+                        print(message.format(f_out))
 
 
 def main(argv=None):
