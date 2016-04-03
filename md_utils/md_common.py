@@ -27,7 +27,7 @@ import six
 import sys
 from cStringIO import StringIO
 from contextlib import contextmanager
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pyPlt
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('test_md_utils')
@@ -45,18 +45,23 @@ SEC_NUM_ATOMS = 'dump_num_atoms'
 SEC_BOX_SIZE = 'dump_box_size'
 SEC_ATOMS = 'atoms_section'
 
+
 # Exceptions #
 
-class MdError(Exception): pass
+class MdError(Exception):
+    pass
 
 
-class InvalidDataError(MdError): pass
+class InvalidDataError(MdError):
+    pass
 
 
-class NotFoundError(MdError): pass
+class NotFoundError(MdError):
+    pass
 
 
-class ArgumentParserError(Exception): pass
+class ArgumentParserError(Exception):
+    pass
 
 
 class ThrowingArgumentParser(argparse.ArgumentParser):
@@ -111,9 +116,7 @@ def xyz_distance(fir, sec):
     TODO: Consider adding numpy optimization if lib is present.
 
     :param fir: The first XYZ coordinate.
-    :type name: list.
     :param sec: The second XYZ coordinate.
-    :type state: list.
     :returns:  float -- The Euclidean distance between the given points.
     :raises: KeyError
     """
@@ -131,19 +134,20 @@ def pbc_vector_diff(a, b, box):
     return vec - box * np.asarray(map(round, vec / box))
 
 
-# def dotproduct(v1, v2):
+# def dot_product(v1, v2):
 #   return sum((a*b) for a, b in zip(v1, v2))
 #
 # def length(v):
-#   return math.sqrt(dotproduct(v, v))
+#   return math.sqrt(dot_product(v, v))
 #
 # def angle(v1, v2):
-#   return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2)))
+#   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
 
 def pbc_angle(p0, p1, p2, box):
     pass
 
 
+# noinspection PyUnresolvedReferences
 def pbc_dihedral(p0, p1, p2, p3, box):
     """
     From http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
@@ -181,14 +185,6 @@ def pbc_dihedral(p0, p1, p2, p3, box):
 
 # Other #
 
-
-def swarn(*objs):
-    """Writes a warning message to a target (stderr by default).
-    :param objs: The elements of the message to write.
-    """
-    print("WARNING:", *objs, file=sys.stderr)
-
-
 def swerr(*objs):
     """Writes an error message to a target (stderr by default).
     :param objs: The elements of the message to write.
@@ -196,24 +192,24 @@ def swerr(*objs):
     print("ERROR:", *objs, file=sys.stderr)
 
 
-def chunk(seq, chunksize, process=iter):
+def chunk(seq, chunk_size, process=iter):
     """Yields items from an iterator in iterable chunks.
     From https://gist.github.com/ksamuel/1275417
 
     :param seq: The sequence to chunk.
-    :param chunksize: The size of the returned chunks.
+    :param chunk_size: The size of the returned chunks.
     :param process: The function to use for creating the iterator.  Useful for iterating over different
     data structures.
     :return: Chunks of the given size from the given sequence.
     """
     it = iter(seq)
     while True:
-        yield process(chain([six.next(it)], islice(it, chunksize - 1)))
+        yield process(chain([six.next(it)], islice(it, chunk_size - 1)))
 
 
 # I/O #
 
-def cmakedir(tgt_dir):
+def make_dir(tgt_dir):
     """
     Creates the given directory and its parent directories if it
     does not already exist.
@@ -237,8 +233,8 @@ def file_to_str(fname):
     :return: The contents of the given file.
     :raises: IOError if the file can't be opened for reading.
     """
-    with open(fname) as myfile:
-        return myfile.read()
+    with open(fname) as f:
+        return f.read()
 
 
 def str_to_file(str_val, fname, mode='w'):
@@ -248,9 +244,8 @@ def str_to_file(str_val, fname, mode='w'):
     :param str_val: The string to write.
     :param fname: The location of the file to write.
     """
-    with open(fname, mode) as myfile:
-        myfile.write(str_val)
-
+    with open(fname, mode) as f:
+        f.write(str_val)
 
 
 def create_backup_filename(orig):
@@ -290,7 +285,7 @@ def allow_write(f_loc, overwrite=False):
     Returns whether to allow writing to the given location.
 
     :param f_loc: The location to check.
-    :param overwrite: Whether to allow overwriting an exisiting location.
+    :param overwrite: Whether to allow overwriting an existing location.
     :return: Whether to allow writing to the given location.
     """
     if os.path.exists(f_loc) and not overwrite:
@@ -299,14 +294,14 @@ def allow_write(f_loc, overwrite=False):
     return True
 
 
-def move_existing_file(floc):
+def move_existing_file(f_loc):
     """
     Renames an existing file using a timestamp based on the move time.
 
-    :param floc: The location to check.
+    :param f_loc: The location to check.
     """
-    if os.path.exists(floc):
-        shutil.move(floc, create_backup_filename(floc))
+    if os.path.exists(f_loc):
+        shutil.move(f_loc, create_backup_filename(f_loc))
 
 
 def create_prefix_out_fname(src_file, prefix, base_dir=None, ext=None):
@@ -364,12 +359,12 @@ def find_files_by_dir(tgt_dir, pat):
     :return: A dict where absolute directory names are keys for lists of found file names
         that match the given pattern.
     """
-    matchdirs = {}
+    match_dirs = {}
     for root, dirs, files in os.walk(tgt_dir):
         matches = [match for match in files if fnmatch.fnmatch(match, pat)]
         if matches:
-            matchdirs[os.path.abspath(root)] = matches
-    return matchdirs
+            match_dirs[os.path.abspath(root)] = matches
+    return match_dirs
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -417,23 +412,23 @@ def copytree(src, dst, symlinks=False, ignore=None):
     for name in names:
         if name in ignored_names:
             continue
-        srcname = os.path.join(src, name)
-        dstname = os.path.join(dst, name)
+        src_name = os.path.join(src, name)
+        dst_name = os.path.join(dst, name)
         try:
-            if symlinks and os.path.islink(srcname):
-                linkto = os.readlink(srcname)
-                os.symlink(linkto, dstname)
-            elif os.path.isdir(srcname):
-                copytree(srcname, dstname, symlinks, ignore)
+            if symlinks and os.path.islink(src_name):
+                link_to = os.readlink(src_name)
+                os.symlink(link_to, dst_name)
+            elif os.path.isdir(src_name):
+                copytree(src_name, dst_name, symlinks, ignore)
             else:
                 # Will raise a SpecialFileError for unsupported file types
-                copy2(srcname, dstname)
+                copy2(src_name, dst_name)
         # catch the Error from the recursive copytree so that we can
         # continue with other files
         except Error as err:
             errors.extend(err.args[0])
         except EnvironmentError as why:
-            errors.append((srcname, dstname, str(why)))
+            errors.append((src_name, dst_name, str(why)))
     try:
         copystat(src, dst)
     except OSError as why:
@@ -453,9 +448,33 @@ def read_csv_header(src_file):
     :param src_file: The CSV file to read.
     :return: The first row or None if empty.
     """
-    with open(src_file) as csvfile:
-        for row in csv.reader(csvfile):
+    with open(src_file) as csv_file:
+        for row in csv.reader(csv_file):
             return list(row)
+
+
+def convert_dict_line(all_conv, data_conv, line):
+    s_dict = {}
+    for s_key, s_val in line.items():
+        if data_conv and s_key in data_conv:
+            try:
+                s_dict[s_key] = data_conv[s_key](s_val)
+            except ValueError as e:
+                logger.debug("Could not convert value "
+                             "'%s' from column '%s': '%s'.  Leaving as str",
+                             s_val, s_key, e)
+                s_dict[s_key] = s_val
+        elif all_conv:
+            try:
+                s_dict[s_key] = all_conv(s_val)
+            except ValueError as e:
+                logger.debug("Could not convert value "
+                             "'%s' from column '%s': '%s'.  Leaving as str",
+                             s_val, s_key, e)
+                s_dict[s_key] = s_val
+        else:
+            s_dict[s_key] = s_val
+    return s_dict
 
 
 def read_csv(src_file, data_conv=None, all_conv=None):
@@ -471,29 +490,36 @@ def read_csv(src_file, data_conv=None, all_conv=None):
     :return: A list of dicts containing the file's data.
     """
     result = []
-    with open(src_file) as csvfile:
-        for sline in csv.DictReader(csvfile):
-            sdict = {}
-            for skey, sval in sline.items():
-                if data_conv and skey in data_conv:
-                    try:
-                        sdict[skey] = data_conv[skey](sval)
-                    except ValueError as e:
-                        logger.debug("Could not convert value "
-                                     "'%s' from column '%s': '%s'.  Leaving as str",
-                                     sval, skey, e)
-                        sdict[skey] = sval
-                elif all_conv:
-                    try:
-                        sdict[skey] = all_conv(sval)
-                    except ValueError as e:
-                        logger.debug("Could not convert value "
-                                     "'%s' from column '%s': '%s'.  Leaving as str",
-                                     sval, skey, e)
-                        sdict[skey] = sval
-                else:
-                    sdict[skey] = sval
-            result.append(sdict)
+    with open(src_file) as csv_file:
+        for line in csv.DictReader(csv_file):
+            result.append(convert_dict_line(all_conv, data_conv, line))
+    return result
+
+
+def read_csv_to_dict(src_file, col_name, data_conv=None, all_conv=None):
+    """
+    Reads the given CSV (comma-separated with a first-line header row) and returns a
+    dict of dicts indexed on the given col_name. Each dict contains a row's data keyed by the header row.
+
+    :param src_file: The CSV to read.
+    :param col_name: the name of the column to index on
+    :param data_conv: A map of header keys to conversion functions.  Note that values
+        that throw a TypeError from an attempted conversion are left as strings in the result.
+    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+        takes precedence.
+    :return: A list of dicts containing the file's data.
+    """
+    result = {}
+    with open(src_file) as csv_file:
+        for line in csv.DictReader(csv_file):
+            val = convert_dict_line(all_conv, data_conv, line)
+            try:
+                col_val = val[col_name]
+                if col_val in result:
+                    warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
+                result[col_val] = convert_dict_line(all_conv, data_conv, line)
+            except KeyError as e:
+                warning("Error {}: Could not find value for {} on line {}.".format(e, col_name, line))
     return result
 
 
@@ -517,7 +543,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
 # Other input/output files
 
 def save_fig(name, base_dir=None):
-    plt.savefig(base_dir + name, bbox_inches='tight')
+    pyPlt.savefig(base_dir + name, bbox_inches='tight')
 
 
 def read_int_dict(d_file, one_to_one=True):
