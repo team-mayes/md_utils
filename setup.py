@@ -33,7 +33,7 @@ setup(
     url='https://github.com/cmayes/md_utils',
     packages=['md_utils',
               ],
-    entry_points={'console_scripts': ['align_on_timestep = md_utils.align_on_timestep:main',
+    entry_points={'console_scripts': ['align_on_col = md_utils.align_on_col:main',
                                       'calc_pka = md_utils.calc_pka:main',
                                       'calc_split_avg = md_utils.calc_split_avg:main',
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
