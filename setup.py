@@ -3,7 +3,7 @@
 import md_utils
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
@@ -31,8 +31,7 @@ setup(
     author="Chris Mayes",
     author_email='cmayes@cmayes.com',
     url='https://github.com/cmayes/md_utils',
-    packages=['md_utils',
-              ],
+    packages=find_packages('md_utils', exclude=['tests']),
     entry_points={'console_scripts': ['align_on_col = md_utils.align_on_col:main',
                                       'calc_pka = md_utils.calc_pka:main',
                                       'calc_split_avg = md_utils.calc_split_avg:main',
