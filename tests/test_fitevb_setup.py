@@ -12,22 +12,21 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 
 __author__ = 'hmayes'
 
-TEST_DIR =  os.path.dirname(__file__)
+TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'fitevb')
 
 FITEVB_OUTPUT_PATH = os.path.join(SUB_DATA_DIR, 'fit.best')
 
-INI_PATH = os.path.join(SUB_DATA_DIR, 'fit_evb_setup.ini')
-MISS_SEC_INI_PATH = os.path.join(SUB_DATA_DIR, 'fit_evb_setup_missing_section.ini')
-MISS_PARAM_INI_PATH = os.path.join(SUB_DATA_DIR, 'fit_evb_setup_missing_param.ini')
+INI_PATH = os.path.join(SUB_DATA_DIR, 'fitevb_setup.ini')
+MISS_SEC_INI_PATH = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_section.ini')
+MISS_PARAM_INI_PATH = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_param.ini')
 
-DEF_OUT_PATH = os.path.join(TEST_DIR, 'fit.inp')
 GOOD_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_vii_good.inp')
 GOOD_NO_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_not_vii_good.inp')
+# noinspection PyUnresolvedReferences
+DEF_OUT_PATH = os.path.join(TEST_DIR, 'fit.inp')
 
-# tests/test_data/fitevb/fitevb_setup.ini
-# tests/test_data/fitevb/fit_evb_setup.ini
 
 class TestFitEVBSetup(unittest.TestCase):
 
@@ -59,6 +58,6 @@ class TestFitEVBSetup(unittest.TestCase):
         with capture_stderr(fitevb_setup.main,["-c", MISS_PARAM_INI_PATH, "-f", FITEVB_OUTPUT_PATH, ]) as output:
             self.assertTrue("missing parameter" in output)
 
-    def testInputFile(self):
+    def testInpuTEST_DIRtFile(self):
         with capture_stderr(fitevb_setup.main,["-c", INI_PATH, ]) as output:
             self.assertTrue("Problems reading " in output)

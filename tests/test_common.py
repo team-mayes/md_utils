@@ -25,11 +25,11 @@ logger = logging.getLogger(__name__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 FES_OUT_DIR = 'fes_out'
 CALC_PKA_DIR = 'calc_pka'
-CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMFlast2ns3_1.txt')
+CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMF_last2ns3_1.txt')
 FES_BASE = os.path.join(DATA_DIR, FES_OUT_DIR)
 FRENG_TYPES = [float, str]
 
-ORIG_WHAM_FNAME = "PMFlast2ns3_1.txt"
+ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')

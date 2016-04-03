@@ -1,3 +1,4 @@
+import json
 import unittest
 import os
 
@@ -7,35 +8,27 @@ from md_utils.md_common import diff_lines, silent_remove
 
 __author__ = 'hmayes'
 
+TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'data2pdb')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data2pdb.ini')
 GLU_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu.ini')
+GLU_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu_dict.ini')
 
 PDB_TPL = os.path.join(SUB_DATA_DIR, 'glue_hm_tpl.pdb')
 # noinspection PyUnresolvedReferences
 PDB_TPL_OUT = os.path.join(SUB_DATA_DIR, 'reproduced_tpl.pdb')
 
-
 # noinspection PyUnresolvedReferences
 PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_hm.pdb')
 GOOD_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_hm_good.pdb')
+
 # noinspection PyUnresolvedReferences
 GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990.pdb')
 GOOD_GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990_good.pdb')
 
-# REPRODUCE_INI = os.path.join(SUB_DATA_DIR, 'dump_edit_reproduce.ini')
-# SHORTER_INI = os.path.join(SUB_DATA_DIR, 'dump_shorter.ini')
-# SKIP_INI = os.path.join(SUB_DATA_DIR, 'dump_every_2every3.ini')
-# REORDER_INI = os.path.join(SUB_DATA_DIR, 'dump_edit.ini')
-# REORDER_RENUM_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol.ini')
-# RETYPE_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol_retype.ini')
-# DUMP_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short.dump')
-
-# SHORT_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_4steps.dump')
-# SKIP_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_2every3.dump')
-# GOOD_ATOM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
-
+DEF_DICT_OUT = os.path.join(TEST_DIR, 'atom_dict.json')
+GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 class TestDumpEdit(unittest.TestCase):
 
@@ -63,12 +56,16 @@ class TestDumpEdit(unittest.TestCase):
             silent_remove(PDB_TPL_OUT)
             silent_remove(GLU_OUT)
 
-    # TODO: add recentering option and test
-    def testGluRecenter(self):
+    def testGluDict(self):
         try:
-            data2pdb.main(["-c", GLU_INI])
+            data2pdb.main(["-c", GLU_DICT_INI])
             self.assertFalse(diff_lines(GLU_OUT, GOOD_GLU_OUT))
+            with open(DEF_DICT_OUT, 'r') as d_file:
+                dict_test = json.load(d_file)
+            with open(GOOD_DICT, 'r') as d_file:
+                dict_good = json.load(d_file)
+            self.assertEqual(dict_test, dict_good)
         finally:
             silent_remove(PDB_TPL_OUT)
             silent_remove(GLU_OUT)
-
+            silent_remove(DEF_DICT_OUT)

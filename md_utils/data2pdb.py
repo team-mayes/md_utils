@@ -7,6 +7,7 @@ from __future__ import print_function
 import ConfigParser
 from collections import defaultdict
 import copy
+import json
 import logging
 import re
 import sys
@@ -52,13 +53,14 @@ PDB_FORMAT = 'pdb_print_format'
 LAST_PROT_ID = 'last_prot_atom'
 OUT_BASE_DIR = 'output_directory'
 MAKE_DICT_BOOL = 'make_dictionary_flag'
+CHECK_ATOM_TYPE = 'use_atom_dict_flag'
 
 # data file info
 
 # Defaults
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
-DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv',
+DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.json',
                 PDB_FORMAT: '{:s}{:s}{:s}{:s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:s}',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
@@ -71,6 +73,7 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.csv
                 LAST_PROT_ID: 0,
                 OUT_BASE_DIR: None,
                 MAKE_DICT_BOOL: False,
+                CHECK_ATOM_TYPE: False,
                 }
 REQ_KEYS = {PDB_TPL_FILE: str,
             }
@@ -113,17 +116,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file and'
-                                                 'a dictionary of CHARMM and LAMMPS types for verifying that the atom'
-                                                 'types on the corresponding lines align.'
-                                                 'The required input file provides the location of the '
-                                                 'template file, the file with a list of data files to convert, and '
-                                                 'the dictionary file (CSV, with charmm type (exactly as it in the PDB)'
-                                                 'followed by the lammps type (int).')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/data2pdb/data2pdb.ini. "
-                                               "The default file name is pdb2data.ini, located in the "
-                                               "base directory where the program as run.",
+    parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file.')
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -226,7 +222,8 @@ def make_dict(cfg, data_tpl_content):
                             continue
                         split_line = line.split()
 
-                        lammps_atom_type = int(split_line[2])
+                        # keep lammps types as strings, because json saves as strings to be portable
+                        lammps_atom_type = split_line[2]
                         charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2] + \
                                            data_tpl_content[ATOMS_CONTENT][atom_id][3]
 
@@ -242,7 +239,9 @@ def make_dict(cfg, data_tpl_content):
                         else:
                             matched_atom_types[charmm_atom_type] = lammps_atom_type
 
-                        atom_type_dict[lammps_atom_type].append(charmm_atom_type)
+                        # Don't add if already there
+                        if charmm_atom_type not in atom_type_dict[lammps_atom_type]:
+                            atom_type_dict[lammps_atom_type].append(charmm_atom_type)
 
                         atom_id += 1
                         # Check after increment because the counter started at 0
@@ -250,16 +249,11 @@ def make_dict(cfg, data_tpl_content):
                             # Since the tail will come only from the template, nothing more is needed.
                             break
             print('Finished looking for dictionary values in file ', data_file)
-    # # Write dictionary
-    # # TODO: Save dictionary as a JASON file, then use it in processing the data files.
-    # For now, just do the check above.
-    # with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as d_file:
-    #     for line in atom_type_dict.items():
-    #         print(line)
-    #         # d_file.write('%s,%d' % line + '\n')
 
-    print('Completed making dictionary.')
-    return atom_type_dict
+    with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as d_file:
+        json.dump(atom_type_dict, d_file)
+
+    print('Completed making dictionary and saved it to {}'.format(cfg[ATOM_TYPE_DICT_FILE]))
 
 
 def process_data_files(cfg, data_tpl_content):
@@ -267,6 +261,18 @@ def process_data_files(cfg, data_tpl_content):
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     # Don't want to change the original template data when preparing to print the new file:
     pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
+
+    chk_atom_type = cfg[CHECK_ATOM_TYPE]
+
+    if chk_atom_type:
+        try:
+            with open(cfg[ATOM_TYPE_DICT_FILE], 'r') as d_file:
+                data_dict = json.load(d_file)
+        except IOError as e:
+            warning("Problems reading dictionary file: {}\n"
+                    "The program will continue without checking atom types.".format(cfg[ATOM_TYPE_DICT_FILE]), e)
+            chk_atom_type = False
+
     with open(cfg[DATA_FILES]) as f:
         for data_file in f:
             data_file = data_file.strip()
@@ -274,6 +280,7 @@ def process_data_files(cfg, data_tpl_content):
                 section = SEC_HEAD
                 atom_id = 0
                 num_atoms = None
+                atom_types = []
 
                 for line in d:
                     line = line.strip()
@@ -298,15 +305,14 @@ def process_data_files(cfg, data_tpl_content):
                             continue
                         split_line = line.split()
 
-                        # Not currently checking molecule number; the number may be wrong and the data still correct,
-                        # as PDB numbering starts over at zero a few times (due to restrictions on number of digits in
-                        # mol_num) but not the data file
+                        # Not currently checking molecule number
+                        # If decide to do so, should make a count from 1 as the PDB is read; the PDB does not
+                        # have to start from 1, but the data file counts molecules from 1. For now, decided
+                        # checking atom type is a sufficient check
                         # mol_num = int(split_line[1])
 
-                        # TODO: Later, do a check on atom_type based on reading the dictionary.
-                        # For now, the checking was in making the dictionary.
-                        # atom_type = int(split_line[2])
-
+                        # Keep as string; json save as string and this helps compare
+                        atom_types.append(split_line[2])
                         pdb_data_section[atom_id][5:8] = map(float, split_line[4:7])
                         atom_id += 1
                         # Check after increment because the counter started at 0
@@ -318,6 +324,18 @@ def process_data_files(cfg, data_tpl_content):
             if atom_id != num_atoms:
                 raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal '
                                        'the listed number of atoms ({}).'.format(data_file, atom_id, num_atoms))
+
+            if chk_atom_type:
+                for data_type, atom in zip(atom_types, pdb_data_section):
+                    try:
+                        pdb_type = atom[2] + atom[3]
+                        if pdb_type not in data_dict[data_type]:
+                            warning('Did not find type {} in dictionary of values for atom_type {}: ({})'
+                                    ''.format(pdb_type, data_type, data_dict[data_type]))
+                        # print("atom", atom_type, data_dict[atom_type])
+                    except KeyError:
+                        warning('Did not find data file atom type {} in the atom type dictionary {}'
+                                ''.format(data_type, cfg[ATOM_TYPE_DICT_FILE]))
 
             f_name = create_out_fname(data_file, ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
             list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_data_section + data_tpl_content[TAIL_CONTENT],
@@ -341,8 +359,7 @@ def main(argv=None):
         pdb_tpl_content = process_pdb_tpl(cfg)
         # TODO: Test and use dictionary
         if cfg[MAKE_DICT_BOOL]:
-            atom_type_dict = make_dict(cfg, pdb_tpl_content)
-            print(atom_type_dict)
+            make_dict(cfg, pdb_tpl_content)
         process_data_files(cfg, pdb_tpl_content)
     except IOError as e:
         warning("Problems reading file:", e)
