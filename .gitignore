@@ -95,10 +95,3 @@ tests/test_data/evb_info/1.500_20c_short_ci_sq_ts.csv
 tests/test_data/lammps_proc/glue_dump_incomp_gofrs.csv
 tests/reproduced_tpl.data
 
-# don't think I need the following:
-tests/test_data/lammps_proc/glue_alt.list
-tests/test_data/lammps_proc/ho_oo_hh_oh_gofr_with_oh.ini
-tests/test_data/lammps_proc/1.625_0a.dump.short
-tests/test_data/lammps_proc/1.625_0a.dump_proc_data.csv
-tests/test_data/lammps_proc/glue_alt_gofrs.csv
-

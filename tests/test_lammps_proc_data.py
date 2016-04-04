@@ -26,6 +26,7 @@ GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
 INCOMP_DUMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_incomp_dump.ini')
+INCOMP_PROT_O_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_miss_prot_oxys.ini')
 
 HO_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr.ini')
 GOOD_HO_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_good.csv')
@@ -39,20 +40,32 @@ GOOD_HH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_hh_good.csv')
 OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ostar_h_gofr.ini')
 GOOD_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_oh_good.csv')
 
-HO_OO_HH_OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr.ini')
-GOOD_HO_OO_HH_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_oo_hh_oh_good.csv')
+HO_OO_HH_OH_GOFR_INI = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr.ini')
+GOOD_HO_OO_HH_OH_GOFR_OUT = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_oo_hh_oh_good.csv')
 
-HO_OO_HH_OH_GOFR_OH_INI = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr_with_oh.ini')
+HO_OO_HH_OH_GOFR_INI_MAX_STEPS = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr_max_steps.ini')
+GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs_good.csv')
 
-
-DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_gofrs.csv')
-DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
+# noinspection PyUnresolvedReferences
+DEF_GOFR_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_gofrs.csv')
+# noinspection PyUnresolvedReferences
+DEF_GOFR_INCOMP_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
+DEF_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs.csv')
 
 HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 # noinspection PyUnresolvedReferences
 DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
 GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
+good_long_out_msg = 'Wrote file: /Users/Heather/bee/code/python/md_utils/tests/test_data/lammps_proc/' \
+                    'glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/md_utils/tests/test_data/' \
+                    'lammps_proc/glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/md_utils/tests/' \
+                    'test_data/lammps_proc/glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/' \
+                    'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
+                    'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
+                    'Continuing program.\nCompleted reading dumpfile /Users/Heather/bee/code/python/md_utils/tests/' \
+                    'test_data/lammps_proc/1.625_0a_21steps.dump.\nWrote file: /Users/Heather/bee/code/python/md_utils/' \
+                    'tests/test_data/lammps_proc/glue_dump_long_gofrs.csv'
 
 class TestLammpsProcData(unittest.TestCase):
     def testNoAction(self):
@@ -76,7 +89,7 @@ class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
         try:
             lammps_proc_data.main(["-c", OH_DIST_INI_PATH])
-            self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+            # self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
 
@@ -94,9 +107,14 @@ class TestLammpsProcData(unittest.TestCase):
                 self.assertTrue("WARNING" in output)
             with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("Wrote file" in output)
-            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_INCOMP_OUT_PATH)
+            silent_remove(DEF_GOFR_INCOMP_OUT)
+
+    def testIncompProtType(self):
+        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_PROT_O_INI]) as output:
+            self.assertTrue("WARNING" in output)
+            self.assertTrue("Expected to find exactly" in output)
 
     def testNegGofR(self):
         with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
@@ -105,42 +123,44 @@ class TestLammpsProcData(unittest.TestCase):
     def testHOGofR(self):
         try:
             lammps_proc_data.main(["-c", HO_GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_OUT_PATH)
+            silent_remove(DEF_GOFR_OUT)
 
     def testOOGofR(self):
         try:
             lammps_proc_data.main(["-c", OO_GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OO_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OO_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_OUT_PATH)
+            silent_remove(DEF_GOFR_OUT)
 
     def testHHGofR(self):
         try:
             lammps_proc_data.main(["-c", HH_GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HH_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HH_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_OUT_PATH)
+            silent_remove(DEF_GOFR_OUT)
 
     def testOHGofR(self):
         try:
             lammps_proc_data.main(["-c", OH_GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_OH_GOFR_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OH_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_OUT_PATH)
+            silent_remove(DEF_GOFR_OUT)
 
     def testHO_OO_HH_OHGofR(self):
         try:
-            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI_PATH])
-            self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
+            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI])
+            self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT))
         finally:
-            silent_remove(DEF_GOFR_OUT_PATH)
+            silent_remove(DEF_GOFR_OUT)
 
-    def testHO_OO_HH_OHGofR_OH(self):
+    def testHO_OO_HH_OHGofR_MaxSteps(self):
+        # lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS])
         try:
-            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_OH_INI])
-            # self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
+            with capture_stdout(lammps_proc_data.main, ["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS]) as output:
+                self.assertTrue(good_long_out_msg in output)
+            self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:
-            # silent_remove(DEF_GOFR_OUT_PATH)
-            pass
+            silent_remove(DEF_MAX_STEPS_OUT)
+

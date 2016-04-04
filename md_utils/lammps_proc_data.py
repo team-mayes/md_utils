@@ -99,8 +99,8 @@ CALC_DIH_CCCC = 'calc_carboxyl_ca_cb_cg_cd_dihed'  # 9 11 14 17
 CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'  # 14 17 ?? ??
 
 # Added so I don't have to read all of a really big file
-# TODO: Set up so produces output every 1000 lines
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
+PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 
 # TODO: Maybe move PER_FRAME_OUTPUT; something set by reading other configs; is it still a config?
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
@@ -136,6 +136,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 GOFR_BINS: [],
                 GOFR_RAW_HIST: [],
                 MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
+                PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -237,12 +238,10 @@ def hij_amino(r, c1, c2, c3):
 
 
 def calc_q(r_o, r_op, r_h):
-    print(r_o, r_op, r_h)
     return np.add(r_o, r_op) / 2.0 - r_h
 
 
 def hij_water(r_oo, q_vec):
-    print(np.exp(-gamma * .1))
     term_a1 = np.exp(-gamma * np.dot(q_vec, q_vec))
     term_a2 = 1 + P * np.exp(-k_water * (r_oo - D_OO_water) ** 2)
     term_a3 = 0.5 * (1 - np.tanh(beta * (r_oo - R_0_OO))) + Pp * np.exp(-a_water * (r_oo - r_0_OO))
@@ -311,6 +310,11 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+
+    if len(args.config[PROT_O_IDS]) != 2:
+        warning('Expected to find exactly two atom indices listed for the key {}. Check '
+                'configuration file.'.format(PROT_O_IDS))
+        return args, INVALID_DATA
 
     # TODO: is this where it should be?
     for flag in PER_FRAME_OUTPUT_FLAGS:
@@ -524,7 +528,7 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     return calc_results
 
 
-def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
     with open(dump_file) as d:
         section = None
         box = np.zeros((3,))
@@ -547,10 +551,15 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
                 timestep = line
                 timesteps_read += 1
                 if timesteps_read > cfg[MAX_TIMESTEPS]:
-                    warning("FYI: dump file {} contains more than the maximum timesteps per dumpfile to read ({}). "
-                            "To increase this number, set a larger value for {}. "
-                            "Continuing program.".format(dump_file, cfg[MAX_TIMESTEPS], MAX_TIMESTEPS))
+                    print("Reached the maximum timesteps per dumpfile ({}). "
+                          "To increase this number, set a larger value for {}. "
+                          "Continuing program.".format(cfg[MAX_TIMESTEPS], MAX_TIMESTEPS))
                     break
+                if timesteps_read % cfg[PRINT_TIMESTEPS] == 0:
+                    if cfg[PER_FRAME_OUTPUT]:
+                        print_per_frame(dump_file, cfg, data_to_print, out_fieldnames)
+                    if cfg[GOFR_OUTPUT]:
+                        print_gofr(cfg, gofr_data)
                 result = {TIMESTEP: timestep}
             elif section == SEC_NUM_ATOMS:
                 num_atoms = int(line)
@@ -604,56 +613,11 @@ def setup_per_frame_output(cfg):
     return out_fieldnames
 
 
-def process_dump_files(cfg):
-    """
-    @param cfg: configuration data read from ini file
-    """
-    gofr_data = {}
-    out_fieldnames = None
-    g_dr = np.nan
-    dr_array = []
-    gofr_out_fieldnames = []
-    gofr_output = []
-
-    if cfg[GOFR_OUTPUT]:
-        g_dr = cfg[GOFR_DR]
-        g_max = cfg[GOFR_MAX]
-        gofr_data[GOFR_BINS] = np.arange(0.0, g_max + g_dr, g_dr)
-        if cfg[CALC_HO_GOFR]:
-            gofr_data[HO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-            gofr_data[HO_STEPS_COUNTED] = 0
-        if cfg[CALC_OO_GOFR]:
-            gofr_data[OO_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-            gofr_data[OO_STEPS_COUNTED] = 0
-        if cfg[CALC_HH_GOFR]:
-            gofr_data[HH_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-            gofr_data[HH_STEPS_COUNTED] = 0
-        if cfg[CALC_OH_GOFR]:
-            gofr_data[OH_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-            gofr_data[OH_STEPS_COUNTED] = 0
-        if cfg[CALC_TYPE_GOFR]:
-            gofr_data[TYPE_BIN_COUNT] = np.zeros(len(gofr_data[GOFR_BINS]) - 1)
-            gofr_data[TYPE_STEPS_COUNTED] = 0
-
-    if cfg[PER_FRAME_OUTPUT]:
-        out_fieldnames = setup_per_frame_output(cfg)
-
-    with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f:
-            data_to_print = []
-            dump_file = dump_file.strip()
-            # skip any excess blank lines
-            if len(dump_file) > 0:
-                read_dump_file(dump_file, cfg, data_to_print, gofr_data)
-                if cfg[PER_FRAME_OUTPUT]:
-                    f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
-                    print('Wrote file: {}'.format(f_out))
-
-    if cfg[GOFR_OUTPUT]:
-        dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
-        gofr_out_fieldnames = [GOFR_R]
-        gofr_output = dr_array
+def print_gofr(cfg, gofr_data):
+    g_dr = cfg[GOFR_DR]
+    dr_array = gofr_data[GOFR_BINS][1:] - g_dr / 2
+    gofr_out_fieldnames = [GOFR_R]
+    gofr_output = dr_array
     if cfg[CALC_HO_GOFR]:
         normal_fac = np.square(dr_array) * gofr_data[HO_STEPS_COUNTED] * 4 * np.pi * g_dr
         gofr_ho = np.divide(gofr_data[HO_BIN_COUNT], normal_fac)
@@ -683,10 +647,65 @@ def process_dump_files(cfg):
         else:
             warning("Did not find any timesteps with the pairs in {}. "
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
+
+    f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+    seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
+    print('Wrote file: {}'.format(f_out))
+
+
+
+def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, message='Wrote file: {}'):
+    f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
+    print(message.format(f_out))
+
+
+def ini_gofr_data(gofr_data, bin_count, bins, step_count):
+    gofr_data[bin_count] = np.zeros(len(gofr_data[bins]) - 1)
+    gofr_data[step_count] = 0
+
+
+def process_dump_files(cfg):
+    """
+    @param cfg: configuration data read from ini file
+    """
+    gofr_data = {}
+    out_fieldnames = None
+
+    # If RDFS are to be calculated, initialize empty data structures
     if cfg[GOFR_OUTPUT]:
-        f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-        seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
-        print('Wrote file: {}'.format(f_out))
+        g_dr = cfg[GOFR_DR]
+        g_max = cfg[GOFR_MAX]
+        gofr_data[GOFR_BINS] = np.arange(0.0, g_max + g_dr, g_dr)
+        if len(gofr_data[GOFR_BINS]) < 2:
+            raise InvalidDataError("Insufficient number of bins to calculate RDFs. Check input: "
+                                   "{}: {}, {}: {},".format(GOFR_DR, cfg[GOFR_DR], GOFR_MAX, cfg[GOFR_MAX]))
+        if cfg[CALC_HO_GOFR]:
+            ini_gofr_data(gofr_data, HO_BIN_COUNT, GOFR_BINS, HO_STEPS_COUNTED)
+        if cfg[CALC_OO_GOFR]:
+            ini_gofr_data(gofr_data, OO_BIN_COUNT, GOFR_BINS, OO_STEPS_COUNTED)
+        if cfg[CALC_HH_GOFR]:
+            ini_gofr_data(gofr_data, HH_BIN_COUNT, GOFR_BINS, HH_STEPS_COUNTED)
+        if cfg[CALC_OH_GOFR]:
+            ini_gofr_data(gofr_data, OH_BIN_COUNT, GOFR_BINS, OH_STEPS_COUNTED)
+        if cfg[CALC_TYPE_GOFR]:
+            ini_gofr_data(gofr_data, TYPE_BIN_COUNT, GOFR_BINS, TYPE_STEPS_COUNTED)
+
+    if cfg[PER_FRAME_OUTPUT]:
+        out_fieldnames = setup_per_frame_output(cfg)
+
+    with open(cfg[DUMPS_FILE]) as f:
+        for dump_file in f:
+            data_to_print = []
+            dump_file = dump_file.strip()
+            # skip any excess blank lines
+            if len(dump_file) > 0:
+                read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames)
+                if cfg[PER_FRAME_OUTPUT]:
+                    print_per_frame(dump_file, cfg, data_to_print, out_fieldnames)
+
+    if cfg[GOFR_OUTPUT]:
+        print_gofr(cfg, gofr_data)
 
 
 def main(argv=None):
@@ -708,7 +727,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success
