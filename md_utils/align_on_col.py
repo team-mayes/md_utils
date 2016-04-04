@@ -11,7 +11,7 @@ import sys
 import argparse
 import six
 
-from md_utils.md_common import InvalidDataError, warning, read_csv_to_dict, create_out_fname, write_csv
+from md_utils.md_common import InvalidDataError, warning, read_csv_to_dict, write_csv
 
 __author__ = 'hmayes'
 
@@ -77,16 +77,18 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+
 def process_files(comp_f_list, col_name, f_out):
     """
     Want to grab the timestep, first and 2nd mole found, first and 2nd ci^2
     print the timestep, residue ci^2
-    @param cfg: configuration data read from ini file
+    @param comp_f_list: list of file names to process
     @return: @raise InvalidDataError:
     """
     timesteps = None
     headers = []
     all_dicts = defaultdict(dict)
+    new_dict = {}
     for line in comp_f_list:
         s_line = line.strip()
         if len(s_line) > 0:
@@ -95,8 +97,9 @@ def process_files(comp_f_list, col_name, f_out):
                 timesteps = new_dict.keys()
             else:
                 timesteps = set(timesteps).intersection(new_dict.keys())
+            new_dict_keys = six.next(six.itervalues(new_dict)).keys()
             # Get the keys for the inner dictionary; diff methods for python 2 and 3 so use six
-            for key in six.next(six.itervalues(new_dict)).keys():
+            for key in new_dict_keys:
                 if key in headers:
                     if key != col_name:
                         warning("Non-unique column name {} found in {}. "
@@ -105,7 +108,6 @@ def process_files(comp_f_list, col_name, f_out):
                     headers.append(key)
         for new_key in new_dict.items():
             all_dicts[new_key[0]].update(new_key[1])
-            # all_dicts[new_key] = new_dict.update({new_key: new_dict[new_key]})
 
     final_dict = []
     for key in sorted(timesteps):

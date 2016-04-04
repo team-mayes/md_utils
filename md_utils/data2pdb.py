@@ -188,6 +188,7 @@ def process_pdb_tpl(cfg):
         list_to_file(tpl_data[HEAD_CONTENT] + tpl_data[ATOMS_CONTENT] + tpl_data[TAIL_CONTENT],
                      f_name,
                      list_format=cfg[PDB_FORMAT])
+        print("Wrote file {}".format(f_name))
 
     return tpl_data
 

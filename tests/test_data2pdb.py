@@ -1,10 +1,13 @@
 import json
+import logging
 import unittest
 import os
 
 from md_utils import data2pdb
 from md_utils.md_common import diff_lines, silent_remove
 
+logger = logging.getLogger('data2pdb')
+logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -30,6 +33,7 @@ GOOD_GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990
 DEF_DICT_OUT = os.path.join(TEST_DIR, 'atom_dict.json')
 GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
+
 class TestDumpEdit(unittest.TestCase):
 
     def testDefIni(self):
@@ -42,11 +46,15 @@ class TestDumpEdit(unittest.TestCase):
             #             if d_line.strip() != g_line.strip():
             #                 print(d_line.strip())
             #                 print(g_line.strip())
-            self.assertFalse(diff_lines(PDB_TPL_OUT, PDB_TPL))
+
+            # will only be there is debugging is on
+            if os.path.exists(PDB_TPL_OUT):
+                self.assertFalse(diff_lines(PDB_TPL_OUT, PDB_TPL))
             self.assertFalse(diff_lines(PDB_OUT, GOOD_PDB_OUT))
         finally:
             silent_remove(PDB_TPL_OUT)
             silent_remove(PDB_OUT)
+            pass
 
     def testGlu(self):
         try:

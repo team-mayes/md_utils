@@ -89,6 +89,7 @@ MOL_A = 'mol_A'
 MOL_B = 'mol_B'
 MAX_PROT_CI_SQ = 'max_prot_ci2'
 MAX_HYD_CI_SQ = 'max_hyd_ci2'
+MAX_HYD_MOL = 'max_hyd_mol'
 MAX_PROT_STATE_NUM = 'max_prot_state_num'
 MAX_HYD_STATE_NUM = 'max_state_num'
 MAX_PROT_STATE_COUL = 'max_prot_state_coul'
@@ -196,6 +197,9 @@ def process_evb_file(evb_file, cfg):
         state_count = 0
         one_state = False
         max_max_prot_mol_a = None
+        max_hyd_wat_mol = None
+        timestep = None
+        states_per_shell = [np.nan]
         for line in d:
             line = line.strip()
             if section is None:
@@ -284,11 +288,8 @@ def process_evb_file(evb_file, cfg):
                                 hyd_state_mol_dict[water_molid] = eigen_sq[state]
 
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
-                               MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq})
+                               MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq, MAX_HYD_MOL: max_hyd_wat_mol})
                 if cfg[PRINT_WAT_MOL]:
-                    # for state in hyd_state_list:
-                    #     if state_list[state][MOL_B] == max_hyd_wat_mol:
-                    #         print(timestep, state_list[state][MOL_A], state_list[state][MOL_B], eigen_sq[state])
                     for mol in hyd_state_mol_dict:
                         prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: mol,
                                                   MAX_HYD_CI_SQ: hyd_state_mol_dict[mol]})
@@ -341,14 +342,16 @@ def process_evb_files(cfg):
                 if cfg[PRINT_PER_FILE] is True:
                     if cfg[PRINT_KEY_PROPS]:
                         if len(data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                            f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
+                                                     base_dir=cfg[OUT_BASE_DIR])
                             write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
                             print('Wrote file: {}'.format(f_out))
                         else:
                             no_print.append(PRINT_KEY_PROPS)
                     if cfg[PRINT_CI_SUBSET]:
                         if len(subset_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                            f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv',
+                                                     base_dir=cfg[OUT_BASE_DIR])
                             write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                             print('Wrote file: {}'.format(f_out))
                         else:
@@ -369,7 +372,8 @@ def process_evb_files(cfg):
                             no_print.append(PRINT_CEC)
                     if cfg[PRINT_WAT_MOL]:
                         if len(wat_mol_data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                            f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv',
+                                                     base_dir=cfg[OUT_BASE_DIR])
                             write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore")
                             print('Wrote file: {}'.format(f_out))
                         else:

@@ -20,6 +20,8 @@ DEF_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list.txt')
 MULTI_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_multi.txt')
 NO_OVER_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_no_overlap.txt')
 DUP_COL_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_dup_col.txt')
+NO_COL_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_no_timestep.txt')
+NO_FILE_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_no_file.txt')
 
 # noinspection PyUnresolvedReferences
 DEF_OUT = os.path.join(TEST_DIR, 'combined_data.csv')
@@ -59,3 +61,14 @@ class TestAlignCol(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
             self.assertTrue("Non-unique column" in output)
         silent_remove(DEF_OUT)
+
+    def testNoTimestep(self):
+        with capture_stderr(align_on_col.main, ["-f", NO_COL_CMP_LIST]) as output:
+            self.assertTrue("Could not find value" in output)
+        silent_remove(DEF_OUT)
+
+    def testNoFile(self):
+        with capture_stderr(align_on_col.main, ["-f", NO_FILE_CMP_LIST]) as output:
+            # self.assertTrue("No such file or directory" in output)
+            print(output)
+        # silent_remove(DEF_OUT)

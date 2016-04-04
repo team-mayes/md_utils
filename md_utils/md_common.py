@@ -29,7 +29,8 @@ from cStringIO import StringIO
 from contextlib import contextmanager
 import matplotlib.pyplot as pyPlt
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_md_utils')
 
 # Constants #
@@ -514,13 +515,14 @@ def read_csv_to_dict(src_file, col_name, data_conv=None, all_conv=None):
     with open(src_file) as csv_file:
         for line in csv.DictReader(csv_file):
             val = convert_dict_line(all_conv, data_conv, line)
-            try:
+            if col_name in val:
                 col_val = val[col_name]
                 if col_val in result:
                     warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
                 result[col_val] = convert_dict_line(all_conv, data_conv, line)
-            except KeyError as e:
-                warning("Error {}: Could not find value for {} on line {}.".format(e, col_name, line))
+            else:
+                raise InvalidDataError("Could not find value for {} in file {} on line {}."
+                                       "".format(col_name, src_file, line))
     return result
 
 
