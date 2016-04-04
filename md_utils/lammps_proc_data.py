@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 From lammps dump file(s), finds key distance, such as:
-CALC_OH_DIST: the hydroxyl OH distance on the protonateable residue (when protonated)
+CALC_OH_DIST: the hydroxyl OH distance on the protonatable residue (when protonated)
 
 This script assumes we care about one protonatable residue in a simulation with a PBC
 """
@@ -22,8 +22,8 @@ __author__ = 'hmayes'
 
 
 # Logging
-logger = logging.getLogger('hydroxyl_oh_dist')
-logging.basicConfig(filename='hydroxyl_oh_dist.log', filemode='w', level=logging.DEBUG)
+logger = logging.getLogger('lammps_proc_data')
+logging.basicConfig(filename='lammps_proc_data', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
@@ -46,7 +46,7 @@ DUMPS_FILE = 'dump_list_file'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
-PROT_O_IDS = 'prot_carboxy_oxy_atom_nums'
+PROT_O_IDS = 'prot_carboxyl_oxy_atom_nums'
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 H3O_O_TYPE = 'h3o_o_type'
@@ -93,10 +93,10 @@ CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 
 # TODO: talk to Chris about listing many angles, dihedrals
 CALC_COORD_NUM = 'calc_coord_number'
-CALC_ANG_OCO = 'calc_carbox_o_c_o_ang'          # 18 17 19
-CALC_ANG_COH = 'calc_carbox_c_o_h_ang'          # 17 ?? ??
-CALC_DIH_CCCC = 'calc_carbox_ca_cb_cg_cd_dihed'  # 9 11 14 17
-CALC_DIH_CCOH = 'calc_carbox_cg_cd_o_h_dihed'  # 14 17 ?? ??
+CALC_ANG_OCO = 'calc_carboxyl_o_c_o_ang'          # 18 17 19
+CALC_ANG_COH = 'calc_carboxyl_c_o_h_ang'          # 17 ?? ??
+CALC_DIH_CCCC = 'calc_carboxyl_ca_cb_cg_cd_dihed'  # 9 11 14 17
+CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'  # 14 17 ?? ??
 
 # Added so I don't have to read all of a really big file
 # TODO: Set up so produces output every 1000 lines
@@ -108,6 +108,8 @@ PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_AMINO_FORM, CALC_HIJ_WATER_FORM
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
+# Default max timesteps 1E12
+DEF_MAX_TIMESTEPS = 1000000000000
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -133,7 +135,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 GOFR_DR: -1.1,
                 GOFR_BINS: [],
                 GOFR_RAW_HIST: [],
-                MAX_TIMESTEPS: 1000000000000, # Default max timestesps in 1E12
+                MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -214,7 +216,7 @@ Vii_glu = -150.291915
 # 3.2 water params from http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.5b09466
 gamma = 1.783170  # Angstrom^-2
 P = 0.1559053
-k_water = 5.0664471  #  Angstrom^-2
+k_water = 5.0664471  # Angstrom^-2
 D_OO_water = 2.8621690  # Angstrom
 beta = 5.2394128  # Angstrom^-1
 R_0_OO = 2.9425969
@@ -226,8 +228,8 @@ V_ij_water = -21.064268  # kcal/mol
 
 # EVB Formulas
 
-def U_morse(r):
-    return D * ( 1 - np.exp(-alpha * (r - r_0)) ) ** 2
+def u_morse(r):
+    return D * (1 - np.exp(-alpha * (r - r_0))) ** 2
 
 
 def hij_amino(r, c1, c2, c3):
@@ -239,17 +241,18 @@ def calc_q(r_o, r_op, r_h):
     return np.add(r_o, r_op) / 2.0 - r_h
 
 
-def hij_water(r_OO, q_vec):
+def hij_water(r_oo, q_vec):
     print(np.exp(-gamma * .1))
-    termA1 = np.exp(-gamma * np.dot(q_vec, q_vec))
-    termA2 = 1 + P * np.exp(-k_water * (r_OO - D_OO_water) ** 2)
-    termA3 = 0.5 * (1 - np.tanh(beta * (r_OO - R_0_OO))) + Pp * np.exp(-a_water * (r_OO - r_0_OO))
-    return V_ij_water * 1.1 * termA1 * termA2 * termA3, termA1, termA2, termA3
+    term_a1 = np.exp(-gamma * np.dot(q_vec, q_vec))
+    term_a2 = 1 + P * np.exp(-k_water * (r_oo - D_OO_water) ** 2)
+    term_a3 = 0.5 * (1 - np.tanh(beta * (r_oo - R_0_OO))) + Pp * np.exp(-a_water * (r_oo - r_0_OO))
+    return V_ij_water * 1.1 * term_a1 * term_a2 * term_a3, term_a1, term_a2, term_a3
 
 
 def switch_func(rc, rs, r_array):
     """
-    Switching function as in eq 9 of Wu Y, Chen H, Wang F, Paesani F, Voth GA. J Phys Chem B. 2008;112(2):467-482. doi:10.1021/jp076658h.
+    Switching function as in eq 9 of Wu Y, Chen H, Wang F, Paesani F, Voth GA. J Phys Chem B. 2008;112(2):467-482.
+    doi:10.1021/jp076658h.
     @param rc: cut-off distance
     @param rs: switching distance
     @param r_array: an array of distance values
@@ -290,10 +293,8 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Find difference of distances between carboxylic oxygens and '
-                                                 'the excess proton, if the carboxylic group is protonated. '
-                                                 'Currently, this script expects only one '
-                                                 'protonatable residue.')
+    parser = argparse.ArgumentParser(description='Calculates properties of protonatable residues from lammps output. '
+                                                 'Currently, this script expects only one protonatable residue.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run. The required keys are: "
@@ -352,11 +353,12 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
     return dist
 
 
-def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
+def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
     # initialize smallest distance to the closest distance
-    min_dist = np.zeros(len(carboxy_oxys))
+    min_dist = np.zeros(len(carboxyl_oxys))
     closest_h = {}
-    for index, oxy in enumerate(carboxy_oxys):
+    alt_dist = np.nan
+    for index, oxy in enumerate(carboxyl_oxys):
         if prot_h is None:
             # initialize minimum distance to maximum distance allowed in the PBC
             min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
@@ -371,25 +373,25 @@ def find_closest_excessH(carboxy_oxys, prot_h, hydronium, box, cfg):
             closest_h[index] = prot_h
     index_min = np.argmin(min_dist)
     min_min = min_dist[index_min]
-    excess_H = closest_h[index_min]
+    excess_proton = closest_h[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
-    for index, oxy in enumerate(carboxy_oxys):
+    for index, oxy in enumerate(carboxyl_oxys):
         if index != index_min:
-            alt_dist = pbc_dist(np.asarray(excess_H[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
+            alt_dist = pbc_dist(np.asarray(excess_proton[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
     alt_min = np.amin(alt_dist)
-    return excess_H, \
-           {OH_MIN: min_min,
-            OH_MAX: alt_min,
-            OH_DIFF: alt_min - min_min,
-           }
+    return excess_proton, {OH_MIN: min_min,
+                           OH_MAX: alt_min,
+                           OH_DIFF: alt_min - min_min,
+                           }
 
 
-def find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg):
+def find_closest_o_to_ostar(carboxyl_oxys, water_oxys, hydronium, box, cfg):
     # initialize smallest distance to the closest distance
-    min_dist = np.zeros(len(carboxy_oxys))
+    min_dist = np.zeros(len(carboxyl_oxys))
     closest_o = {}
-    for index, co in enumerate(carboxy_oxys):
+    alt_dist = np.nan
+    for index, co in enumerate(carboxyl_oxys):
         if not hydronium:
             # initialize minimum distance to maximum distance allowed in the PBC
             min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
@@ -404,39 +406,39 @@ def find_closest_o_to_ostar(carboxy_oxys, water_oxys, hydronium, box, cfg):
                     min_dist[index] = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
                     closest_o[index] = atom
     index_min = np.argmin(min_dist)
-    prot_o = carboxy_oxys[index_min]
+    prot_o = carboxyl_oxys[index_min]
     min_min = min_dist[index_min]
     close_o = closest_o[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
-    for index, co in enumerate(carboxy_oxys):
+    for index, co in enumerate(carboxyl_oxys):
         if index != index_min:
             alt_dist = pbc_dist(np.asarray(close_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
-    if alt_dist:
-        alt_min = np.amin(alt_dist)
-    else:
-        alt_min = np.nan
+    alt_min = np.amin(alt_dist)
     return close_o, prot_o, min_min, alt_min
 
 
-
 def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
-    carboxy_oxys = []
+    carboxyl_oxys = []
     water_oxys = []
     # dictionary so can index by mol_num
     water_hs = []
-    prot_H = None
+    excess_proton = None
     hydronium = []
     type1 = []
     type2 = []
     calc_results = {}
+    oh_dist_dict = {}
+    closest_o_to_ostar = {}
+    prot_o = {}
+    o_ostar_dist = {}
+    closest_excess_h = {}
     for atom in dump_atom_data:
-        # Keep track of carboxylic oxygens.
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
-                carboxy_oxys.append(atom)
-            elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and ( atom[ATOM_NUM] not in cfg[PROT_IGNORE]):
-                prot_H = atom
+                carboxyl_oxys.append(atom)
+            elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and (atom[ATOM_NUM] not in cfg[PROT_IGNORE]):
+                excess_proton = atom
         elif atom[ATOM_TYPE] == cfg[WAT_O_TYPE]:
             water_oxys.append(atom)
         elif atom[ATOM_TYPE] == cfg[WAT_H_TYPE]:
@@ -450,18 +452,18 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 type2.append(atom)
 
     if cfg[PER_FRAME_OUTPUT]:
-        if len(carboxy_oxys) != 2:
+        if len(carboxyl_oxys) != 2:
             raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
-                                   'carboxylic oxygens). Found {} such indices at timestep {}. '
+                                   'carboxylic oxygen atoms). Found {} such indices at timestep {}. '
                                    'Check input data.'.format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
-                                                              len(carboxy_oxys), timestep))
+                                                              len(carboxyl_oxys), timestep))
     if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_AMINO_FORM] or cfg[CALC_HIJ_WATER_FORM]:
-        closest_excess_h, oh_dist_dict = find_closest_excessH(carboxy_oxys, prot_H, hydronium, box, cfg)
+        closest_excess_h, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton, hydronium, box, cfg)
     if cfg[CALC_HIJ_WATER_FORM]:
-        closest_o_to_ostar, prot_o, o_ostar_dist, alt_ostar_dist = find_closest_o_to_ostar(carboxy_oxys, water_oxys,
+        closest_o_to_ostar, prot_o, o_ostar_dist, alt_ostar_dist = find_closest_o_to_ostar(carboxyl_oxys, water_oxys,
                                                                                            hydronium, box, cfg)
     if cfg[CALC_OH_DIST]:
-        if prot_H is None:
+        if excess_proton is None:
             calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
         else:
             calc_results.update(oh_dist_dict)
@@ -472,63 +474,65 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
     if cfg[CALC_HIJ_WATER_FORM]:
         q_vec = calc_q(closest_o_to_ostar[XYZ_COORDS], prot_o[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
-        hij_wat, termA1, termA2, termA3 = hij_water(o_ostar_dist, q_vec)
-        calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat, HIJ_A1: termA1, HIJ_A2: termA2, HIJ_A3: termA3, })
-
+        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_vec)
+        calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat,
+                             HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
 
     # Checks for required data
     if cfg[CALC_HO_GOFR] or cfg[CALC_OO_GOFR]:
         if len(water_oxys) < 1:
-            raise InvalidDataError('Found no water oxygens at timestep {}. Check input data.'.format(timestep))
+            raise InvalidDataError('Found no water oxygen atoms at timestep {}. Check input data.'.format(timestep))
     if cfg[CALC_HH_GOFR] or cfg[CALC_OH_GOFR]:
         if len(water_hs) < 1:
-            raise InvalidDataError('Found no water hydrogens at timestep {}. Check input data.'.format(timestep))
+            raise InvalidDataError('Found no water hydrogen atoms at timestep {}. Check input data.'.format(timestep))
 
     # For calcs requiring H* (proton on protonated residue) skip timesteps when there is no H* (residue deprotonated)
     if cfg[GOFR_OUTPUT]:
-        if prot_H is not None:
+        if excess_proton is not None:
             if cfg[CALC_HO_GOFR]:
                 num_dens = len(water_oxys) / np.prod(box)
-                ho_dists = (calc_pair_dists([prot_H], water_oxys, box))
+                ho_dists = (calc_pair_dists([excess_proton], water_oxys, box))
                 step_his = np.histogram(ho_dists, gofr_data[GOFR_BINS])
-                gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], step_his[0] / num_dens)
+                gofr_data[HO_BIN_COUNT] = np.add(gofr_data[HO_BIN_COUNT], np.divide(step_his[0], num_dens))
                 gofr_data[HO_STEPS_COUNTED] += 1
             if cfg[CALC_HH_GOFR]:
                 num_dens = len(water_hs) / np.prod(box)
-                hh_dists = (calc_pair_dists([prot_H], water_hs, box))
+                hh_dists = (calc_pair_dists([excess_proton], water_hs, box))
                 step_his = np.histogram(hh_dists, gofr_data[GOFR_BINS])
-                gofr_data[HH_BIN_COUNT] = np.add(gofr_data[HH_BIN_COUNT], step_his[0] / num_dens)
+                gofr_data[HH_BIN_COUNT] = np.add(gofr_data[HH_BIN_COUNT], np.divide(step_his[0], num_dens))
                 gofr_data[HH_STEPS_COUNTED] += 1
         if cfg[CALC_OO_GOFR]:
-            num_dens = (len(carboxy_oxys) * len(water_oxys)) / np.prod(box)
-            oo_dists = (calc_pair_dists(carboxy_oxys, water_oxys, box))
+            num_dens = (len(carboxyl_oxys) * len(water_oxys)) / np.prod(box)
+            oo_dists = (calc_pair_dists(carboxyl_oxys, water_oxys, box))
             step_his = np.histogram(oo_dists, gofr_data[GOFR_BINS])
-            gofr_data[OO_BIN_COUNT] = np.add(gofr_data[OO_BIN_COUNT], step_his[0] / num_dens)
+            gofr_data[OO_BIN_COUNT] = np.add(gofr_data[OO_BIN_COUNT], np.divide(step_his[0], num_dens))
             gofr_data[OO_STEPS_COUNTED] += 1
         if cfg[CALC_OH_GOFR]:
-            num_dens = (len(carboxy_oxys) * len(water_hs)) / np.prod(box)
-            oh_dists = (calc_pair_dists(carboxy_oxys, water_hs, box))
+            num_dens = (len(carboxyl_oxys) * len(water_hs)) / np.prod(box)
+            oh_dists = (calc_pair_dists(carboxyl_oxys, water_hs, box))
             step_his = np.histogram(oh_dists, gofr_data[GOFR_BINS])
-            gofr_data[OH_BIN_COUNT] = np.add(gofr_data[OH_BIN_COUNT], step_his[0] / num_dens)
+            gofr_data[OH_BIN_COUNT] = np.add(gofr_data[OH_BIN_COUNT], np.divide(step_his[0], num_dens))
             gofr_data[OH_STEPS_COUNTED] += 1
         if cfg[CALC_TYPE_GOFR]:
             if len(type1) > 0 and len(type2) > 0:
                 num_dens = (len(type1) * len(type2)) / np.prod(box)
                 type_dists = (calc_pair_dists(type1, type2, box))
                 step_his = np.histogram(type_dists, gofr_data[GOFR_BINS])
-                gofr_data[TYPE_BIN_COUNT] = np.add(gofr_data[TYPE_BIN_COUNT], step_his[0] / num_dens)
+                gofr_data[TYPE_BIN_COUNT] = np.add(gofr_data[TYPE_BIN_COUNT], np.divide(step_his[0], num_dens))
                 gofr_data[TYPE_STEPS_COUNTED] += 1
 
     return calc_results
 
 
-def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data):
     with open(dump_file) as d:
         section = None
         box = np.zeros((3,))
         box_counter = 1
         atom_counter = 1
         timesteps_read = 0
+        num_atoms = 0
+        timestep = None
         for line in d:
             line = line.strip()
             if section is None:
@@ -585,9 +589,8 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
     if atom_counter == 1:
         print("Completed reading dumpfile {}.".format(dump_file))
     else:
-        warning(
-            "FYI: dump file {} step {} did not have the full list of atom numbers. Continuing to next dump file.".format(
-                dump_file, timestep))
+        warning("FYI: dump file {} step {} did not have the full list of atom numbers. "
+                "Continuing to next dump file.".format(dump_file, timestep))
 
 
 def setup_per_frame_output(cfg):
@@ -607,6 +610,10 @@ def process_dump_files(cfg):
     """
     gofr_data = {}
     out_fieldnames = None
+    g_dr = np.nan
+    dr_array = []
+    gofr_out_fieldnames = []
+    gofr_output = []
 
     if cfg[GOFR_OUTPUT]:
         g_dr = cfg[GOFR_DR]
@@ -637,7 +644,7 @@ def process_dump_files(cfg):
             dump_file = dump_file.strip()
             # skip any excess blank lines
             if len(dump_file) > 0:
-                read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames)
+                read_dump_file(dump_file, cfg, data_to_print, gofr_data)
                 if cfg[PER_FRAME_OUTPUT]:
                     f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                     write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
@@ -674,14 +681,12 @@ def process_dump_files(cfg):
             gofr_out_fieldnames.append(GOFR_TYPE)
             gofr_output = np.column_stack((gofr_output, gofr_type))
         else:
-            warning("Did not find any timesteps with the pairs in {}. This output will not be printed.".config(
-                CALC_TYPE_GOFR))
+            warning("Did not find any timesteps with the pairs in {}. "
+                    "This output will not be printed.".format(CALC_TYPE_GOFR))
     if cfg[GOFR_OUTPUT]:
         f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
         seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
         print('Wrote file: {}'.format(f_out))
-
-    return
 
 
 def main(argv=None):

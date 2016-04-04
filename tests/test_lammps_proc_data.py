@@ -42,6 +42,9 @@ GOOD_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_oh_good.csv')
 HO_OO_HH_OH_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr.ini')
 GOOD_HO_OO_HH_OH_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_gofr_ho_oo_hh_oh_good.csv')
 
+HO_OO_HH_OH_GOFR_OH_INI = os.path.join(SUB_DATA_DIR, 'ho_oo_hh_oh_gofr_with_oh.ini')
+
+
 DEF_GOFR_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_gofrs.csv')
 DEF_GOFR_INCOMP_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
 
@@ -133,3 +136,11 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT_PATH)
+
+    def testHO_OO_HH_OHGofR_OH(self):
+        try:
+            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_OH_INI])
+            # self.assertFalse(diff_lines(DEF_GOFR_OUT_PATH, GOOD_HO_OO_HH_OH_GOFR_OUT_PATH))
+        finally:
+            # silent_remove(DEF_GOFR_OUT_PATH)
+            pass
