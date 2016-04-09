@@ -19,6 +19,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 INVALID_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
+LONG_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_long.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
@@ -83,11 +84,12 @@ class TestLammpsProcData(unittest.TestCase):
         with capture_stdout(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
 
-    def testNoIni(self):
-        with capture_stdout(lammps_proc_data.main, []) as output:
-            self.assertTrue("usage:" in output)
-        with capture_stderr(lammps_proc_data.main, []) as output:
-            self.assertTrue("Problems reading file: Could not read file" in output)
+    def testLongDump(self):
+        lammps_proc_data.main(["-c", LONG_INI_PATH])
+        # with capture_stderr(lammps_proc_data.main, ["-c", LONG_INI_PATH]) as output:
+        #     self.assertTrue("Problems reading file: Could not read file" in output)
+        # with capture_stdout(lammps_proc_data.main) as output:
+        #     self.assertTrue("optional arguments" in output)
 
     def testMissingConfig(self):
         lammps_proc_data.main(["-c", INCOMP_INI_PATH])
