@@ -1,2 +1,2 @@
-/Users/Heather/bee/code/python/md_utils/tests/test_data/evb_info/0_3.out
-/Users/Heather/bee/code/python/md_utils/tests/test_data/evb_info/31_3.out
+test_data/evb_info/0_3.out
+test_data/evb_info/31_3.out

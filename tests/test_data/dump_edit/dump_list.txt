@@ -1,2 +1,2 @@
-/Users/Heather/bee/code/python/md_utils/tests/test_data/dump_edit/0.625_20c_short.dump
+test_data/dump_edit/0.625_20c_short.dump
 

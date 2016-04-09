@@ -1,1 +1,1 @@
-/Users/Heather/bee/code/python/md_utils/tests/test_data/data2pdb/glue_hm.data
+test_data/data2pdb/glue_hm.data
