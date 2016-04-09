@@ -18,6 +18,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
+INVALID_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
@@ -50,6 +51,7 @@ GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS = os.path.join(SUB_DATA_DIR, 'glue_dump_long
 DEF_GOFR_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_gofrs.csv')
 # noinspection PyUnresolvedReferences
 DEF_GOFR_INCOMP_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
+# noinspection PyUnresolvedReferences
 DEF_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs.csv')
 
 HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
@@ -57,17 +59,24 @@ HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
 GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
-good_long_out_msg = 'Wrote file: /Users/Heather/bee/code/python/md_utils/tests/test_data/lammps_proc/' \
-                    'glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/md_utils/tests/test_data/' \
-                    'lammps_proc/glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/md_utils/tests/' \
-                    'test_data/lammps_proc/glue_dump_long_gofrs.csv\nWrote file: /Users/Heather/bee/code/python/' \
-                    'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
+good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
-                    'Continuing program.\nCompleted reading dumpfile /Users/Heather/bee/code/python/md_utils/tests/' \
-                    'test_data/lammps_proc/1.625_0a_21steps.dump.\nWrote file: /Users/Heather/bee/code/python/md_utils/' \
-                    'tests/test_data/lammps_proc/glue_dump_long_gofrs.csv'
+                    'Continuing program.\nCompleted reading dumpfile'
+
 
 class TestLammpsProcData(unittest.TestCase):
+    def testNoInputFile(self):
+        with capture_stderr(lammps_proc_data.main) as output:
+            self.assertTrue("Problems reading file: Could not read file" in output)
+        with capture_stdout(lammps_proc_data.main) as output:
+            self.assertTrue("optional arguments" in output)
+
+    def testInvalidData(self):
+        with capture_stderr(lammps_proc_data.main, ["-c", INVALID_INI_PATH]) as output:
+            self.assertTrue("Problem with default config vals on key h3o_o_type: invalid literal for int" in output)
+        with capture_stdout(lammps_proc_data.main, ["-c", INVALID_INI_PATH]) as output:
+            self.assertTrue("optional arguments" in output)
+
     def testNoAction(self):
         with capture_stderr(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("No calculations have been requested" in output)
@@ -81,6 +90,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertTrue("Problems reading file: Could not read file" in output)
 
     def testMissingConfig(self):
+        lammps_proc_data.main(["-c", INCOMP_INI_PATH])
         with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("Input data missing" in output)
         with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
@@ -89,14 +99,14 @@ class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
         try:
             lammps_proc_data.main(["-c", OH_DIST_INI_PATH])
-            # self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+            self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
 
     def testMaxTimestepsCalcHIJ(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", HIJ_INI_PATH]) as output:
+        with capture_stdout(lammps_proc_data.main, ["-c", HIJ_INI_PATH]) as output:
             try:
-                self.assertTrue("more than the maximum" in output)
+                self.assertTrue("Reached the maximum timesteps" in output)
                 self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
             finally:
                 silent_remove(DEF_HIJ_OUT_PATH)
@@ -163,4 +173,3 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:
             silent_remove(DEF_MAX_STEPS_OUT)
-

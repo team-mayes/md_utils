@@ -11,7 +11,7 @@ import unittest
 import os
 
 from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, read_csv,
-                                write_csv, str_to_bool, read_csv_header, fmt_row_data)
+                                write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -78,6 +78,16 @@ def is_one_of_type(val, types):
 
 # Tests #
 
+class TestRateCalc(unittest.TestCase):
+    """
+    Tests calculation of a rate coefficient by the Eyring equation.
+    """
+    def test_calc_k(self):
+        temp = 900.0
+        delta_g = 53.7306
+        rate_coeff = calc_k(temp, delta_g)
+        self.assertEqual(rate_coeff, 1.648326791137026)
+
 
 class TestFindFiles(unittest.TestCase):
     """
@@ -85,13 +95,13 @@ class TestFindFiles(unittest.TestCase):
     """
 
     def test_find(self):
-        self.maxDiff = None
         found = find_files_by_dir(FES_BASE, DEF_FILE_PAT)
         exp_data = expected_dir_data()
         self.assertEqual(len(exp_data), len(found))
         for key, files in exp_data.items():
             found_files = found.get(key)
             try:
+                # noinspection PyUnresolvedReferences
                 self.assertCountEqual(files, found_files)
             except AttributeError:
                 self.assertItemsEqual(files, found_files)
@@ -136,8 +146,8 @@ class TestReadCsv(unittest.TestCase):
         Verifies the contents of the CSV file.
         """
         result = read_csv(CSV_FILE, data_conv={FREE_KEY: float,
-                                     CORR_KEY: float,
-                                     COORD_KEY: float, })
+                                               CORR_KEY: float,
+                                               COORD_KEY: float, })
         self.assertTrue(result)
         for row in result:
             self.assertEqual(3, len(row))
@@ -173,9 +183,10 @@ class TestWriteCsv(unittest.TestCase):
             tgt_fname = create_prefix_out_fname(SHORT_WHAM_PATH, OUT_PFX, base_dir=tmp_dir)
 
             write_csv(data, tgt_fname, RAD_KEY_SEQ)
-            csv_result = read_csv(tgt_fname, data_conv={FREE_KEY: str_to_bool,
-                                              CORR_KEY: float,
-                                              COORD_KEY: str, })
+            csv_result = read_csv(tgt_fname,
+                                  data_conv={FREE_KEY: str_to_bool,
+                                             CORR_KEY: float,
+                                             COORD_KEY: str, })
             self.assertEqual(len(data), len(csv_result))
             for i, csv_row in enumerate(csv_result):
                 self.assertDictEqual(data[i], csv_row)

@@ -26,14 +26,12 @@ logger = logging.getLogger('lammps_proc_data')
 logging.basicConfig(filename='lammps_proc_data', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
-
 # Error Codes
 # The good status code
 GOOD_RET = 0
 INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
-
 
 # Constants #
 
@@ -101,8 +99,6 @@ CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'  # 14 17 ?? ??
 # Added so I don't have to read all of a really big file
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
-
-# TODO: Maybe move PER_FRAME_OUTPUT; something set by reading other configs; is it still a config?
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
 PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_AMINO_FORM, CALC_HIJ_WATER_FORM]
 GOFR_OUTPUT = 'flag_for_gofr_output'
@@ -310,6 +306,10 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except InvalidDataError as e:
+        warning("Invalid Data:", e)
+        parser.print_help()
+        return args, INVALID_DATA
 
     if len(args.config[PROT_O_IDS]) != 2:
         warning('Expected to find exactly two atom indices listed for the key {}. Check '
@@ -717,9 +717,6 @@ def main(argv=None):
 
     # Read template and dump files
     cfg = args.config
-
-    # TODO: Fix file name--when gave it a folder name as part of the dumplist list, tried to use the folder name twice
-    # TODO: Print intermediate data!
 
     try:
         process_dump_files(cfg)

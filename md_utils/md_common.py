@@ -39,6 +39,10 @@ BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in kcal/mol Kelvin
 BOLTZ_CONST = 0.0019872041
+# Planck's Constant in kcal s / mol
+PLANCK_CONST = 9.53707E-14
+# Universal gas constant in kcal/mol K
+R = 0.001985877534
 
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
@@ -107,6 +111,16 @@ def calc_kbt(temp_k):
     :return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
     """
     return BOLTZ_CONST * temp_k
+
+
+def calc_k(temp, delta_gibbs):
+    """
+    Returns the rate coefficient calculated from Transition State Theory in inverse seconds
+    @param temp: the temperature in Kelvin
+    @param delta_gibbs: the change in Gibbs free energy in kcal/mol
+    @return: rate coefficient in inverse sections
+    """
+    return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (R * temp))
 
 
 def xyz_distance(fir, sec):
@@ -694,10 +708,11 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     try:
         for key, def_val in def_cfg_vals.items():
             proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
+        for key, type_func in req_keys.items():
+            proc_cfg[key] = type_func(raw_cfg[key])
     except Exception as e:
-        logger.error('Problem with default config vals on key %s: %s', key, e)
-    for key, type_func in req_keys.items():
-        proc_cfg[key] = type_func(raw_cfg[key])
+        print("hello", key, def_val, type(def_val))
+        raise InvalidDataError('Problem with default config vals on key {}: {}'.format(key, e))
 
     return proc_cfg
 
