@@ -44,6 +44,10 @@ PLANCK_CONST = 9.53707E-14
 # Universal gas constant in kcal/mol K
 R = 0.001985877534
 
+# Tolerance based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
+TOL = 0.000000000000001
+
+
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
 SEC_NUM_ATOMS = 'dump_num_atoms'
@@ -159,6 +163,8 @@ def pbc_vector_diff(a, b, box):
 #   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
 
 def pbc_angle(p0, p1, p2, box):
+    #
+    print(p0, p1, p2, box)
     pass
 
 
@@ -710,8 +716,9 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
             proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
         for key, type_func in req_keys.items():
             proc_cfg[key] = type_func(raw_cfg[key])
+    except KeyError as e:
+        raise KeyError('Missing config val for key {}'.format(key, e))
     except Exception as e:
-        print("hello", key, def_val, type(def_val))
         raise InvalidDataError('Problem with default config vals on key {}: {}'.format(key, e))
 
     return proc_cfg
@@ -719,19 +726,61 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
 
 # Comparisons #
 
+def conv_num(s):
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return float(s)
+        except ValueError:
+            return s
+
+
 def diff_lines(floc1, floc2):
-    diff_lines = []
+    """
+    Determine all lines in a file are equal.
+    If not, test if the line is a csv that has floats and the difference is due to machine precision.
+    If not, return all lines with differences.
+    @param floc1: file location 1
+    @param floc2: file location 1
+    @return: a list of the lines with differences
+    """
+    diff_lines_list = []
+    diff_plus_lines = []
+    diff_neg_lines = []
+    close_enough = False
     with open(floc1) as file1:
         with open(floc2) as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
-            for line in diff:
-                if line.startswith('-'):
-                    logger.debug(line)
-                    diff_lines.append(line)
-                elif line.startswith('+'):
-                    logger.debug(line)
-                    diff_lines.append(line)
-    return diff_lines
+    for line in diff:
+        if line.startswith('-') or line.startswith('+'):
+            diff_lines_list.append(line)
+            # line may be space or comma-separated. First, remove difflib's two-charatcter code,
+            #   then split on comma, then clean up white space (and split on white-space, just in case)
+            #   then convert to number
+            s_line = [conv_num(x.strip()) for x in line[2:].split(',')]
+            if line.startswith('-'):
+                diff_plus_lines.append(s_line)
+            elif line.startswith('+'):
+                diff_neg_lines.append(s_line)
+
+    if len(diff_plus_lines) == len(diff_neg_lines):
+        # if the same number of lines, there is a chance that the difference is only due to difference in
+        # floating point precision. Check each value of the line, split on whitespace or comma
+        close_enough = True
+        for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
+            for item_plus, item_neg in zip(line_plus, line_neg):
+                if isinstance(item_plus, float) and isinstance(item_neg, float):
+                    if abs(item_plus - item_plus) < TOL:
+                        close_enough = close_enough and True
+                else:
+                    if item_plus != item_neg:
+                        close_enough = False
+
+    if not close_enough:
+        return diff_lines_list
+    else:
+        return []
 
 
 # Data Structures #

@@ -11,7 +11,7 @@ import unittest
 import os
 
 from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, read_csv,
-                                write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k)
+                                write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -33,6 +33,10 @@ ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
+ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
+MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
 
 OUT_PFX = 'rad_'
 
@@ -199,3 +203,19 @@ class TestFormatData(unittest.TestCase):
         raw = [{"a": 1.3333322333, "b": 999.222321}, {"a": 333.44422222, "b": 17.121}]
         fmt_std = [{'a': '1.3333', 'b': '999.2223'}, {'a': '333.4442', 'b': '17.1210'}]
         self.assertListEqual(fmt_std, fmt_row_data(raw, "{0:.4f}"))
+
+
+class TestDiffLines(unittest.TestCase):
+    def testSameFile(self):
+        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+
+    def testMachinePrecDiff(self):
+        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, ALMOST_OH_DIST_OUT_PATH))
+
+    def testMachinePrecDiff2(self):
+        self.assertFalse(diff_lines(ALMOST_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+
+    def testMissLine(self):
+        diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
+        self.assertTrue(len(diff_line_list) == 1)
+        self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])

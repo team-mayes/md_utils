@@ -26,6 +26,8 @@ OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
+MISS_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_missing_dump.ini')
+BAD_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_bad_dump.ini')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
 INCOMP_DUMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_incomp_dump.ini')
 INCOMP_PROT_O_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_miss_prot_oxys.ini')
@@ -84,12 +86,13 @@ class TestLammpsProcData(unittest.TestCase):
         with capture_stdout(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
 
-    def testLongDump(self):
-        lammps_proc_data.main(["-c", LONG_INI_PATH])
-        # with capture_stderr(lammps_proc_data.main, ["-c", LONG_INI_PATH]) as output:
-        #     self.assertTrue("Problems reading file: Could not read file" in output)
-        # with capture_stdout(lammps_proc_data.main) as output:
-        #     self.assertTrue("optional arguments" in output)
+    def testMissDump(self):
+        with capture_stderr(lammps_proc_data.main, ["-c", MISS_DUMP_INI]) as output:
+            self.assertTrue("No such file or directory" in output)
+
+    def testBadDump(self):
+        with capture_stderr(lammps_proc_data.main, ["-c", BAD_DUMP_INI]) as output:
+            self.assertTrue("Problems reading data: Unexpected line in file " in output)
 
     def testMissingConfig(self):
         lammps_proc_data.main(["-c", INCOMP_INI_PATH])

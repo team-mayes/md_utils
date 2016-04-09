@@ -541,9 +541,8 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
             line = line.strip()
             if section is None:
                 section = find_dump_section_state(line)
-                #logger.debug("In process_dump_files, set section to %s.", section)
-                if section is None:
-                    raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
+                if section is None and len(line) > 0:
+                    raise InvalidDataError('Unexpected line in file {}: {}'.format(dump_file, line))
             elif section == SEC_TIMESTEP:
                 # Reset variables
                 section = None
@@ -651,7 +650,6 @@ def print_gofr(cfg, gofr_data):
     f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
     seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
     print('Wrote file: {}'.format(f_out))
-
 
 
 def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, message='Wrote file: {}'):
