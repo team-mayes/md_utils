@@ -6,7 +6,6 @@ Creates lammps data files from lammps dump files, given a template lammps data f
 from __future__ import print_function
 import ConfigParser
 from collections import defaultdict
-import copy
 import logging
 import re
 import sys
@@ -14,7 +13,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, pbc_dist, \
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, pbc_dist, \
     warning, process_cfg, find_dump_section_state
 
 PRE_RES = 'pre_prot_res'
@@ -58,6 +57,7 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_IGNORE = 'prot_ignore_atom_nums'
 OUT_BASE_DIR = 'output_directory'
+REPROD_TPL = 'reproduce_tpl_flag'
 
 # Config keys to allow calculating charge at intermediate points:
 LAST_P1 = 'last_p1'
@@ -81,6 +81,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
                 LAST_HYD: -1,
                 LAST_WATER: -1,
                 LAST_ION1: -1,
+                REPROD_TPL: False,
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
             WAT_O_TYPE: int,
@@ -173,13 +174,6 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def print_lammps_data_file(head, atoms, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(atoms, f_name, mode='a', delimiter=' ')
-    list_to_file(tail, f_name, mode='a')
-    return
-
-
 def process_data_tpl(cfg):
     tpl_loc = cfg[DATA_TPL_FILE]
     tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: [], PROT_RES_MOL: [], H3O_MOL: [],
@@ -252,8 +246,15 @@ def process_data_tpl(cfg):
                                                                                         cfg[PROT_RES_MOL]))
                     for mol_list in [H3O_MOL, WATER_MOLS]:
                         if len(tpl_data[mol_list]) == 0:
-                            raise InvalidDataError('In reading the data file, found no {}. Check the data file and'
-                                                   'the input atom types.'.format(mol_list))
+                            raise InvalidDataError('In reading the data file, found no {}. Check the data file and '
+                                                   'the input atom types: \n{} = {}\n{} = {}\n{} = {}\n'
+                                                   '{} = {}\n{} = {}.'
+                                                   ''.format(mol_list,
+                                                             PROT_H_TYPE, cfg[PROT_H_TYPE],
+                                                             H3O_O_TYPE, cfg[H3O_O_TYPE],
+                                                             H3O_H_TYPE, cfg[H3O_H_TYPE],
+                                                             WAT_O_TYPE, cfg[WAT_O_TYPE],
+                                                             WAT_H_TYPE, cfg[WAT_H_TYPE]))
 
                 elif atom_num in calc_charge_atom_nums:
                     print('After atom {0} ({1}), the total charge is: {2:.3f}'.format(atom_num,
@@ -266,12 +267,16 @@ def process_data_tpl(cfg):
 
     # Validate data section
     if len(tpl_data[ATOMS_CONTENT]) != tpl_data[NUM_ATOMS]:
-        raise InvalidDataError('The length of the "Atoms" section ({}) does not equal '
-                               'the number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT])-1, tpl_data[NUM_ATOMS]))
+        raise InvalidDataError('In the file {}, The length of the "Atoms" section ({}) does not equal '
+                               'the number of atoms ({}).'.format(tpl_loc,
+                                                                  len(tpl_data[ATOMS_CONTENT]),
+                                                                  tpl_data[NUM_ATOMS]))
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if cfg[REPROD_TPL]:
         f_out = create_out_fname('reproduced_tpl', base_dir=cfg[OUT_BASE_DIR], ext='.data')
-        print_lammps_data_file(tpl_data[HEAD_CONTENT], tpl_data[ATOMS_CONTENT][1:], tpl_data[TAIL_CONTENT], f_out)
+        list_to_file(tpl_data[HEAD_CONTENT] + tpl_data[ATOMS_CONTENT][:] + tpl_data[TAIL_CONTENT],
+                     f_out)
+        print('Wrote file: {}'.format(f_out))
 
     return tpl_data
 
@@ -315,6 +320,8 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         raise InvalidDataError('Encountered dump file in which the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
     for atom in range(0, len(protonatable_res)):
+        # TODO: continue here. Check types, but allow a few to be different!
+        print("hello", protonatable_res[atom][0:2], tpl_data[PROT_RES_MOL][atom][0:2])
         if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
             protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
         else:
@@ -322,88 +329,6 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
                                    'protonatable residue are not ordered as in the template data file.')
 
     return
-
-
-def change_h3o_mol_id(cfg, dump_h3o_mol, water_mol_dict, tpl_h3o_mol, tpl_water_mols):
-    # if the h3o molecule id does not match the template, make it so
-    #   Note: if the procedure for deprotonating a residue has been run, (at least currently) the first hydrogen may
-    #   have the correct molecule ID, while the rest does not! Thus, check from the last atom of the molecule
-    #   (guaranteed not to be the first hydrogen!)
-    target_h3o_mol_id = tpl_h3o_mol[-1][1]
-    target_wat_mol_id = copy.copy(dump_h3o_mol[-1][1])
-    # Start by copying properties from the template; copy whole line so easier to align columns later
-    #   FYI on why I used copy: I was assigning parts of the original water and h3o to the same new molecules,
-    #   and it was referencing only, so I did not get my required combination results.
-    for atom in tpl_h3o_mol:
-        if atom[2] == cfg[H3O_O_TYPE]:
-            h3o_o_props = copy.copy(atom)
-        else:
-            # okay if overwrite; all H props should be the same
-            h3o_h_props = copy.copy(atom)
-    for atom in next(tpl_water_mols.itervalues()):
-        if atom[2] == cfg[WAT_O_TYPE]:
-            wat_o_props = copy.copy(atom)
-        else:
-            # okay if overwrite; all H props should be the same
-            wat_h_props = copy.copy(atom)
-
-    for atom_id, atom in enumerate(dump_h3o_mol):
-        atom[1] = target_h3o_mol_id
-        # Make sure line up atom types!
-        if atom[2] == cfg[H3O_O_TYPE]:
-            atom[2:3] = h3o_o_props[2:3]
-            atom[7:] = h3o_o_props[7:]
-        else:
-            atom[2:3] = h3o_h_props[2:3]
-            atom[7:] = h3o_h_props[7:]
-
-    for atom_id, atom in enumerate(water_mol_dict[target_h3o_mol_id]):
-        atom[1] = target_wat_mol_id
-        # Make sure line up atom types!
-        if atom[2] == cfg[WAT_O_TYPE]:
-            atom[2:3] = wat_o_props[2:3]
-            atom[7:] = wat_o_props[7:]
-        else:
-            atom[2:3] = wat_h_props[2:3]
-            atom[7:] = wat_h_props[7:]
-
-    # copy before I delete it
-    new_wat_mol = copy.copy(water_mol_dict[target_h3o_mol_id])
-    del water_mol_dict[target_h3o_mol_id]
-    water_mol_dict[target_wat_mol_id] = new_wat_mol
-    return
-
-
-def check_h3o_atom_id(cfg, dump_h3o_mol, tpl_data):
-
-    current_h_ids = []
-    for atom in dump_h3o_mol:
-        if atom[2] == cfg[H3O_H_TYPE]:
-            current_h_ids.append(atom[0])
-
-    all_h3o_h_atom_ids = []
-    target_h3o_h_atom_ids = []
-    for atom in tpl_data[H3O_MOL]:
-        atom_id = copy.copy(atom[0])
-        if atom[2] == cfg[H3O_O_TYPE]:
-            target_h3o_o_atom_id = atom_id
-        else:
-            all_h3o_h_atom_ids.append(atom_id)
-            # Also make a list of ones that need to change
-            if atom[0] not in current_h_ids:
-                target_h3o_h_atom_ids.append(atom_id)
-
-    # Check if any are wrong
-    h_atom_counter = 0
-    reorder_dict = {}
-    for atom in dump_h3o_mol:
-        if atom[2] == cfg[H3O_O_TYPE]:
-            if atom[0] != target_h3o_o_atom_id:
-                reorder_dict[copy.copy(atom[0])] = target_h3o_o_atom_id
-        else:
-            if atom[0] not in all_h3o_h_atom_ids:
-                reorder_dict[copy.copy(atom[0])] = target_h3o_h_atom_ids[h_atom_counter]
-                h_atom_counter += 1
 
 
 def sort_wat_mols(cfg, water_dict):
@@ -461,7 +386,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                 section = find_dump_section_state(line)
                 #logger.debug("In process_dump_files, set section to %s.", section)
                 if section is None:
-                    raise InvalidDataError('Unexpected line in file {}: {}'.format(d, line))
+                    raise InvalidDataError('Unexpected line in file {}: {}'.format(dump_file, line))
             elif section == SEC_TIMESTEP:
                 timestep = line
                 # Reset variables
@@ -476,7 +401,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                 if data_tpl_content[NUM_ATOMS] != int(line):
                     raise InvalidDataError('At timestep {} in file {}, the listed number of atoms ({}) does '
                                            'not equal the number of atoms in the template data file '
-                                           '({}).'.format(timestep, d, line, data_tpl_content[NUM_ATOMS]))
+                                           '({}).'.format(timestep, dump_file, line, data_tpl_content[NUM_ATOMS]))
                 section = None
             elif section == SEC_BOX_SIZE:
                 split_line = line.split()
@@ -563,12 +488,12 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                                              ext='.data', base_dir=cfg[OUT_BASE_DIR])
                     data_tpl_content[HEAD_CONTENT][0] = "Created by evbdump2data from {} " \
                                                         "timestep {}".format(dump_file, timestep)
-                    print_lammps_data_file(data_tpl_content[HEAD_CONTENT], dump_atom_data,
-                                           data_tpl_content[TAIL_CONTENT], d_out)
+                    list_to_file(data_tpl_content[HEAD_CONTENT] + dump_atom_data + data_tpl_content[TAIL_CONTENT],
+                                 d_out)
                     print('Wrote file: {}'.format(d_out))
                 counter += 1
     if counter == 1:
-        print("Completed reading dumpfile {}.".format(dump_file))
+        print("Completed reading dumpfile {}".format(dump_file))
     else:
         warning("Dump file {} step {} did not have the full list of atom numbers. "
                 "Continuing program.".format(dump_file, timestep))
