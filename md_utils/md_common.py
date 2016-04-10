@@ -207,13 +207,6 @@ def pbc_dihedral(p0, p1, p2, p3, box):
 
 # Other #
 
-def swerr(*objs):
-    """Writes an error message to a target (stderr by default).
-    :param objs: The elements of the message to write.
-    """
-    print("ERROR:", *objs, file=sys.stderr)
-
-
 def chunk(seq, chunk_size, process=iter):
     """Yields items from an iterator in iterable chunks.
     From https://gist.github.com/ksamuel/1275417

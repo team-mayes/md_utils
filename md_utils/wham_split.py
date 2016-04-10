@@ -11,7 +11,7 @@ import logging
 import math
 
 from md_utils.md_common import (find_files_by_dir, chunk, file_to_str,
-                                allow_write, str_to_file, swerr)
+                                allow_write, str_to_file, warning)
 from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            LINES_KEY, DEF_BASE_SUBMIT_TPL,
                            DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
@@ -188,7 +188,7 @@ def main(argv=None):
             for meta_file in meta_files:
                 rmsd_split(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
     except TemplateNotReadableError as e:
-        swerr(e)
+        warning(e)
         return 3
 
     return 0  # success

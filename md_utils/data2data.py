@@ -322,17 +322,14 @@ def process_data_files(cfg, data_tpl_content):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
-
 
     # Read template and data files
     cfg = args.config
 
     # TODO, did not read in file correctly
     cfg[MAKE_DICT] = False
-
 
     try:
         data_tpl_content = process_data_tpl(cfg)
