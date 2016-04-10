@@ -15,18 +15,31 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'evbd2d')
+
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_missing_data.ini')
 GOOD_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_good.ini')
 GOOD_INI_NO_CHARGE_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_good_no_section_atom_nums.ini')
-DEF_PROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_10.data')
-DEF_DEPROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_20.data')
+
 GOOD_PROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_prot_good.data')
 GOOD_DEPROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_deprot_good.data')
-REPROD_TPL = os.path.join(DATA_DIR, 'reproduced_tpl.data')
-REPROD2_TPL = os.path.join(os.path.dirname(__file__), 'reproduced_tpl.data')
+
+GLU_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu.ini')
 GLU_NEW_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_new_types.ini')
 GLU_BAD_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_bad.ini')
-GLU_INI_PATH = os.path.join(SUB_DATA_DIR, 'evbd2d_glu.ini')
+
+GLU_DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990.data')
+GLU_GOOD_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990_good.data')
+
+# Test output files #
+
+# noinspection PyUnresolvedReferences
+REPROD_TPL = os.path.join(DATA_DIR, 'reproduced_tpl.data')
+# noinspection PyUnresolvedReferences
+REPROD2_TPL = os.path.join(os.path.dirname(__file__), 'reproduced_tpl.data')
+# noinspection PyUnresolvedReferences
+DEF_PROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_10.data')
+# noinspection PyUnresolvedReferences
+DEF_DEPROT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_20.data')
 
 
 class TestEVBDump2Data(unittest.TestCase):
@@ -58,6 +71,7 @@ class TestEVBDump2Data(unittest.TestCase):
             # Make sure it handles the extra empty line
             self.assertFalse("WARNING:  Problems reading file" in output)
         try:
+            self.assertFalse(diff_lines(DEF_PROT_OUT_PATH, GOOD_PROT_OUT_PATH))
             self.assertFalse(diff_lines(DEF_DEPROT_OUT_PATH, GOOD_DEPROT_OUT_PATH))
         finally:
             silent_remove(DEF_PROT_OUT_PATH)
@@ -95,6 +109,6 @@ class TestEVBDump2Data(unittest.TestCase):
     def testGlu(self):
         try:
             evbdump2data.main(["-c", GLU_INI_PATH])
-            # self.assertFalse(md_utils.md_common.diff_lines(DEF_OUT, GOOD_OUT))
+            self.assertFalse(diff_lines(GLU_DEF_OUT, GLU_GOOD_OUT))
         finally:
             silent_remove(REPROD_TPL)
