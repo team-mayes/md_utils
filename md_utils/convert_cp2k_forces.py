@@ -22,7 +22,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, warning, seq_list_to_file, create_prefix_out_fname
+from md_utils.md_common import InvalidDataError, warning, create_prefix_out_fname, list_to_file
 
 
 __author__ = 'hmayes'
@@ -182,8 +182,7 @@ def process_cp2k_force_file(file, out_dir):
                         sums = np.asarray(map(float,split_line[4:])) * au_to_N
                         # sums_str = ' '.join([str(atom_num)] + ['%8.3f'%F for F in sums])
                         f_out = create_prefix_out_fname(file, OUT_FILE_PREFIX, base_dir=out_dir, ext='')
-                        seq_list_to_file(to_print, f_out, delimiter=' ')
-                                            # outfile.write(' '.join(map(str, [atom_num] + xyz)))
+                        list_to_file(to_print, f_out)
                         return np.append([atom_num], sums)
                 except ValueError as e:
                     warning('Check file {} sum line in the third ATOMIC FORCES section, as it does not '
@@ -239,7 +238,7 @@ def read_file_list(file_list, out_dir):
         print(' '.join(['%10.0f'%summary_array[0]] + ['%10.3f'%F for F in summary_array[1:]]))
     else:
         f_out = create_prefix_out_fname(file_list, 'force_sums_', base_dir=out_dir, ext='.csv')
-        seq_list_to_file(summary_array, f_out, delimiter=' ')
+        list_to_file(summary_array, f_out)
         with open(f_out, 'w') as logfile:
             logfile.write(','.join(summary_header) + "\n")
             for line in summary_array:
