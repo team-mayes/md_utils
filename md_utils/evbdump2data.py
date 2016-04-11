@@ -55,7 +55,8 @@ H3O_O_TYPE = 'h3o_o_type'
 H3O_H_TYPE = 'h3o_h_type'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
-PROT_IGNORE = 'prot_ignore_atom_nums'
+PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
+PROT_TYPE_IGNORE_ATOMS = 'prot_res_type_ignore_atoms'
 OUT_BASE_DIR = 'output_directory'
 REPROD_TPL = 'reproduce_tpl_flag'
 
@@ -72,7 +73,7 @@ LAST_ION1 = 'last_ion1'
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
-                PROT_IGNORE: [],
+                PROT_H_IGNORE: [],
                 OUT_BASE_DIR: None,
                 LAST_P1: -1,
                 LAST_P2: -1,
@@ -82,6 +83,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
                 LAST_WATER: -1,
                 LAST_ION1: -1,
                 REPROD_TPL: False,
+                PROT_TYPE_IGNORE_ATOMS: [],
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
             WAT_O_TYPE: int,
@@ -320,13 +322,15 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         raise InvalidDataError('Encountered dump file in which the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
     for atom in range(0, len(protonatable_res)):
-        # TODO: continue here. Check types, but allow a few to be different!
-        print("hello", protonatable_res[atom][0:2], tpl_data[PROT_RES_MOL][atom][0:2])
-        if protonatable_res[atom][0:2] == tpl_data[PROT_RES_MOL][atom][0:2]:
-            protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
+        if protonatable_res[atom][0:4] == tpl_data[PROT_RES_MOL][atom][0:4] or \
+                protonatable_res[atom][0] in cfg[PROT_TYPE_IGNORE_ATOMS]:
+           protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
         else:
-            raise InvalidDataError('In the current timestep of the current dump file, the atoms in the '
-                                   'protonatable residue are not ordered as in the template data file.')
+            raise InvalidDataError("In reading the dump file, found atom index {} with type {} which does not "
+                                   "match the type in the data template ({}). \nTo ignore this mis-match, list "
+                                   "the atom's index number in the keyword '{}' in the ini file."
+                                   "".format(protonatable_res[atom][0], protonatable_res[atom][2],
+                                             tpl_data[PROT_RES_MOL][atom][2], PROT_TYPE_IGNORE_ATOMS))
 
     return
 
@@ -426,7 +430,7 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
 
                 # Keep track of separate portions of the system to allow sorting and processing
                 if mol_num == cfg[PROT_RES_MOL_ID]:
-                    if atom_type == cfg[PROT_H_TYPE] and atom_num not in cfg[PROT_IGNORE]:
+                    if atom_type == cfg[PROT_H_TYPE] and atom_num not in cfg[PROT_H_IGNORE]:
                         excess_proton = atom_struct
                     else:
                         atom_lists[PROT_RES].append(atom_struct)

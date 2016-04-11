@@ -43,7 +43,7 @@ DUMPS_FILE = 'dump_list_file'
 
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
-PROT_IGNORE = 'prot_ignore_atom_nums'
+PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
 PROT_O_IDS = 'prot_carboxyl_oxy_atom_nums'
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
@@ -111,7 +111,7 @@ DEF_MAX_TIMESTEPS = 1000000000000
 DEF_CFG_FILE = 'lammps_proc_data.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
-                PROT_IGNORE: [],
+                PROT_H_IGNORE: [],
                 PROT_O_IDS: [],
                 OUT_BASE_DIR: None,
                 PER_FRAME_OUTPUT: False,
@@ -441,7 +441,7 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
                 carboxyl_oxys.append(atom)
-            elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and (atom[ATOM_NUM] not in cfg[PROT_IGNORE]):
+            elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and (atom[ATOM_NUM] not in cfg[PROT_H_IGNORE]):
                 excess_proton = atom
         elif atom[ATOM_TYPE] == cfg[WAT_O_TYPE]:
             water_oxys.append(atom)
