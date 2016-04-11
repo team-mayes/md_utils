@@ -39,8 +39,8 @@ GOOD_PROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_prot_good.data')
 GOOD_DEPROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_deprot_good.data')
 
 # noinspection PyUnresolvedReferences
-GLU_DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990.data')
-GLU_GOOD_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990_good.data')
+GLU_DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990.data')
+GLU_GOOD_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990_good.data')
 GLU_DATA_TPL = os.path.join(SUB_DATA_DIR, 'glue_tpl.data')
 
 # noinspection PyUnresolvedReferences
@@ -96,6 +96,7 @@ class TestEVBDump2Data(unittest.TestCase):
         silent_remove(REPROD_TPL)
 
     def testGlu(self):
+        # evbdump2data.main(["-c", GLU_INI])
         try:
             with capture_stdout(evbdump2data.main, ["-c", GLU_INI]) as output:
                 # Checking intermediate charge calculation
@@ -127,12 +128,12 @@ class TestEVBDump2Data(unittest.TestCase):
             silent_remove(REPROD_TPL)
 
     def testTplMissAtom(self):
+        # evbdump2data.main(["-c", TPL_MISS_ATOM_INI])
         with capture_stderr(evbdump2data.main, ["-c", TPL_MISS_ATOM_INI]) as output:
-                self.assertTrue("The data file system is not neutral. Total charge -0.510000" in output)
-                self.assertTrue("The data file system is not neutral. Total charge -0.510000" in output)
-
-    def testMissingArg(self):
-        evbdump2data.main(["-c", ])
+            self.assertTrue("The data file system is not neutral. Total charge -0.510000" in output)
+            self.assertTrue('The length of the "Atoms" section (1428) does not equal the '
+                            'number of atoms (1429)' in output)
 
     def testTplAtomWrongOrder(self):
-        evbdump2data.main(["-c", TPL_WRONG_ATOM_ORDER_INI])
+        with capture_stderr(evbdump2data.main, ["-c", TPL_WRONG_ATOM_ORDER_INI]) as output:
+            self.assertTrue("does not match the type" in output)
