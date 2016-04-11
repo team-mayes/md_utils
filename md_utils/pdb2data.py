@@ -8,18 +8,14 @@ List of pdb files to convert
 """
 
 from __future__ import print_function
-
 import ConfigParser
-from collections import defaultdict
-import copy
 import logging
 import re
-import numpy as np
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, str_to_file, create_prefix_out_fname, process_cfg, warning, write_csv
-
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, process_cfg, warning
 
 __author__ = 'hmayes'
 
@@ -130,6 +126,7 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+
 def process_data_tpl(cfg):
     dict_loc = cfg[ATOM_DICT_FILE]
     tpl_loc = cfg[DATA_TPL_FILE]
@@ -142,7 +139,6 @@ def process_data_tpl(cfg):
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
     bond_pat = re.compile(r"^Bond.*")
-
 
     with open(dict_loc) as csvfile:
         for line in csv.reader(csvfile):
@@ -197,7 +193,7 @@ def process_data_tpl(cfg):
 
     if logger.isEnabledFor(logging.DEBUG):
         list_to_file(tpl_data[HEAD_CONTENT], 'head.txt')
-        seq_list_to_file(tpl_data[ATOMS_CONTENT], 'atoms.txt')
+        list_to_file(tpl_data[ATOMS_CONTENT], 'atoms.txt')
         list_to_file(tpl_data[TAIL_CONTENT], 'tail.txt')
 
     return tpl_data
@@ -229,19 +225,18 @@ def process_pdb_files(cfg, data_tpl_content):
                         #     print(atom_num,atom_type, data_tpl_content[ATOMS_CONTENT][atom_num][2],data_tpl_content[ATOM_TYPE_DICT][atom_type])
                         # # For printing a dictionary
                         # new_atom_type_dict[atom_type] = data_tpl_content[ATOMS_CONTENT][atom_num][2]
-                        pdb_atom_line.append(data_tpl_content[ATOMS_CONTENT][atom_num][:4]+[pdb_x,pdb_y,pdb_z]+data_tpl_content[ATOMS_CONTENT][atom_num][4:])
+                        pdb_atom_line.append(data_tpl_content[ATOMS_CONTENT][atom_num][:4]+
+                                             [pdb_x,pdb_y,pdb_z]+data_tpl_content[ATOMS_CONTENT][atom_num][4:])
                         atom_num += 1
             if atom_num != data_tpl_content[NUM_ATOMS]:
-                raise InvalidDataError('The length of the "Atoms" section ({}) in the pdb does not equal ' \
-                           'the number of atoms in the data template file ({}).'.format(len(atom_num),
-                            data_tpl_content[NUM_ATOMS]))
+                raise InvalidDataError('The length of the "Atoms" section ({}) in the pdb does not equal '
+                                       'the number of atoms in the data template file ({}).'
+                                       ''.format(len(atom_num),
+                                                 data_tpl_content[NUM_ATOMS]))
             d_out = create_out_fname(pdb_file, suffix='_from_py' , ext='.data')
-            list_to_file(data_tpl_content[HEAD_CONTENT], d_out)
-            seq_list_to_file(pdb_atom_line, d_out, mode='a')
-            list_to_file(data_tpl_content[TAIL_CONTENT], d_out, mode='a')
+            list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_atom_line + data_tpl_content[TAIL_CONTENT],
+                         d_out)
             print('Wrote file: {}'.format(d_out))
-
-    return
 
 
 def main(argv=None):

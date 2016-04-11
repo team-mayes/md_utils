@@ -154,7 +154,8 @@ class TestLammpsProcData(unittest.TestCase):
             lammps_proc_data.main(["-c", HH_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HH_GOFR_OUT_PATH))
         finally:
-            silent_remove(DEF_GOFR_OUT)
+            # silent_remove(DEF_GOFR_OUT)
+            pass
 
     def testOHGofR(self):
         try:

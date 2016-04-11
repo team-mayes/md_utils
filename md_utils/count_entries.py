@@ -4,12 +4,11 @@ Adds a string to the beginning and end of a file.
 """
 
 from __future__ import print_function
-
-import numpy as np
 import logging
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, create_prefix_out_fname
 import sys
 import argparse
+
+from md_utils.md_common import InvalidDataError, create_out_fname, warning
 
 __author__ = 'hmayes'
 

@@ -4,15 +4,15 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
-
 import ConfigParser
 from collections import defaultdict
 import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, warning, conv_raw_val, process_cfg
 import sys
 import argparse
+
+from md_utils.md_common import InvalidDataError, warning, process_cfg
 
 __author__ = 'hmayes'
 
@@ -145,13 +145,6 @@ def parse_cmdline(argv):
         return args, INPUT_ERROR
 
     return args, GOOD_RET
-
-
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
 
 
 def find_section_state(line, current_section):

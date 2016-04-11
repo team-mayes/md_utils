@@ -15,7 +15,7 @@ import argparse
 import numpy as np
 
 from md_utils.md_common import InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg, \
-    find_dump_section_state, write_csv, seq_list_to_file
+    find_dump_section_state, write_csv, list_to_file
 
 
 __author__ = 'hmayes'
@@ -648,7 +648,7 @@ def print_gofr(cfg, gofr_data):
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
 
     f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    seq_list_to_file(gofr_output, f_out, header=gofr_out_fieldnames)
+    list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
     print('Wrote file: {}'.format(f_out))
 
 

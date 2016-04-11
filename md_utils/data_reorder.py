@@ -4,23 +4,15 @@ Reorders a lammps data file
 """
 
 from __future__ import print_function
-
 import ConfigParser
-import logging
 import re
 import csv
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, warning, process_cfg
+
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('reorder_lammps_data')
-logging.basicConfig(filename='reorder_lammps_data.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes
@@ -36,8 +28,9 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-DATAS_FILE = 'data_list_file'
+DATA_FILES = 'data_list_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
+MAKE_DICT = 'make_dictionary_flag'
 
 # data file info
 
@@ -45,11 +38,11 @@ ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
 # Defaults
 DEF_CFG_FILE = 'data_reorder.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt',
+DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 ATOM_ID_DICT_FILE: 'reorder_old_new.csv',
+                MAKE_DICT: False,
                 }
-REQ_KEYS = {
-             }
+REQ_KEYS = {}
 
 # For data template file processing
 SEC_HEAD = 'head_section'
@@ -78,13 +71,6 @@ NUM_DIHE_TYP = 'num_dihe_typ'
 NUM_IMPR_TYP = 'num_impr_typ'
 
 
-def to_int_list(raw_val):
-    return_vals = []
-    for val in raw_val.split(','):
-        return_vals.append(int(val.strip()))
-    return return_vals
-
-
 def read_cfg(floc, cfg_proc=process_cfg):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
@@ -111,13 +97,11 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Reorders atom ids in a lammps data file, given a dictionary to reorder '
-                                                 'the atoms (each line contains the old index (0-based) followed by the'
-                                                 'new, in csv format.')
+    parser = argparse.ArgumentParser(description='Reorders atom ids in a lammps data file, given a dictionary to '
+                                                 'reorder the atoms (a csv of old_index,new_index).')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
-                                               "See the example file /test/test_data/data_reorder/data_reorder.ini. "
-                                               "The default file name is data_reorder.ini, located in the "
-                                               "base directory where the program as run.",
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -174,7 +158,8 @@ def find_section_state(line, current_section):
     else:
         return current_section
 
-def find_header_values(line, dict):
+
+def find_header_values(line, nums_dict):
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     num_bonds_pat = re.compile(r"(\d+).*bonds$")
     num_angl_pat = re.compile(r"(\d+).*angles$")
@@ -187,67 +172,66 @@ def find_header_values(line, dict):
     num_dihe_typ_pat = re.compile(r"(\d+).*dihedral types$")
     num_impr_typ_pat = re.compile(r"(\d+).*improper types$")
 
-    if dict[NUM_ATOMS] is None:
+    if nums_dict[NUM_ATOMS] is None:
         atoms_match = num_atoms_pat.match(line)
         if atoms_match:
             # regex is 1-based
-            dict[NUM_ATOMS] = int(atoms_match.group(1))
+            nums_dict[NUM_ATOMS] = int(atoms_match.group(1))
             return
-    if dict[NUM_ATOM_TYP] is None:
+    if nums_dict[NUM_ATOM_TYP] is None:
         atom_match = num_atom_typ_pat.match(line)
         if atom_match:
             # regex is 1-based
-            dict[NUM_ATOM_TYP] = int(atom_match.group(1))
+            nums_dict[NUM_ATOM_TYP] = int(atom_match.group(1))
             return
-    if dict[NUM_BONDS] is None:
+    if nums_dict[NUM_BONDS] is None:
         bonds_match = num_bonds_pat.match(line)
         if bonds_match:
             # regex is 1-based
-            dict[NUM_BONDS] = int(bonds_match.group(1))
+            nums_dict[NUM_BONDS] = int(bonds_match.group(1))
             return
-    if dict[NUM_BOND_TYP] is None:
+    if nums_dict[NUM_BOND_TYP] is None:
         bond_match = num_bond_typ_pat.match(line)
         if bond_match:
             # regex is 1-based
-            dict[NUM_BOND_TYP] = int(bond_match.group(1))
+            nums_dict[NUM_BOND_TYP] = int(bond_match.group(1))
             return
-    if dict[NUM_ANGLS] is None:
+    if nums_dict[NUM_ANGLS] is None:
         angls_match = num_angl_pat.match(line)
         if angls_match:
             # regex is 1-based
-            dict[NUM_ANGLS] = int(angls_match.group(1))
+            nums_dict[NUM_ANGLS] = int(angls_match.group(1))
             return
-    if dict[NUM_ANGL_TYP] is None:
+    if nums_dict[NUM_ANGL_TYP] is None:
         angl_match = num_angl_typ_pat.match(line)
         if angl_match:
             # regex is 1-based
-            dict[NUM_ANGL_TYP] = int(angl_match.group(1))
+            nums_dict[NUM_ANGL_TYP] = int(angl_match.group(1))
             return
-    if dict[NUM_DIHES] is None:
+    if nums_dict[NUM_DIHES] is None:
         dihes_match = num_dihe_pat.match(line)
         if dihes_match:
             # regex is 1-based
-            dict[NUM_DIHES] = int(dihes_match.group(1))
+            nums_dict[NUM_DIHES] = int(dihes_match.group(1))
             return
-    if dict[NUM_DIHE_TYP] is None:
+    if nums_dict[NUM_DIHE_TYP] is None:
         dihe_match = num_dihe_typ_pat.match(line)
         if dihe_match:
             # regex is 1-based
-            dict[NUM_DIHE_TYP] = int(dihe_match.group(1))
+            nums_dict[NUM_DIHE_TYP] = int(dihe_match.group(1))
             return
-    if dict[NUM_IMPRS ] is None:
+    if nums_dict[NUM_IMPRS] is None:
         imprs_match = num_impr_pat.match(line)
         if imprs_match:
             # regex is 1-based
-            dict[NUM_IMPRS ] = int(imprs_match.group(1))
+            nums_dict[NUM_IMPRS] = int(imprs_match.group(1))
             return
-    if dict[NUM_IMPR_TYP] is None:
+    if nums_dict[NUM_IMPR_TYP] is None:
         impr_match = num_impr_typ_pat.match(line)
         if impr_match:
             # regex is 1-based
-            dict[NUM_IMPR_TYP] = int(impr_match.group(1))
+            nums_dict[NUM_IMPR_TYP] = int(impr_match.group(1))
             return
-
 
 
 def process_data_files(cfg):
@@ -257,19 +241,20 @@ def process_data_files(cfg):
 
     # Read in the reordering dictionary
     # Note: the dictionary is base 1.
-    with open(atom_id_dict_loc) as csvfile:
-        for line in csv.reader(csvfile):
+    with open(atom_id_dict_loc) as csv_file:
+        for line in csv.reader(csv_file):
             try:
                 atom_id_dict[int(line[0])] = int(line[1])
             except ValueError as e:
-                logger.debug("Could not convert line %s of file %s to two integers.", line, csvfile)
+                raise InvalidDataError("Encountered error {} on file {}. Could not convert the following line to two "
+                                       "integers: {}".format(e, atom_id_dict_loc, line))
         print('Completed reading atom dictionary.')
 
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
-    with open(cfg[DATAS_FILE]) as f:
+    with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
             if len(data_file) == 0:
@@ -292,11 +277,11 @@ def process_data_files(cfg):
                     if section is None:
                         section = find_section_state(line, section)
                         count = 0
-                        if section == None:
+                        if section is None:
                             # If we are skipping velocities and it was the last-read section, skip the buffer.
                             # Otherwise, add it to the head if haven't finished reading atoms, tail otherwise
                             if last_read_velos:
-                               last_read_velos = False
+                                last_read_velos = False
                             elif len(atoms_content) < nums_dict[NUM_ATOMS]:
                                 head_content.append(line)
                             else:
@@ -307,7 +292,7 @@ def process_data_files(cfg):
                         head_content.append(line)
                         section = find_section_state(line, section)
                         if section == SEC_HEAD:
-                            find_header_values(line,nums_dict)
+                            find_header_values(line, nums_dict)
                         else:
                             # Count starts at 1 because the title of the next section is already printed in the header
                             # For all the rest, it is not
@@ -379,14 +364,14 @@ def process_data_files(cfg):
                             tail_content.append(line)
                         else:
                             split_line = line.split()
-                            atoms  = map(int,split_line[2:4])
+                            atoms = map(int, split_line[2:4])
                             new_atoms = atoms
-                            for id,atom_id in enumerate(atoms):
+                            for index, atom_id in enumerate(atoms):
                                 if atom_id in atom_id_dict:
-                                    new_atoms[id] = atom_id_dict[atom_id]
+                                    new_atoms[index] = atom_id_dict[atom_id]
                                 else:
-                                    new_atoms[id] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[4:]))
+                                    new_atoms[index] = atom_id
+                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[4:]))
                             count += 1
                     elif section == SEC_ANGLS:
                         if count == nums_dict[NUM_ANGLS]:
@@ -395,14 +380,14 @@ def process_data_files(cfg):
                             tail_content.append(line)
                         else:
                             split_line = line.split()
-                            atoms  = map(int,split_line[2:5])
+                            atoms = map(int, split_line[2:5])
                             new_atoms = atoms
-                            for id,atom_id in enumerate(atoms):
+                            for index, atom_id in enumerate(atoms):
                                 if atom_id in atom_id_dict:
-                                    new_atoms[id] = atom_id_dict[atom_id]
+                                    new_atoms[index] = atom_id_dict[atom_id]
                                 else:
-                                    new_atoms[id] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[5:]))
+                                    new_atoms[index] = atom_id
+                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[5:]))
                             count += 1
                     elif section == SEC_DIHES:
                         if count == nums_dict[NUM_DIHES]:
@@ -411,14 +396,14 @@ def process_data_files(cfg):
                             tail_content.append(line)
                         else:
                             split_line = line.split()
-                            atoms = map(int,split_line[2:6])
+                            atoms = map(int, split_line[2:6])
                             new_atoms = atoms
-                            for id,atom_id in enumerate(atoms):
+                            for index, atom_id in enumerate(atoms):
                                 if atom_id in atom_id_dict:
-                                    new_atoms[id] = atom_id_dict[atom_id]
+                                    new_atoms[index] = atom_id_dict[atom_id]
                                 else:
-                                    new_atoms[id] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[6:]))
+                                    new_atoms[index] = atom_id
+                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[6:]))
                             count += 1
                     elif section == SEC_IMPRS:
                         if count == nums_dict[NUM_IMPRS]:
@@ -427,14 +412,14 @@ def process_data_files(cfg):
                             tail_content.append(line)
                         else:
                             split_line = line.split()
-                            atoms  = map(int,split_line[2:6])
+                            atoms = map(int, split_line[2:6])
                             new_atoms = atoms
-                            for id,atom_id in enumerate(atoms):
+                            for index, atom_id in enumerate(atoms):
                                 if atom_id in atom_id_dict:
-                                    new_atoms[id] = atom_id_dict[atom_id]
+                                    new_atoms[index] = atom_id_dict[atom_id]
                                 else:
-                                    new_atoms[id] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str,new_atoms) + split_line[6:]))
+                                    new_atoms[index] = atom_id
+                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[6:]))
                             count += 1
                     else:
                         tail_content.append(line)
@@ -458,19 +443,18 @@ def process_data_files(cfg):
                     new_atom_id += 1
 
             # # Write dictionary
-            # with open('new_mapping.csv', 'w') as myfile:
+            # with open('new_mapping.csv', 'w') as d_file:
             #     for line in new_mapping:
-            #         myfile.write('%d,%d' % tuple(line) + '\n')
+            #         d_file.write('%d,%d' % tuple(line) + '\n')
 
             f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
             list_to_file(head_content+renumbered+tail_content, f_name)
             print('Completed writing {}'.format(f_name))
-    return
+
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 

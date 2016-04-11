@@ -4,24 +4,15 @@ Removes consecutive duplicate lines
 """
 
 from __future__ import print_function
-
-import ConfigParser
-import logging
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, warning
 
 __author__ = 'hmayes'
 
 
-# Logging
-logger = logging.getLogger('remove_consec_dup_lines')
-logging.basicConfig(filename='remove_consec_dup_lines.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
 # Constants #
-
-
 
 # Error Codes
 # The good status code
@@ -29,12 +20,6 @@ GOOD_RET = 0
 INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
-
-def to_int_list(raw_val):
-    return_vals = []
-    for val in raw_val.split(','):
-        return_vals.append(int(val.strip()))
-    return return_vals
 
 
 def parse_cmdline(argv):
@@ -46,12 +31,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Compares sequential lines of files. If two consequtive lines are '
+    parser = argparse.ArgumentParser(description='Compares sequential lines of files. If two consecutive lines are '
                                                  'equal, keeps only the first.')
-    parser.add_argument("-f", "--src_file", help="The location of the file to be processed."
-                                               "format. See the example file /test/test_data/evbd2d/compare_data.ini. "
-                                               "The default file name is compare_data.ini, located in the "
-                                               "base directory where the program as run.")
+    parser.add_argument("-f", "--src_file", help="The location of the file to be processed.")
+
     args = None
     try:
         args = parser.parse_args(argv)
@@ -67,13 +50,6 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
-
-
 def proc_file(file_name):
     with open(file_name) as d:
         nodups_lines = ['']
@@ -85,11 +61,10 @@ def proc_file(file_name):
                 continue
             else:
                 nodups_lines.append(line)
-    print('Completed reading',file_name)
-    print('')
+    print('Completed reading {}.\n'.format(file_name))
     f_out_name = create_out_fname(file_name, suffix='_nodups')
     list_to_file(nodups_lines[1:], f_out_name)
-    return
+    print('Wrote {}.\n'.format(f_out_name))
 
 
 def main(argv=None):
@@ -105,7 +80,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

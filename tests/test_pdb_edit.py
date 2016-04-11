@@ -44,11 +44,11 @@ class TestPDBEdit(unittest.TestCase):
         try:
             pdb_edit.main(["-c", DEF_INI])
             # for debugging:
-            with open(DEF_OUT) as f:
-                with open(GOOD_OUT) as g:
-                    for d_line, g_line in zip(f, g):
-                        if d_line != g_line:
-                            print(d_line, g_line)
+            # with open(DEF_OUT) as f:
+            #     with open(GOOD_OUT) as g:
+            #         for d_line, g_line in zip(f, g):
+            #             if d_line != g_line:
+            #                 print(d_line, g_line)
             self.assertFalse(md_utils.md_common.diff_lines(DEF_OUT, GOOD_OUT))
         finally:
             md_utils.md_common.silent_remove(DEF_OUT)

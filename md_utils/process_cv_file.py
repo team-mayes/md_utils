@@ -5,16 +5,13 @@ For combining data from multiple files based on a common timestep. Convert plume
 """
 
 from __future__ import print_function
-
 import ConfigParser
 import logging
-import re
 import os
-import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, to_int_list, create_out_fname, conv_raw_val, process_cfg, seq_list_to_file
-
 import sys
 import argparse
+
+from md_utils.md_common import list_to_file, InvalidDataError, warning, create_out_fname, process_cfg
 
 __author__ = 'hmayes'
 
@@ -125,11 +122,11 @@ def process_cv_file(cv_file, time_col, cv_col, row_index, time_conv):
                     warning("Excepted a number for the time_column ({}) and cv column({}). Found {} and {}.".format(time_col, cv_col, data[time_col]), data[cv_col], e)
                     return INVALID_DATA
     d_out = create_out_fname(cv_file, suffix='_converted', ext='.txt')
-    seq_list_to_file(data_to_print, d_out, delimiter=' ')
+    list_to_file(data_to_print, d_out)
     print('Wrote file: {}'.format(d_out))
 
     d_out = create_out_fname(cv_file, suffix='_converted', ext='.csv')
-    seq_list_to_file(data_to_print, d_out,)
+    list_to_file(data_to_print, d_out, delimiter=',')
     print('Wrote file: {}'.format(d_out))
 
 

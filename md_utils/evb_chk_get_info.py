@@ -10,7 +10,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, warning, create_prefix_out_fname, process_cfg
+from md_utils.md_common import InvalidDataError, warning, create_prefix_out_fname, process_cfg
 
 __author__ = 'hmayes'
 
@@ -217,19 +217,11 @@ def process_file(cfg):
             print_qm_kind(o_ids,'O',f_name,mode='a')
             f_name = create_prefix_out_fname(data_file, 'vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_vmd_list(o_ids+h_ids, f_name)
-    return
-
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
 
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
 
@@ -247,7 +239,6 @@ def main(argv=None):
         return INVALID_DATA
 
     # print(psf_data_content[ATOMS_CONTENT])
-
     return GOOD_RET  # success
 
 

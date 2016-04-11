@@ -4,25 +4,15 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
-
 import ConfigParser
 import copy
-import logging
 import re
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
 
+from md_utils.md_common import InvalidDataError, create_out_fname, warning, process_cfg, list_to_file, read_int_dict
+
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
-
 
 # Error Codes
 # The good status code
@@ -38,21 +28,27 @@ MAIN_SEC = 'main'
 
 # Config keys
 DATA_TPL_FILE = 'data_tpl_file'
-DATAS_FILE = 'data_list_file'
+DATA_FILES = 'data_list_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
-MAKE_DICT = 'make_dictionary_flag'
+MAKE_ATOM_TYPE_DICT = 'make_atom_type_dict_flag'
+ATOM_NUM_DICT_FILE = 'atom_num_dict_filename'
+MAKE_ATOM_NUM_DICT = 'make_atom_num_dict_flag'
 
 # data file info
-
+ATOMS_PAT = re.compile(r"^Atoms.*")
+NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
 
 # Defaults
 DEF_CFG_FILE = 'data2data.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_type_dict_old_new.csv',
-                MAKE_DICT: False,
-}
+DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
+                ATOM_TYPE_DICT_FILE: None,
+                MAKE_ATOM_NUM_DICT: False,
+                ATOM_NUM_DICT_FILE: None,
+                MAKE_ATOM_TYPE_DICT: False,
+                }
 REQ_KEYS = {DATA_TPL_FILE: str,
-}
+            }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -97,15 +93,15 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(description='Creates data files from lammps data in the format of a template data '
                                                  'file. The required input file provides the location of the '
                                                  'template file, a file with a list of data files to convert, and '
-                                                 'a dictionary mapping old data types to new, to allow checks that the '
-                                                 'order is the same in the files to convert and the template file.'
-                                                 'Note: Dictionaries of data types can be made, **assuming the atom'
+                                                 '(optionally) dictionaries mapping old data number or types to new, '
+                                                 'to reorder and/or check that the atom type order '
+                                                 'is the same in the files to convert and the template file. \n'
+                                                 'Note: Dictionaries of data types can be made, **assuming the atom '
                                                  'numbers correspond**. The check on whether they do can be used to '
                                                  'make a list of which atom numbers require remapping.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/data2data/data2data.ini. "
-                                               "The default file name is data2data.ini, located in the "
-                                               "base directory where the program as run.",
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -121,17 +117,11 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+
 def process_data_tpl(cfg):
     tpl_loc = cfg[DATA_TPL_FILE]
-    tpl_data = {}
-    tpl_data[HEAD_CONTENT] = []
-    tpl_data[ATOMS_CONTENT] = []
-    tpl_data[TAIL_CONTENT] = []
-    tpl_data[ATOM_TYPE_DICT] = {}
-    tpl_data[ATOM_ID_DICT] = {}
+    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: [], ATOM_TYPE_DICT: {}, ATOM_ID_DICT: {}}
     section = SEC_HEAD
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    atoms_pat = re.compile(r"^Atoms.*")
 
     with open(tpl_loc) as f:
         for line in f.readlines():
@@ -141,11 +131,11 @@ def process_data_tpl(cfg):
             if section == SEC_HEAD:
                 tpl_data[HEAD_CONTENT].append(line)
                 if NUM_ATOMS not in tpl_data:
-                    atoms_match = num_atoms_pat.match(line)
+                    atoms_match = NUM_ATOMS_PAT.match(line)
                     if atoms_match:
                         # regex is 1-based
                         tpl_data[NUM_ATOMS] = int(atoms_match.group(1))
-                elif atoms_pat.match(line):
+                elif ATOMS_PAT.match(line):
                     section = SEC_ATOMS
                     tpl_data[HEAD_CONTENT].append('')
 
@@ -175,148 +165,188 @@ def process_data_tpl(cfg):
     return tpl_data
 
 
-def make_atom_dict(cfg, data_tpl_content):
-    atoms_pat = re.compile(r"^Atoms.*")
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    # Don't want to change the original template data when preparing to print the new file:
+def read_data_for_dict(cfg, data_file, data_tpl_content, old_new_atom_num_dict, old_new_atom_type_dict):
+    with open(data_file) as d:
+        section = SEC_HEAD
+        atom_id = 0
+        num_atoms = None
 
-    with open(cfg[DATAS_FILE]) as f:
+        for line in d.readlines():
+            line = line.strip()
+
+            # Get number of atoms in header, so know when to exit reading loop
+            if section == SEC_HEAD:
+                if ATOMS_PAT.match(line):
+                    section = SEC_ATOMS
+                elif num_atoms is None:
+                    atoms_match = NUM_ATOMS_PAT.match(line)
+                    if atoms_match:
+                        # regex is 1-based
+                        num_atoms = int(atoms_match.group(1))
+
+            elif section == SEC_ATOMS:
+                if len(line) == 0:
+                    continue
+                split_line = line.split()
+
+                old_atom_num = int(split_line[0])
+                new_atom_num = data_tpl_content[ATOMS_CONTENT][atom_id][0]
+
+                old_atom_type = int(split_line[2])
+                new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+
+                # Making the dictionaries
+                if cfg[MAKE_ATOM_NUM_DICT]:
+                    if old_atom_num in old_new_atom_num_dict:
+                        # Check that we don't have conflicting matching; may look at multiple files
+                        if new_atom_num != old_new_atom_num_dict[old_atom_num]:
+                            warning('Previously matched old atom number {} to new atom number {}. On the '
+                                    'following line, also found old atom number matched to a different new '
+                                    'atom number ({}): \n{}.'.format(old_atom_num,
+                                                                     old_new_atom_num_dict[old_atom_num],
+                                                                     new_atom_num, line))
+                    else:
+                        # skip if the values are equal
+                        if old_atom_num != new_atom_num:
+                            old_new_atom_num_dict[old_atom_num] = new_atom_num
+                if cfg[MAKE_ATOM_TYPE_DICT]:
+                    if old_atom_type in old_new_atom_type_dict:
+                        # Check that we don't have conflicting matching
+                        if new_atom_type != old_new_atom_type_dict[old_atom_type]:
+                            warning('Previously matched old atom type {} to new atom type {}. On the following '
+                                    'line, also found old atom type matched to a different new atom type ({}):'
+                                    ' \n{}.'.format(old_atom_type, old_new_atom_type_dict[old_atom_type],
+                                                    new_atom_type, line))
+                    else:
+                        # skip if the values are equal
+                        if old_atom_type != new_atom_type:
+                            old_new_atom_type_dict[old_atom_type] = new_atom_type
+
+                atom_id += 1
+                # Check after addition because the counter started at 0
+                if atom_id == num_atoms:
+                    # Since the dictionary is only based on the atom section, nothing more is needed.
+                    return
+
+
+def make_atom_dict(cfg, data_tpl_content, old_new_atom_num_dict, old_new_atom_type_dict):
+    """
+    By matching lines in the template and data file, make a dictionary of atom types (old,new)
+    @param cfg: configuration for run
+    @param data_tpl_content: info from the data template
+    @return: dictionary of atom types (old,new) (also saved if file name given)
+    """
+    with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-                match_atom_type = {}
+            # check for empty line; skip to next
+            if len(data_file) > 0:
+                read_data_for_dict(cfg, data_file, data_tpl_content, old_new_atom_num_dict, old_new_atom_type_dict)
+                print("Created dictionary based on 'old' info from: {}\n"
+                      "                        and 'new' info from: {}".format(data_file, cfg[DATA_TPL_FILE]))
 
-                for line in d.readlines():
-                    line = line.strip()
-                    # Only look for number of atoms in header, so know when to exit reading loop
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
-                    # atoms_content to contain only xyz; also perform some checking
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
+                # Now that finished reading the file, Write dictionary if a name is given, and a dictionary was created
+                if (len(old_new_atom_num_dict) > 0) and (cfg[ATOM_NUM_DICT_FILE] is not None):
+                    with open(cfg[ATOM_NUM_DICT_FILE], 'w') as d_file:
+                        for line in old_new_atom_num_dict.items():
+                            d_file.write('%d,%d' % line + '\n')
+                    print('Wrote atom number dictionary to {}.'.format(cfg[ATOM_NUM_DICT_FILE]))
+                if len(old_new_atom_type_dict) > 0 and (cfg[ATOM_TYPE_DICT_FILE] is not None):
+                    with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as d_file:
+                        for line in old_new_atom_type_dict.items():
+                            d_file.write('%d,%d' % line + '\n')
+                    print('Wrote atom type dictionary to {}.'.format(cfg[ATOM_TYPE_DICT_FILE]))
 
-                        old_atom_type = int(split_line[2])
-                        new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
-
-                        # Making the dictionary
-                        if old_atom_type in match_atom_type:
-                            # Check that we don't have conflicting matching
-                            if new_atom_type != match_atom_type[old_atom_type]:
-                                print('error on line: ', line)
-                        else:
-                            match_atom_type[old_atom_type] = new_atom_type
-
-                        atom_id += 1
-                        # Check after addition because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
-
-            # Now that finished reading the file...
-
-            # Write dictionary
-            with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as myfile:
-                for line in match_atom_type.items():
-                    myfile.write('%d,%d' % line + '\n')
-
-            print('Completed making atom dictionary.')
-
-    return match_atom_type
+                # Only need to read one file to make the dictionary.
+                return
 
 
-def process_data_files(cfg, data_tpl_content):
-    atoms_pat = re.compile(r"^Atoms.*")
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
+def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_section):
+    with open(data_file) as d:
+        section = SEC_HEAD
+        atom_id = 0
+        num_atoms = None
+        for line in d.readlines():
+            line = line.strip()
+            # not keeping anything from the header
+            if section == SEC_HEAD:
+                if ATOMS_PAT.match(line):
+                    section = SEC_ATOMS
+                elif num_atoms is None:
+                    atoms_match = NUM_ATOMS_PAT.match(line)
+                    if atoms_match:
+                        # regex is 1-based
+                        num_atoms = int(atoms_match.group(1))
+                        if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
+                            raise InvalidDataError('The number of atoms listed in the data file {} ({}) does '
+                                                   'not equal the number of atoms in the template file ({}).'
+                                                   ''.format(num_atoms,
+                                                             len(data_tpl_content[ATOMS_CONTENT]), data_file))
+            # atoms_content to grab xyz and pbc rep; also perform some checking
+            elif section == SEC_ATOMS:
+                if len(line) == 0:
+                    continue
+                split_line = line.split()
+
+                # Not currently checking molecule number; the number may be wrong and the data still correct,
+                # because of the reordering I did to match the template ordering.
+                # Thus, I don't need:
+                # mol_num = int(split_line[1])
+
+                # Perform checking that the atom type in the corresponding line of the template file matches
+                # the current file
+                old_atom_type = int(split_line[2])
+
+                # If there is an atom_type_dict, and the read atom type is in it....
+                if old_atom_type in atom_type_dict:
+                    new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+                    matching_new_atom_type = atom_type_dict[old_atom_type]
+
+                    if new_atom_type != matching_new_atom_type:
+                        print('Data mismatch on atom_id : {}. The template file line and current file lines are:'
+                              '\n{}\n{}\n'.format(atom_id + 1,
+                                                  data_tpl_content[ATOMS_CONTENT][atom_id],
+                                                  line))
+                # Add in the xyz coordinates
+                try:
+                    new_data_section[atom_id][4:7] = map(float, split_line[4:7])
+                except ValueError:
+                    raise InvalidDataError("Could not convert expected x, y, z data to floats in data file {}, "
+                                           "line: {}".format(data_file, line))
+                # and pbc ids, if they are there
+                try:
+                    new_data_section[atom_id][8:10] = map(int, split_line[8:10])
+                except ValueError:
+                    # if there is not pdb id info, problem. Keep on.
+                    pass
+                atom_id += 1
+                # Check after increment because the counter started at 0
+                if atom_id == num_atoms:
+                    # Since the tail will come only from the template, nothing more is needed.
+                    break
+
+    # Now that finished reading the file...
+    # Check total length
+    # (will be wrong if got to tail before reaching num_atoms)
+    if atom_id != num_atoms:
+        raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal '
+                               'the listed number of atoms ({}).'.format(data_file, atom_id, num_atoms))
+        # Now make new file
+    f_name = create_out_fname(data_file, suffix='_new', ext='.data')
+    list_to_file(data_tpl_content[HEAD_CONTENT] + new_data_section + data_tpl_content[TAIL_CONTENT],
+                 f_name)
+    print('Completed writing {}'.format(f_name))
+
+
+def process_data_files(cfg, data_tpl_content, atom_type_dict):
     # Don't want to change the original template data when preparing to print the new file:
     new_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
 
-    # Read in the dictionaries
-    atom_type_dict_loc = cfg[ATOM_TYPE_DICT_FILE]
-    atom_type_dict = {}
-    # TODO: make it okay if it does not exist, and then just don't do checking
-    with open(atom_type_dict_loc) as csvfile:
-        for line in csv.reader(csvfile):
-            try:
-                atom_type_dict[int(line[0])] = int(line[1])
-            except ValueError as e:
-                logger.debug("Could not convert line %s of file %s to two integers.", line, csvfile)
-
-    with open(cfg[DATAS_FILE]) as f:
+    with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-                for line in d.readlines():
-                    line = line.strip()
-                    # not keeping anything from the header
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
-                                if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
-                                    raise InvalidDataError('The number of atoms listed in the data file {} ({}) does ' \
-                                                           'not equal the number of atoms in the template file ({}).'.format(
-                                        num_atoms, len(data_tpl_content[ATOMS_CONTENT]), data_file))
-                    # atoms_content to grab xyz and pbc rep; also perform some checking
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
-
-                        # Not currently checking molecule number; the number may be wrong and the data still correct,
-                        # because of the reordering I did to match the template ordering.
-                        # Thus, I don't need:
-                        # mol_num = int(split_line[1])
-
-                        # Perform checking that the atom type in the corresponding line of the template file matches
-                        # the curent file
-                        old_atom_type = int(split_line[2])
-                        new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
-                        matching_new_atom_type = atom_type_dict[old_atom_type]
-
-                        if new_atom_type != matching_new_atom_type:
-                            print('Data mismatch on (base 1) atom_id : ', atom_id + 1,
-                                  'The template file line and current file lines are:')
-                            print(data_tpl_content[ATOMS_CONTENT][atom_id])
-                            print(line)
-                            print('')
-                            # Add in the xyz coordinates and pbc ids
-                        new_data_section[atom_id][4:10] = map(float, split_line[4:7]) + map(int, split_line[7:10])
-                        atom_id += 1
-                        # Check after increment because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
-
-            # Now that finished reading the file...
-            # Check total length
-            # (will be wrong if got to tail before reaching num_atoms)
-            if atom_id != num_atoms:
-                raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal ' \
-                                       'the listed number of atoms ({}).'.format(data_file,atom_id, num_atoms))
-            # Now make new file
-            f_name = create_out_fname(data_file, suffix='_new', ext='.data')
-            print_data(data_tpl_content[HEAD_CONTENT], new_data_section, data_tpl_content[TAIL_CONTENT],
-                       f_name)
-            print('Completed writing {}'.format(f_name))
-    return
+            if len(data_file) > 0:
+                process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_section)
 
 
 def main(argv=None):
@@ -328,18 +358,27 @@ def main(argv=None):
     # Read template and data files
     cfg = args.config
 
-    # TODO, did not read in file correctly
-    cfg[MAKE_DICT] = False
-
     try:
         data_tpl_content = process_data_tpl(cfg)
-        if cfg[MAKE_DICT]:
-            make_atom_dict(cfg, data_tpl_content)
-        else:
-            process_data_files(cfg, data_tpl_content)
+
+        # Not really necessary, but makes the IDE error go away :-)
+        old_new_atom_num_dict = {}
+        old_new_atom_type_dict = {}
+
+        # Will return an empty dictionary for one of them if that one is not true
+        if cfg[MAKE_ATOM_NUM_DICT] or cfg[MAKE_ATOM_TYPE_DICT]:
+            make_atom_dict(cfg, data_tpl_content, old_new_atom_num_dict, old_new_atom_type_dict)
+
+        # Will return empty dicts if no file
+        if not cfg[MAKE_ATOM_TYPE_DICT]:
+            old_new_atom_type_dict = read_int_dict(cfg[ATOM_TYPE_DICT_FILE])
+
+        process_data_files(cfg, data_tpl_content, old_new_atom_type_dict)
+
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
+
     except InvalidDataError as e:
         warning("Problems reading data template:", e)
         return INVALID_DATA

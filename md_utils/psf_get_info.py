@@ -4,15 +4,13 @@ Get selected info from the data file
 """
 
 from __future__ import print_function
-
 import ConfigParser
-import copy
 import logging
 import re
-import csv
-from md_utils.md_common import list_to_file, InvalidDataError, seq_list_to_file, create_out_fname, warning, conv_raw_val, process_cfg
 import sys
 import argparse
+
+from md_utils.md_common import InvalidDataError, warning, process_cfg
 
 __author__ = 'hmayes'
 
@@ -251,7 +249,7 @@ def process_data_tpl(cfg):
                 psf_data[TAIL_CONTENT].append(line)
 
     # if logger.isEnabledFor(logging.DEBUG):
-    #     print_data(psf_data[HEAD_CONTENT], psf_data[ATOMS_CONTENT], psf_data[TAIL_CONTENT], 'reproduced.data')
+    #     list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT], 'reproduced.data')
 
     print_qm_kind(h_ids,'H')
     print_qm_kind(o_ids,'O')
@@ -266,14 +264,6 @@ def process_data_tpl(cfg):
 
     print(to_print)
     return psf_data
-
-
-def print_data(head, data, tail, f_name):
-    list_to_file(head, f_name)
-    seq_list_to_file(data, f_name, mode='a')
-    list_to_file(tail, f_name, mode='a')
-    return
-
 
 def main(argv=None):
     # Read input

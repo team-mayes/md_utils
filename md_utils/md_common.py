@@ -172,8 +172,9 @@ def pbc_angle(p0, p1, p2, box):
 def pbc_dihedral(p0, p1, p2, p3, box):
     """
     From:
-    http://stackoverflow.com/questions/20305272/dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
-    khouli formula
+    http://stackoverflow.com/questions/20305272/
+      dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
+    Khouli formula
     1 sqrt, 1 cross product
     @param p0: xyz coordinates of point 0, etc.
     @param p1:
@@ -549,8 +550,8 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
     :param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
     """
-    with open(out_fname, mode) as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames, extrasaction=extrasaction)
+    with open(out_fname, mode) as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction)
         if mode == 'w':
             writer.writeheader()
         writer.writerows(data)
@@ -599,9 +600,11 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
 
-    :param list_format: Specified formatting for the line.
-    :param list_val: The list of sequences to write.
-    :param fname: The location of the file to write.
+    @param list_to_print: A list of lines to print. The list may be a list of lists, list of strings, or a mixture.
+    @param fname: The location of the file to write.
+    @param list_format: Specified formatting for the line if the line is  list.
+    @param delimiter: If no format is given and the list contains lists, the delimiter will join items in the list.
+    @param mode: write by default; can be changed to allow appending to file.
     """
     with open(fname, mode) as w_file:
         for line in list_to_print:
@@ -613,20 +616,6 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
                 else:
                     w_file.write(list_format.format(*line) + '\n')
 
-
-# TODO: Get rid of, eventually
-def seq_list_to_file(list_val, fname, mode='w', header=None, delimiter=','):
-    """
-    Writes the list of sequences to the given file.
-
-    :param list_val: The list of sequences to write.
-    :param fname: The location of the file to write.
-    """
-    with open(fname, mode) as myfile:
-        if header:
-            myfile.write(delimiter.join(header) + "\n")
-        for line in list_val:
-            myfile.write(delimiter.join(map(str, line)) + "\n")
 
 # Conversions #
 
