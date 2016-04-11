@@ -27,8 +27,8 @@ PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_hm.pdb')
 GOOD_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_hm_good.pdb')
 
 # noinspection PyUnresolvedReferences
-GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990.pdb')
-GOOD_GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_100ps_reorder_retype_548990_good.pdb')
+GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990.pdb')
+GOOD_GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990_good.pdb')
 
 DEF_DICT_OUT = os.path.join(TEST_DIR, 'atom_dict.json')
 GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')

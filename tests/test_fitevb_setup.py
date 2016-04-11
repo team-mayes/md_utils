@@ -58,6 +58,6 @@ class TestFitEVBSetup(unittest.TestCase):
         with capture_stderr(fitevb_setup.main,["-c", MISS_PARAM_INI_PATH, "-f", FITEVB_OUTPUT_PATH, ]) as output:
             self.assertTrue("missing parameter" in output)
 
-    def testInpuTEST_DIRtFile(self):
+    def testInputFile(self):
         with capture_stderr(fitevb_setup.main,["-c", INI_PATH, ]) as output:
             self.assertTrue("Problems reading " in output)
