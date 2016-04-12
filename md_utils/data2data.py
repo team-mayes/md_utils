@@ -148,14 +148,14 @@ def process_data_tpl(cfg):
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
-                # Make space for xyz coords and periodic box id. Make them zeros.
-                xyz_pbc_ids = [0.0, 0.0, 0.0, 0, 0, 0]
-                # Read in CHARMM type info
+                # Make space for xyz coords
+                xyz_coords = [0.0, 0.0, 0.0]
+                # Read in CHARMM type info,
                 end = split_line[7:]
                 # end = ' '.join(split_line[7:])
                 # atom_struct = [atom_num, mol_num, atom_type, charge,end]
                 # tpl_data[ATOMS_CONTENT].append(atom_struct)
-                tpl_data[ATOMS_CONTENT].append([atom_num, mol_num, atom_type, charge] + xyz_pbc_ids + end)
+                tpl_data[ATOMS_CONTENT].append([atom_num, mol_num, atom_type, charge] + xyz_coords + end)
                 if len(tpl_data[ATOMS_CONTENT]) == tpl_data[NUM_ATOMS]:
                     section = SEC_TAIL
             # tail_content to contain everything after the 'Atoms' section
@@ -313,9 +313,9 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
                 except ValueError:
                     raise InvalidDataError("Could not convert expected x, y, z data to floats in data file {}, "
                                            "line: {}".format(data_file, line))
-                # and pbc ids, if they are there
+                # and pbc ids, if they are there, before comments
                 try:
-                    new_data_section[atom_id][8:10] = map(int, split_line[8:10])
+                    new_data_section[atom_id][7] = ' '.join(map(int, split_line[8:10] + [new_data_section[atom_id][7]]))
                 except ValueError:
                     # if there is not pdb id info, problem. Keep on.
                     pass
@@ -361,7 +361,6 @@ def main(argv=None):
     try:
         data_tpl_content = process_data_tpl(cfg)
 
-        # Not really necessary, but makes the IDE error go away :-)
         old_new_atom_num_dict = {}
         old_new_atom_type_dict = {}
 

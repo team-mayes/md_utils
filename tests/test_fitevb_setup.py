@@ -32,7 +32,7 @@ class TestFitEVBSetup(unittest.TestCase):
 
     def testNoIni(self):
         with capture_stdout(fitevb_setup.main,[]) as output:
-            self.assertTrue("usage:" in output)
+            self.assertTrue("optional arguments:" in output)
         with capture_stderr(fitevb_setup.main,[]) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
 

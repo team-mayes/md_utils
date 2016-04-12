@@ -1,4 +1,4 @@
 FIX BROKEN TESTS
 ====
 
-test_fitevb_setup.py
+Several tests broken. Also .gitignore is ignoring files that may be needed for testing.
