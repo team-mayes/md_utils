@@ -23,38 +23,40 @@ logger = logging.getLogger(__name__)
 
 # Constants #
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-FES_OUT_DIR = 'fes_out'
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+FES_DIR = os.path.join(DATA_DIR, 'fes_out')
 CALC_PKA_DIR = 'calc_pka'
+
 CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMF_last2ns3_1.txt')
-FES_BASE = os.path.join(DATA_DIR, FES_OUT_DIR)
 FRENG_TYPES = [float, str]
 
 ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')
-SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
-GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
-ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
-MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
 
 OUT_PFX = 'rad_'
 
 # Data #
+
 CSV_HEADER = ['coord', 'free_energy', 'corr']
 
-# Util Functions #
+# Output files #
+
+GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
+ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
+MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
 
 
 def expected_dir_data():
     """
     :return: The data structure that's expected from `find_files_by_dir`
     """
-    return {os.path.abspath(os.path.join(FES_BASE, "1.00")): ['fes.out'],
-            os.path.abspath(os.path.join(FES_BASE, "2.75")): ['fes.out', 'fes_cont.out'],
-            os.path.abspath(os.path.join(FES_BASE, "5.50")): ['fes.out', 'fes_cont.out'],
-            os.path.abspath(os.path.join(FES_BASE, "multi")): ['fes.out', 'fes_cont.out',
-                                                               'fes_cont2.out', 'fes_cont3.out'], }
+    return {os.path.abspath(os.path.join(FES_DIR, "1.00")): ['fes.out'],
+            os.path.abspath(os.path.join(FES_DIR, "2.75")): ['fes.out', 'fes_cont.out'],
+            os.path.abspath(os.path.join(FES_DIR, "5.50")): ['fes.out', 'fes_cont.out'],
+            os.path.abspath(os.path.join(FES_DIR, "multi")): ['fes.out', 'fes_cont.out',
+                                                              'fes_cont2.out', 'fes_cont3.out'], }
 
 
 def csv_data():
@@ -99,7 +101,7 @@ class TestFindFiles(unittest.TestCase):
     """
 
     def test_find(self):
-        found = find_files_by_dir(FES_BASE, DEF_FILE_PAT)
+        found = find_files_by_dir(FES_DIR, DEF_FILE_PAT)
         exp_data = expected_dir_data()
         self.assertEqual(len(exp_data), len(found))
         for key, files in exp_data.items():

@@ -60,7 +60,7 @@ class TestMain(unittest.TestCase):
     def testGood(self):
         try:
             main([PB_GOOD])
-            self.assertEqual(1, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ)))
+            self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ)))
             self.assertEqual(0, len(diff_lines(PB_GOOD_LOG, PB_REF_LOG)))
         finally:
             silent_remove(PB_GOOD_LOG)
@@ -97,6 +97,7 @@ def check_idx_lines(self, xyz_list):
             self.assertEqual(3, len(item))
             for coord in item:
                 self.assertIsInstance(coord, float)
+
 
 def dump_idx(xyz_idx):
     dump = []

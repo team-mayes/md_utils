@@ -39,7 +39,7 @@ GOOD_PROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_prot_good.data')
 GOOD_DEPROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_deprot_good.data')
 
 # noinspection PyUnresolvedReferences
-GLU_DEF_OUT = os.path.join(SUB_DATA_DIR, 'test_data/data2pdb/0.625_20c_reorder_retype_548990.data')
+GLU_DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990.data')
 GLU_GOOD_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990_good.data')
 GLU_DATA_TPL = os.path.join(SUB_DATA_DIR, 'glue_tpl.data')
 
@@ -96,7 +96,7 @@ class TestEVBDump2Data(unittest.TestCase):
         silent_remove(REPROD_TPL)
 
     def testGlu(self):
-        # evbdump2data.main(["-c", GLU_INI])
+        evbdump2data.main(["-c", GLU_INI])
         try:
             with capture_stdout(evbdump2data.main, ["-c", GLU_INI]) as output:
                 # Checking intermediate charge calculation
@@ -108,7 +108,7 @@ class TestEVBDump2Data(unittest.TestCase):
                 self.assertTrue(REPROD_TPL in output)
                 self.assertFalse(diff_lines(REPROD_TPL, GLU_DATA_TPL))
         finally:
-            # silent_remove(GLU_DEF_OUT)
+            silent_remove(GLU_DEF_OUT)
             silent_remove(REPROD_TPL)
 
     def testGluBadDump(self):

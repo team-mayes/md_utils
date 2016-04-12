@@ -264,6 +264,42 @@ def str_to_file(str_val, fname, mode='w'):
         f.write(str_val)
 
 
+def np_float_array_from_file(data_file):
+    """
+    Adds to the basic np.loadtxt by performing data checks.
+    @param data_file: file expected to have space-separated values, with the same number of entries per line
+    @return: a numpy array or InvalidDataError if np.loadtxt was unsuccessful
+    """
+    try:
+        dim_vectors = np.loadtxt(data_file, dtype=np.float64)
+    except ValueError:
+        with open(data_file) as d:
+            first_line = None
+            for line in d:
+                line = line.strip()
+                try:
+                    f_line = [float(x) for x in line.split()]
+                except ValueError:
+                    raise InvalidDataError("Could not convert the following line to floats: {}".format(line))
+                if first_line is None:
+                    first_line = f_line
+                else:
+                    if len(f_line) != len(first_line):
+                        raise InvalidDataError("File could not be read as an array of floats: {}\n  Expected "
+                                               "space-separated values with an equal number of columns per row.\n  "
+                                               "However, found {} values on the first line ({})\n  "
+                                               "           and {} values on the later line ({})"
+                                               "".format(data_file,
+                                                         len(first_line), first_line,
+                                                         len(f_line), f_line))
+        raise InvalidDataError("File could not be read as an array of floats: {}\n Expected space-separated values "
+                               "with an equal number of columns per row.".format(data_file))
+    if len(dim_vectors.shape) == 1:
+        raise InvalidDataError("File contains a vector, not an array of floats: {}\n".format(data_file))
+
+    return dim_vectors
+
+
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)
     now = datetime.now()

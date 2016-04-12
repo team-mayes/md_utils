@@ -196,7 +196,7 @@ def process_data_tpl(cfg):
         calc_charge_atom_nums[cfg[name]] = name
 
     with open(tpl_loc) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms

@@ -69,6 +69,4 @@ class TestAlignCol(unittest.TestCase):
 
     def testNoFile(self):
         with capture_stderr(align_on_col.main, ["-f", NO_FILE_CMP_LIST]) as output:
-            # self.assertTrue("No such file or directory" in output)
-            print(output)
-        # silent_remove(DEF_OUT)
+            self.assertTrue("No such file or directory" in output)
