@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 """
-Given a file with columns of data (space separated, no other data), return the min, max, avg, and std dev per column
+Given a file with columns of data (space separated, no other data):
+by default: returns the min, max, avg, and std dev per column
+alternately: returns maximum x, y, and z coordinates, plus the values after a buffer length is added
 """
 
 from __future__ import print_function
 
-import numpy as np
-from md_utils.md_common import InvalidDataError, warning
+from md_utils.md_common import InvalidDataError, warning, np_float_array_from_file
 import sys
 import argparse
 
 __author__ = 'hmayes'
-
-
-np.set_printoptions(formatter={'float_kind':lambda x: "%10.6f" % x})
 
 
 # Error Codes
@@ -26,7 +24,7 @@ INVALID_DATA = 3
 # Constants #
 
 # Defaults
-DEF_DIMEN_FILE = 'qm_box_sizes.txt'
+DEF_ARRAY_FILE = 'qm_box_sizes.txt'
 
 
 def parse_cmdline(argv):
@@ -38,10 +36,17 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Reads in space-separated columns and returns the min, max, avg, and std dev for each column.'
-                                                 'in each dimension.')
-    parser.add_argument("-f", "--file", help="The location of the file with the dimensions with one line per vector, space-separated.",
-                        default=DEF_DIMEN_FILE)
+    parser = argparse.ArgumentParser(description='Reads in space-separated columns and returns the min, max, avg, and '
+                                                 'std dev for each column.')
+    parser.add_argument("-f", "--file", help="The location of the file with the dimensions with one line per vector, "
+                                             "space-separated, containing at least two lines. The default file is {}, "
+                                             "located in the current directory".format(DEF_ARRAY_FILE),
+                        default=DEF_ARRAY_FILE)
+
+    parser.add_argument("-b", "--buffer", help="If specified, the program will output only the max dimension"
+                                               "in each column plus an additional buffer amount (float).",
+                        default=None)
+
     args = None
     try:
         args = parser.parse_args(argv)
@@ -57,14 +62,18 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_file(data_file):
-
-    dim_vectors = np.loadtxt(data_file,dtype=np.float64)
-    print("Min value per column: {}".format(str(dim_vectors.min(axis=0)).strip('[]')))
-    print("Max value per column: {}".format(str(dim_vectors.max(axis=0)).strip('[]')))
-    print("Avg value per column: {}".format(str(dim_vectors.mean(axis=0)).strip('[]')))
-    print("Std. dev. per column: {}".format(str(dim_vectors.std(axis=0, ddof=1)).strip('[]')))
-    return
+def process_file(data_file, len_buffer):
+    dim_vectors = np_float_array_from_file(data_file)
+    max_vector = dim_vectors.max(axis=0)
+    print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
+    print("     Min value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.min(axis=0)])))
+    print("     Max value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in max_vector])))
+    print("     Avg value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.mean(axis=0)])))
+    print("     Std. dev. per column: {}".format(' '.join(['{:12.6f}'.format(x) for x
+                                                           in dim_vectors.std(axis=0, ddof=1)])))
+    if len_buffer is not None:
+        print("\nMax value plus {} buffer: {}".format(len_buffer,
+                                                      ' '.join(['{:12.6f}'.format(x) for x in max_vector+len_buffer])))
 
 
 def main(argv=None):
@@ -73,8 +82,14 @@ def main(argv=None):
     if ret != GOOD_RET:
         return ret
 
+    len_buffer = None
     try:
-        process_file(args.file)
+        if args.buffer is not None:
+            try:
+                len_buffer = float(args.buffer)
+            except ValueError:
+                raise InvalidDataError("Input for buffer ({}) could not be converted to a float.".format(args.buffer))
+        process_file(args.file, len_buffer)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

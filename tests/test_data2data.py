@@ -10,16 +10,21 @@ logging.basicConfig(filename='data2data.log', filemode='w', level=logging.DEBUG)
 
 __author__ = 'hmayes'
 
+
+# Directories #
+
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'data2data')
 
-# Input files
+# Input files #
+
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data2data.ini')
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'data2data_serca.ini')
 REORD_GLU_INI = os.path.join(SUB_DATA_DIR, 'data2data_glu_deprot.ini')
 
-# Output files
+# Output files #
+
 # noinspection PyUnresolvedReferences
 SERCA_OUT = os.path.join(SUB_DATA_DIR, 'serca_reus_2_edited_ord_new.data')
 SERCA_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'serca_reus_2_edited_ord_new_good.data')

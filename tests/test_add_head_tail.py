@@ -14,8 +14,10 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 HEAD_TAIL_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
+
 INPUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input.txt')
 # noinspection PyUnresolvedReferences
+
 DEF_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input_amend.txt')
 # noinspection PyUnresolvedReferences
 NEW_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input_new.txt')

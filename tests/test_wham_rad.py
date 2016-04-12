@@ -41,8 +41,8 @@ def zpe_check(test_inst, zpe):
     :param test_inst: The test class instance.
     :param zpe: The zpe-calibrated data to test.
     """
-    for zrow in zpe:
-        corr, coord = float(zrow[CORR_KEY]), float(zrow[COORD_KEY])
+    for z_row in zpe:
+        corr, coord = float(z_row[CORR_KEY]), float(z_row[COORD_KEY])
         if corr == 0:
             test_inst.assertAlmostEqual(6.0, coord)
         else:
