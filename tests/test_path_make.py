@@ -9,7 +9,7 @@ import logging
 import unittest
 import os
 from md_utils.md_common import find_backup_filenames, silent_remove, diff_lines
-from md_utils.path_make import process_infile, main
+from md_utils.path_make import process_infile, main, bin_data
 
 __author__ = 'hmayes'
 

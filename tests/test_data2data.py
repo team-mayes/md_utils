@@ -1,4 +1,3 @@
-import json
 import logging
 import unittest
 import os
@@ -26,6 +25,7 @@ SERCA_OUT = os.path.join(SUB_DATA_DIR, 'serca_reus_2_edited_ord_new.data')
 SERCA_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'serca_reus_2_edited_ord_new_good.data')
 # noinspection PyUnresolvedReferences
 GLU_DEPROT_OUT = os.path.join(SUB_DATA_DIR, 'glu_deprot_switched_order_for_dict_new.data')
+# noinspection PyUnresolvedReferences
 GLU_DEPROT_ATOM_DICT = os.path.join(SUB_DATA_DIR, 'glu_deprot_atom_num_dict_old_new.csv')
 GLU_DEPROT_ATOM_DICT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_atom_num_dict_old_new_good.csv')
 
@@ -35,12 +35,12 @@ GLU_DEPROT_DATA = os.path.join(SUB_DATA_DIR, 'glu_deprot.data')
 
 class TestData2Data(unittest.TestCase):
 
-    def testDefIni(self):
-        try:
-            data2data.main(["-c", DEF_INI])
-        finally:
-            # silent_remove(PDB_OUT)
-            pass
+    # def testDefIni(self):
+    #     try:
+    #         data2data.main(["-c", DEF_INI])
+    #     finally:
+    #         # silent_remove(PDB_OUT)
+    #         pass
 
     def testSerca(self):
         try:
