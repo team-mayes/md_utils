@@ -8,20 +8,43 @@ import unittest
 import os
 
 from md_utils import max_dimen
-from md_utils.md_common import capture_stdout
+from md_utils.max_dimen import DEF_DIMEN_FILE
+from md_utils.md_common import capture_stdout, capture_stderr
 
 
 __author__ = 'hmayes'
 
+# Directories #
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
-INPUT2 = os.path.join(SUB_DATA_DIR, 'max_dimen_input.txt')
+
+# Input files #
+
+DEF_INP = os.path.join(SUB_DATA_DIR, DEF_DIMEN_FILE)
+BAD_INPUT = os.path.join(SUB_DATA_DIR, 'bad_max_dimen_input.txt')
+BAD_INPUT2 = os.path.join(SUB_DATA_DIR, 'bad_max_dimen_input2.txt')
 
 
 class TestMaxDimen(unittest.TestCase):
     def testNoArgs(self):
-        with capture_stdout(max_dimen.main,[]) as output:
-            self.assertTrue("Maximum value in each dimension: [ 11.89100027  15.60500002  18.31400013]\nWith 6 A buffer: [ 17.89100027  21.60500002  24.31400013]\n" in output)
-    def testSpecifyFile(self):
-        with capture_stdout(max_dimen.main,["-f", INPUT2]) as output:
-            self.assertTrue("Maximum value in each dimension: [ 13.15199995  15.38499975  18.19799995]\nWith 6 A buffer: [ 19.15199995  21.38499975  24.19799995]\n" in output)
+        with capture_stderr(max_dimen.main, []) as output:
+            self.assertTrue("Problems reading file" in output)
+
+    def testDefInp(self):
+        max_dimen.main(["-f", DEF_INP])
+        with capture_stdout(max_dimen.main, ["-f", DEF_INP]) as output:
+            self.assertTrue('Maximum value in each dimension:    11.891000    15.605000    18.314000\n'
+                            '                With 6 A buffer:    17.891000    21.605000    24.314000' in output)
+
+    def testBadInput(self):
+        # Test what happens when cannot convert a value to float
+        with capture_stderr(max_dimen.main, ["-f", BAD_INPUT]) as output:
+            self.assertTrue("Could not convert the following line to floats" in output)
+
+    def testIncDimen(self):
+        # Test what happens when the lines do not all have the same number of dimensions
+        with capture_stderr(max_dimen.main, ["-f", BAD_INPUT2]) as output:
+            self.assertTrue("Problems reading data" in output)
+            self.assertTrue("found 3 values " in output)
+            self.assertTrue("and 2 values" in output)
