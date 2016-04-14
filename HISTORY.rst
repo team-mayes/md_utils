@@ -6,7 +6,7 @@ History
 0.7.2 (2016-04-14)
 ------------------
 
-* Added data2data to distribution
+* Added data2data, data_reorder to distribution
 
 0.7.1 (2016-03-31)
 ------------------
