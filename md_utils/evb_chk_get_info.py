@@ -10,7 +10,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import InvalidDataError, warning, create_prefix_out_fname, process_cfg
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg
 
 __author__ = 'hmayes'
 
@@ -19,7 +19,6 @@ __author__ = 'hmayes'
 logger = logging.getLogger('evb_chk_get_info')
 logging.basicConfig(filename='evb_chk_get_info.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes
@@ -45,10 +44,10 @@ OUT_BASE_DIR = 'output_base_directory'
 # Defaults
 DEF_CFG_FILE = 'evb_chk_get_info.ini'
 # Set notation
-DEF_CFG_VALS = { LAST_EXCLUDE_ID: 0, OUT_BASE_DIR: None,
-}
+DEF_CFG_VALS = {LAST_EXCLUDE_ID: 0, OUT_BASE_DIR: None,
+                }
 REQ_KEYS = {CHK_FILE_LIST: str,
-}
+            }
 
 # Sections
 SEC_HEAD = 'head_section'
@@ -96,8 +95,8 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Grabs selected info from the designated file.'
-                                                 'The required input file provides the location of the '
-                                                 'file. Optional info is an atom index for the last atom not to consider.')
+                                                 'The required input file provides the location of the file. '
+                                                 'Optional info is an atom index for the last atom not to consider.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
                                                "format. See the example file /test/test_data/evbd2d/evb_chk_get_info.ini"
                                                "The default file name is evb_chk_get_info.ini, located in the "
@@ -117,39 +116,39 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
+
 def print_qm_kind(int_list, element_name, fname, mode='w'):
     """
     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
 
-    :param list_val: The list to write.
+    :param int_list: The list to write.
     :param element_name: element type to designate
     :param fname: The location of the file to write.
     :param mode: default is to write to a new file. Use option to designate to append to existing file.
     """
-    with open(fname, mode) as myfile:
-        myfile.write('    &QM_KIND {} \n'.format(element_name))
-        myfile.write('        MM_INDEX {} \n'.format(' '.join(map(str,int_list))))
-        myfile.write('    &END QM_KIND \n')
+    with open(fname, mode) as m_file:
+        m_file.write('    &QM_KIND {} \n'.format(element_name))
+        m_file.write('        MM_INDEX {} \n'.format(' '.join(map(str, int_list))))
+        m_file.write('    &END QM_KIND \n')
     return
 
 
-def print_qm_links(resid, dict):
+def print_qm_links(resid, atom_dict):
     """
     Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
     @param resid: protein residue to be broken. Only used for comment line.
-    @param dict: atom ids of CA and CB to be broken
-    @return: not acutally needed.
+    @param atom_dict: atom ids of CA and CB to be broken
     """
     print('! Break resid {} between CA and CB, and cap CB with hydrogen'.format(resid))
-    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n    &END LINK '.format(dict['CA'],dict['CB']))
-    return
+    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
+          '    &END LINK '.format(atom_dict['CA'], atom_dict['CB']))
 
 
 def print_vmd_list(atom_ids, fname, mode='w'):
     # Change to base zero for VMD
-    vmd_atom_ids = [ id - 1 for id in atom_ids ]
-    with open(fname, mode) as myfile:
-        myfile.write('{}'.format(' '.join(map(str,vmd_atom_ids))))
+    vmd_atom_ids = [a_id - 1 for a_id in atom_ids]
+    with open(fname, mode) as m_file:
+        m_file.write('{}'.format(' '.join(map(str, vmd_atom_ids))))
     #print('index {}'.format(' '.join(map(str,vmd_atom_ids))))
     return
 
@@ -164,10 +163,7 @@ def process_file(cfg):
         for data_file in f:
             data_file = data_file.strip()
             with open(data_file) as d:
-                chk_data = {}
-                chk_data[HEAD_CONTENT] = []
-                chk_data[ATOMS_CONTENT] = []
-                chk_data[TAIL_CONTENT] = []
+                chk_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
                 section = SEC_HEAD
                 o_ids = []
@@ -193,7 +189,7 @@ def process_file(cfg):
                         split_line = line.split()
                         index = int(split_line[0])
                         atom_num = int(split_line[1])
-                        x, y, z = map(float,split_line[2:5])
+                        x, y, z = map(float, split_line[2:5])
                         atom_type = split_line[5]
                         atom_struct = [index, atom_num, x, y, z, atom_type]
                         chk_data[ATOMS_CONTENT].append(atom_struct)
@@ -203,7 +199,8 @@ def process_file(cfg):
                             elif atom_type == 'H':
                                 h_ids.append(atom_num)
                             else:
-                                raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}.'.format(atom_type,line))
+                                raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}'
+                                                       ''.format(atom_type,line))
 
                         if len(chk_data[ATOMS_CONTENT]) == chk_data[NUM_ATOMS]:
                             section = SEC_TAIL
@@ -211,11 +208,10 @@ def process_file(cfg):
                     elif section == SEC_TAIL:
                         break
 
-
-            f_name = create_prefix_out_fname(data_file, 'water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_out_fname(data_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_qm_kind(h_ids,'H',f_name)
             print_qm_kind(o_ids,'O',f_name,mode='a')
-            f_name = create_prefix_out_fname(data_file, 'vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_out_fname(data_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_vmd_list(o_ids+h_ids, f_name)
 
 

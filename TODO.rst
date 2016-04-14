@@ -4,5 +4,4 @@ CHECK TESTS ON DIFFERENT SYSTEM
 .gitignore is ignoring files that may be needed for testing.
 Find by installing and testing on a cluster.
 
-
-Move max_dimen into per_col_stats
+Last checked: all tests pass, 70% of files, 81% of lines

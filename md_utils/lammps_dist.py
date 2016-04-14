@@ -9,14 +9,11 @@ import argparse
 import csv
 import logging
 import sys
-from collections import defaultdict, OrderedDict
-from functools import reduce
+from collections import OrderedDict
 
 import itertools
-import numpy as np
-from md_utils import md_common
 from md_utils.lammps import find_atom_data
-from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_prefix_out_fname
+from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_out_fname
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +41,9 @@ def atom_distances(rst, atom_pairs):
         pair_dist = OrderedDict()
         for pair in atom_pairs:
             try:
-                atrow1 = atoms[pair[0]]
-                atrow2 = atoms[pair[1]]
-                pair_dist[pair] = xyz_distance(atrow1[-3:], atrow2[-3:])
+                row1 = atoms[pair[0]]
+                row2 = atoms[pair[1]]
+                pair_dist[pair] = xyz_distance(row1[-3:], row2[-3:])
             except KeyError as e:
                 raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(
                     rst, tstep, e))
@@ -55,17 +52,17 @@ def atom_distances(rst, atom_pairs):
 
 
 def write_results(out_fname, dist_data, atom_pairs):
-    with open(out_fname, 'w') as ofile:
-        owriter = csv.writer(ofile)
-        owriter.writerow(["timestep"] +
-                         ["_".join(map(str, tpair)) for tpair in atom_pairs])
+    with open(out_fname, 'w') as o_file:
+        o_writer = csv.writer(o_file)
+        o_writer.writerow(["timestep"] +
+                          ["_".join(map(str, t_pair)) for t_pair in atom_pairs])
         for tstep, pair_dists in dist_data.items():
-            tstr = str(tstep)
-            dist_row = [tstr]
+            t_str = str(tstep)
+            dist_row = [t_str]
             try:
                 for pair in atom_pairs:
                     dist_row.append("{:.6f}".format(pair_dists[pair]))
-                owriter.writerow(dist_row)
+                o_writer.writerow(dist_row)
             except KeyError as e:
                 raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(
                     "_".join(map(str, pair)), tstep, e))
@@ -78,14 +75,14 @@ def parse_pairs(pair_files):
     :return: A list of unique pairs from the given files.
     """
     pairs = []
-    for pfile in pair_files:
-        with open(pfile) as ofile:
-            for pline in ofile:
-                pair = pline.strip().split(",")
+    for p_file in pair_files:
+        with open(p_file) as o_file:
+            for p_line in o_file:
+                pair = p_line.strip().split(",")
                 if len(pair) == 2:
                     pairs.append(tuple(map(int, pair)))
                 else:
-                    logger.warn("Skipping pair %s from file %s", pair, pfile)
+                    logger.warn("Skipping pair %s from file %s", pair, p_file)
     return unique_list(pairs)
 
 # CLI Processing #
@@ -129,7 +126,7 @@ def main(argv=None):
 
     pairs = parse_pairs(args.pair_files)
     dists = atom_distances(args.file, pairs)
-    write_results(create_prefix_out_fname(args.file, 'pairs_', ext='.csv'),
+    write_results(create_out_fname(args.file, prefix='pairs_', ext='.csv'),
                   dists, pairs)
 
     return 0  # success

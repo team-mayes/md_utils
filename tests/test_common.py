@@ -10,8 +10,9 @@ import unittest
 
 import os
 
-from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, read_csv,
-                                write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines)
+from md_utils.md_common import (find_files_by_dir, read_csv,
+                                write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
+                                create_out_fname)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -127,7 +128,7 @@ class TestCreateOutFname(unittest.TestCase):
         """
         Check for prefix addition.
         """
-        self.assertTrue(create_prefix_out_fname(ORIG_WHAM_PATH, OUT_PFX).endswith(
+        self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
             os.sep + OUT_PFX + ORIG_WHAM_FNAME))
 
 
@@ -186,7 +187,7 @@ class TestWriteCsv(unittest.TestCase):
         data = csv_data()
         try:
             tmp_dir = tempfile.mkdtemp()
-            tgt_fname = create_prefix_out_fname(SHORT_WHAM_PATH, OUT_PFX, base_dir=tmp_dir)
+            tgt_fname = create_out_fname(SHORT_WHAM_PATH, prefix=OUT_PFX, base_dir=tmp_dir)
 
             write_csv(data, tgt_fname, RAD_KEY_SEQ)
             csv_result = read_csv(tgt_fname,

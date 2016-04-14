@@ -8,8 +8,8 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, write_csv,
-                                calc_kbt)
+from md_utils.md_common import (find_files_by_dir, write_csv,
+                                calc_kbt, create_out_fname)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'cmayes'
@@ -24,6 +24,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham_rad')
 
 # Constants #
+
+GOOD_RET = 0
+INPUT_ERROR = 1
 
 OUT_PFX = 'rad_'
 
@@ -60,24 +63,24 @@ def calc_rad(src_file, kbt):
     :param kbt: The experimental temperature in Kelvin multiplied by Boltzmann's Constant.
     :return: The corrected contents of the file as a list of dicts.
     """
-    reslines = []
+    res_lines = []
     with open(src_file) as wham:
-        for wline in wham:
-            wres = {}
+        for w_line in wham:
+            w_res = {}
             try:
-                swline = wline.strip().split()
-                if len(swline) < 2 or "#" in swline[0]:
+                sw_line = w_line.strip().split()
+                if len(sw_line) < 2 or "#" in sw_line[0]:
                     continue
-                wres[COORD_KEY] = float(swline[0])
+                w_res[COORD_KEY] = float(sw_line[0])
                 try:
-                    wres[FREE_KEY] = float(swline[1])
+                    w_res[FREE_KEY] = float(sw_line[1])
                 except ValueError:
-                    wres[FREE_KEY] = swline[1]
+                    w_res[FREE_KEY] = sw_line[1]
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, wline)
-            wres[CORR_KEY] = calc_corr(wres[COORD_KEY], wres[FREE_KEY], kbt)
-            reslines.append(wres)
-    return reslines
+                logger.debug("Error '%s' for line '%s'", e, w_line)
+            w_res[CORR_KEY] = calc_corr(w_res[COORD_KEY], w_res[FREE_KEY], kbt)
+            res_lines.append(w_res)
+    return res_lines
 
 
 def to_zero_point(corr_res):
@@ -89,32 +92,32 @@ def to_zero_point(corr_res):
     :return: The data set reoriented relative to the highest free energy value.
     """
     # max_cor_freng = None
-    # for zrow in corr_res:
+    # for z_row in corr_res:
     #     try:
-    #         row_corr_val = zrow[CORR_KEY]
+    #         row_corr_val = z_row[CORR_KEY]
     #         if max_cor_freng < row_corr_val and not math.isinf(row_corr_val):
     #             max_cor_freng = row_corr_val
     #     except Exception, e:
     #         logger.debug("Error finding zero point: '%s'", e)
     #         continue
-    # for zrow in corr_res:
-    #     zrow[CORR_KEY] -= max_cor_freng
+    # for z_row in corr_res:
+    #     z_row[CORR_KEY] -= max_cor_freng
     # return corr_res
 
     max_coord = 0.0
     set_cor_freng = 0.0
-    for zrow in corr_res:
+    for z_row in corr_res:
         try:
-            row_coord_val = zrow[COORD_KEY]
-            row_corr_val = zrow[CORR_KEY]
+            row_coord_val = z_row[COORD_KEY]
+            row_corr_val = z_row[CORR_KEY]
             if max_coord < row_coord_val and not math.isinf(row_corr_val):
                 max_coord = row_coord_val
                 set_cor_freng = row_corr_val
         except Exception as e:
             logger.debug("Error finding zero point: '%s'", e)
             continue
-    for zrow in corr_res:
-        zrow[CORR_KEY] -= set_cor_freng
+    for z_row in corr_res:
+        z_row[CORR_KEY] -= set_cor_freng
     return corr_res
 
 
@@ -144,9 +147,13 @@ def parse_cmdline(argv):
                         action='store_true')
     parser.add_argument("temp", help="The temperature in Kelvin for the simulation", type=float)
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit:
+        parser.print_help()
+        return [], INPUT_ERROR
 
-    return args, 0
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -156,24 +163,24 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
 
     kbt = calc_kbt(args.temp)
 
     if args.src_file is not None:
         proc_data = to_zero_point(calc_rad(args.src_file, kbt))
-        write_csv(proc_data, create_prefix_out_fname(args.src_file, OUT_PFX), RAD_KEY_SEQ)
+        write_csv(proc_data, create_out_fname(args.src_file, prefix=OUT_PFX), RAD_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
-        for fdir, files in found_files.iteritems():
+        for f_dir, files in found_files.iteritems():
             if not files:
-                logger.warn("No files found for dir '%s'", fdir)
+                logger.warn("No files found for dir '%s'", f_dir)
                 continue
-            for pmf_path in ([os.path.join(fdir, tgt) for tgt in files]):
+            for pmf_path in ([os.path.join(f_dir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                out_fname = create_prefix_out_fname(pmf_path, OUT_PFX)
+                out_fname = create_out_fname(pmf_path, prefix=OUT_PFX)
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue

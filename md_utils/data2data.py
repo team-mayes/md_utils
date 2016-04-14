@@ -58,10 +58,12 @@ TAIL_CONTENT = 'tail_content'
 ATOM_TYPE_DICT = 'atom_type_dict'
 ATOM_ID_DICT = 'atom_id_dict'
 
-# For data template file processing
+# For data file processing
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
+LAMMPS_SECTION_NAMES = ['Masses', 'Pair Coeffs', 'Atoms', 'Bond Coeffs', 'Bonds', 'Angle Coeffs', 'Angles',
+                        'Dihedral Coeffs', 'Dihedrals', 'Improper Coeffs', 'Impropers']
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -183,32 +185,37 @@ def read_data_for_dict(cfg, data_file, data_tpl_content, old_new_atom_num_dict, 
                     if atoms_match:
                         # regex is 1-based
                         num_atoms = int(atoms_match.group(1))
+                        if num_atoms != data_tpl_content[NUM_ATOMS]:
+                            raise InvalidDataError("Number of atoms ({}) in the file: {} \n  does not match the "
+                                                   "number of atoms ({}) in the template file: {}"
+                                                   "".format(num_atoms, data_file,
+                                                             data_tpl_content[NUM_ATOMS], cfg[DATA_TPL_FILE]))
 
             elif section == SEC_ATOMS:
                 if len(line) == 0:
                     continue
                 split_line = line.split()
 
-                old_atom_num = int(split_line[0])
-                new_atom_num = data_tpl_content[ATOMS_CONTENT][atom_id][0]
+                try:
+                    old_atom_num = int(split_line[0])
+                    new_atom_num = data_tpl_content[ATOMS_CONTENT][atom_id][0]
 
-                old_atom_type = int(split_line[2])
-                new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+                    old_atom_type = int(split_line[2])
+                    new_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2]
+
+                except ValueError as e:
+                    if line in LAMMPS_SECTION_NAMES:
+                        raise InvalidDataError("Encountered next section ('{}') before reading the number of "
+                                               "atoms ({}) in the data template. "
+                                               "Check input.".format(line, data_tpl_content[NUM_ATOMS]))
+                    else:
+                        raise InvalidDataError("Encountered error: '{}' on line: {}.".format(line, e))
 
                 # Making the dictionaries
                 if cfg[MAKE_ATOM_NUM_DICT]:
-                    if old_atom_num in old_new_atom_num_dict:
-                        # Check that we don't have conflicting matching; may look at multiple files
-                        if new_atom_num != old_new_atom_num_dict[old_atom_num]:
-                            warning('Previously matched old atom number {} to new atom number {}. On the '
-                                    'following line, also found old atom number matched to a different new '
-                                    'atom number ({}): \n{}.'.format(old_atom_num,
-                                                                     old_new_atom_num_dict[old_atom_num],
-                                                                     new_atom_num, line))
-                    else:
-                        # skip if the values are equal
-                        if old_atom_num != new_atom_num:
-                            old_new_atom_num_dict[old_atom_num] = new_atom_num
+                    # skip if the values are equal
+                    if old_atom_num != new_atom_num:
+                        old_new_atom_num_dict[old_atom_num] = new_atom_num
                 if cfg[MAKE_ATOM_TYPE_DICT]:
                     if old_atom_type in old_new_atom_type_dict:
                         # Check that we don't have conflicting matching
@@ -278,10 +285,9 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
                         # regex is 1-based
                         num_atoms = int(atoms_match.group(1))
                         if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
-                            raise InvalidDataError('The number of atoms listed in the data file {} ({}) does '
-                                                   'not equal the number of atoms in the template file ({}).'
-                                                   ''.format(num_atoms,
-                                                             len(data_tpl_content[ATOMS_CONTENT]), data_file))
+                            raise InvalidDataError('The number of atoms in the template file ({}) does '
+                                                   'not equal the number of atoms ({}) in the data file file: {}.'
+                                                   ''.format(data_tpl_content[NUM_ATOMS], num_atoms, data_file))
             # atoms_content to grab xyz and pbc rep; also perform some checking
             elif section == SEC_ATOMS:
                 if len(line) == 0:
@@ -295,7 +301,15 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
 
                 # Perform checking that the atom type in the corresponding line of the template file matches
                 # the current file
-                old_atom_type = int(split_line[2])
+                try:
+                    old_atom_type = int(split_line[2])
+                    # Add in the xyz coordinates
+                    new_data_section[atom_id][4:7] = map(float, split_line[4:7])
+                except (IndexError, ValueError):
+                    raise InvalidDataError("In attempting to read {} atoms from file: {}\n  "
+                                           "expected, but did not find, three ints followed by four floats on"
+                                           "line: {}\n  "
+                                           "Check input".format(data_tpl_content[NUM_ATOMS], data_file, line))
 
                 # If there is an atom_type_dict, and the read atom type is in it....
                 if old_atom_type in atom_type_dict:
@@ -303,21 +317,14 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
                     matching_new_atom_type = atom_type_dict[old_atom_type]
 
                     if new_atom_type != matching_new_atom_type:
-                        print('Data mismatch on atom_id : {}. The template file line and current file lines are:'
-                              '\n{}\n{}\n'.format(atom_id + 1,
-                                                  data_tpl_content[ATOMS_CONTENT][atom_id],
-                                                  line))
-                # Add in the xyz coordinates
-                try:
-                    new_data_section[atom_id][4:7] = map(float, split_line[4:7])
-                except ValueError:
-                    raise InvalidDataError("Could not convert expected x, y, z data to floats in data file {}, "
-                                           "line: {}".format(data_file, line))
+                        print('Data mismatch on atom_id {:3d}, line: {}\n  Expected type {} but found type {}'
+                              ''.format(atom_id + 1, line, matching_new_atom_type, new_atom_type))
+
                 # and pbc ids, if they are there, before comments
                 try:
                     new_data_section[atom_id][7] = ' '.join(map(int, split_line[8:10] + [new_data_section[atom_id][7]]))
-                except ValueError:
-                    # if there is not pdb id info, problem. Keep on.
+                except (ValueError, IndexError):
+                    # if there is no pdb id info and/or comment info, no problem. Keep on.
                     pass
                 atom_id += 1
                 # Check after increment because the counter started at 0
@@ -379,7 +386,7 @@ def main(argv=None):
         return IO_ERROR
 
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success
