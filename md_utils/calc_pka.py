@@ -33,8 +33,8 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname,
-                                read_csv, write_csv, calc_kbt)
+from md_utils.md_common import (find_files_by_dir,
+                                read_csv, write_csv, calc_kbt, create_out_fname)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 NO_MAX_MSG = 'NONE'
@@ -90,7 +90,7 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     :param basedir: The base directory to target (uses the source file's base directory
         if not specified)
     """
-    out_fname = create_prefix_out_fname(src_file, OUT_PFX, base_dir=basedir)
+    out_fname = create_out_fname(src_file, prefix=OUT_PFX, base_dir=basedir)
     if os.path.exists(out_fname) and not overwrite:
         logger.warn("Not overwriting existing file '%s'", out_fname)
         return
@@ -189,23 +189,22 @@ def main(argv=None):
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
-        for fdir, files in found_files.items():
+        for f_dir, files in found_files.items():
             results = []
             if not files:
-                logger.warn("No files found for dir '%s'", fdir)
+                logger.warn("No files found for dir '%s'", f_dir)
                 continue
-            for pmf_path, fname in ([(os.path.join(fdir, tgt), tgt) for tgt in sorted(files)]):
+            for pmf_path, fname in ([(os.path.join(f_dir, tgt), tgt) for tgt in sorted(files)]):
                 file_data = read_csv(pmf_path, data_conv=KEY_CONV)
                 try:
                     pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-                    results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr,
-                                MAX_LOC: cur_coord})
+                    results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord})
                 except NoMaxError:
                     results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG,
                                     MAX_LOC: NO_MAX_MSG})
 
-            write_result(results, os.path.basename(fdir), args.overwrite,
-                         basedir=os.path.dirname(fdir))
+            write_result(results, os.path.basename(f_dir), args.overwrite,
+                         basedir=os.path.dirname(f_dir))
 
     return 0  # success
 

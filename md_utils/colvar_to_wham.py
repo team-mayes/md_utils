@@ -10,7 +10,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_prefix_out_fname, write_csv, list_to_file)
+from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file)
 
 __author__ = 'hmayes'
 
@@ -43,14 +43,14 @@ DEF_FILE_PAT = 'COLVAR*'
 
 # Logic #
 
-
-def calc_R(dx,dy,dz):
+def calc_r(dx, dy, dz):
     """Calculates the radial distance (R) for the given dx, dy, dz (X1-X2, Y1-Y2, Z1-Z2)
 
     :param dx, dy, dz: the  (X1-X2, Y1-Y2, Z1-Z2) for timestep under consideration.
     :return: radial distance.
     """
     return math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
+
 
 def calc_for_wham(src_file):
     """
@@ -59,24 +59,24 @@ def calc_for_wham(src_file):
     :param src_file: The file with the data to correct.
     :return: The radial distance of the file as a list of dicts.
     """
-    reslines = []
+    res_lines = []
     logger.debug("Found '%s' file to process", src_file)
     with open(src_file) as colvar:
-        for wline in colvar:
-            wres = {}
+        for w_line in colvar:
+            w_res = {}
             try:
-                swline = wline.strip().split()
-                if len(swline) < 4 or "#" in swline[0]:
+                sw_line = w_line.strip().split()
+                if len(sw_line) < 4 or "#" in sw_line[0]:
                     continue
-                wres[TIMESTEP_KEY] = float(swline[0])
-                wres[DX_KEY] = float(swline[1])
-                wres[DY_KEY] = float(swline[2])
-                wres[DZ_KEY] = float(swline[3])
-                wres[R_KEY] = calc_R(wres[DX_KEY],wres[DY_KEY],wres[DZ_KEY])
+                w_res[TIMESTEP_KEY] = float(sw_line[0])
+                w_res[DX_KEY] = float(sw_line[1])
+                w_res[DY_KEY] = float(sw_line[2])
+                w_res[DZ_KEY] = float(sw_line[3])
+                w_res[R_KEY] = calc_r(w_res[DX_KEY], w_res[DY_KEY], w_res[DZ_KEY])
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, wline)
-            reslines.append(wres)
-    return reslines
+                logger.debug("Error '%s' for line '%s'", e, w_line)
+            res_lines.append(w_res)
+    return res_lines
 
 
 # CLI Processing #
@@ -120,17 +120,17 @@ def main(argv=None):
 
     if args.src_file is not None:
         proc_data = calc_for_wham(args.src_file)
-        write_csv(proc_data, create_prefix_out_fname(args.src_file, OUT_PFX), COLVAR_WHAM_KEY_SEQ)
+        write_csv(proc_data, create_out_fname(args.src_file, prefix=OUT_PFX), COLVAR_WHAM_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
-        for fdir, files in found_files.iteritems():
+        for f_dir, files in found_files.iteritems():
             if not files:
-                logger.warn("No files found for dir '%s'", fdir)
+                logger.warn("No files found for dir '%s'", f_dir)
                 continue
-            for colvar_path in ([os.path.join(fdir, tgt) for tgt in files]):
+            for colvar_path in ([os.path.join(f_dir, tgt) for tgt in files]):
                 proc_data = calc_for_wham(colvar_path)
-                out_fname = create_prefix_out_fname(colvar_path, OUT_PFX)
+                out_fname = create_out_fname(colvar_path, prefix=OUT_PFX)
                 if os.path.exists(out_fname) and not args.overwrite:
                     logger.warn("Not overwriting existing file '%s'", out_fname)
                     continue

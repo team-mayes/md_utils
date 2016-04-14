@@ -4,14 +4,13 @@
 Tests for wham_rad.
 """
 
-import logging
 import unittest
 import math
 
 import os
 
-from md_utils.md_common import BOLTZ_CONST
-from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point
+from md_utils.md_common import BOLTZ_CONST, capture_stderr, capture_stdout
+from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point, main
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 
@@ -21,9 +20,6 @@ EXP_TEMP = 310
 EXP_KBT = BOLTZ_CONST * EXP_TEMP
 
 __author__ = 'cmayes'
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
@@ -79,3 +75,13 @@ class TestZeroPoint(unittest.TestCase):
     def testZeroPoint(self):
         zpe = to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT))
         zpe_check(self, zpe)
+
+
+class TestMain(unittest.TestCase):
+
+    def testNoArgs(self):
+        with capture_stderr(main, []) as output:
+            self.assertTrue("too few arguments" in output)
+        with capture_stdout(main, []) as output:
+            self.assertTrue("Creates a radial correction value" in output)
+

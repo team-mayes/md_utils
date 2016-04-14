@@ -7,10 +7,11 @@ Read cp2k force output files
 ----The second is QM only
 ----The third is QMMM
 --Keep only the third section, and reprint after converting from [a.u.] to kcal/mol
-----1 a.u. force = 8.2387225(14)x10-8 N ; 1 J / m = 1 N  ; 1.0e-10 m = 1 A ;  6.022140857E+23 particles / mol ; 1 kcal = 4.1484 J
+----1 a.u. force = 8.2387225(14)x10-8 N ; 1 J / m = 1 N  ; 1.0e-10 m = 1 A ;
+                   6.022140857E+23 particles / mol ; 1 kcal = 4.1484 J
 --- Thus, 1185.820922 a.u. force = 1 kcal/mol
 
-CALC_OH_DIST: the hydroxyl OH distance on the protonateable residue (when protonated)
+CALC_OH_DIST: the hydroxyl OH distance on the protonatable residue (when protonated)
 """
 
 from __future__ import print_function
@@ -22,7 +23,7 @@ import argparse
 
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, warning, create_prefix_out_fname, list_to_file
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, list_to_file
 
 
 __author__ = 'hmayes'
@@ -114,8 +115,8 @@ def parse_cmdline(argv):
                                                   "process. The default file name is {}, located in the base "
                                                   "directory where the program as run.".format(DEF_FILE_LIST),
                         default=DEF_FILE_LIST, )
-    parser.add_argument("-d", "--out_dir", help="Directory for output files. The default option is the "
-                                                         "same location as the cp2k output file.",
+    parser.add_argument("-d", "--out_dir", help="Directory for output files. The default option is the same location "
+                                                "as the cp2k output file.",
                         default=DEF_OUT_DIR, )
     args = None
 
@@ -146,10 +147,11 @@ def parse_cmdline(argv):
 
     return args, GOOD_RET
 
-def process_cp2k_force_file(file, out_dir):
+
+def process_cp2k_force_file(f_file, out_dir):
     """
 
-    @param file: cp2k force output file to read and process (convert last section to kcal/(mol-Angstrom) )
+    @param f_file: cp2k force output file to read and process (convert last section to kcal/(mol-Angstrom) )
     @param out_dir: where to create the new output file (last section, converted)
     @return: if a valid cp2k file, return a string with the total number of atoms and converted total forces
     """
@@ -162,8 +164,9 @@ def process_cp2k_force_file(file, out_dir):
     line_count = 0
     to_print = []
 
-    with open(file) as f:
-        print('Reading file {}'.format(file))
+    with open(f_file) as f:
+        print('Reading file {}'.format(f_file))
+        atom_num = None
         for line in f:
             line = line.strip()
             if len(line) == 0:
@@ -179,31 +182,30 @@ def process_cp2k_force_file(file, out_dir):
                     continue
                 try:
                     if sum_pat.match(split_line[0]):
-                        sums = np.asarray(map(float,split_line[4:])) * au_to_N
+                        sums = np.asarray(map(float, split_line[4:])) * au_to_N
                         # sums_str = ' '.join([str(atom_num)] + ['%8.3f'%F for F in sums])
-                        f_out = create_prefix_out_fname(file, OUT_FILE_PREFIX, base_dir=out_dir, ext='')
+                        f_out = create_out_fname(f_file, prefix=OUT_FILE_PREFIX, base_dir=out_dir, ext='')
                         list_to_file(to_print, f_out)
                         return np.append([atom_num], sums)
                 except ValueError as e:
-                    warning('Check file {} sum line in the third ATOMIC FORCES section, as it does not '
-                                          'appear to contain the expected data: \n {}\n'
-                                          'Continuing to the next line in the file list'.format(file, line), e)
+                    warning('Check file {} sum line in the third ATOMIC FORCES section, as it does not appear to '
+                            'contain the expected data: \n {}\n'
+                            'Continuing to the next line in the file list'.format(f_file, line), e)
                     return None
 
                 try:
                     atom_num = int(split_line[0])
                     # kind = int(split_line[1])
                     # element = split_line[2]
-                    xyz = np.asarray(map(float,split_line[3:])) * au_to_N
+                    xyz = np.asarray(map(float, split_line[3:])) * au_to_N
                     to_print.append([atom_num] + xyz.tolist())
                 except ValueError as e:
-                    warning('Check file {} line {} in the third ATOMIC FORCES section, as it does not '
-                                          'appear to contain all six expected columns of data '
-                                          '(Atom Kind Element X Y Z): \n {}\n'
-                                          'Continuing to the next line in the file list'.format(file, line_count, line), e)
+                    warning('Check file {} line {} in the third ATOMIC FORCES section, as it does not appear to '
+                            'contain all six expected columns of data (Atom Kind Element X Y Z): \n {}\n'
+                            'Continuing to the next line in the file list'.format(f_file, line_count, line), e)
                     return None
     warning('Reached end of file {} without encountering a third SUM OF ATOMIC FORCES section. '
-            'Continuing to the next line in the file list.'.format(file))
+            'Continuing to the next line in the file list.'.format(f_file))
     return None
 
 
@@ -215,12 +217,12 @@ def read_file_list(file_list, out_dir):
     summary_array = None
 
     with open(file_list) as f:
-        for file in f:
-            file = file.strip()
-            if len(file) == 0:
+        for f_file in f:
+            f_file = f_file.strip()
+            if len(f_file) == 0:
                 continue
-            elif os.path.isfile(file):
-                summary = process_cp2k_force_file(file, out_dir)
+            elif os.path.isfile(f_file):
+                summary = process_cp2k_force_file(f_file, out_dir)
                 if summary is not None:
                     if summary_array is None:
                         summary_array = summary
@@ -228,29 +230,30 @@ def read_file_list(file_list, out_dir):
                         summary_array = np.vstack((summary, summary_array))
             else:
                 warning('Could not read file {} in file list {}. '
-                        'Continuing to the next line in file list.'.format(file,file_list))
+                        'Continuing to the next line in file list.'.format(f_file, file_list))
     # print(np.amax(summary_array, axis=1))
     if summary_array is None:
         warning("No valid cp2k force output files were read.")
     elif summary_array.size == 5:
         print('For the one CP2K force file read:')
         print(' ' + '      '.join(summary_header))
-        print(' '.join(['%10.0f'%summary_array[0]] + ['%10.3f'%F for F in summary_array[1:]]))
+        print(' '.join(['%10.0f' % summary_array[0]] + ['%10.3f' % F for F in summary_array[1:]]))
     else:
-        f_out = create_prefix_out_fname(file_list, 'force_sums_', base_dir=out_dir, ext='.csv')
+        f_out = create_out_fname(file_list, prefix='force_sums_', base_dir=out_dir, ext='.csv')
         list_to_file(summary_array, f_out)
         with open(f_out, 'w') as logfile:
             logfile.write(','.join(summary_header) + "\n")
             for line in summary_array:
-                logfile.write(','.join(['%d'%line[0]] + ['%f'%F for F in line[1:]]) + "\n")
+                logfile.write(','.join(['%d' % line[0]] + ['%f' % F for F in line[1:]]) + "\n")
         print('Finished reading all cp2k force files. Printed each atomic force sum to: {}'.format(f_out))
 
         min_vals = np.amin(summary_array, axis=0)
         max_vals = np.amax(summary_array, axis=0)
 
         print('           ' + '      '.join(summary_header))
-        print('min_vals: ' + ' '.join(['%10.0f'%min_vals[0]] + ['%10.3f'%F for F in min_vals[1:]]))
-        print('max_vals: ' + ' '.join(['%10.0f'%max_vals[0]] + ['%10.3f'%F for F in max_vals[1:]]))
+        print('min_vals: ' + ' '.join(['%10.0f' % min_vals[0]] + ['%10.3f' % F for F in min_vals[1:]]))
+        print('max_vals: ' + ' '.join(['%10.0f' % max_vals[0]] + ['%10.3f' % F for F in max_vals[1:]]))
+
 
 def main(argv=None):
     # Read input

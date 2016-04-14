@@ -356,28 +356,6 @@ def move_existing_file(f_loc):
         shutil.move(f_loc, create_backup_filename(f_loc))
 
 
-def create_prefix_out_fname(src_file, prefix, base_dir=None, ext=None):
-    """Creates an outfile name for the given source file.
-
-    :param src_file: The file to process.
-    :param prefix: The file prefix to prepend.
-    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
-    :param ext: The extension to use instead of the source file's extension;
-        defaults to the `sec_file`'s extension.
-    :return: The output file name.
-    """
-    if base_dir is None:
-        base_dir = os.path.dirname(src_file)
-
-    if ext is None:
-        tgt_file = src_file
-    else:
-        tgt_file = os.path.splitext(src_file)[0] + ext
-
-    return os.path.abspath(
-        os.path.join(base_dir, prefix + os.path.basename(tgt_file)))
-
-
 def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
