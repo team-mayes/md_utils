@@ -30,7 +30,6 @@ MAIN_SEC = 'main'
 # Config keys
 DATA_FILES = 'data_list_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
-MAKE_DICT = 'make_dictionary_flag'
 
 # data file info
 
@@ -40,7 +39,6 @@ DEF_CFG_FILE = 'data_reorder.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 ATOM_ID_DICT_FILE: 'reorder_old_new.csv',
-                MAKE_DICT: False,
                 }
 REQ_KEYS = {}
 
@@ -243,11 +241,12 @@ def process_data_files(cfg):
     # Note: the dictionary is base 1.
     with open(atom_id_dict_loc) as csv_file:
         for line in csv.reader(csv_file):
-            try:
-                atom_id_dict[int(line[0])] = int(line[1])
-            except ValueError as e:
-                raise InvalidDataError("Encountered error {} on file {}. Could not convert the following line to two "
-                                       "integers: {}".format(e, atom_id_dict_loc, line))
+            if len(line) > 0:
+                try:
+                    atom_id_dict[int(line[0])] = int(line[1])
+                except (ValueError, IndexError) as e:
+                    raise InvalidDataError("Encountered error {} on file: {}\nCould not convert the following line to "
+                                           "two integers: {}".format(e, atom_id_dict_loc, line))
         print('Completed reading atom dictionary.')
 
     # Easier to pass when contained in a dictionary

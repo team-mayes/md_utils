@@ -2,7 +2,7 @@ import unittest
 import os
 
 from md_utils import data_reorder
-from md_utils.md_common import diff_lines, silent_remove
+from md_utils.md_common import diff_lines, silent_remove, capture_stderr, capture_stdout
 
 __author__ = 'hmayes'
 
@@ -13,6 +13,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'data_reorder')
 # Input files
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data_reorder.ini')
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_serca.ini')
+BAD_DICT_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_dict.ini')
 
 # Output files
 
@@ -22,12 +23,19 @@ GOOD_OUT = os.path.join(SUB_DATA_DIR, '4.25_ord_good.data')
 
 # noinspection PyUnresolvedReferences
 SERCA_0_OUT = os.path.join(SUB_DATA_DIR, 'reus_0_edited_ord.data')
-SERCA_1_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord.data')
 SERCA_0_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_0_edited_ord_good.data')
+# noinspection PyUnresolvedReferences
+SERCA_1_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord.data')
 SERCA_1_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord_good.data')
 
 
 class TestDataReorder(unittest.TestCase):
+
+    def testNoArgs(self):
+        with capture_stderr(data_reorder.main, []) as output:
+            self.assertTrue("Could not read file" in output)
+        with capture_stdout(data_reorder.main, []) as output:
+            self.assertTrue("optional arguments" in output)
 
     def testDefIni(self):
         try:
@@ -45,29 +53,15 @@ class TestDataReorder(unittest.TestCase):
 
     def testSerca(self):
         """
-        May not cover new parts of code, but at least tests on another set of data
+        Tests on another set of data, and a bad file location
         """
-        try:
-            data_reorder.main(["-c", SERCA_INI])
+        with capture_stderr(data_reorder.main, ["-c", SERCA_INI]) as output:
+            self.assertTrue("No such file or directory" in output)
             self.assertFalse(diff_lines(SERCA_0_OUT, SERCA_0_GOOD_OUT))
             self.assertFalse(diff_lines(SERCA_1_OUT, SERCA_1_GOOD_OUT))
-        finally:
             silent_remove(SERCA_0_OUT)
             silent_remove(SERCA_1_OUT)
 
-
-    # TODO: test make_atom_type_dict_flag
-    #
-    # def testGluDict(self):
-    #     try:
-    #         data_reorder.main(["-c", GLU_DICT_INI])
-    #         self.assertFalse(diff_lines(GLU_OUT, GOOD_GLU_OUT))
-    #         with open(DEF_DICT_OUT, 'r') as d_file:
-    #             dict_test = json.load(d_file)
-    #         with open(GOOD_DICT, 'r') as d_file:
-    #             dict_good = json.load(d_file)
-    #         self.assertEqual(dict_test, dict_good)
-    #     finally:
-    #         silent_remove(PDB_TPL_OUT)
-    #         silent_remove(GLU_OUT)
-    #         silent_remove(DEF_DICT_OUT)
+    def testBadDict(self):
+        with capture_stderr(data_reorder.main, ["-c", BAD_DICT_INI]) as output:
+            self.assertTrue("Could not convert the following line to two integers:" in output)
