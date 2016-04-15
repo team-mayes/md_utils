@@ -32,14 +32,23 @@ DATA_FILES = 'data_list_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
 PRINT_DATA_ATOMS = 'print_interactions_involving_atoms'
 
-# data file info
+PRINT_ATOM_TYPES = 'print_atom_types'
+PRINT_BOND_TYPES = 'print_bond_types'
+PRINT_ANGLE_TYPES = 'print_angle_types'
+PRINT_DIHEDRAL_TYPES = 'print_dihedral_types'
+PRINT_IMPROPER_TYPES = 'print_improper_types'
 
 # Defaults
 DEF_CFG_FILE = 'data_reorder.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
-                ATOM_ID_DICT_FILE: 'reorder_old_new.csv',
-                PRINT_DATA_ATOMS: []
+                ATOM_ID_DICT_FILE: None,
+                PRINT_DATA_ATOMS: [],
+                PRINT_ATOM_TYPES: [],
+                PRINT_BOND_TYPES: [],
+                PRINT_ANGLE_TYPES: [],
+                PRINT_DIHEDRAL_TYPES: [],
+                PRINT_IMPROPER_TYPES: []
                 }
 REQ_KEYS = {}
 
@@ -69,12 +78,12 @@ NUM_ANGL_TYP = 'num_angl_typ'
 NUM_DIHE_TYP = 'num_dihe_typ'
 NUM_IMPR_TYP = 'num_impr_typ'
 
-TYPE_SEC_DICT = {SEC_MASSES: NUM_ATOM_TYP,
-                 SEC_PAIR_COEFF: NUM_ATOM_TYP,
-                 SEC_BOND_COEFF: NUM_BOND_TYP,
-                 SEC_ANGL_COEFF: NUM_ANGL_TYP,
-                 SEC_DIHE_COEFF: NUM_DIHE_TYP,
-                 SEC_IMPR_COEFF: NUM_IMPR_TYP,
+TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES),
+                 SEC_PAIR_COEFF: (NUM_ATOM_TYP, PRINT_ATOM_TYPES),
+                 SEC_BOND_COEFF: (NUM_BOND_TYP, PRINT_BOND_TYPES),
+                 SEC_ANGL_COEFF: (NUM_ANGL_TYP, PRINT_ANGLE_TYPES),
+                 SEC_DIHE_COEFF: (NUM_DIHE_TYP, PRINT_DIHEDRAL_TYPES),
+                 SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES),
                  }
 
 # For these sections, keeps track of total number of entries and min number of columns per line
@@ -136,7 +145,8 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Reorders atom ids in a lammps data file, given a dictionary to '
-                                                 'reorder the atoms (a csv of old_index,new_index).')
+                                                 'reorder the atoms (a csv of old_index,new_index). Can also '
+                                                 'print info for selected atom ids. ')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
@@ -152,11 +162,14 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except InvalidDataError as e:
+        warning(e)
+        return args, INVALID_DATA
 
     return args, GOOD_RET
 
 
-def find_section_state(line, current_section, section_order, content):
+def find_section_state(line, current_section, section_order, content, highlight_content):
     """
     In addition to finding the current section by matching patterns, resets the count and
     adds to lists that are keeping track of the data being read
@@ -171,6 +184,7 @@ def find_section_state(line, current_section, section_order, content):
         if pattern.match(line):
             section_order.append(section)
             content[section] = []
+            highlight_content[section] = []
             return section, 1
 
     if current_section is None:
@@ -198,7 +212,7 @@ def find_header_values(line, nums_dict):
         raise InvalidDataError("While reading a data file, encountered error '{}' on line: {}".format(e, line))
 
 
-def ord_data_file(atom_id_dict, data_file):
+def ord_data_file(atom_id_dict, data_file, cfg):
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
@@ -211,6 +225,7 @@ def ord_data_file(atom_id_dict, data_file):
         for key in num_dict_headers:
             nums_dict[key] = None
         content = {SEC_HEAD: [], }
+        highlight_content = {}
 
         for line in d.readlines():
             line = line.strip()
@@ -218,7 +233,7 @@ def ord_data_file(atom_id_dict, data_file):
                 continue
 
             if section is None:
-                section, count = find_section_state(line, section, section_order, content)
+                section, count = find_section_state(line, section, section_order, content, highlight_content)
 
             elif section == SEC_HEAD:
                 # Head is the only section of indeterminate lengths, so check every line *after the first, comment
@@ -228,7 +243,7 @@ def ord_data_file(atom_id_dict, data_file):
                     content[SEC_HEAD].append('')
                     count += 1
                 else:
-                    section, count = find_section_state(line, section, section_order, content)
+                    section, count = find_section_state(line, section, section_order, content, highlight_content)
                     if section == SEC_HEAD:
                         content[SEC_HEAD].append(line)
                         find_header_values(line, nums_dict)
@@ -245,7 +260,17 @@ def ord_data_file(atom_id_dict, data_file):
 
             elif section in TYPE_SEC_DICT:
                 content[section].append(line)
-                type_count = TYPE_SEC_DICT[section]
+                type_count = TYPE_SEC_DICT[section][0]
+                highlight_types = cfg[TYPE_SEC_DICT[section][1]]
+                if len(highlight_types) > 0:
+                    s_line = line.split()
+                    try:
+                        coeff_id = int(s_line[0])
+                    except ValueError as e:
+                        raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: "
+                                               "{}".format(e, line, data_file))
+                    if coeff_id in highlight_types:
+                        highlight_content[section].append(line)
                 if type_count in nums_dict:
                     if count == nums_dict[type_count]:
                         section = None
@@ -269,12 +294,17 @@ def ord_data_file(atom_id_dict, data_file):
 
                 content[section].append(s_line)
 
+                if atom_id in cfg[PRINT_DATA_ATOMS]:
+                    highlight_content[section].append(s_line)
+
                 if count == nums_dict[NUM_ATOMS]:
                     content[section].sort()
+                    highlight_content[section].sort()
                     section = None
                 else:
                     count += 1
             elif section in NUM_SEC_DICT:
+                highlight_line = False
                 tot_num_key = NUM_SEC_DICT[section][0]
                 if tot_num_key not in nums_dict:
                     raise InvalidDataError("Found section {}, but did not find number of bonds "
@@ -291,13 +321,20 @@ def ord_data_file(atom_id_dict, data_file):
                 for index, atom_id in enumerate(atoms):
                     if atom_id in atom_id_dict:
                         new_atoms[index] = atom_id_dict[atom_id]
+                    if atom_id in cfg[PRINT_DATA_ATOMS]:
+                        highlight_line = True
 
                 if len(split_line) > min_col_num:
                     end = split_line[min_col_num:]
                 else:
                     end = []
 
-                content[section].append(split_line[0:2] + new_atoms + end)
+                line_struct = split_line[0:2] + new_atoms + end
+                content[section].append(line_struct)
+
+                if highlight_line:
+                    highlight_content[section].append(line_struct)
+
                 if count == nums_dict[tot_num_key]:
                     section = None
                 else:
@@ -306,14 +343,22 @@ def ord_data_file(atom_id_dict, data_file):
             else:
                 warning("Note: unexpected content added to end of file:", line)
 
-    # empty list will become an empty line
     data_content = content[SEC_HEAD]
+    select_data_content = []
     for section in section_order:
+        # empty list will become an empty line
         data_content += [''] + [section, ''] + content[section]
+        select_data_content += [section] + highlight_content[section]
 
-    f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
-    list_to_file(data_content, f_name)
-    print('Completed writing {}'.format(f_name))
+    if cfg[ATOM_ID_DICT_FILE] is not None:
+        f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
+        list_to_file(data_content, f_name)
+        print('Completed writing {}'.format(f_name))
+
+    if len(cfg[PRINT_DATA_ATOMS]) > 0:
+        f_name = create_out_fname(data_file, suffix='_selected', ext='.txt')
+        list_to_file(select_data_content, f_name)
+        print('Completed writing {}'.format(f_name))
 
 
 def process_data_files(cfg, atom_id_dict):
@@ -322,7 +367,7 @@ def process_data_files(cfg, atom_id_dict):
             data_file = data_file.strip()
             if len(data_file) == 0:
                 continue
-            ord_data_file(atom_id_dict, data_file)
+            ord_data_file(atom_id_dict, data_file, cfg)
 
 
 def main(argv=None):

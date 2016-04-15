@@ -18,6 +18,8 @@ DEF_INI = os.path.join(SUB_DATA_DIR, 'data_reorder.ini')
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_serca.ini')
 BAD_DICT_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_dict.ini')
 GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
+IMP_ATOMS_BAD_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_bad_input.ini')
+GLUE_GLUP_IMP_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms.ini')
 
 # Output files
 
@@ -33,6 +35,12 @@ SERCA_1_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord_good.data')
 # noinspection PyUnresolvedReferences
 GLUP_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord.data')
 GLUP_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good.data')
+# noinspection PyUnresolvedReferences
+GLUE_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected.txt')
+GLUE_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected_good.txt')
+# noinspection PyUnresolvedReferences
+GLUP_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected.txt')
+GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected_good.txt')
 
 
 class TestDataReorder(unittest.TestCase):
@@ -70,7 +78,6 @@ class TestDataReorder(unittest.TestCase):
 
     def testBadDict(self):
         with capture_stderr(data_reorder.main, ["-c", BAD_DICT_INI]) as output:
-            print(output)
             self.assertTrue("Expected exactly two comma-separated values" in output)
 
     def testGlupIni(self):
@@ -79,3 +86,16 @@ class TestDataReorder(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_OUT, GLUP_GOOD_OUT))
         finally:
             silent_remove(GLUP_OUT)
+
+    def testImptAtomsBadInput(self):
+        with capture_stderr(data_reorder.main, ["-c", IMP_ATOMS_BAD_INI]) as output:
+            self.assertTrue("Problem with config vals on key print_dihedral_types: invalid literal for int()" in output)
+
+    def testImptAtoms(self):
+        try:
+            data_reorder.main(["-c", GLUE_GLUP_IMP_ATOMS_INI])
+            self.assertFalse(diff_lines(GLUE_SELECT_OUT, GLUE_SELECT_OUT_GOOD))
+            self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OUT_GOOD))
+        finally:
+            silent_remove(GLUE_SELECT_OUT)
+            silent_remove(GLUP_SELECT_OUT)
