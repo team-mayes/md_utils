@@ -732,7 +732,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     except KeyError as e:
         raise KeyError('Missing config val for key {}'.format(key, e))
     except Exception as e:
-        raise InvalidDataError('Problem with default config vals on key {}: {}'.format(key, e))
+        raise InvalidDataError('Problem with config vals on key {}: {}'.format(key, e))
 
     return proc_cfg
 
