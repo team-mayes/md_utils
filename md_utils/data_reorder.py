@@ -219,6 +219,7 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
 
     with open(data_file) as d:
+        print("Reading file: ".format(data_file))
         section = SEC_HEAD
         section_order = []
         count = 0
