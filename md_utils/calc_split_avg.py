@@ -63,13 +63,14 @@ def bin_by_pattern(vals, pat='rad_PMF.(\d+)_\d+'):
     :param pat: The pattern to use for matching.  Should contain a capturing group.
     :return: A dict of the values keyed by the matching captured substring.
     """
-    rpat = re.compile(pat)
+    r_pat = re.compile(pat)
     prefix_bin = defaultdict(list)
-    for pfile in vals:
-        pmat = rpat.match(pfile)
-        if pmat and len(pmat.groups()) >= 1:
-            prefix_bin[pmat.group(1)].append(pfile)
+    for p_file in vals:
+        p_mat = r_pat.match(p_file)
+        if p_mat and len(p_mat.groups()) >= 1:
+            prefix_bin[p_mat.group(1)].append(p_file)
     return prefix_bin
+
 
 def calc_avg_stdev(coord_bin):
     collect_coord = defaultdict(list)
@@ -103,8 +104,8 @@ def write_avg_stdev(result, out_fname, overwrite=False, basedir=None):
             for res_row in sorted(result):
                 res_writer.writerow(res_row)
 
-# CLI Processing #
 
+# CLI Processing #
 
 def parse_cmdline(argv):
     """

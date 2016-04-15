@@ -5,13 +5,11 @@ LAMMPS data file from restart file: timestep = 20000; edited to sort order and r
 514 angles
 63 dihedrals
 6 impropers
-
 80 atom types
 125 bond types
 274 angle types
 327 dihedral types
 27 improper types
-
 -1.6227808001752422e+01 8.0215719986556113e+00 xlo xhi
 -1.0816801999999999e+01 1.3432577999999999e+01 ylo yhi
 -1.0285513000000000e+01 1.3963866999999999e+01 zlo zhi
@@ -3806,4 +3804,3 @@ Impropers
 4 9 17 14 19 18
 5 24 19 18 14 17
 6 3 22 20 24 23
-

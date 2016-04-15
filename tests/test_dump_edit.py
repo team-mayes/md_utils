@@ -1,15 +1,19 @@
 import unittest
 import os
 
-from md_utils import dump_edit
+from md_utils.dump_edit import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
 __author__ = 'hmayes'
 
+# Directories #
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'dump_edit')
-ATOM_DICT_FILE = os.path.join(SUB_DATA_DIR, 'atom_reorder.csv')
+
+# Input files #
+
 DEF_INI = os.path.join(SUB_DATA_DIR, 'dump_edit.ini')
 REPRODUCE_INI = os.path.join(SUB_DATA_DIR, 'dump_edit_reproduce.ini')
 SHORTER_INI = os.path.join(SUB_DATA_DIR, 'dump_shorter.ini')
@@ -17,67 +21,75 @@ SKIP_INI = os.path.join(SUB_DATA_DIR, 'dump_every_2every3.ini')
 REORDER_INI = os.path.join(SUB_DATA_DIR, 'dump_edit.ini')
 REORDER_RENUM_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol.ini')
 RETYPE_INI = os.path.join(SUB_DATA_DIR, 'dump_renum_mol_retype.ini')
-DUMP_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short.dump')
+MISSING_FILE_INI = os.path.join(SUB_DATA_DIR, 'dump_missing_file.ini')
+
+# Output files
+
+# noinspection PyUnresolvedReferences
 DEF_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder.dump')
+DUMP_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short.dump')
 SHORT_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_4steps.dump')
 SKIP_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_2every3.dump')
 GOOD_ATOM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_good.dump')
 GOOD_RENUM_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_short_reorder_renum_good.dump')
-GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_reord_renum_retyp_good.dump')
+GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_reord_renum_retype_good.dump')
+
 
 class TestDumpEdit(unittest.TestCase):
+    def testNoArgs(self):
+        with capture_stderr(main, []) as output:
+            self.assertTrue("Could not read file" in output)
+        with capture_stdout(main, []) as output:
+            self.assertTrue("optional arguments" in output)
+
+    def testMissingFile(self):
+        with capture_stderr(main, ["-c", MISSING_FILE_INI]) as output:
+            self.assertTrue("Problems reading file" in output)
 
     def testReproduceDump(self):
         try:
-            dump_edit.main(["-c", REPRODUCE_INI])
-            # for debugging:
-            # with open(DEF_OUT) as f:
-            #     with open(DUMP_FILE) as g:
-            #         for line, gline in zip(f, g):
-            #             if line.strip() != gline.strip():
-            #                 print(line.strip() == gline.strip(), line.strip(), gline.strip())
+            main(["-c", REPRODUCE_INI])
             self.assertFalse(diff_lines(DEF_OUT, DUMP_FILE))
         finally:
             silent_remove(DEF_OUT)
 
     def testFewerSteps(self):
         try:
-            dump_edit.main(["-c", SHORTER_INI])
+            main(["-c", SHORTER_INI])
             self.assertFalse(diff_lines(DEF_OUT, SHORT_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
 
     def testSkipSteps(self):
         try:
-            dump_edit.main(["-c", SKIP_INI])
+            main(["-c", SKIP_INI])
             self.assertFalse(diff_lines(DEF_OUT, SKIP_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
 
     def testReorderAtoms(self):
         try:
-            dump_edit.main(["-c", REORDER_INI])
+            main(["-c", REORDER_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_ATOM_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
 
     def testReorderAtomRenumMol(self):
         try:
-            dump_edit.main(["-c", REORDER_RENUM_INI])
+            main(["-c", REORDER_RENUM_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_RENUM_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
 
     def testRetypeAtom(self):
         try:
-            dump_edit.main(["-c", RETYPE_INI])
+            main(["-c", RETYPE_INI])
             # for debugging:
-            with open(DEF_OUT) as f:
-                with open(GOOD_OUT_FILE) as g:
-                    for d_line, g_line in zip(f, g):
-                        if d_line != g_line:
-                            print(d_line, g_line)
+            # with open(DEF_OUT) as f:
+            #     with open(GOOD_OUT_FILE) as g:
+            #         for d_line, g_line in zip(f, g):
+            #             if d_line != g_line:
+            #                 print(d_line, g_line)
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
-
