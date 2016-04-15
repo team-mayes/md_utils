@@ -30,6 +30,8 @@ from contextlib import contextmanager
 import matplotlib.pyplot as pyPlt
 
 # logging.basicConfig(level=logging.DEBUG)
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_md_utils')
 
@@ -53,6 +55,21 @@ SEC_TIMESTEP = 'timestep'
 SEC_NUM_ATOMS = 'dump_num_atoms'
 SEC_BOX_SIZE = 'dump_box_size'
 SEC_ATOMS = 'atoms_section'
+
+# Lammps-specific sections
+MASSES = 'Masses'
+PAIR_COEFFS = 'Pair Coeffs'
+ATOMS = 'Atoms'
+BOND_COEFFS = 'Bond Coeffs'
+BONDS = 'Bonds'
+ANGLE_COEFFS = 'Angle Coeffs'
+ANGLES = 'Angles'
+DIHE_COEFFS = 'Dihedral Coeffs'
+DIHES = 'Dihedrals'
+IMPR_COEFFS = 'Improper Coeffs'
+IMPRS = 'Impropers'
+LAMMPS_SECTION_NAMES = [MASSES, PAIR_COEFFS, ATOMS, BOND_COEFFS, BONDS, ANGLE_COEFFS, ANGLES,
+                        DIHE_COEFFS, DIHES, IMPR_COEFFS, IMPRS]
 
 
 # Exceptions #

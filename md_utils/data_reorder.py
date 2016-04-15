@@ -6,11 +6,11 @@ Reorders a lammps data file
 from __future__ import print_function
 import ConfigParser
 import re
-import csv
 import sys
 import argparse
 
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, warning, process_cfg
+from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_int_dict,
+                                )
 
 __author__ = 'hmayes'
 
@@ -30,32 +30,33 @@ MAIN_SEC = 'main'
 # Config keys
 DATA_FILES = 'data_list_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
+PRINT_DATA_ATOMS = 'print_interactions_involving_atoms'
 
 # data file info
-
 
 # Defaults
 DEF_CFG_FILE = 'data_reorder.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 ATOM_ID_DICT_FILE: 'reorder_old_new.csv',
+                PRINT_DATA_ATOMS: []
                 }
 REQ_KEYS = {}
 
 # For data template file processing
 SEC_HEAD = 'head_section'
-SEC_MASSES = 'masses_section'
-SEC_PAIR_COEFF = 'pair_coeff_section'
-SEC_BOND_COEFF = 'bond_coeff_section'
-SEC_ANGL_COEFF = 'angle_coeff_section'
-SEC_IMPR_COEFF = 'improp_coeff_section'
-SEC_DIHE_COEFF = 'dihe_coeff_section'
-SEC_ATOMS = 'atoms_section'
-SEC_BONDS = 'bonds_section'
-SEC_ANGLS = 'angles_section'
-SEC_DIHES = 'dihedrals_section'
-SEC_IMPRS = 'impropers_section'
-SEC_VELOS = 'velos_section'
+SEC_MASSES = 'Masses'
+SEC_PAIR_COEFF = 'Pair Coeffs'
+SEC_BOND_COEFF = 'Bond Coeffs'
+SEC_ANGL_COEFF = 'Angle Coeffs'
+SEC_IMPR_COEFF = 'Improper Coeffs'
+SEC_DIHE_COEFF = 'Dihedral Coeffs'
+SEC_ATOMS = 'Atoms'
+SEC_BONDS = 'Bonds'
+SEC_ANGLS = 'Angles'
+SEC_DIHES = 'Dihedrals'
+SEC_IMPRS = 'Impropers'
+SEC_VELOS = 'Velocities'
 
 NUM_ATOMS = 'num_atoms'
 NUM_BONDS = 'num_bonds'
@@ -67,6 +68,45 @@ NUM_BOND_TYP = 'num_bond_typ'
 NUM_ANGL_TYP = 'num_angl_typ'
 NUM_DIHE_TYP = 'num_dihe_typ'
 NUM_IMPR_TYP = 'num_impr_typ'
+
+TYPE_SEC_DICT = {SEC_MASSES: NUM_ATOM_TYP,
+                 SEC_PAIR_COEFF: NUM_ATOM_TYP,
+                 SEC_BOND_COEFF: NUM_BOND_TYP,
+                 SEC_ANGL_COEFF: NUM_ANGL_TYP,
+                 SEC_DIHE_COEFF: NUM_DIHE_TYP,
+                 SEC_IMPR_COEFF: NUM_IMPR_TYP,
+                 }
+
+# For these sections, keeps track of total number of entries and min number of columns per line
+NUM_SEC_DICT = {SEC_BONDS: (NUM_BONDS, 4),
+                SEC_ANGLS: (NUM_ANGLS, 5),
+                SEC_DIHES: (NUM_DIHES, 6),
+                SEC_IMPRS: (NUM_IMPRS, 6),
+                }
+
+HEADER_PAT_DICT = {NUM_ATOMS: re.compile(r"(\d+).*atoms$"),
+                   NUM_BONDS: re.compile(r"(\d+).*bonds$"),
+                   NUM_ANGLS: re.compile(r"(\d+).*angles$"),
+                   NUM_DIHES: re.compile(r"(\d+).*dihedrals$"),
+                   NUM_IMPRS: re.compile(r"(\d+).*impropers$"),
+                   NUM_ATOM_TYP: re.compile(r"(\d+).*atom types$"),
+                   NUM_BOND_TYP: re.compile(r"(\d+).*bond types$"),
+                   NUM_ANGL_TYP: re.compile(r"(\d+).*angle types$"),
+                   NUM_DIHE_TYP: re.compile(r"(\d+).*dihedral types$"),
+                   NUM_IMPR_TYP: re.compile(r"(\d+).*improper types$"), }
+
+SEC_PAT_DICT = {SEC_MASSES: re.compile(r"^Masses.*"),
+                SEC_BOND_COEFF: re.compile(r"^Bond Coe.*"),
+                SEC_PAIR_COEFF: re.compile(r"^Pair Coe.*"),
+                SEC_ANGL_COEFF: re.compile(r"^Angle Coe.*"),
+                SEC_DIHE_COEFF: re.compile(r"^Dihedral Coe.*"),
+                SEC_IMPR_COEFF: re.compile(r"^Improper Coe.*"),
+                SEC_ATOMS: re.compile(r"^Atoms.*"),
+                SEC_VELOS: re.compile(r"^Velocities.*"),
+                SEC_BONDS: re.compile(r"^Bonds.*"),
+                SEC_ANGLS: re.compile(r"^Angles.*"),
+                SEC_DIHES: re.compile(r"^Dihedrals.*"),
+                SEC_IMPRS: re.compile(r"^Impropers.*"), }
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -116,339 +156,173 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def find_section_state(line, current_section):
-    masses_pat = re.compile(r"^Masses.*")
-    bond_pat = re.compile(r"^Bond Coe.*")
-    pair_pat = re.compile(r"^Pair Coe.*")
-    angl_pat = re.compile(r"^Angle Coe.*")
-    dihe_pat = re.compile(r"^Dihedral Coe.*")
-    impr_pat = re.compile(r"^Improper Coe.*")
-    atoms_pat = re.compile(r"^Atoms.*")
-    velos_pat = re.compile(r"^Velocities.*")
-    bonds_pat = re.compile(r"^Bonds.*")
-    angls_pat = re.compile(r"^Angles.*")
-    dihes_pat = re.compile(r"^Dihedrals.*")
-    imprs_pat = re.compile(r"^Impropers.*")
-    if masses_pat.match(line):
-        return SEC_MASSES
-    elif pair_pat.match(line):
-        return SEC_PAIR_COEFF
-    elif bond_pat.match(line):
-        return SEC_BOND_COEFF
-    elif angl_pat.match(line):
-        return SEC_ANGL_COEFF
-    elif dihe_pat.match(line):
-        return SEC_DIHE_COEFF
-    elif impr_pat.match(line):
-        return SEC_IMPR_COEFF
-    elif atoms_pat.match(line):
-        return SEC_ATOMS
-    elif velos_pat.match(line):
-        return SEC_VELOS
-    elif bonds_pat.match(line):
-        return SEC_BONDS
-    elif angls_pat.match(line):
-        return SEC_ANGLS
-    elif dihes_pat.match(line):
-        return SEC_DIHES
-    elif imprs_pat.match(line):
-        return SEC_IMPRS
+def find_section_state(line, current_section, section_order, content):
+    """
+    In addition to finding the current section by matching patterns, resets the count and
+    adds to lists that are keeping track of the data being read
+
+    @param line: current line of data file
+    @param current_section: current section
+    @param section_order: list keeping track of when find an new section
+    @param content: dictionary; add a new key for each section found
+    @return: the section currently reading, count
+    """
+    for section, pattern in SEC_PAT_DICT.items():
+        if pattern.match(line):
+            section_order.append(section)
+            content[section] = []
+            return section, 1
+
+    if current_section is None:
+        raise InvalidDataError("Could not identify section from line: {}".format(line))
     else:
-        return current_section
+        return current_section, 1
 
 
 def find_header_values(line, nums_dict):
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
-    num_bonds_pat = re.compile(r"(\d+).*bonds$")
-    num_angl_pat = re.compile(r"(\d+).*angles$")
-    num_dihe_pat = re.compile(r"(\d+).*dihedrals$")
-    num_impr_pat = re.compile(r"(\d+).*impropers$")
-
-    num_atom_typ_pat = re.compile(r"(\d+).*atom types$")
-    num_bond_typ_pat = re.compile(r"(\d+).*bond types$")
-    num_angl_typ_pat = re.compile(r"(\d+).*angle types$")
-    num_dihe_typ_pat = re.compile(r"(\d+).*dihedral types$")
-    num_impr_typ_pat = re.compile(r"(\d+).*improper types$")
-
-    if nums_dict[NUM_ATOMS] is None:
-        atoms_match = num_atoms_pat.match(line)
-        if atoms_match:
-            # regex is 1-based
-            nums_dict[NUM_ATOMS] = int(atoms_match.group(1))
-            return
-    if nums_dict[NUM_ATOM_TYP] is None:
-        atom_match = num_atom_typ_pat.match(line)
-        if atom_match:
-            # regex is 1-based
-            nums_dict[NUM_ATOM_TYP] = int(atom_match.group(1))
-            return
-    if nums_dict[NUM_BONDS] is None:
-        bonds_match = num_bonds_pat.match(line)
-        if bonds_match:
-            # regex is 1-based
-            nums_dict[NUM_BONDS] = int(bonds_match.group(1))
-            return
-    if nums_dict[NUM_BOND_TYP] is None:
-        bond_match = num_bond_typ_pat.match(line)
-        if bond_match:
-            # regex is 1-based
-            nums_dict[NUM_BOND_TYP] = int(bond_match.group(1))
-            return
-    if nums_dict[NUM_ANGLS] is None:
-        angls_match = num_angl_pat.match(line)
-        if angls_match:
-            # regex is 1-based
-            nums_dict[NUM_ANGLS] = int(angls_match.group(1))
-            return
-    if nums_dict[NUM_ANGL_TYP] is None:
-        angl_match = num_angl_typ_pat.match(line)
-        if angl_match:
-            # regex is 1-based
-            nums_dict[NUM_ANGL_TYP] = int(angl_match.group(1))
-            return
-    if nums_dict[NUM_DIHES] is None:
-        dihes_match = num_dihe_pat.match(line)
-        if dihes_match:
-            # regex is 1-based
-            nums_dict[NUM_DIHES] = int(dihes_match.group(1))
-            return
-    if nums_dict[NUM_DIHE_TYP] is None:
-        dihe_match = num_dihe_typ_pat.match(line)
-        if dihe_match:
-            # regex is 1-based
-            nums_dict[NUM_DIHE_TYP] = int(dihe_match.group(1))
-            return
-    if nums_dict[NUM_IMPRS] is None:
-        imprs_match = num_impr_pat.match(line)
-        if imprs_match:
-            # regex is 1-based
-            nums_dict[NUM_IMPRS] = int(imprs_match.group(1))
-            return
-    if nums_dict[NUM_IMPR_TYP] is None:
-        impr_match = num_impr_typ_pat.match(line)
-        if impr_match:
-            # regex is 1-based
-            nums_dict[NUM_IMPR_TYP] = int(impr_match.group(1))
-            return
+    """
+    Comprehend entries in lammps data file header
+    @param line: line in header section
+    @param nums_dict: dictionary keep track of total numbers for types (lammps header data)
+    @return: updated nums_dict or error
+    """
+    try:
+        for num_key, pattern in HEADER_PAT_DICT.items():
+            if nums_dict[num_key] is None:
+                pattern_match = pattern.match(line)
+                if pattern_match:
+                  # regex is 1-based
+                    nums_dict[num_key] = int(pattern_match.group(1))
+                    return
+    except (ValueError, KeyError) as e:
+        raise InvalidDataError("While reading a data file, encountered error '{}' on line: {}".format(e, line))
 
 
-def process_data_files(cfg):
-
-    atom_id_dict_loc = cfg[ATOM_ID_DICT_FILE]
-    atom_id_dict = {}
-
-    # Read in the reordering dictionary
-    # Note: the dictionary is base 1.
-    with open(atom_id_dict_loc) as csv_file:
-        for line in csv.reader(csv_file):
-            if len(line) > 0:
-                try:
-                    atom_id_dict[int(line[0])] = int(line[1])
-                except (ValueError, IndexError) as e:
-                    raise InvalidDataError("Encountered error {} on file: {}\nCould not convert the following line to "
-                                           "two integers: {}".format(e, atom_id_dict_loc, line))
-        print('Completed reading atom dictionary.')
-
+def ord_data_file(atom_id_dict, data_file):
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
+
+    with open(data_file) as d:
+        section = SEC_HEAD
+        section_order = []
+        count = 0
+        for key in num_dict_headers:
+            nums_dict[key] = None
+        content = {SEC_HEAD: [], }
+
+        for line in d.readlines():
+            line = line.strip()
+            if len(line) == 0:
+                continue
+
+            if section is None:
+                section, count = find_section_state(line, section, section_order, content)
+
+            elif section == SEC_HEAD:
+                # Head is the only section of indeterminate lengths, so check every line *after the first, comment
+                # line** to see if a new section is encountered
+                if count == 0:
+                    content[SEC_HEAD].append(line)
+                    content[SEC_HEAD].append('')
+                    count += 1
+                else:
+                    section, count = find_section_state(line, section, section_order, content)
+                    if section == SEC_HEAD:
+                        content[SEC_HEAD].append(line)
+                        find_header_values(line, nums_dict)
+                    else:
+                        # Upon exiting header, see if have minimum data needed
+                        if nums_dict[NUM_ATOMS] is None:
+                            raise InvalidDataError("Did not find total atom number in the header of "
+                                                   "file {}".format(data_file))
+
+                        for key, val in nums_dict.items():
+                            if val <= 0:
+                                raise InvalidDataError("Invalid value ({}) encountered for key '{}' in file: "
+                                                       "{}".format(val, key, data_file))
+
+            elif section in TYPE_SEC_DICT:
+                content[section].append(line)
+                type_count = TYPE_SEC_DICT[section]
+                if type_count in nums_dict:
+                    if count == nums_dict[type_count]:
+                        section = None
+                    else:
+                        count += 1
+                else:
+                    raise InvalidDataError("Found section {}, but did not find number of entries for that section "
+                                           "in the header.".format(section))
+
+            elif section in [SEC_ATOMS, SEC_VELOS]:
+                s_line = line.split()
+                try:
+                    atom_id = int(s_line[0])
+                except (ValueError, KeyError) as e:
+                    raise InvalidDataError("Error {} on line: {}\n  in file: {}".format(e, line, data_file))
+
+                if atom_id in atom_id_dict:
+                    s_line[0] = atom_id_dict[atom_id]
+                else:
+                    s_line[0] = atom_id
+
+                content[section].append(s_line)
+
+                if count == nums_dict[NUM_ATOMS]:
+                    content[section].sort()
+                    section = None
+                else:
+                    count += 1
+            elif section in NUM_SEC_DICT:
+                tot_num_key = NUM_SEC_DICT[section][0]
+                if tot_num_key not in nums_dict:
+                    raise InvalidDataError("Found section {}, but did not find number of bonds "
+                                           "in the header.".format(section))
+
+                min_col_num = NUM_SEC_DICT[section][1]
+                split_line = line.split()
+                try:
+                    atoms = map(int, split_line[2:min_col_num])
+                except (ValueError, KeyError) as e:
+                    raise InvalidDataError("Error {} reading line: {} \n  in section {} of file: {} "
+                                           "".format(e, line, section, data_file))
+                new_atoms = atoms
+                for index, atom_id in enumerate(atoms):
+                    if atom_id in atom_id_dict:
+                        new_atoms[index] = atom_id_dict[atom_id]
+
+                if len(split_line) > min_col_num:
+                    end = split_line[min_col_num:]
+                else:
+                    end = []
+
+                content[section].append(split_line[0:2] + new_atoms + end)
+                if count == nums_dict[tot_num_key]:
+                    section = None
+                else:
+                    count += 1
+
+            else:
+                warning("Note: unexpected content added to end of file:", line)
+
+    # empty list will become an empty line
+    data_content = content[SEC_HEAD]
+    for section in section_order:
+        data_content += [''] + [section, ''] + content[section]
+
+    f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
+    list_to_file(data_content, f_name)
+    print('Completed writing {}'.format(f_name))
+
+
+def process_data_files(cfg, atom_id_dict):
     with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
             if len(data_file) == 0:
                 continue
-            with open(data_file) as d:
-                section = SEC_HEAD
-                count = 0
-                for key in num_dict_headers:
-                    nums_dict[key] = None
-                head_content = []
-                atoms_content = []
-                tail_content = []
-                reorder_data = {}
-                # TODO: Make printing velocities an option
-                # We are not printing velocities.
-                last_read_velos = False
-                # Now read the data
-                for line in d.readlines():
-                    line = line.strip()
-                    if section is None:
-                        section = find_section_state(line, section)
-                        count = 0
-                        if section is None:
-                            # If we are skipping velocities and it was the last-read section, skip the buffer.
-                            # Otherwise, add it to the head if haven't finished reading atoms, tail otherwise
-                            if last_read_velos:
-                                last_read_velos = False
-                            elif len(atoms_content) < nums_dict[NUM_ATOMS]:
-                                head_content.append(line)
-                            else:
-                                tail_content.append(line)
-                            continue
-                    # Not an elif because want to continue from above if section state changed
-                    if section == SEC_HEAD:
-                        head_content.append(line)
-                        section = find_section_state(line, section)
-                        if section == SEC_HEAD:
-                            find_header_values(line, nums_dict)
-                        else:
-                            # Count starts at 1 because the title of the next section is already printed in the header
-                            # For all the rest, it is not
-                            count = 1
-                            # Upon exiting header, made sure have all the data we need.
-                            for key in nums_dict:
-                                if key is None:
-                                    raise InvalidDataError('Did not find a value for {} in the header of '
-                                                           'file {}'.format(key, data_file))
-                    elif section in [SEC_MASSES, SEC_PAIR_COEFF]:
-                        head_content.append(line)
-                        if count == nums_dict[NUM_ATOM_TYP]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_BOND_COEFF:
-                        head_content.append(line)
-                        if count == nums_dict[NUM_BOND_TYP]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_ANGL_COEFF:
-                        head_content.append(line)
-                        if count == nums_dict[NUM_ANGL_TYP]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_DIHE_COEFF:
-                        head_content.append(line)
-                        if count == nums_dict[NUM_DIHE_TYP]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_IMPR_COEFF:
-                        head_content.append(line)
-                        if count == nums_dict[NUM_IMPR_TYP]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_ATOMS:
-                        if count == 0:
-                            head_content.append(line)
-                        else:
-                            atoms_content.append(line)
-                            if len(line) == 0:
-                                continue
-                            if count in atom_id_dict:
-                                reorder_data[count] = line
-                            if count == nums_dict[NUM_ATOMS]:
-                                section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_VELOS:
-                        # TODO: Don't really need velocities; They will be skipped. Not yet tested.
-                        # split_line = line.split
-                        # atom_id = int(split_line)
-                        # if atom_id in atom_id_dict:
-                        #     atom_id = atom_id_dict[atom_id]
-                        # tail_content.append(' '.join([str(atom_id)]+ split_line[1:]))
-                        last_read_velos = True
-                        if count == nums_dict[NUM_ATOMS]:
-                            section = None
-                        if len(line) != 0:
-                            count += 1
-                    elif section == SEC_BONDS:
-                        if count == nums_dict[NUM_BONDS]:
-                            section = None
-                        if len(line) == 0:
-                            tail_content.append(line)
-                        else:
-                            split_line = line.split()
-                            atoms = map(int, split_line[2:4])
-                            new_atoms = atoms
-                            for index, atom_id in enumerate(atoms):
-                                if atom_id in atom_id_dict:
-                                    new_atoms[index] = atom_id_dict[atom_id]
-                                else:
-                                    new_atoms[index] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[4:]))
-                            count += 1
-                    elif section == SEC_ANGLS:
-                        if count == nums_dict[NUM_ANGLS]:
-                            section = None
-                        if len(line) == 0:
-                            tail_content.append(line)
-                        else:
-                            split_line = line.split()
-                            atoms = map(int, split_line[2:5])
-                            new_atoms = atoms
-                            for index, atom_id in enumerate(atoms):
-                                if atom_id in atom_id_dict:
-                                    new_atoms[index] = atom_id_dict[atom_id]
-                                else:
-                                    new_atoms[index] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[5:]))
-                            count += 1
-                    elif section == SEC_DIHES:
-                        if count == nums_dict[NUM_DIHES]:
-                            section = None
-                        if len(line) == 0:
-                            tail_content.append(line)
-                        else:
-                            split_line = line.split()
-                            atoms = map(int, split_line[2:6])
-                            new_atoms = atoms
-                            for index, atom_id in enumerate(atoms):
-                                if atom_id in atom_id_dict:
-                                    new_atoms[index] = atom_id_dict[atom_id]
-                                else:
-                                    new_atoms[index] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[6:]))
-                            count += 1
-                    elif section == SEC_IMPRS:
-                        if count == nums_dict[NUM_IMPRS]:
-                            section = None
-                        if len(line) == 0:
-                            tail_content.append(line)
-                        else:
-                            split_line = line.split()
-                            atoms = map(int, split_line[2:6])
-                            new_atoms = atoms
-                            for index, atom_id in enumerate(atoms):
-                                if atom_id in atom_id_dict:
-                                    new_atoms[index] = atom_id_dict[atom_id]
-                                else:
-                                    new_atoms[index] = atom_id
-                            tail_content.append(' '.join(split_line[0:2] + map(str, new_atoms) + split_line[6:]))
-                            count += 1
-                    else:
-                        tail_content.append(line)
-                        print("Note: unexpected content added to end of file:", line)
-
-            # Now that finished reading the file...
-            # Do any necessary reordering
-            for atom in reorder_data:
-                atoms_content[atom_id_dict[atom]] = reorder_data[atom]
-            # renumber atoms:
-            renumbered = ['']
-            new_atom_id = 1
-            # new_mapping = []
-            for line in atoms_content:
-                if len(line) != 0:
-                    split_line = line.split()
-                    # old_atom_id = int(split_line[0])
-                    # if old_atom_id != new_atom_id:
-                    #     new_mapping.append([old_atom_id,new_atom_id])
-                    renumbered.append(' '.join([str(new_atom_id)]+split_line[1:]))
-                    new_atom_id += 1
-
-            # # Write dictionary
-            # with open('new_mapping.csv', 'w') as d_file:
-            #     for line in new_mapping:
-            #         d_file.write('%d,%d' % tuple(line) + '\n')
-
-            f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
-            list_to_file(head_content+renumbered+tail_content, f_name)
-            print('Completed writing {}'.format(f_name))
+            ord_data_file(atom_id_dict, data_file)
 
 
 def main(argv=None):
@@ -460,12 +334,13 @@ def main(argv=None):
     # Read template and data files
     cfg = args.config
     try:
-        process_data_files(cfg)
+        atom_id_dict = read_int_dict(cfg[ATOM_ID_DICT_FILE], one_to_one=False)
+        process_data_files(cfg, atom_id_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading file:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

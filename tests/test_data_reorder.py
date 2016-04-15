@@ -6,27 +6,33 @@ from md_utils.md_common import diff_lines, silent_remove, capture_stderr, captur
 
 __author__ = 'hmayes'
 
+# Directories #
+
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'data_reorder')
 
-# Input files
+# Input files #
+
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data_reorder.ini')
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_serca.ini')
 BAD_DICT_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_dict.ini')
+GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
 
 # Output files
 
 # noinspection PyUnresolvedReferences
 DEF_OUT = os.path.join(SUB_DATA_DIR, '4.25_ord.data')
 GOOD_OUT = os.path.join(SUB_DATA_DIR, '4.25_ord_good.data')
-
 # noinspection PyUnresolvedReferences
 SERCA_0_OUT = os.path.join(SUB_DATA_DIR, 'reus_0_edited_ord.data')
 SERCA_0_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_0_edited_ord_good.data')
 # noinspection PyUnresolvedReferences
 SERCA_1_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord.data')
 SERCA_1_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_ord_good.data')
+# noinspection PyUnresolvedReferences
+GLUP_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord.data')
+GLUP_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good.data')
 
 
 class TestDataReorder(unittest.TestCase):
@@ -64,4 +70,12 @@ class TestDataReorder(unittest.TestCase):
 
     def testBadDict(self):
         with capture_stderr(data_reorder.main, ["-c", BAD_DICT_INI]) as output:
-            self.assertTrue("Could not convert the following line to two integers:" in output)
+            print(output)
+            self.assertTrue("Expected exactly two comma-separated values" in output)
+
+    def testGlupIni(self):
+        try:
+            data_reorder.main(["-c", GLUP_INI])
+            self.assertFalse(diff_lines(GLUP_OUT, GLUP_GOOD_OUT))
+        finally:
+            silent_remove(GLUP_OUT)

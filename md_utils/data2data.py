@@ -10,7 +10,8 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import InvalidDataError, create_out_fname, warning, process_cfg, list_to_file, read_int_dict
+from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
+                                list_to_file, read_int_dict, LAMMPS_SECTION_NAMES)
 
 __author__ = 'hmayes'
 
@@ -62,8 +63,6 @@ ATOM_ID_DICT = 'atom_id_dict'
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
-LAMMPS_SECTION_NAMES = ['Masses', 'Pair Coeffs', 'Atoms', 'Bond Coeffs', 'Bonds', 'Angle Coeffs', 'Angles',
-                        'Dihedral Coeffs', 'Dihedrals', 'Improper Coeffs', 'Impropers']
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
