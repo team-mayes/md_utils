@@ -19,6 +19,7 @@ SERCA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_serca.ini')
 BAD_DICT_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_dict.ini')
 GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
 IMP_ATOMS_BAD_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_bad_input.ini')
+IMP_ATOMS_TYPO_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_key_typo.ini')
 GLUE_GLUP_IMP_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms.ini')
 
 # Output files
@@ -99,3 +100,7 @@ class TestDataReorder(unittest.TestCase):
         finally:
             silent_remove(GLUE_SELECT_OUT)
             silent_remove(GLUP_SELECT_OUT)
+
+    def testKeyTypo(self):
+        with capture_stderr(data_reorder.main, ["-c", IMP_ATOMS_TYPO_INI]) as output:
+            self.assertTrue("Unexpected key 'print_interaction_involving_atoms' in configuration" in output)

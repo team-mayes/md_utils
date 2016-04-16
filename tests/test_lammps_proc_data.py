@@ -7,6 +7,7 @@ import os
 import unittest
 
 from md_utils import lammps_proc_data
+from md_utils.lammps_proc_data import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
@@ -18,7 +19,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
-INVALID_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
+INVALID_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
 LONG_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_long.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
@@ -69,47 +70,47 @@ good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.c
 
 class TestLammpsProcData(unittest.TestCase):
     def testNoInputFile(self):
-        with capture_stderr(lammps_proc_data.main) as output:
+        with capture_stderr(main) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
-        with capture_stdout(lammps_proc_data.main) as output:
+        with capture_stdout(main) as output:
             self.assertTrue("optional arguments" in output)
 
     def testInvalidData(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", INVALID_INI_PATH]) as output:
-            self.assertTrue("Problem with default config vals on key h3o_o_type: invalid literal for int" in output)
-        with capture_stdout(lammps_proc_data.main, ["-c", INVALID_INI_PATH]) as output:
+        main(["-c", INVALID_INI])
+        with capture_stderr(main, ["-c", INVALID_INI]) as output:
+            self.assertTrue("Problem with config vals on key h3o_o_type: invalid literal for int" in output)
+        with capture_stdout(main, ["-c", INVALID_INI]) as output:
             self.assertTrue("optional arguments" in output)
 
     def testNoAction(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stderr(main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("No calculations have been requested" in output)
-        with capture_stdout(lammps_proc_data.main, ["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stdout(main, ["-c", NO_ACTION_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
 
     def testMissDump(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", MISS_DUMP_INI]) as output:
+        with capture_stderr(main, ["-c", MISS_DUMP_INI]) as output:
             self.assertTrue("No such file or directory" in output)
 
     def testBadDump(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", BAD_DUMP_INI]) as output:
+        with capture_stderr(main, ["-c", BAD_DUMP_INI]) as output:
             self.assertTrue("Problems reading data: Unexpected line in file " in output)
 
     def testMissingConfig(self):
-        lammps_proc_data.main(["-c", INCOMP_INI_PATH])
-        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
+        with capture_stderr(main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("Input data missing" in output)
-        with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_INI_PATH]) as output:
+        with capture_stdout(main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
 
     def testOHDist(self):
         try:
-            lammps_proc_data.main(["-c", OH_DIST_INI_PATH])
+            main(["-c", OH_DIST_INI_PATH])
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
 
     def testMaxTimestepsCalcHIJ(self):
-        with capture_stdout(lammps_proc_data.main, ["-c", HIJ_INI_PATH]) as output:
+        with capture_stdout(main, ["-c", HIJ_INI_PATH]) as output:
             try:
                 self.assertTrue("Reached the maximum timesteps" in output)
                 self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
@@ -118,63 +119,63 @@ class TestLammpsProcData(unittest.TestCase):
 
     def testIncompDump(self):
         try:
-            with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
+            with capture_stderr(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("WARNING" in output)
-            with capture_stdout(lammps_proc_data.main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
+            with capture_stdout(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("Wrote file" in output)
             self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_INCOMP_OUT)
 
     def testIncompProtType(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_PROT_O_INI]) as output:
+        # main(["-c", INCOMP_PROT_O_INI])
+        with capture_stderr(main, ["-c", INCOMP_PROT_O_INI]) as output:
             self.assertTrue("WARNING" in output)
             self.assertTrue("Expected to find exactly" in output)
 
     def testNegGofR(self):
-        with capture_stderr(lammps_proc_data.main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
+        with capture_stderr(main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
 
     def testHOGofR(self):
         try:
-            lammps_proc_data.main(["-c", HO_GOFR_INI_PATH])
+            main(["-c", HO_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
 
     def testOOGofR(self):
         try:
-            lammps_proc_data.main(["-c", OO_GOFR_INI_PATH])
+            main(["-c", OO_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
 
     def testHHGofR(self):
         try:
-            lammps_proc_data.main(["-c", HH_GOFR_INI_PATH])
+            main(["-c", HH_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HH_GOFR_OUT_PATH))
         finally:
-            # silent_remove(DEF_GOFR_OUT)
-            pass
+            silent_remove(DEF_GOFR_OUT)
 
     def testOHGofR(self):
         try:
-            lammps_proc_data.main(["-c", OH_GOFR_INI_PATH])
+            main(["-c", OH_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
 
     def testHO_OO_HH_OHGofR(self):
         try:
-            lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI])
+            main(["-c", HO_OO_HH_OH_GOFR_INI])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT))
         finally:
             silent_remove(DEF_GOFR_OUT)
 
     def testHO_OO_HH_OHGofR_MaxSteps(self):
-        # lammps_proc_data.main(["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS])
+        # main(["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS])
         try:
-            with capture_stdout(lammps_proc_data.main, ["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS]) as output:
+            with capture_stdout(main, ["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS]) as output:
                 self.assertTrue(good_long_out_msg in output)
             self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:

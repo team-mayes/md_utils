@@ -723,6 +723,9 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     :return: The processed configuration.
     """
     proc_cfg = {}
+    for key in raw_cfg:
+        if not (key in def_cfg_vals or key in req_keys):
+            raise InvalidDataError("Unexpected key '{}' in configuration ('ini') file.".format(key))
     key = None
     try:
         for key, def_val in def_cfg_vals.items():
