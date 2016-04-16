@@ -30,6 +30,11 @@ MAIN_SEC = 'main'
 # Config keys
 DATA_FILES = 'data_list_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
+ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
+BOND_TYPE_DICT_FILE = 'bond_type_dict_filename'
+ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
+DIHE_TYPE_DICT_FILE = 'dihedral_type_dict_filename'
+IMPR_TYPE_DICT_FILE = 'improper_type_dict_filename'
 PRINT_DATA_ATOMS = 'print_interactions_involving_atoms'
 
 PRINT_ATOM_TYPES = 'print_atom_types'
@@ -43,6 +48,11 @@ DEF_CFG_FILE = 'data_reorder.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 ATOM_ID_DICT_FILE: None,
+                ATOM_TYPE_DICT_FILE: None,
+                BOND_TYPE_DICT_FILE: None,
+                ANGL_TYPE_DICT_FILE: None,
+                DIHE_TYPE_DICT_FILE: None,
+                IMPR_TYPE_DICT_FILE: None,
                 PRINT_DATA_ATOMS: [],
                 PRINT_ATOM_TYPES: [],
                 PRINT_BOND_TYPES: [],
@@ -86,7 +96,9 @@ TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES),
                  SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES),
                  }
 
-# For these sections, keeps track of total number of entries and min number of columns per line
+# For these sections, keeps track of:
+#   * total number of entries
+#   * min number of columns per line
 NUM_SEC_DICT = {SEC_BONDS: (NUM_BONDS, 4),
                 SEC_ANGLS: (NUM_ANGLS, 5),
                 SEC_DIHES: (NUM_DIHES, 6),
@@ -212,7 +224,7 @@ def find_header_values(line, nums_dict):
         raise InvalidDataError("While reading a data file, encountered error '{}' on line: {}".format(e, line))
 
 
-def ord_data_file(atom_id_dict, data_file, cfg):
+def ord_data_file(cfg, data_file, atom_id_dict, type_dict):
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
@@ -285,6 +297,7 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                 s_line = line.split()
                 try:
                     atom_id = int(s_line[0])
+                    atom_type = int(s_line[2])
                 except (ValueError, KeyError) as e:
                     raise InvalidDataError("Error {} on line: {}\n  in file: {}".format(e, line, data_file))
 
@@ -292,6 +305,9 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                     s_line[0] = atom_id_dict[atom_id]
                 else:
                     s_line[0] = atom_id
+
+                if atom_type in type_dict[SEC_ATOMS]:
+                    s_line[2] = type_dict[SEC_ATOMS][atom_type]
 
                 content[section].append(s_line)
 
@@ -312,9 +328,10 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                                            "in the header.".format(section))
 
                 min_col_num = NUM_SEC_DICT[section][1]
-                split_line = line.split()
+                s_line = line.split()
                 try:
-                    atoms = map(int, split_line[2:min_col_num])
+                    sec_type = int(s_line[1])
+                    atoms = map(int, s_line[2:min_col_num])
                 except (ValueError, KeyError) as e:
                     raise InvalidDataError("Error {} reading line: {} \n  in section {} of file: {} "
                                            "".format(e, line, section, data_file))
@@ -325,12 +342,15 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                     if atom_id in cfg[PRINT_DATA_ATOMS]:
                         highlight_line = True
 
-                if len(split_line) > min_col_num:
-                    end = split_line[min_col_num:]
+                if sec_type in type_dict[section]:
+                    s_line[1] = type_dict[section][sec_type]
+
+                if len(s_line) > min_col_num:
+                    end = s_line[min_col_num:]
                 else:
                     end = []
 
-                line_struct = split_line[0:2] + new_atoms + end
+                line_struct = s_line[0:2] + new_atoms + end
                 content[section].append(line_struct)
 
                 if highlight_line:
@@ -351,7 +371,7 @@ def ord_data_file(atom_id_dict, data_file, cfg):
         data_content += [''] + [section, ''] + content[section]
         select_data_content += [section] + highlight_content[section]
 
-    if cfg[ATOM_ID_DICT_FILE] is not None:
+    if (len(atom_id_dict) + len(type_dict)) > 0:
         f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
         list_to_file(data_content, f_name)
         print('Completed writing {}'.format(f_name))
@@ -362,13 +382,13 @@ def ord_data_file(atom_id_dict, data_file, cfg):
         print('Completed writing {}'.format(f_name))
 
 
-def process_data_files(cfg, atom_id_dict):
+def process_data_files(cfg, atom_id_dict, type_dicts):
     with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
             if len(data_file) == 0:
                 continue
-            ord_data_file(atom_id_dict, data_file, cfg)
+            ord_data_file(cfg, data_file, atom_id_dict, type_dicts,)
 
 
 def main(argv=None):
@@ -380,9 +400,20 @@ def main(argv=None):
     # Read template and data files
     cfg = args.config
 
+    type_dicts = {SEC_ATOMS: {},
+                  SEC_BONDS: {},
+                  SEC_ANGLS: {},
+                  SEC_DIHES: {},
+                  SEC_IMPRS: {}, }
+
     try:
         atom_id_dict = read_int_dict(cfg[ATOM_ID_DICT_FILE], one_to_one=False)
-        process_data_files(cfg, atom_id_dict)
+        type_dicts[SEC_ATOMS] = read_int_dict(cfg[ATOM_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_BONDS] = read_int_dict(cfg[BOND_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_ANGLS] = read_int_dict(cfg[ANGL_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_DIHES] = read_int_dict(cfg[DIHE_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_IMPRS] = read_int_dict(cfg[IMPR_TYPE_DICT_FILE], one_to_one=False)
+        process_data_files(cfg, atom_id_dict, type_dicts)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
