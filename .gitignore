@@ -90,3 +90,4 @@ tests/test_data/lammps_proc/glue_dump_incomp_gofrs.csv
 tests/reproduced_tpl.data
 tests/test_data/evbd2d/0.625_20c_reorder_retype_548990.data
 tests/test_data/data_reorder/glup_autopsf_ord.data
+tests/test_data/data_reorder/glup_autopsf_reordered_ord.data

@@ -42,19 +42,18 @@ def header_lines(tgt_file):
     :tgt_file: The file location to read from.
     """
     with open(tgt_file) as tf:
-        hlines = []
-        for tline in tf:
-            sline = tline.strip().split()
-            if len(sline) < 2:
-                hlines.append(tline)
+        h_lines = []
+        for t_line in tf:
+            s_line = t_line.strip().split()
+            if len(s_line) < 2:
+                h_lines.append(t_line)
                 continue
             try:
                 # If we have a timestep, this is not a header line
-                int(sline[0])
-                break
-            except:
-                hlines.append(tline)
-        return hlines
+                int(s_line[0])
+            except (ValueError, TypeError):
+                h_lines.append(t_line)
+        return h_lines
 
 
 # Tests #
@@ -66,29 +65,29 @@ class TestFesCombo(unittest.TestCase):
     def test_single(self):
         test_dict = find_files_by_dir(FES_OUT_SINGLE, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
-        fdir, files = test_dict.popitem()
-        combo = combine([os.path.join(fdir, tgt) for tgt in files])
+        f_dir, files = test_dict.popitem()
+        combo = combine([os.path.join(f_dir, tgt) for tgt in files])
         self.assertDictEqual(map_fes(FES_ALL_SINGLE)[1], combo)
 
     def test_two(self):
         test_dict = find_files_by_dir(FES_OUT_TWO, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
-        fdir, files = test_dict.popitem()
-        combo = combine([os.path.join(fdir, tgt) for tgt in files])
+        f_dir, files = test_dict.popitem()
+        combo = combine([os.path.join(f_dir, tgt) for tgt in files])
         self.assertDictEqual(map_fes(FES_ALL_TWO)[1], combo)
 
     def test_multi(self):
         test_dict = find_files_by_dir(FES_OUT_MULTI, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
-        fdir, files = test_dict.popitem()
-        combo = combine([os.path.join(fdir, tgt) for tgt in files])
+        f_dir, files = test_dict.popitem()
+        combo = combine([os.path.join(f_dir, tgt) for tgt in files])
         self.assertDictEqual(map_fes(FES_ALL_MULTI)[1], combo)
 
     def test_headers(self):
         test_dict = find_files_by_dir(FES_OUT_SINGLE, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
-        fdir, files = test_dict.popitem()
-        headers = extract_header(os.path.join(fdir, files[0]))
+        f_dir, files = test_dict.popitem()
+        headers = extract_header(os.path.join(f_dir, files[0]))
         ref_headers = header_lines(HEADER_DIR)
         self.assertEqual(len(headers), len(ref_headers))
         self.assertListEqual(ref_headers, headers)
@@ -96,10 +95,10 @@ class TestFesCombo(unittest.TestCase):
     def test_writer(self):
         test_dict = find_files_by_dir(FES_OUT_MULTI, DEF_FILE_PAT)
         self.assertEqual(1, len(test_dict))
-        fdir, files = test_dict.popitem()
-        combo = combine([os.path.join(fdir, tgt) for tgt in files])
+        f_dir, files = test_dict.popitem()
+        combo = combine([os.path.join(f_dir, tgt) for tgt in files])
         try:
-            write_combo(extract_header(os.path.join(fdir, files[0])), combo, FES_ALL_MULTI_FILE)
+            write_combo(extract_header(os.path.join(f_dir, files[0])), combo, FES_ALL_MULTI_FILE)
             self.assertEqual(map_fes(FES_ALL_MULTI), map_fes(FES_ALL_MULTI_FILE))
         finally:
             os.remove(FES_ALL_MULTI_FILE)

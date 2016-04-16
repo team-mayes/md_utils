@@ -2,6 +2,7 @@ import unittest
 import os
 
 from md_utils import data_reorder
+from md_utils.data_reorder import main
 from md_utils.md_common import diff_lines, silent_remove, capture_stderr, capture_stdout
 
 __author__ = 'hmayes'
@@ -21,6 +22,7 @@ GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
 IMP_ATOMS_BAD_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_bad_input.ini')
 IMP_ATOMS_TYPO_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_key_typo.ini')
 GLUE_GLUP_IMP_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms.ini')
+RETYPE_INI = os.path.join(SUB_DATA_DIR, 'data_retype.ini')
 
 # Output files
 
@@ -42,6 +44,11 @@ GLUE_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected_good.txt'
 # noinspection PyUnresolvedReferences
 GLUP_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected.txt')
 GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected_good.txt')
+# noinspection PyUnresolvedReferences
+GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_ord.data')
+GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retyped_good.data')
+
+
 
 
 class TestDataReorder(unittest.TestCase):
@@ -104,3 +111,10 @@ class TestDataReorder(unittest.TestCase):
     def testKeyTypo(self):
         with capture_stderr(data_reorder.main, ["-c", IMP_ATOMS_TYPO_INI]) as output:
             self.assertTrue("Unexpected key 'print_interaction_involving_atoms' in configuration" in output)
+
+    def testRetype(self):
+        try:
+            main(["-c", RETYPE_INI])
+            self.assertFalse(diff_lines(GLUP_RETYPE_OUT, GLUP_RETYPE_OUT_GOOD))
+        finally:
+            pass
