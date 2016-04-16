@@ -415,7 +415,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

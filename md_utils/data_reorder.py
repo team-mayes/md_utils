@@ -219,7 +219,7 @@ def ord_data_file(atom_id_dict, data_file, cfg):
                         NUM_DIHES, NUM_DIHE_TYP, NUM_IMPRS, NUM_IMPR_TYP]
 
     with open(data_file) as d:
-        print("Reading file: ".format(data_file))
+        print("Reading file: {}".format(data_file))
         section = SEC_HEAD
         section_order = []
         count = 0
@@ -379,6 +379,7 @@ def main(argv=None):
 
     # Read template and data files
     cfg = args.config
+
     try:
         atom_id_dict = read_int_dict(cfg[ATOM_ID_DICT_FILE], one_to_one=False)
         process_data_files(cfg, atom_id_dict)
