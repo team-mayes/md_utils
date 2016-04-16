@@ -49,8 +49,6 @@ GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_ord.data')
 GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retyped_good.data')
 
 
-
-
 class TestDataReorder(unittest.TestCase):
 
     def testNoArgs(self):
@@ -117,4 +115,4 @@ class TestDataReorder(unittest.TestCase):
             main(["-c", RETYPE_INI])
             self.assertFalse(diff_lines(GLUP_RETYPE_OUT, GLUP_RETYPE_OUT_GOOD))
         finally:
-            pass
+            silent_remove(GLUP_RETYPE_OUT)
