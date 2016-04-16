@@ -2,14 +2,14 @@ Created by charmm2lammps v1.8.1 on Wed Mar 30 14:50:25 CDT 2016
 
 1429  atoms
 961  bonds
-514  angles
+512  angles
 62  dihedrals
 5  impropers
 20  atom types
 20  bond types
-33  angle types
-43  dihedral types
-5  improper types
+34  angle types
+48  dihedral types
+6  improper types
 -12.12469     12.12469 xlo xhi
 -12.12469     12.12469 ylo yhi
 -12.12469     12.12469 zlo zhi
@@ -83,16 +83,16 @@ Atoms
 19 1 12 -0.18 -0.003 -2.201 1.505 # CT2A
 20 1 7 0.09 -1.091 -2.059 1.654 # HA2
 21 1 7 0.09 0.586 -2.487 2.445 # HA2
-22 1 11 -0.21 0.673 -0.826 1.124 # CT2
+22 1 11 -0.21 0.673 -0.826 1.124 # CT2 # CHANGE CHARGE
 23 1 7 0.09 0.595 -0.183 2.017 # HA2
 24 1 7 0.09 1.735 -0.81 0.745 # HA2
-25 1 14 0.75 -0.012 0.03 0.003 # CD
-26 1 17 -0.55 -0.93 -0.307 -0.7 # OB
-27 1 18 -0.61 0.616 1.203 -0.251 # OH1
-28 2 2 -0.32 9.491 2.147 -7.819 # OT
-29 2 1 0.44 9.094 2.844 -8.458 # HT
-30 2 1 0.44 8.682 1.8 -7.286 # HT
-31 1 5 0.44 0.186 1.638 -1.042 # H
+25 1 14 0.75 -0.012 0.03 0.003 # CD # RETYPE
+26 1 17 -0.55 -0.93 -0.307 -0.7 # OB # RETYPE
+27 1 18 -0.61 0.616 1.203 -0.251 # OH1 # RETYPE
+28 2 2 -0.32 9.491 2.147 -7.819 # OT # RETYPE
+29 2 1 0.44 9.094 2.844 -8.458 # HT # RETYPE
+30 2 1 0.44 8.682 1.8 -7.286 # HT # RETYPE
+31 1 5 0.44 0.186 1.638 -1.042 # H # RETYPE
 32 3 2 -0.82 -2.795 -7.502 -5.435 # OT
 33 3 1 0.41 -2.893 -6.668 -4.817 # HT
 34 3 1 0.41 -3.079 -7.264 -6.386 # HT
@@ -1498,7 +1498,7 @@ Bond Coeffs
 2        250       1.49  # C    CT3
 3        370      1.345  # C    NH1
 4        620       1.23  # C    O
-5        200      1.522  # CD   CT2
+5        200      1.522  # CC   CT2 (same as CD   CT2)
 6        525       1.26  # CC   OC
 7      222.5      1.538  # CT1  CT2A
 8        330       1.08  # CT1  HB1
@@ -1517,35 +1517,35 @@ Bond Coeffs
 
 Bonds
 
-1 3 1 3 # C NH1
-2 1 1 17 # C CT1
-3 4 2 1 # C O
-4 11 22 19 # CT2 CT2A
-5 12 22 23 # CT2 HA2
-6 12 22 24 # CT2 HA2
-7 5 25 22 # CD CT2
-8 6 25 26 # CD OB
-9 17 27 31 # H OH1
-10 7 27 25 # CD OH1
-11 16 3 4 # H NH1
-12 15 3 5 # CT3 NH1
-13 14 5 6 # CT3 HA3
-14 14 5 7 # CT3 HA3
-15 14 5 8 # CT3 HA3
-16 14 9 10 # CT3 HA3
-17 14 9 11 # CT3 HA3
-18 14 9 12 # CT3 HA3
-19 2 13 9 # C CT3
-20 3 13 15 # C NH1
-21 4 14 13 # C O
-22 16 15 16 # H NH1
-23 10 15 17 # CT1 NH1
-24 9 17 18 # CT1 HB1
-25 8 19 17 # CT1 CT2A
-26 13 19 20 # CT2A HA2
-27 13 19 21 # CT2A HA2
-28 18 28 29 # HT OT
-29 18 28 30 # HT OT
+1 1 1 17 # C CT1
+2 2 13 9 # C CT3
+3 3 1 3 # C NH1
+4 3 13 15 # C NH1
+5 4 2 1 # C O
+6 4 14 13 # C O
+7 5 25 22 # CC CT2 (same as CD CT2)
+8 6 25 26 # CD OB  # RETYPE
+9 7 27 25 # CD OH1 # RETYPE
+10 8 19 17 # CT1 CT2A
+11 9 17 18 # CT1 HB1
+12 10 15 17 # CT1 NH1
+13 11 22 19 # CT2 CT2A
+14 12 22 23 # CT2 HA2
+15 12 22 24 # CT2 HA2
+16 13 19 20 # CT2A HA2
+17 13 19 21 # CT2A HA2
+18 14 5 6 # CT3 HA3
+19 14 5 7 # CT3 HA3
+20 14 5 8 # CT3 HA3
+21 14 9 10 # CT3 HA3
+22 14 9 11 # CT3 HA3
+23 14 9 12 # CT3 HA3
+24 15 3 5 # CT3 NH1
+25 16 3 4 # H NH1
+26 16 15 16 # H NH1
+27 17 27 31 # H OH1 # RETYPE
+28 18 28 29 # HT OT # RETYPE
+29 18 28 30 # HT OT # RETYPE
 30 18 32 33 # HT OT
 31 18 32 34 # HT OT
 32 18 35 36 # HT OT
@@ -2488,83 +2488,84 @@ Angle Coeffs
 5         50        120          0          0  # C    NH1  CT1
 6         50        120          0          0  # C    NH1  CT3
 7         34        123          0          0  # C    NH1  H
-8         52        108          0          0  # CD   CT2  CT2A
-9         33      109.5         30      2.163  # CD   CT2  HA2
+8         52        108          0          0  # CC   CT2  CT2A (same as CD   CT2  CT2A)
+9         33      109.5         30      2.163  # CC   CT2  HA2  (same as CD   CT2  HA2
 10         80      116.5          0          0  # CT1  C    NH1
 11         80        121          0          0  # CT1  C    O
 12      58.35      113.5      11.16      2.561  # CT1  CT2A CT2
 13       26.5      110.1      22.53      2.179  # CT1  CT2A HA2
 14         35        117          0          0  # CT1  NH1  H
-15         70        125         20      2.442  # CT2  CD   OB
-16         55      110.5          0          0  # CT2  CD   OH1
-17       26.5      110.1      22.53      2.179  # CT2  CT2A HA2
-18         35        111          0          0  # CT2A CT1  HB1
-19         70      113.5          0          0  # CT2A CT1  NH1
-20       26.5      110.1      22.53      2.179  # CT2A CT2  HA2
-21         80      116.5          0          0  # CT3  C    NH1
-22         80        121          0          0  # CT3  C    O
-23         35        117          0          0  # CT3  NH1  H
-24       35.5        109        5.4      1.802  # HA2  CT2  HA2
-25       35.5        109        5.4      1.802  # HA2  CT2A HA2
-26       35.5      108.4        5.4      1.802  # HA3  CT3  HA3
-27       51.5      109.5          0          0  # HA3  CT3  NH1
-28         48        108          0          0  # HB1  CT1  NH1
-29      37.95     113.24          0          0  # HT   OT   HT
-30   38.74335   111.7269          0          0  # HTH  OTH  HTH
+15         40        118         50      2.388  # CT2  CC   OC
+16       26.5      110.1      22.53      2.179  # CT2  CT2A HA2
+17         35        111          0          0  # CT2A CT1  HB1
+18         70      113.5          0          0  # CT2A CT1  NH1
+19       26.5      110.1      22.53      2.179  # CT2A CT2  HA2
+20         80      116.5          0          0  # CT3  C    NH1
+21         80        121          0          0  # CT3  C    O
+22         35        117          0          0  # CT3  NH1  H
+23       35.5        109        5.4      1.802  # HA2  CT2  HA2
+24       35.5        109        5.4      1.802  # HA2  CT2A HA2
+25       35.5      108.4        5.4      1.802  # HA3  CT3  HA3
+26       51.5      109.5          0          0  # HA3  CT3  NH1
+27         48        108          0          0  # HB1  CT1  NH1
+28      37.95     113.24          0          0  # HT   OT   HT
+29   38.74335   111.7269          0          0  # HTH  OTH  HTH
+30         80      122.5          0          0  # NH1  C    O
 31        100        124         70      2.225  # OC   CC   OC
-32         50        123        210      2.262  # OB   CD   OH1
-33         80      122.5          0          0  # NH1  C    O
+32         70        125         20      2.442  # CT2  CD   OB
+33         55      110.5          0          0  # CT2  CD   OH1
+34         50        123        210      2.262  # OB   CD   OH1
 
 Angles
 
-1 2 1 17 18 # C CT1 HB1
-2 6 1 3 5 # C NH1 CT3
-3 7 1 3 4 # C NH1 H
-4 15 22 25 26 # CT2 CD OB
-5 16 22 25 27 # CT2 CD OH1
-6 17 22 19 21 # CT2 CT2A HA2
-7 33 3 1 2 # NH1 C O
-8 10 3 1 17 # CT1 C NH1
-9 17 22 19 20 # CT2 CT2A HA2
-10 24 23 22 24 # HA2 CT2 HA2
-11 9 25 22 24 # CD CT2 HA2
-12 9 25 22 23 # CD CT2 HA2
-13 32 27 25 26 # OB CD OH1
-14 27 3 5 8 # HA3 CT3 NH1
-15 27 3 5 7 # HA3 CT3 NH1
-16 27 3 5 6 # HA3 CT3 NH1
-17 23 4 3 5 # CT3 NH1 H
-18 26 6 5 8 # HA3 CT3 HA3
-19 26 6 5 7 # HA3 CT3 HA3
-20 26 7 5 8 # HA3 CT3 HA3
-21 22 9 13 14 # CT3 C O
-22 21 9 13 15 # CT3 C NH1
-23 26 10 9 12 # HA3 CT3 HA3
-24 3 15 17 1 # C CT1 NH1
-25 26 10 9 11 # HA3 CT3 HA3
-26 26 11 9 12 # HA3 CT3 HA3
-27 5 13 15 17 # C NH1 CT1
-28 7 13 15 16 # C NH1 H
-29 4 13 9 12 # C CT3 HA3
-30 11 17 1 2 # CT1 C O
-31 4 13 9 11 # C CT3 HA3
-32 4 13 9 10 # C CT3 HA3
-33 28 15 17 18 # HB1 CT1 NH1
-34 33 15 13 14 # NH1 C O
-35 1 19 17 1 # C CT1 CT2A
-36 14 16 15 17 # CT1 NH1 H
-37 13 17 19 21 # CT1 CT2A HA2
-38 13 17 19 20 # CT1 CT2A HA2
-39 12 17 19 22 # CT1 CT2A CT2
-40 20 19 22 24 # CT2A CT2 HA2
-41 20 19 22 23 # CT2A CT2 HA2
-42 8 19 22 25 # CD CT2 CT2A
-43 18 19 17 18 # CT2A CT1 HB1
-44 19 19 17 15 # CT2A CT1 NH1
-45 25 20 19 21 # HA2 CT2A HA2
-46 30 29 28 32 # HTH OTH HTH
-47 30 29 28 30 # HTH OTH HTH
-48 30 30 28 32 # HTH OTH HTH
+1 1 19 17 1 # C CT1 CT2A
+2 2 1 17 18 # C CT1 HB1
+3 3 15 17 1 # C CT1 NH1
+4 4 13 9 10 # C CT3 HA3
+5 4 13 9 11 # C CT3 HA3
+6 4 13 9 12 # C CT3 HA3
+7 5 13 15 17 # C NH1 CT1
+8 6 1 3 5 # C NH1 CT3
+9 7 1 3 4 # C NH1 H
+10 7 13 15 16 # C NH1 H
+11 8 19 22 25 # CC CT2 CT2A (same as CD CT2 CT2A)
+12 9 25 22 23 # CC CT2 HA2 (same as CD CT2 HA2)
+13 9 25 22 24 # CC CT2 HA2 (same as CD CT2 HA2)
+14 10 3 1 17 # CT1 C NH1
+15 11 17 1 2 # CT1 C O
+16 12 17 19 22 # CT1 CT2A CT2
+17 13 17 19 20 # CT1 CT2A HA2
+18 13 17 19 21 # CT1 CT2A HA2
+19 14 16 15 17 # CT1 NH1 H
+20 15 22 25 26 # CT2 CD OB # RETYPE
+21 16 22 25 27 # CT2 CD OH1 # RETYPE
+22 17 22 19 20 # CT2 CT2A HA2
+23 17 22 19 21 # CT2 CT2A HA2
+24 18 19 17 18 # CT2A CT1 HB1
+25 19 19 17 15 # CT2A CT1 NH1
+26 20 19 22 23 # CT2A CT2 HA2
+27 20 19 22 24 # CT2A CT2 HA2
+28 21 9 13 15 # CT3 C NH1
+29 22 9 13 14 # CT3 C O
+30 23 4 3 5 # CT3 NH1 H
+31 24 23 22 24 # HA2 CT2 HA2
+32 25 20 19 21 # HA2 CT2A HA2
+33 26 6 5 7 # HA3 CT3 HA3
+34 26 6 5 8 # HA3 CT3 HA3
+35 26 7 5 8 # HA3 CT3 HA3
+36 26 10 9 11 # HA3 CT3 HA3
+37 26 10 9 12 # HA3 CT3 HA3
+38 26 11 9 12 # HA3 CT3 HA3
+39 27 3 5 6 # HA3 CT3 NH1
+40 27 3 5 7 # HA3 CT3 NH1
+41 27 3 5 8 # HA3 CT3 NH1
+42 28 15 17 18 # HB1 CT1 NH1
+43 33 3 1 2 # NH1 C O
+44 33 15 13 14 # NH1 C O
+45 32 27 25 26 # OB CD OH1  # RETYPE
+
+47 29 29 28 30 # HT OT HT  # RETYPE
+
 49 29 33 32 34 # HT OT HT
 50 29 36 35 37 # HT OT HT
 51 29 39 38 40 # HT OT HT
@@ -3034,49 +3035,54 @@ Angles
 
 Dihedral Coeffs
 
-1       0.11          1          0          1  # C    CT1  CT2A CT2
-2       0.98          2        180          0  # C    CT1  CT2A CT2
-3        1.6          3        180          0  # C    CT1  CT2A CT2
-4        0.2          3          0          1  # C    CT1  CT2A HA2
-5        0.2          1        180          1  # C    CT1  NH1  C
-6          0          1          0          1  # C    CT1  NH1  H
-7        1.8          1          0          1  # C    NH1  CT1  CT2A
-8          0          1          0          1  # C    NH1  CT1  HB1
-9          0          3          0          1  # C    NH1  CT3  HA3
-10       0.19          3          0          1  # CD   CT2  CT2A CT1
-11       0.19          3          0          1  # CD   CT2  CT2A HA2
-12        1.6          1          0          1  # CT1  C    NH1  CT3
-13        2.5          2        180          0  # CT1  C    NH1  CT3
-14        2.5          2        180          1  # CT1  C    NH1  H
-15       0.19          3          0          1  # CT1  CT2A CT2  HA2
-16        1.6          1          0          1  # CT1  NH1  C    CT3
-17        2.5          2        180          0  # CT1  NH1  C    CT3
-18        2.5          2        180          1  # CT1  NH1  C    O
-19        0.2          3          0          1  # CT2  CT2A CT1  HB1
-20        0.3          1          0          1  # CT2  CT2A CT1  NH1
-21       0.35          2          0          0  # CT2  CT2A CT1  NH1
-22       1.76          3          0          0  # CT2  CT2A CT1  NH1
-23          0          1          0          1  # CT2A CT1  C    NH1
-24        1.4          1          0          1  # CT2A CT1  C    O
-25          0          1          0          1  # CT2A CT1  NH1  H
-26          0          6        180          1  # CT2A CT2  CD   OB
-27          0          6        180          1  # CT2A CT2  CD   OH1
-28        2.5          2        180          1  # CT3  C    NH1  H
-29        2.5          2        180          1  # CT3  NH1  C    O
-30        2.5          2        180          1  # H    NH1  C    O
-31          0          1          0          1  # H    NH1  CT1  HB1
-32          0          3          0          1  # H    NH1  CT3  HA3
-33          0          6        180          1  # HA2  CT2  CD   OB
-34          0          6        180          1  # HA2  CT2  CD   OH1
-35       0.19          3          0          1  # HA2  CT2  CT2A HA2
-36        0.2          3          0          1  # HA2  CT2A CT1  HB1
-37        0.2          3          0          1  # HA2  CT2A CT1  NH1
-38          0          3          0          1  # HA3  CT3  C    NH1
-39          0          3        180          1  # HA3  CT3  C    O
-40          0          1          0          1  # HB1  CT1  C    NH1
-41          0          1          0          1  # HB1  CT1  C    O
-42        0.6          1          0          1  # NH1  C    CT1  NH1
-43          0          1          0          1  # NH1  CT1  C    O
+1 0.11 1 0 1 # C CT1 CT2A CT2
+2 0.98 2 180 0 # C CT1 CT2A CT2
+3 1.6 3 180 0 # C CT1 CT2A CT2
+4 0.2 3 0 1 # C CT1 CT2A HA2
+5 0.2 1 180 1 # C CT1 NH1 C
+6 0 1 0 1 # C CT1 NH1 H
+7 1.8 1 0 1 # C NH1 CT1 CT2A
+8 0 1 0 1 # C NH1 CT1 HB1
+9 0 3 0 1 # C NH1 CT3 HA3
+10 0 1 180 1 # CC CT2 CT2A CT1
+11 0.38 2 180 0 # CC CT2 CT2A CT1
+12 0.59 3 180 0 # CC CT2 CT2A CT1
+13 0.19 3 0 1 # CC CT2 CT2A HA2 (same as CD   CT2  CT2A HA2)
+14 1.6 1 0 1 # CT1 C NH1 CT3
+15 2.5 2 180 0 # CT1 C NH1 CT3
+16 2.5 2 180 1 # CT1 C NH1 H
+17 0.19 3 0 1 # CT1 CT2A CT2 HA2
+18 1.6 1 0 1 # CT1 NH1 C CT3
+19 2.5 2 180 0 # CT1 NH1 C CT3
+20 2.5 2 180 1 # CT1 NH1 C O
+21 0.2 3 0 1 # CT2 CT2A CT1 HB1
+22 0.3 1 0 1 # CT2 CT2A CT1 NH1
+23 0.35 2 0 0 # CT2 CT2A CT1 NH1
+24 1.76 3 0 0 # CT2 CT2A CT1 NH1
+25 0 1 0 1 # CT2A CT1 C NH1
+26 1.4 1 0 1 # CT2A CT1 C O
+27 0 1 0 1 # CT2A CT1 NH1 H
+28 0.05 6 180 1 # CT2A CT2 CC OC
+29 2.5 2 180 1 # CT3 C NH1 H
+30 2.5 2 180 1 # CT3 NH1 C O
+31 2.5 2 180 1 # H NH1 C O
+32 0 1 0 1 # H NH1 CT1 HB1
+33 0 3 0 1 # H NH1 CT3 HA3
+34 0.05 6 180 1 # HA2 CT2 CC OC
+35 0.19 3 0 1 # HA2 CT2 CT2A HA2
+36 0.2 3 0 1 # HA2 CT2A CT1 HB1
+37 0.2 3 0 1 # HA2 CT2A CT1 NH1
+38 0 3 0 1 # HA3 CT3 C NH1
+39 0 3 180 1 # HA3 CT3 C O
+40 0 1 0 1 # HB1 CT1 C NH1
+41 0 1 0 1 # HB1 CT1 C O
+42 0.6 1 0 1 # NH1 C CT1 NH1
+43 0 1 0 1 # NH1 CT1 C O
+44 0.19 3 0 1 # CD CT2 CT2A CT1
+45 0 6 180 1 # CT2A CT2 CD OB
+46 0 6 180 1 # CT2A CT2 CD OH1
+47 0 6 180 1 # HA2 CT2 CD OB
+48 0 6 180 1 # HA2 CT2 CD OH1
 
 Dihedrals
 
@@ -3104,57 +3110,58 @@ Dihedrals
 22 32 4 3 5 8 # H NH1 CT3 HA3
 23 12 5 3 1 17 # CT1 C NH1 CT3
 24 13 5 3 1 17 # CT1 C NH1 CT3
-25 34 23 22 25 27 # HA2 CT2 CD OH1
-26 33 23 22 25 26 # HA2 CT2 CD OB
-27 34 24 22 25 27 # HA2 CT2 CD OH1
-28 33 24 22 25 26 # HA2 CT2 CD OB
-29 28 9 13 15 16 # CT3 C NH1 H
-30 16 9 13 15 17 # CT1 NH1 C CT3
-31 17 9 13 15 17 # CT1 NH1 C CT3
-32 38 10 9 13 15 # HA3 CT3 C NH1
-33 39 10 9 13 14 # HA3 CT3 C O
-34 38 11 9 13 15 # HA3 CT3 C NH1
-35 39 11 9 13 14 # HA3 CT3 C O
-36 38 12 9 13 15 # HA3 CT3 C NH1
-37 39 12 9 13 14 # HA3 CT3 C O
-38 7 13 15 17 19 # C NH1 CT1 CT2A
-39 8 13 15 17 18 # C NH1 CT1 HB1
-40 30 14 13 15 16 # H NH1 C O
-41 18 14 13 15 17 # CT1 NH1 C O
-42 20 15 17 19 22 # CT2 CT2A CT1 NH1
-43 21 15 17 19 22 # CT2 CT2A CT1 NH1
-44 22 15 17 19 22 # CT2 CT2A CT1 NH1
-45 37 15 17 19 20 # HA2 CT2A CT1 NH1
-46 37 15 17 19 21 # HA2 CT2A CT1 NH1
-47 25 16 15 17 19 # CT2A CT1 NH1 H
-48 31 16 15 17 18 # H NH1 CT1 HB1
-49 10 17 19 22 25 # CD CT2 CT2A CT1
-50 15 17 19 22 23 # CT1 CT2A CT2 HA2
-51 15 17 19 22 24 # CT1 CT2A CT2 HA2
-52 19 18 17 19 22 # CT2 CT2A CT1 HB1
-53 36 18 17 19 20 # HA2 CT2A CT1 HB1
-54 36 18 17 19 21 # HA2 CT2A CT1 HB1
-55 27 19 22 25 27 # CT2A CT2 CD OH1
-56 26 19 22 25 26 # CT2A CT2 CD OB
-57 11 20 19 22 25 # CD CT2 CT2A HA2
-58 35 20 19 22 23 # HA2 CT2 CT2A HA2
-59 35 20 19 22 24 # HA2 CT2 CT2A HA2
-60 11 21 19 22 25 # CD CT2 CT2A HA2
-61 35 21 19 22 23 # HA2 CT2 CT2A HA2
-62 35 21 19 22 24 # HA2 CT2 CT2A HA2
+25 28 9 13 15 16 # CT3 C NH1 H
+26 16 9 13 15 17 # CT1 NH1 C CT3
+27 17 9 13 15 17 # CT1 NH1 C CT3
+28 39 10 9 13 14 # HA3 CT3 C O
+29 38 10 9 13 15 # HA3 CT3 C NH1
+30 39 11 9 13 14 # HA3 CT3 C O
+31 38 11 9 13 15 # HA3 CT3 C NH1
+32 39 12 9 13 14 # HA3 CT3 C O
+33 38 12 9 13 15 # HA3 CT3 C NH1
+34 8 13 15 17 18 # C NH1 CT1 HB1
+35 7 13 15 17 19 # C NH1 CT1 CT2A
+36 30 14 13 15 16 # H NH1 C O
+37 18 14 13 15 17 # CT1 NH1 C O
+38 37 15 17 19 20 # HA2 CT2A CT1 NH1
+39 37 15 17 19 21 # HA2 CT2A CT1 NH1
+40 20 15 17 19 22 # CT2 CT2A CT1 NH1
+41 21 15 17 19 22 # CT2 CT2A CT1 NH1
+42 22 15 17 19 22 # CT2 CT2A CT1 NH1
+43 31 16 15 17 18 # H NH1 CT1 HB1
+44 25 16 15 17 19 # CT2A CT1 NH1 H
+45 15 17 19 22 23 # CT1 CT2A CT2 HA2
+46 15 17 19 22 24 # CT1 CT2A CT2 HA2
+47 10 17 19 22 25 # CD CT2 CT2A CT1 # RETYPE
+48 36 18 17 19 20 # HA2 CT2A CT1 HB1
+49 36 18 17 19 21 # HA2 CT2A CT1 HB1
+50 19 18 17 19 22 # CT2 CT2A CT1 HB1
+51 26 19 22 25 26 # CT2A CT2 CD OB # RETYPE
+52 27 19 22 25 27 # CT2A CT2 CD OH1 # RETYPE
+53 35 20 19 22 23 # HA2 CT2 CT2A HA2
+54 35 20 19 22 24 # HA2 CT2 CT2A HA2
+55 11 20 19 22 25 # CC CT2 CT2A HA2 (same as CD CT2 CT2A HA2)
+56 35 21 19 22 23 # HA2 CT2 CT2A HA2
+57 35 21 19 22 24 # HA2 CT2 CT2A HA2
+58 11 21 19 22 25 # CC CT2 CT2A HA2 (same as CD CT2 CT2A HA2)
+59 33 23 22 25 26 # HA2 CT2 CD OB # RETYPE
+60 34 23 22 25 27 # HA2 CT2 CD OH1 # RETYPE
+61 33 24 22 25 26 # HA2 CT2 CD OB # RETYPE
+62 34 24 22 25 27 # HA2 CT2 CD OH1 # RETYPE
 
 Improper Coeffs
 
-1        120          0  # C    CT1  NH1  O
-2        120          0  # C    CT3  NH1  O
-3        100          0  # CD   CT2  OH1  OB
-4         20          0  # H    CT1  C    NH1
-5         20          0  # H    CT3  C    NH1
+1 120 0 # C CT1 NH1 O
+2 120 0 # C CT3 NH1 O
+3 96 0 # CC CT2 OC OC
+4 20 0 # H CT1 C NH1
+5 20 0 # H CT3 C NH1
+6 100 0 # CD CT2 OH1 OB
 
 Impropers
 
 1 1 1 17 3 2 # C CT1 NH1 O
 2 5 3 1 5 4 # H CT3 C NH1
-3 3 25 22 27 26 # CD CT2 OH1 OB
-4 2 13 9 15 14 # C CT3 NH1 O
-5 4 15 13 17 16 # H CT1 C NH1
+3 2 13 9 15 14 # C CT3 NH1 O
+4 4 15 13 17 16 # H CT1 C NH1
+5 3 25 22 27 26 # CD CT2 OH1 OB # RETYPE
