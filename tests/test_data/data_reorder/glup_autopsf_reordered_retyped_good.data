@@ -1498,7 +1498,7 @@ Bond Coeffs
 2        250       1.49  # C    CT3
 3        370      1.345  # C    NH1
 4        620       1.23  # C    O
-5        200      1.522  # CC   CT2 (same as CD   CT2)
+5        200      1.522  # CD   CT2
 6        525       1.26  # CC   OC
 7      222.5      1.538  # CT1  CT2A
 8        330       1.08  # CT1  HB1

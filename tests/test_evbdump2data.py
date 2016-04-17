@@ -7,6 +7,7 @@ import os
 import unittest
 
 from md_utils import evbdump2data
+from md_utils.evbdump2data import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
@@ -31,7 +32,7 @@ GLU_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu.ini')
 GLU_NEW_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_new_types.ini')
 GLU_BAD_ATOM_TYPE_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_type_mismatch.ini')
 GLU_BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_bad_dump.ini')
-
+GLU_TYPO_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_typo.ini')
 
 # Test output files #
 
@@ -137,3 +138,7 @@ class TestEVBDump2Data(unittest.TestCase):
     def testTplAtomWrongOrder(self):
         with capture_stderr(evbdump2data.main, ["-c", TPL_WRONG_ATOM_ORDER_INI]) as output:
             self.assertTrue("does not match the type" in output)
+
+    def testTypoIni(self):
+        with capture_stderr(main, ["-c", GLU_TYPO_INI]) as output:
+            self.assertTrue("WARNING:  Unexpected key 'reduce_tpl_flag' in configuration ('ini') file." in output)
