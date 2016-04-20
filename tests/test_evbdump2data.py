@@ -136,8 +136,9 @@ class TestEVBDump2Data(unittest.TestCase):
                             'number of atoms (1429)' in output)
 
     def testTplAtomWrongOrder(self):
-        with capture_stderr(evbdump2data.main, ["-c", TPL_WRONG_ATOM_ORDER_INI]) as output:
-            self.assertTrue("does not match the type" in output)
+        main(["-c", TPL_WRONG_ATOM_ORDER_INI])
+        with capture_stderr(main, ["-c", TPL_WRONG_ATOM_ORDER_INI]) as output:
+            self.assertTrue("which does not match" in output)
 
     def testTypoIni(self):
         with capture_stderr(main, ["-c", GLU_TYPO_INI]) as output:
