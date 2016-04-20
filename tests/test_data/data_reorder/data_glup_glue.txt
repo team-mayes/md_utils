@@ -1,2 +1,0 @@
-test_data/data_reorder/glup_autopsf_ord_good.data
-test_data/data_reorder/glu_deprot.data

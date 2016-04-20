@@ -5,6 +5,7 @@ Reorders a lammps data file
 
 from __future__ import print_function
 import ConfigParser
+import os
 import re
 import sys
 import argparse
@@ -29,6 +30,7 @@ MAIN_SEC = 'main'
 
 # Config keys
 DATA_FILES = 'data_list_file'
+DATA_FILE = 'data_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
 BOND_TYPE_DICT_FILE = 'bond_type_dict_filename'
@@ -44,9 +46,10 @@ PRINT_DIHEDRAL_TYPES = 'print_dihedral_types'
 PRINT_IMPROPER_TYPES = 'print_improper_types'
 
 # Defaults
-DEF_CFG_FILE = 'data_reorder.ini'
+DEF_CFG_FILE = 'data_edit.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
+                DATA_FILE: None,
                 ATOM_ID_DICT_FILE: None,
                 ATOM_TYPE_DICT_FILE: None,
                 BOND_TYPE_DICT_FILE: None,
@@ -156,8 +159,11 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Reorders atom ids in a lammps data file, given a dictionary to '
-                                                 'reorder the atoms (a csv of old_index,new_index). Can also '
+    parser = argparse.ArgumentParser(description='Changes a lammps data file by implementing options such as: '
+                                                 'reorder atom ids in a lammps data file, given a dictionary to '
+                                                 'reorder the atoms (a csv of old_index,new_index), and/or '
+                                                 'change the atom, bond, angle, dihedral, and/or improper types,'
+                                                 'given a dictionary to do so. Can also '
                                                  'print info for selected atom ids. ')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
                                                "The default file name is {}, located in the "
@@ -224,7 +230,7 @@ def find_header_values(line, nums_dict):
         raise InvalidDataError("While reading a data file, encountered error '{}' on line: {}".format(e, line))
 
 
-def ord_data_file(cfg, data_file, atom_id_dict, type_dict):
+def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
@@ -371,8 +377,13 @@ def ord_data_file(cfg, data_file, atom_id_dict, type_dict):
         data_content += [''] + [section, ''] + content[section]
         select_data_content += [section] + highlight_content[section]
 
-    if (len(atom_id_dict) + len(type_dict)) > 0:
-        f_name = create_out_fname(data_file, suffix='_ord', ext='.data')
+    # Only print a "new" data file if something is changed
+    dict_lens = len(atom_id_dict)
+    for name, t_dict in type_dict.items():
+        dict_lens += len(t_dict)
+
+    if dict_lens > 0:
+        f_name = create_out_fname(data_file, suffix='_new', ext='.data')
         list_to_file(data_content, f_name)
         print('Completed writing {}'.format(f_name))
 
@@ -383,12 +394,15 @@ def ord_data_file(cfg, data_file, atom_id_dict, type_dict):
 
 
 def process_data_files(cfg, atom_id_dict, type_dicts):
-    with open(cfg[DATA_FILES]) as f:
-        for data_file in f.readlines():
-            data_file = data_file.strip()
-            if len(data_file) == 0:
-                continue
-            ord_data_file(cfg, data_file, atom_id_dict, type_dicts,)
+    if os.path.isfile(cfg[DATA_FILES]):
+        with open(cfg[DATA_FILES]) as f:
+            for data_file in f.readlines():
+                data_file = data_file.strip()
+                if len(data_file) == 0:
+                    continue
+                proc_data_file(cfg, data_file, atom_id_dict, type_dicts,)
+    if cfg[DATA_FILE] is not None:
+        proc_data_file(cfg, cfg[DATA_FILE], atom_id_dict, type_dicts,)
 
 
 def main(argv=None):
@@ -399,6 +413,13 @@ def main(argv=None):
 
     # Read template and data files
     cfg = args.config
+
+    if cfg[DATA_FILE] is None:
+        if not(os.path.isfile(cfg[DATA_FILES])):
+            warning("Did not find a list of data files at the path: {}\n"
+                    "In the configuration file, specify a location of a single data file with the keyword {}\n"
+                    "and/or a single data file with the keyword {}".format(cfg[DATA_FILES], DATA_FILES, DATA_FILE))
+            return INVALID_DATA
 
     type_dicts = {SEC_ATOMS: {},
                   SEC_BONDS: {},

@@ -325,15 +325,16 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
         raise InvalidDataError('Encountered dump file in which the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
     for atom in range(0, len(protonatable_res)):
-        if protonatable_res[atom][0:4] == tpl_data[PROT_RES_MOL][atom][0:4] or \
+        # At least check that the charge is the same...
+        if protonatable_res[atom][3] == tpl_data[PROT_RES_MOL][atom][3] or \
                 protonatable_res[atom][0] in cfg[PROT_TYPE_IGNORE_ATOMS]:
-           protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
+            protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
         else:
-            raise InvalidDataError("In reading the dump file, found atom index {} with type {} which does not "
-                                   "match the type in the data template ({}). \nTo ignore this mis-match, list "
+            raise InvalidDataError("In reading the dump file, found atom index {} with charge {} which does not "
+                                   "match the charge in the data template ({}). \nTo ignore this mis-match, list "
                                    "the atom's index number in the keyword '{}' in the ini file."
-                                   "".format(protonatable_res[atom][0], protonatable_res[atom][2],
-                                             tpl_data[PROT_RES_MOL][atom][2], PROT_TYPE_IGNORE_ATOMS))
+                                   "".format(protonatable_res[atom][0], protonatable_res[atom][3],
+                                             tpl_data[PROT_RES_MOL][atom][3], PROT_TYPE_IGNORE_ATOMS))
 
     return
 

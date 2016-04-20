@@ -40,7 +40,7 @@ setup(
                                       'calc_split_avg = md_utils.calc_split_avg:main',
                                       # TODO: improve coverage: 80%
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
-                                      'data_reorder = md_utils.data_reorder:main',
+                                      'data_edit = md_utils.data_edit:main',
                                       'dump_edit = md_utils.dump_edit:main',
                                       # TODO: improve coverage: 87%
                                       'evb_get_info = md_utils.evb_get_info:main',

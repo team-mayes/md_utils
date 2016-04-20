@@ -3,6 +3,11 @@
 History
 -------
 
+0.7.3 (2016-04-20)
+------------------
+
+* Changed data_reorder to data_edit, reflecting its additional capabilities.
+
 0.7.2 (2016-04-14)
 ------------------
 
