@@ -48,6 +48,9 @@ GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
 MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
 
+IMPROP_SEC = os.path.join(SUB_DATA_DIR, 'glue_improp.data')
+IMPROP_SEC_ALT = os.path.join(SUB_DATA_DIR, 'glue_improp_diff_ord.data')
+
 
 def expected_dir_data():
     """
@@ -222,3 +225,8 @@ class TestDiffLines(unittest.TestCase):
         diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
         self.assertTrue(len(diff_line_list) == 1)
         self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])
+
+    def testDiffOrd(self):
+        # diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT)
+        # print(diff_line_list)
+        self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT))

@@ -5,6 +5,7 @@ Reorders a lammps data file
 
 from __future__ import print_function
 import ConfigParser
+from operator import itemgetter
 import os
 import re
 import sys
@@ -38,6 +39,7 @@ ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
 DIHE_TYPE_DICT_FILE = 'dihedral_type_dict_filename'
 IMPR_TYPE_DICT_FILE = 'improper_type_dict_filename'
 PRINT_DATA_ATOMS = 'print_interactions_involving_atoms'
+SORT_ME = 'data_sort_flag'
 
 PRINT_ATOM_TYPES = 'print_atom_types'
 PRINT_BOND_TYPES = 'print_bond_types'
@@ -61,7 +63,8 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 PRINT_BOND_TYPES: [],
                 PRINT_ANGLE_TYPES: [],
                 PRINT_DIHEDRAL_TYPES: [],
-                PRINT_IMPROPER_TYPES: []
+                PRINT_IMPROPER_TYPES: [],
+                SORT_ME: False,
                 }
 REQ_KEYS = {}
 
@@ -295,6 +298,8 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 if coeff_id in change_dict:
                     s_line[0] = change_dict[coeff_id]
+                else:
+                    s_line[0] = coeff_id
 
                 content[section].append(s_line)
 
@@ -302,7 +307,9 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     highlight_content[section].append(line)
                 if type_count in nums_dict:
                     if count == nums_dict[type_count]:
+                        content[section].sort()
                         section = None
+
                     else:
                         count += 1
                 else:
@@ -346,7 +353,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 min_col_num = NUM_SEC_DICT[section][1]
                 s_line = line.split()
                 try:
-                    sec_type = int(s_line[1])
+                    s_line[1] = int(s_line[1])
                     atoms = map(int, s_line[2:min_col_num])
                 except (ValueError, KeyError) as e:
                     raise InvalidDataError("Error {} reading line: {} \n  in section {} of file: {} "
@@ -358,8 +365,8 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     if atom_id in cfg[PRINT_DATA_ATOMS]:
                         highlight_line = True
 
-                if sec_type in type_dict[section]:
-                    s_line[1] = type_dict[section][sec_type]
+                if s_line[1] in type_dict[section]:
+                    s_line[1] = type_dict[section][s_line[1]]
 
                 if len(s_line) > min_col_num:
                     end = s_line[min_col_num:]
@@ -373,6 +380,10 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     highlight_content[section].append(line_struct)
 
                 if count == nums_dict[tot_num_key]:
+                    if cfg[SORT_ME]:
+                        content[section].sort(key=itemgetter(1))
+                        for index, line in enumerate(content[section]):
+                            line[0] = index + 1
                     section = None
                 else:
                     count += 1
@@ -392,7 +403,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
     for name, t_dict in type_dict.items():
         dict_lens += len(t_dict)
 
-    if dict_lens > 0:
+    if dict_lens > 0 or cfg[SORT_ME]:
         f_name = create_out_fname(data_file, suffix='_new', ext='.data')
         list_to_file(data_content, f_name)
         print('Completed writing {}'.format(f_name))
