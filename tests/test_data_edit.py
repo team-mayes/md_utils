@@ -138,4 +138,5 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
         finally:
             silent_remove(GLUP_SORT_OUT)
+            # pass
 
