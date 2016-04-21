@@ -23,6 +23,7 @@ IMP_ATOMS_TYPO_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_key_typo.
 GLUE_GLUP_IMP_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms.ini')
 RETYPE_INI = os.path.join(SUB_DATA_DIR, 'data_retype.ini')
 BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_data.ini')
+SORT_INI = os.path.join(SUB_DATA_DIR, 'data_sort.ini')
 
 # Output files
 
@@ -47,6 +48,9 @@ GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selecte
 # noinspection PyUnresolvedReferences
 GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_to_retype_new.data')
 GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retyped_good.data')
+# noinspection PyUnresolvedReferences
+GLUP_SORT_OUT = os.path.join(SUB_DATA_DIR, 'glup_new_new.data')
+GLUP_SORT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_new_sorted.data')
 
 
 class TestDataReorder(unittest.TestCase):
@@ -60,13 +64,6 @@ class TestDataReorder(unittest.TestCase):
     def testDefIni(self):
         try:
             main(["-c", DEF_INI])
-            # for debugging:
-            # with open(PDB_TPL) as f:
-            #     with open(PDB_TPL_OUT) as g:
-            #         for d_line, g_line in zip(f, g):
-            #             if d_line.strip() != g_line.strip():
-            #                 print(d_line.strip())
-            #                 print(g_line.strip())
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
         finally:
             silent_remove(DEF_OUT)
@@ -119,6 +116,26 @@ class TestDataReorder(unittest.TestCase):
         try:
             main(["-c", RETYPE_INI])
             self.assertFalse(diff_lines(GLUP_RETYPE_OUT, GLUP_RETYPE_OUT_GOOD))
+
+            # for debugging:
+            with open(GLUP_RETYPE_OUT) as f:
+                with open(GLUP_RETYPE_OUT_GOOD) as g:
+                    for d_line, g_line in zip(f, g):
+                        if d_line.strip() != g_line.strip():
+                            print(d_line.strip())
+                            print(g_line.strip())
         finally:
             silent_remove(GLUP_RETYPE_OUT)
 
+    def testSort(self):
+        try:
+            main(["-c", SORT_INI])
+            with open(GLUP_SORT_OUT) as f:
+                with open(GLUP_SORT_OUT_GOOD) as g:
+                    for d_line, g_line in zip(f, g):
+                        if d_line.strip() != g_line.strip():
+                            print(d_line.strip())
+                            print(g_line.strip())
+            self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
+        finally:
+            silent_remove(GLUP_SORT_OUT)
