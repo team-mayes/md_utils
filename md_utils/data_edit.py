@@ -91,12 +91,14 @@ NUM_ANGL_TYP = 'num_angl_typ'
 NUM_DIHE_TYP = 'num_dihe_typ'
 NUM_IMPR_TYP = 'num_impr_typ'
 
-TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES),
-                 SEC_PAIR_COEFF: (NUM_ATOM_TYP, PRINT_ATOM_TYPES),
-                 SEC_BOND_COEFF: (NUM_BOND_TYP, PRINT_BOND_TYPES),
-                 SEC_ANGL_COEFF: (NUM_ANGL_TYP, PRINT_ANGLE_TYPES),
-                 SEC_DIHE_COEFF: (NUM_DIHE_TYP, PRINT_DIHEDRAL_TYPES),
-                 SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES),
+# the last entry in the tuple is for the type_dicts key
+
+TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
+                 SEC_PAIR_COEFF: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
+                 SEC_BOND_COEFF: (NUM_BOND_TYP, PRINT_BOND_TYPES, SEC_BONDS),
+                 SEC_ANGL_COEFF: (NUM_ANGL_TYP, PRINT_ANGLE_TYPES, SEC_ANGLS),
+                 SEC_DIHE_COEFF: (NUM_DIHE_TYP, PRINT_DIHEDRAL_TYPES, SEC_DIHES),
+                 SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES, SEC_IMPRS),
                  }
 
 # For these sections, keeps track of:
@@ -278,18 +280,26 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                                                        "{}".format(val, key, data_file))
 
             elif section in TYPE_SEC_DICT:
-                content[section].append(line)
+                s_line = line.split()
+
+                try:
+                    coeff_id = int(s_line[0])
+                except ValueError as e:
+                    raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: "
+                                           "{}".format(e, line, data_file))
+
+                # Rename the following to make it easier to follow:
                 type_count = TYPE_SEC_DICT[section][0]
                 highlight_types = cfg[TYPE_SEC_DICT[section][1]]
-                if len(highlight_types) > 0:
-                    s_line = line.split()
-                    try:
-                        coeff_id = int(s_line[0])
-                    except ValueError as e:
-                        raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: "
-                                               "{}".format(e, line, data_file))
-                    if coeff_id in highlight_types:
-                        highlight_content[section].append(line)
+                change_dict = type_dict[TYPE_SEC_DICT[section][2]]
+
+                if coeff_id in change_dict:
+                    s_line[0] = change_dict[coeff_id]
+
+                content[section].append(s_line)
+
+                if coeff_id in highlight_types:
+                    highlight_content[section].append(line)
                 if type_count in nums_dict:
                     if count == nums_dict[type_count]:
                         section = None
