@@ -324,19 +324,6 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
     if len(tpl_data[PROT_RES_MOL]) != len(protonatable_res):
         raise InvalidDataError('Encountered dump file in which the number of atoms in the '
                                'protonatable residue does not equal the number of atoms in the template data file.')
-    for atom in range(0, len(protonatable_res)):
-        # At least check that the charge is the same...
-        if protonatable_res[atom][3] == tpl_data[PROT_RES_MOL][atom][3] or \
-                protonatable_res[atom][0] in cfg[PROT_TYPE_IGNORE_ATOMS]:
-            protonatable_res[atom][2:4] = tpl_data[PROT_RES_MOL][atom][2:4]
-        else:
-            raise InvalidDataError("In reading the dump file, found atom index {} with charge {} which does not "
-                                   "match the charge in the data template ({}). \nTo ignore this mis-match, list "
-                                   "the atom's index number in the keyword '{}' in the ini file."
-                                   "".format(protonatable_res[atom][0], protonatable_res[atom][3],
-                                             tpl_data[PROT_RES_MOL][atom][3], PROT_TYPE_IGNORE_ATOMS))
-
-    return
 
 
 def sort_wat_mols(cfg, water_dict):
@@ -487,10 +474,19 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
 
                     # overwrite atom_num, mol_num, atom_type, charge, then description
                     for index in range(len(dump_atom_data)):
-                        dump_atom_data[index][0:4] = data_tpl_content[ATOMS_CONTENT][index][0:4]
-                        dump_atom_data[index][7] = ' '.join(data_tpl_content[ATOMS_CONTENT][index][7:])
-                        # dump_atom_data[:][7] = ' '.join(data_tpl_content[ATOMS_CONTENT][:][7:])
-                    # dump_atom_data[:][7] = ' '.join(data_tpl_content[ATOMS_CONTENT][:][7:])
+                        if dump_atom_data[index][3] == data_tpl_content[ATOMS_CONTENT][index][3] or \
+                                dump_atom_data[index][0] in cfg[PROT_TYPE_IGNORE_ATOMS]:
+                            dump_atom_data[index][0:4] = data_tpl_content[ATOMS_CONTENT][index][0:4]
+                            dump_atom_data[index][7] = ' '.join(data_tpl_content[ATOMS_CONTENT][index][7:])
+                        else:
+                            raise InvalidDataError("In reading file: {}\n found atom index {} with charge {} which "
+                                                   "does not match the charge in the data template ({}). \n"
+                                                   "To ignore this mis-match, list "
+                                                   "the atom's index number in the keyword '{}' in the ini file."
+                                                   "".format(dump_file,
+                                                             dump_atom_data[index][0], dump_atom_data[index][3],
+                                                             data_tpl_content[ATOMS_CONTENT][index][3],
+                                                             PROT_TYPE_IGNORE_ATOMS))
 
                     d_out = create_out_fname(dump_file, suffix='_' + str(timestep),
                                              ext='.data', base_dir=cfg[OUT_BASE_DIR])
