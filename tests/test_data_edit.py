@@ -37,15 +37,15 @@ SERCA_1_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_new.data')
 SERCA_1_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'reus_1_edited_new_good.data')
 # noinspection PyUnresolvedReferences
 GLUP_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new.data')
-GLUP_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good.data')
+GLUP_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good.data')
 # noinspection PyUnresolvedReferences
 GLUE_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected.txt')
 GLUE_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected_good.txt')
 # noinspection PyUnresolvedReferences
-GLUP_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected.txt')
-GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_ord_good_selected_good.txt')
+GLUP_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selected.txt')
+GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selected_good.txt')
 # noinspection PyUnresolvedReferences
-GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_new.data')
+GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_to_retype_new.data')
 GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retyped_good.data')
 
 
@@ -110,6 +110,11 @@ class TestDataReorder(unittest.TestCase):
         with capture_stderr(main, ["-c", IMP_ATOMS_TYPO_INI]) as output:
             self.assertTrue("Unexpected key 'print_interaction_involving_atoms' in configuration" in output)
 
+    def testBadData(self):
+        # main(["-c", BAD_DATA_INI])
+        with capture_stderr(main, ["-c", BAD_DATA_INI]) as output:
+            self.assertTrue("Problems reading data" in output)
+
     def testRetype(self):
         try:
             main(["-c", RETYPE_INI])
@@ -117,7 +122,3 @@ class TestDataReorder(unittest.TestCase):
         finally:
             silent_remove(GLUP_RETYPE_OUT)
 
-    def testBadData(self):
-        # main(["-c", BAD_DATA_INI])
-        with capture_stderr(main, ["-c", BAD_DATA_INI]) as output:
-            self.assertTrue("Problems reading data" in output)

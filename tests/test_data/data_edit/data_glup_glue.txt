@@ -1,2 +1,2 @@
-test_data/data_edit/glup_autopsf_ord_good.data
+test_data/data_edit/glup_autopsf_new_good.data
 test_data/data_edit/glu_deprot.data
