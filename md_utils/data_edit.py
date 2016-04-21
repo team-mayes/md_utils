@@ -385,10 +385,12 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                             content[section].sort(key=itemgetter(3))
                             content[section].sort(key=itemgetter(2))
                         elif section == SEC_ANGLS:
+                            content[section].sort(key=itemgetter(4))
                             content[section].sort(key=itemgetter(2))
                             content[section].sort(key=itemgetter(3))
                         else:
                             content[section].sort(key=itemgetter(5))
+                            content[section].sort(key=itemgetter(4))
                             content[section].sort(key=itemgetter(2))
                             content[section].sort(key=itemgetter(3))
                         for index, line in enumerate(content[section]):
