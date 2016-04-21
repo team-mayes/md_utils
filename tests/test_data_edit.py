@@ -53,7 +53,7 @@ GLUP_SORT_OUT = os.path.join(SUB_DATA_DIR, 'glup_new_new.data')
 GLUP_SORT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_new_sorted.data')
 
 
-class TestDataReorder(unittest.TestCase):
+class TestDataEdit(unittest.TestCase):
 
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
@@ -116,14 +116,13 @@ class TestDataReorder(unittest.TestCase):
         try:
             main(["-c", RETYPE_INI])
             self.assertFalse(diff_lines(GLUP_RETYPE_OUT, GLUP_RETYPE_OUT_GOOD))
-
             # for debugging:
-            with open(GLUP_RETYPE_OUT) as f:
-                with open(GLUP_RETYPE_OUT_GOOD) as g:
-                    for d_line, g_line in zip(f, g):
-                        if d_line.strip() != g_line.strip():
-                            print(d_line.strip())
-                            print(g_line.strip())
+            # with open(GLUP_RETYPE_OUT) as f:
+            #     with open(GLUP_RETYPE_OUT_GOOD) as g:
+            #         for d_line, g_line in zip(f, g):
+            #             if d_line.strip() != g_line.strip():
+            #                 print(d_line.strip())
+            #                 print(g_line.strip())
         finally:
             silent_remove(GLUP_RETYPE_OUT)
 
@@ -139,3 +138,4 @@ class TestDataReorder(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
         finally:
             silent_remove(GLUP_SORT_OUT)
+

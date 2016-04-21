@@ -381,15 +381,21 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 if count == nums_dict[tot_num_key]:
                     if cfg[SORT_ME]:
-                        content[section].sort(key=itemgetter(1))
+                        if section == SEC_BONDS:
+                            content[section].sort(key=itemgetter(3))
+                            content[section].sort(key=itemgetter(2))
+                        elif section == SEC_ANGLS:
+                            content[section].sort(key=itemgetter(2))
+                            content[section].sort(key=itemgetter(3))
+                        else:
+                            content[section].sort(key=itemgetter(5))
+                            content[section].sort(key=itemgetter(2))
+                            content[section].sort(key=itemgetter(3))
                         for index, line in enumerate(content[section]):
                             line[0] = index + 1
                     section = None
                 else:
                     count += 1
-
-            else:
-                warning("Note: unexpected content added to end of file:", line)
 
     data_content = content[SEC_HEAD]
     select_data_content = []
