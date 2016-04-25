@@ -47,17 +47,12 @@ def parse_cmdline(argv):
                                                "in each column plus an additional buffer amount (float).",
                         default=None)
 
-    args = None
     try:
         args = parser.parse_args(argv)
-    except IOError as e:
-        warning("Problems reading file:", e)
+    except SystemExit as e:
+        warning(e)
         parser.print_help()
-        return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
-        parser.print_help()
-        return args, INPUT_ERROR
+        return [], INPUT_ERROR
 
     return args, GOOD_RET
 

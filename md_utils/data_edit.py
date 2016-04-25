@@ -293,6 +293,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 # Rename the following to make it easier to follow:
                 type_count = TYPE_SEC_DICT[section][0]
+                # TODO: continue here, highlight when owned
                 highlight_types = cfg[TYPE_SEC_DICT[section][1]]
                 change_dict = type_dict[TYPE_SEC_DICT[section][2]]
 
