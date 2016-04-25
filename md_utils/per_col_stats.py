@@ -10,6 +10,7 @@ from __future__ import print_function
 from md_utils.md_common import InvalidDataError, warning, np_float_array_from_file
 import sys
 import argparse
+import numpy as np
 
 __author__ = 'hmayes'
 
@@ -25,7 +26,7 @@ INVALID_DATA = 3
 
 # Defaults
 DEF_ARRAY_FILE = 'qm_box_sizes.txt'
-
+DEF_DELIMITER = ' '
 
 def parse_cmdline(argv):
     """
@@ -47,6 +48,21 @@ def parse_cmdline(argv):
                                                "in each column plus an additional buffer amount (float).",
                         default=None)
 
+    parser.add_argument("-d", "--delimiter", help="Delimiter. Default is '{}'".format(DEF_DELIMITER),
+                        default=DEF_DELIMITER)
+                                            #       "Flag to indicate csv file. Default is a space-separated file with "
+                                            # "only columns of numbers, and any header line preceded by a '#', as "
+                                            # "created by numpy savetxt.",
+
+    parser.add_argument("-n", "--names", help='File contains column names (header) (default is false).',
+                        action='store_true')
+
+    # parser.add_argument("-h", "--header", help="Flag to indicate that the file contains a header (default is false).",
+    #                     action='store_true')
+    #                                         #       "Flag to indicate csv file. Default is a space-separated file with "
+    #                                         # "only columns of numbers, and any header line preceded by a '#', as "
+    #                                         # "created by numpy savetxt.",
+
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
@@ -57,8 +73,12 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_file(data_file, len_buffer):
-    dim_vectors = np_float_array_from_file(data_file)
+def process_file(data_file, len_buffer, delimiter, header=False):
+    try:
+        dim_vectors = np_float_array_from_file(data_file, delimiter=delimiter, header=header)
+    except InvalidDataError as e:
+        raise InvalidDataError("{}\n"
+                               "Run program with '-h' to see options, such as specifying csv format".format(e))
     max_vector = dim_vectors.max(axis=0)
     print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
     print("     Min value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.min(axis=0)])))
@@ -84,7 +104,7 @@ def main(argv=None):
                 len_buffer = float(args.buffer)
             except ValueError:
                 raise InvalidDataError("Input for buffer ({}) could not be converted to a float.".format(args.buffer))
-        process_file(args.file, len_buffer)
+        process_file(args.file, len_buffer, args.delimiter, header=args.names)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

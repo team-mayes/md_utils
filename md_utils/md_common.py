@@ -254,8 +254,7 @@ def make_dir(tgt_dir):
     if not os.path.exists(tgt_dir):
         os.makedirs(tgt_dir)
     elif not os.path.isdir(tgt_dir):
-        raise NotFoundError("Resource %s exists and is not a dir" %
-                            tgt_dir)
+        raise NotFoundError("Resource {} exists and is not a dir".format(tgt_dir))
 
 
 def file_to_str(fname):
@@ -281,14 +280,18 @@ def str_to_file(str_val, fname, mode='w'):
         f.write(str_val)
 
 
-def np_float_array_from_file(data_file):
+def np_float_array_from_file(data_file, delimiter=" ", header=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
     @param data_file: file expected to have space-separated values, with the same number of entries per line
     @return: a numpy array or InvalidDataError if np.loadtxt was unsuccessful
     """
     try:
-        dim_vectors = np.loadtxt(data_file, dtype=np.float64)
+        dim_vectors = np.genfromtxt(data_file, dtype=np.float64, delimiter=delimiter, skip_header=header)
+        print(dim_vectors)
+        if np.isnan(np.min(dim_vectors)):
+            warning("Encountered an entry which could not be converted to a float. 'nan' will be returned for "
+                    "for the stats for that column.")
     except ValueError:
         with open(data_file) as d:
             first_line = None
@@ -297,7 +300,9 @@ def np_float_array_from_file(data_file):
                 try:
                     f_line = [float(x) for x in line.split()]
                 except ValueError:
-                    raise InvalidDataError("Could not convert the following line to floats: {}".format(line))
+                    warning("Could not convert the following line to floats: {}\nStats will "
+                            "not be calculated for the affected column(s)".format(line))
+                    continue
                 if first_line is None:
                     first_line = f_line
                 else:

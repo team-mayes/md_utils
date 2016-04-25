@@ -5,3 +5,5 @@ CHECK TESTS ON DIFFERENT SYSTEM
 Find by installing and testing on a cluster.
 
 Last checked: all tests pass, 70% of files, 83% of lines
+
+per_col_stats: read and print header
