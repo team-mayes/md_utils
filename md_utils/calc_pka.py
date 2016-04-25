@@ -34,14 +34,10 @@ import logging
 import math
 
 from md_utils.md_common import (find_files_by_dir,
-                                read_csv, write_csv, calc_kbt, create_out_fname)
+                                read_csv, write_csv, calc_kbt, create_out_fname, warning)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
-NO_MAX_MSG = 'NONE'
-
-NO_MAX_ERR = "No local max found"
-
-__author__ = 'cmayes'
+__author__ = 'mayes'
 
 import argparse
 import os
@@ -52,10 +48,17 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('calc_pka')
 
+# Error Codes
+# The good status code
+GOOD_RET = 0
+INPUT_ERROR = 1
+IO_ERROR = 2
+
 # Constants #
 OUT_PFX = 'pKa.'
 # Inverse of the standard concentration in Angstrom ^ 3 / molecule
 inv_C_0 = 1660.0
+
 # Defaults #
 
 DEF_FILE_PAT = 'rad_PMF*'
@@ -72,8 +75,11 @@ KEY_CONV = {FREE_KEY: float,
             MAX_LOC: float,
             MAX_VAL: float}
 
-# Exceptions #
+NO_MAX_MSG = 'NONE'
+NO_MAX_ERR = "No local max found"
 
+
+# Exceptions #
 
 class NoMaxError(Exception):
     pass
@@ -92,9 +98,10 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     """
     out_fname = create_out_fname(src_file, prefix=OUT_PFX, base_dir=basedir)
     if os.path.exists(out_fname) and not overwrite:
-        logger.warn("Not overwriting existing file '%s'", out_fname)
+        warning("Not overwriting existing file {}".format(out_fname))
         return
     write_csv(result, out_fname, OUT_KEY_SEQ)
+    print("Wrote file {}".format(out_fname))
 
 
 def calc_pka(file_data, kbt, coord_ts=None):
@@ -159,9 +166,14 @@ def parse_cmdline(argv):
                         type=float)
     parser.add_argument("temp", help="The temperature in Kelvin for the simulation", type=float)
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        warning(e)
+        parser.print_help()
+        return [], INPUT_ERROR
 
-    return args, 0
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -171,42 +183,45 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
 
     kbt = calc_kbt(args.temp)
     if args.coord_ts is not None:
         logger.info("Read TS coordinate value: '%f'", args.coord_ts)
 
-    if args.src_file is not None:
-        file_data = read_csv(args.src_file, data_conv=KEY_CONV)
-        try:
-            pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-            result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
-        except NoMaxError:
-            result = [{SRC_KEY: args.src_file, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
-        write_result(result, args.src_file, args.overwrite)
-    else:
-        found_files = find_files_by_dir(args.base_dir, args.pattern)
-        logger.debug("Found '%d' dirs with files to process", len(found_files))
-        for f_dir, files in found_files.items():
-            results = []
-            if not files:
-                logger.warn("No files found for dir '%s'", f_dir)
-                continue
-            for pmf_path, fname in ([(os.path.join(f_dir, tgt), tgt) for tgt in sorted(files)]):
-                file_data = read_csv(pmf_path, data_conv=KEY_CONV)
-                try:
-                    pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-                    results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord})
-                except NoMaxError:
-                    results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG,
-                                    MAX_LOC: NO_MAX_MSG})
+    try:
+        if args.src_file is not None:
+            file_data = read_csv(args.src_file, data_conv=KEY_CONV)
+            try:
+                pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
+                result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
+            except NoMaxError:
+                result = [{SRC_KEY: args.src_file, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
+            write_result(result, args.src_file, args.overwrite)
+        else:
+            found_files = find_files_by_dir(args.base_dir, args.pattern)
+            logger.debug("Found '%d' dirs with files to process", len(found_files))
+            if len(found_files) == 0:
+                raise IOError("No files found in specified directory '{}'".format(args.base_dir))
+            for f_dir, files in found_files.items():
+                results = []
+                for pmf_path, fname in ([(os.path.join(f_dir, tgt), tgt) for tgt in sorted(files)]):
+                    file_data = read_csv(pmf_path, data_conv=KEY_CONV)
+                    try:
+                        pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
+                        results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord})
+                    except NoMaxError:
+                        results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG,
+                                        MAX_LOC: NO_MAX_MSG})
 
-            write_result(results, os.path.basename(f_dir), args.overwrite,
-                         basedir=os.path.dirname(f_dir))
+                write_result(results, os.path.basename(f_dir), args.overwrite,
+                             basedir=os.path.dirname(f_dir))
+    except IOError as e:
+        warning(e)
+        return IO_ERROR
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

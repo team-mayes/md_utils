@@ -34,7 +34,6 @@ setup(
     packages=['md_utils',
               ],
     entry_points={'console_scripts': ['align_on_col = md_utils.align_on_col:main',
-                                      # TODO: improve coverage: calc_pka 47% covered
                                       'calc_pka = md_utils.calc_pka:main',
                                       # TODO: improve coverage: 69%
                                       'calc_split_avg = md_utils.calc_split_avg:main',
@@ -42,7 +41,7 @@ setup(
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data_edit = md_utils.data_edit:main',
                                       'dump_edit = md_utils.dump_edit:main',
-                                      # TODO: improve coverage: 87%
+                                      # TODO: improve coverage: 88%
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',
                                       'fes_combo = md_utils.fes_combo:main',

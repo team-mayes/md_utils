@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 """
 Make a new dump file with a specified max number of timesteps and reorders atoms.
 """

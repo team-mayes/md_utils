@@ -129,12 +129,12 @@ class TestDataEdit(unittest.TestCase):
     def testSort(self):
         try:
             main(["-c", SORT_INI])
-            with open(GLUP_SORT_OUT) as f:
-                with open(GLUP_SORT_OUT_GOOD) as g:
-                    for d_line, g_line in zip(f, g):
-                        if d_line.strip() != g_line.strip():
-                            print(d_line.strip())
-                            print(g_line.strip())
+            # with open(GLUP_SORT_OUT) as f:
+            #     with open(GLUP_SORT_OUT_GOOD) as g:
+            #         for d_line, g_line in zip(f, g):
+            #             if d_line.strip() != g_line.strip():
+            #                 print(d_line.strip())
+            #                 print(g_line.strip())
             self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
         finally:
             silent_remove(GLUP_SORT_OUT)
