@@ -4,7 +4,8 @@ import unittest
 import os
 
 from md_utils import data2pdb
-from md_utils.md_common import diff_lines, silent_remove
+from md_utils.data2pdb import main
+from md_utils.md_common import diff_lines, silent_remove, capture_stdout, capture_stderr
 
 logger = logging.getLogger('data2pdb')
 logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
@@ -15,6 +16,8 @@ TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'data2pdb')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data2pdb.ini')
+TYPO_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_typo.ini')
+MISS_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_miss.ini')
 GLU_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu.ini')
 GLU_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu_dict.ini')
 
@@ -34,11 +37,26 @@ DEF_DICT_OUT = os.path.join(TEST_DIR, 'atom_dict.json')
 GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 
-class TestDumpEdit(unittest.TestCase):
+class TestData2PDB(unittest.TestCase):
+
+    def testNoArgs(self):
+        with capture_stdout(main, []) as output:
+            self.assertTrue("WARNING:  Problems reading file: Could not read file" in output)
+        with capture_stderr(main, []) as output:
+            self.assertTrue("optional arguments" in output)
+
+    def testTypoIni(self):
+        with capture_stderr(main, ["-c", TYPO_INI]) as output:
+            self.assertTrue("Unexpected key" in output)
+
+    def testMissReqKeyIni(self):
+        main(["-c", MISS_INI])
+        with capture_stderr(main, ["-c", MISS_INI]) as output:
+            self.assertTrue("WARNING:  Input data missing: 'Missing config val for key pdb_tpl_file'" in output)
 
     def testDefIni(self):
         try:
-            data2pdb.main(["-c", DEF_INI])
+            main(["-c", DEF_INI])
             # for debugging:
             # with open(PDB_TPL) as f:
             #     with open(PDB_TPL_OUT) as g:
@@ -54,7 +72,6 @@ class TestDumpEdit(unittest.TestCase):
         finally:
             silent_remove(PDB_TPL_OUT)
             silent_remove(PDB_OUT)
-            pass
 
     def testGlu(self):
         try:

@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from md_utils.md_common import capture_stdout, capture_stderr
+from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 from md_utils.per_col_stats import DEF_ARRAY_FILE, main
 import numpy as np
 
@@ -23,10 +23,15 @@ BAD_INPUT = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input.txt')
 BAD_INPUT2 = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input2.txt')
 CSV_INPUT2 = os.path.join(SUB_DATA_DIR, "sum_output.csv")
 
+CSV_OUT = os.path.join(SUB_DATA_DIR, "stats_qm_box_sizes.csv")
+GOOD_CSV_OUT = os.path.join(SUB_DATA_DIR, "stats_qm_box_sizes_good.csv")
+
+
 GOOD_OUT = "     Min value per column:    10.000000    14.995000    10.988000\n" \
            "     Max value per column:    11.891000    15.605000    18.314000\n" \
            "     Avg value per column:    11.092250    15.241000    16.348750\n" \
            "     Std. dev. per column:     0.798138     0.299536     3.576376"
+
 
 class TestPerCol(unittest.TestCase):
     def testNoArgs(self):
@@ -82,10 +87,13 @@ class TestPerCol(unittest.TestCase):
         """
         This input file has a header that starts with a '#' so is ignored by np.loadtxt
         """
-        main(["-f", CSV_INPUT, "-n", "-d", ","])
-        main(["-f", CSV_INPUT, "-d", ","])
-        with capture_stdout(main, ["-f", CSV_INPUT, "-d", ","]) as output:
-            self.assertTrue(GOOD_OUT in output)
+        # main(["-f", CSV_INPUT, "-d", ","])
+        try:
+            with capture_stdout(main, ["-f", CSV_INPUT, "-d", ","]) as output:
+                self.assertTrue(GOOD_OUT in output)
+                self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
+        finally:
+            silent_remove(CSV_OUT)
 
     def testCsvHeader(self):
         """

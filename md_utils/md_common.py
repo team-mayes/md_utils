@@ -288,7 +288,6 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False):
     """
     try:
         dim_vectors = np.genfromtxt(data_file, dtype=np.float64, delimiter=delimiter, skip_header=header)
-        print(dim_vectors)
         if np.isnan(np.min(dim_vectors)):
             warning("Encountered an entry which could not be converted to a float. 'nan' will be returned for "
                     "for the stats for that column.")
