@@ -79,12 +79,12 @@ def is_one_of_type(val, types):
     :param types: A sequence of types to check against.
     :return: Whether the given value is one of the given types.
     """
+    result = False
     val_type = type(val)
     for tt in types:
         if val_type is tt:
-            return True
-    return False
-
+            result = True
+    return result
 
 # Tests #
 

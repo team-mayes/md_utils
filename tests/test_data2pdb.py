@@ -48,8 +48,8 @@ class TestDumpEdit(unittest.TestCase):
             #                 print(g_line.strip())
 
             # will only be there is debugging is on
-            if os.path.exists(PDB_TPL_OUT):
-                self.assertFalse(diff_lines(PDB_TPL_OUT, PDB_TPL))
+            # if os.path.exists(PDB_TPL_OUT):
+            #     self.assertFalse(diff_lines(PDB_TPL_OUT, PDB_TPL))
             self.assertFalse(diff_lines(PDB_OUT, GOOD_PDB_OUT))
         finally:
             silent_remove(PDB_TPL_OUT)
