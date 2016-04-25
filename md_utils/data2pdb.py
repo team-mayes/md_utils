@@ -117,7 +117,7 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Creates pdb files from lammps data, given a template pdb file.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
@@ -132,6 +132,10 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except InvalidDataError as e:
+        warning(e)
+        parser.print_help()
+        return args, INVALID_DATA
 
     return args, GOOD_RET
 

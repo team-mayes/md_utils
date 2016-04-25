@@ -7,10 +7,9 @@ alternately: returns maximum x, y, and z coordinates, plus the values after a bu
 
 from __future__ import print_function
 
-from md_utils.md_common import InvalidDataError, warning, np_float_array_from_file
+from md_utils.md_common import InvalidDataError, warning, np_float_array_from_file, create_out_fname, list_to_file
 import sys
 import argparse
-import numpy as np
 
 __author__ = 'hmayes'
 
@@ -59,7 +58,7 @@ def parse_cmdline(argv):
 
     # parser.add_argument("-h", "--header", help="Flag to indicate that the file contains a header (default is false).",
     #                     action='store_true')
-    #                                         #       "Flag to indicate csv file. Default is a space-separated file with "
+    #                                         #"Flag to indicate csv file. Default is a space-separated file with "
     #                                         # "only columns of numbers, and any header line preceded by a '#', as "
     #                                         # "created by numpy savetxt.",
 
@@ -78,8 +77,18 @@ def process_file(data_file, len_buffer, delimiter, header=False):
         dim_vectors = np_float_array_from_file(data_file, delimiter=delimiter, header=header)
     except InvalidDataError as e:
         raise InvalidDataError("{}\n"
-                               "Run program with '-h' to see options, such as specifying csv format".format(e))
+                               "Run program with '-h' to see options, such as specifying header row (-n) "
+                               "and/or delimeter (-d)".format(e))
+
     max_vector = dim_vectors.max(axis=0)
+    to_print = [['"Min value per column:"'] + dim_vectors.min(axis=0).tolist(),
+                ['"Max value per column:"'] + max_vector.tolist(),
+                ['"Avg value per column:"'] + dim_vectors.mean(axis=0).tolist(),
+                ['"Std. dev. per column:"'] + dim_vectors.std(axis=0, ddof=1).tolist(),
+                ]
+    if len_buffer is not None:
+        to_print.append(["Max value plus {} buffer:"] + (max_vector+len_buffer).tolist())
+
     print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
     print("     Min value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.min(axis=0)])))
     print("     Max value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in max_vector])))
@@ -89,6 +98,18 @@ def process_file(data_file, len_buffer, delimiter, header=False):
     if len_buffer is not None:
         print("\nMax value plus {} buffer: {}".format(len_buffer,
                                                       ' '.join(['{:12.6f}'.format(x) for x in max_vector+len_buffer])))
+
+    f_name = create_out_fname(data_file, prefix='stats_', ext='.csv')
+    list_to_file(to_print, f_name, delimiter=',')
+    print("Wrote file {}".format(f_name))
+
+#
+# with open('myfile.txt', 'r') as f:
+#     first_line = f.readline()
+# Some notes:
+#
+# As noted in the docs, unless it is the only line in the file, the string returned from f.readline() will contain a trailing newline. You may wish to use f.readline().strip()
+
 
 
 def main(argv=None):
