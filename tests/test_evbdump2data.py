@@ -13,20 +13,19 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 
 __author__ = 'hmayes'
 
+# Directories #
 
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(TEST_DIR, 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'evbd2d')
 
-# Test input files
+# Test input files #
 
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_serca.ini')
 INCOMP_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_missing_data.ini')
 TPL_DUMP_MISMATCH_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_tpl_serca_dump.ini')
 TPL_MISS_ATOM_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_tpl_missing_atom.ini')
 TPL_WRONG_ATOM_ORDER_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_tpl_wrong_atom_order.ini')
-
-# evbd2d_glu_tpl_missing_atom.ini
 
 GLU_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu.ini')
 GLU_NEW_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_new_types.ini')

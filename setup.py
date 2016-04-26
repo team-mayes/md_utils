@@ -35,9 +35,7 @@ setup(
               ],
     entry_points={'console_scripts': ['align_on_col = md_utils.align_on_col:main',
                                       'calc_pka = md_utils.calc_pka:main',
-                                      # TODO: improve coverage: 69%
                                       'calc_split_avg = md_utils.calc_split_avg:main',
-                                      # TODO: improve coverage: 80%
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data_edit = md_utils.data_edit:main',
                                       'dump_edit = md_utils.dump_edit:main',

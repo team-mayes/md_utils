@@ -29,9 +29,8 @@ from cStringIO import StringIO
 from contextlib import contextmanager
 import matplotlib.pyplot as pyPlt
 
+
 # logging.basicConfig(level=logging.DEBUG)
-
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('test_md_utils')
 
@@ -48,7 +47,6 @@ R = 0.001985877534
 
 # Tolerance based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 TOL = 0.000000000000001
-
 
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
@@ -71,6 +69,13 @@ IMPRS = 'Impropers'
 LAMMPS_SECTION_NAMES = [MASSES, PAIR_COEFFS, ATOMS, BOND_COEFFS, BONDS, ANGLE_COEFFS, ANGLES,
                         DIHE_COEFFS, DIHES, IMPR_COEFFS, IMPRS]
 
+
+# Error Codes
+# The good status code
+GOOD_RET = 0
+INPUT_ERROR = 1
+IO_ERROR = 2
+INVALID_DATA = 3
 
 # Exceptions #
 
