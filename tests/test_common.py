@@ -12,7 +12,7 @@ import os
 
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname)
+                                create_out_fname, dequote)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -41,6 +41,7 @@ OUT_PFX = 'rad_'
 # Data #
 
 CSV_HEADER = ['coord', 'free_energy', 'corr']
+GHOST = 'ghost'
 
 # Output files #
 
@@ -230,3 +231,23 @@ class TestDiffLines(unittest.TestCase):
         # diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT)
         # print(diff_line_list)
         self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT))
+
+
+class TestDequote(unittest.TestCase):
+    def testNoQuotes(self):
+        raw = GHOST
+        proc = dequote(raw)
+        self.assertTrue(raw == proc)
+        self.assertTrue(GHOST == proc)
+
+    def testSingleQuotes(self):
+        raw = "'" + GHOST + "'"
+        proc = dequote(raw)
+        self.assertFalse(raw == proc)
+        self.assertTrue(GHOST == proc)
+
+    def testDoubleQuotes(self):
+        raw = '"' + GHOST + '"'
+        proc = dequote(raw)
+        self.assertFalse(raw == proc)
+        self.assertTrue(GHOST == proc)

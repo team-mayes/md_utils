@@ -744,6 +744,18 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     return proc_cfg
 
 
+def dequote(s):
+    """
+    from: http://stackoverflow.com/questions/3085382/python-how-can-i-strip-first-and-last-double-quotes
+    If a string has single or double quotes around it, remove them.
+    Make sure the pair of quotes match.
+    If a matching pair of quotes is not found, return the string unchanged.
+    """
+    if (s[0] == s[-1]) and s.startswith(("'", '"')):
+        return s[1:-1]
+    return s
+
+
 # Comparisons #
 
 def conv_num(s):

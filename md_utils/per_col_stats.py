@@ -7,7 +7,8 @@ alternately: returns maximum x, y, and z coordinates, plus the values after a bu
 
 from __future__ import print_function
 
-from md_utils.md_common import InvalidDataError, warning, np_float_array_from_file, create_out_fname, list_to_file
+from md_utils.md_common import (InvalidDataError, warning,
+                                np_float_array_from_file, create_out_fname, list_to_file, dequote)
 import sys
 import argparse
 
@@ -26,6 +27,7 @@ INVALID_DATA = 3
 # Defaults
 DEF_ARRAY_FILE = 'qm_box_sizes.txt'
 DEF_DELIMITER = ' '
+
 
 def parse_cmdline(argv):
     """
@@ -49,18 +51,10 @@ def parse_cmdline(argv):
 
     parser.add_argument("-d", "--delimiter", help="Delimiter. Default is '{}'".format(DEF_DELIMITER),
                         default=DEF_DELIMITER)
-                                            #       "Flag to indicate csv file. Default is a space-separated file with "
-                                            # "only columns of numbers, and any header line preceded by a '#', as "
-                                            # "created by numpy savetxt.",
 
-    parser.add_argument("-n", "--names", help='File contains column names (header) (default is false).',
+    parser.add_argument("-n", "--names", help="File contains column names (header) (default is false). "
+                                              "Note: lines beginning with '#' are ignored.",
                         action='store_true')
-
-    # parser.add_argument("-h", "--header", help="Flag to indicate that the file contains a header (default is false).",
-    #                     action='store_true')
-    #                                         #"Flag to indicate csv file. Default is a space-separated file with "
-    #                                         # "only columns of numbers, and any header line preceded by a '#', as "
-    #                                         # "created by numpy savetxt.",
 
     try:
         args = parser.parse_args(argv)
@@ -72,44 +66,41 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_file(data_file, len_buffer, delimiter, header=False):
+def process_file(data_file, len_buffer, delimiter=' ', header=False):
     try:
         dim_vectors = np_float_array_from_file(data_file, delimiter=delimiter, header=header)
     except InvalidDataError as e:
         raise InvalidDataError("{}\n"
                                "Run program with '-h' to see options, such as specifying header row (-n) "
-                               "and/or delimeter (-d)".format(e))
+                               "and/or delimiter (-d)".format(e))
+
+    if header:
+        with open(data_file, 'r') as f:
+            header_row = f.readline().strip()
+            to_print = [['" "'] + header_row.split(delimiter)]
+    else:
+        to_print = []
 
     max_vector = dim_vectors.max(axis=0)
-    to_print = [['"Min value per column:"'] + dim_vectors.min(axis=0).tolist(),
-                ['"Max value per column:"'] + max_vector.tolist(),
-                ['"Avg value per column:"'] + dim_vectors.mean(axis=0).tolist(),
-                ['"Std. dev. per column:"'] + dim_vectors.std(axis=0, ddof=1).tolist(),
-                ]
+    to_print += [['"Min value per column:"'] + dim_vectors.min(axis=0).tolist(),
+                 ['"Max value per column:"'] + max_vector.tolist(),
+                 ['"Avg value per column:"'] + dim_vectors.mean(axis=0).tolist(),
+                 ['"Std. dev. per column:"'] + dim_vectors.std(axis=0, ddof=1).tolist(),
+                 ]
     if len_buffer is not None:
-        to_print.append(["Max value plus {} buffer:"] + (max_vector+len_buffer).tolist())
+        to_print.append(['"Max value plus {} buffer:"'.format(len_buffer)] + (max_vector+len_buffer).tolist())
 
     print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
-    print("     Min value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.min(axis=0)])))
-    print("     Max value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in max_vector])))
-    print("     Avg value per column: {}".format(' '.join(['{:12.6f}'.format(x) for x in dim_vectors.mean(axis=0)])))
-    print("     Std. dev. per column: {}".format(' '.join(['{:12.6f}'.format(x) for x
-                                                           in dim_vectors.std(axis=0, ddof=1)])))
-    if len_buffer is not None:
-        print("\nMax value plus {} buffer: {}".format(len_buffer,
-                                                      ' '.join(['{:12.6f}'.format(x) for x in max_vector+len_buffer])))
+    for index, row in enumerate(to_print):
+        if index == 0 and header:
+                print("{:>26s} {}".format(dequote(row[0]),
+                                          ' '.join(['{:>12s}'.format(dequote(x.strip())) for x in row[1:]])))
+        else:
+            print("{:>26s} {}".format(dequote(row[0]), ' '.join(['{:12.6f}'.format(x) for x in row[1:]])))
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv')
     list_to_file(to_print, f_name, delimiter=',')
     print("Wrote file {}".format(f_name))
-
-#
-# with open('myfile.txt', 'r') as f:
-#     first_line = f.readline()
-# Some notes:
-#
-# As noted in the docs, unless it is the only line in the file, the string returned from f.readline() will contain a trailing newline. You may wish to use f.readline().strip()
-
 
 
 def main(argv=None):
@@ -125,7 +116,7 @@ def main(argv=None):
                 len_buffer = float(args.buffer)
             except ValueError:
                 raise InvalidDataError("Input for buffer ({}) could not be converted to a float.".format(args.buffer))
-        process_file(args.file, len_buffer, args.delimiter, header=args.names)
+        process_file(args.file, len_buffer, delimiter=args.delimiter, header=args.names)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

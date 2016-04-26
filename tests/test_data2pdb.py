@@ -38,11 +38,10 @@ GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 
 class TestData2PDB(unittest.TestCase):
-
     def testNoArgs(self):
-        with capture_stdout(main, []) as output:
-            self.assertTrue("WARNING:  Problems reading file: Could not read file" in output)
         with capture_stderr(main, []) as output:
+            self.assertTrue("WARNING:  Problems reading file: Could not read file" in output)
+        with capture_stdout(main, []) as output:
             self.assertTrue("optional arguments" in output)
 
     def testTypoIni(self):
