@@ -12,7 +12,7 @@ import re
 
 import numpy as np
 
-from md_utils.md_common import (find_files_by_dir, read_csv, allow_write)
+from md_utils.md_common import (find_files_by_dir, read_csv, allow_write, warning, GOOD_RET, INPUT_ERROR)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 
@@ -30,10 +30,6 @@ from collections import defaultdict
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('calc_split_avg')
 
-# Constants #
-OUT_PFX = 'stdev.'
-# Inverse of the standard concentration in Angstrom ^ 3 / molecule
-inv_C_0 = 1660.0
 # Defaults #
 
 DEF_FILE_PAT = 'rad_PMF*'
@@ -47,8 +43,8 @@ KEY_CONV = {FREE_KEY: float,
             COORD_KEY: float, }
 
 AVG_KEY_CONV = {MEAN_KEY: float,
-            STDEV_KEY: float,
-            COORD_KEY: float, }
+                STDEV_KEY: float,
+                COORD_KEY: float, }
 
 
 # Logic #
@@ -74,12 +70,12 @@ def bin_by_pattern(vals, pat='rad_PMF.(\d+)_\d+'):
 
 def calc_avg_stdev(coord_bin):
     collect_coord = defaultdict(list)
-    for csv_data in (read_csv(cfile, data_conv=KEY_CONV) for cfile in coord_bin):
-        for drow in csv_data:
-            collect_coord[drow[COORD_KEY]].append(drow[CORR_KEY])
+    for csv_data in (read_csv(c_file, data_conv=KEY_CONV) for c_file in coord_bin):
+        for d_row in csv_data:
+            collect_coord[d_row[COORD_KEY]].append(d_row[CORR_KEY])
     results = []
     for coord, freng_vals in collect_coord.items():
-        results.append((coord, np.mean(freng_vals), np.std(freng_vals)))
+        results.append((coord, np.mean(freng_vals), np.std(freng_vals, ddof=1)))
     return results
 
 
@@ -98,11 +94,12 @@ def write_avg_stdev(result, out_fname, overwrite=False, basedir=None):
         tgt_file = out_fname
 
     if allow_write(tgt_file, overwrite=overwrite):
-        with open(tgt_file , 'w') as csvfile:
-            res_writer = csv.writer(csvfile)
+        with open(tgt_file, 'w') as csv_file:
+            res_writer = csv.writer(csv_file)
             res_writer.writerow(OUT_KEY_SEQ)
             for res_row in sorted(result):
                 res_writer.writerow(res_row)
+        print("Wrote file: {}".format(tgt_file))
 
 
 # CLI Processing #
@@ -128,10 +125,14 @@ def parse_cmdline(argv):
     parser.add_argument('-o', "--overwrite", help='Overwrite existing target file',
                         action='store_true')
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        warning(e)
+        parser.print_help()
+        return [], INPUT_ERROR
 
-    return args, 0
-
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -141,19 +142,18 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
-
 
     found_files = find_files_by_dir(args.base_dir, args.pattern)
     logger.debug("Found '%d' dirs with files to process", len(found_files))
-    for fdir, files in found_files.items():
+    for f_dir, files in found_files.items():
         bin_pfx = bin_by_pattern(files)
-        for pfx, binf in bin_pfx.items():
-            bin_results = calc_avg_stdev([os.path.join(fdir, tgt) for tgt in binf])
+        for pfx, bin_f in bin_pfx.items():
+            bin_results = calc_avg_stdev([os.path.join(f_dir, tgt) for tgt in bin_f])
             avg_fname = OUT_FNAME_FMT.format(pfx)
-            write_avg_stdev(bin_results, os.path.join(fdir, avg_fname), overwrite=args.overwrite)
-    return 0  # success
+            write_avg_stdev(bin_results, os.path.join(f_dir, avg_fname), overwrite=args.overwrite)
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

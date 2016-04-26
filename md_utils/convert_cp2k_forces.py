@@ -59,43 +59,6 @@ DEF_OUT_DIR = None
 
 OUT_FORMAT = '%d %.3f%.3f%.f'
 
-# DEF_CFG_FILE = 'lammps_proc_data.ini'
-# # Set notation
-# DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
-#                 PROT_IGNORE: [],
-#                 PROT_O_IDS: [],
-#                 OUT_BASE_DIR: None,
-#                 CALC_OH_DIST: False,
-#                 CALC_HO_GOFR: False,
-#                 GOFR_MAX: -1.1,
-#                 GOFR_DR: -1.1,
-#                 GOFR_BINS: [],
-#                 GOFR_RAW_HIST: [],
-#                 }
-# REQ_KEYS = {PROT_RES_MOL_ID: int,
-#             PROT_H_TYPE: int,
-#             WAT_O_TYPE: int, WAT_H_TYPE: int,
-#             }
-
-# # For cp2k file processing
-# SEC_TIMESTEP = 'timestep'
-# SEC_NUM_ATOMS = 'dump_num_atoms'
-# SEC_BOX_SIZE = 'dump_box_size'
-# SEC_ATOMS = 'atoms_section'
-# ATOM_NUM = 'atom_num'
-# MOL_NUM = 'mol_num'
-# ATOM_TYPE = 'atom_type'
-# CHARGE = 'charge'
-# XYZ_COORDS = 'x,y,z'
-#
-# # Values to output
-# TIMESTEP = 'timestep'
-# OH_MIN = 'oh_min'
-# OH_MAX = 'oh_max'
-# OH_DIFF = 'oh_diff'
-# OUT_FIELDNAMES = [TIMESTEP]
-# OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
-
 
 def parse_cmdline(argv):
     """
@@ -118,32 +81,27 @@ def parse_cmdline(argv):
     parser.add_argument("-d", "--out_dir", help="Directory for output files. The default option is the same location "
                                                 "as the cp2k output file.",
                         default=DEF_OUT_DIR, )
-    args = None
 
     try:
         args = parser.parse_args(argv)
-    except IOError as e:
-        warning("Problems reading file:", e)
+    except SystemExit as e:
+        warning(e)
         parser.print_help()
-        return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
-        parser.print_help()
-        return args, INPUT_ERROR
+        return [], INPUT_ERROR
 
     if not os.path.isfile(args.file_list):
         if args.file_list == DEF_FILE_LIST:
-            warning("Default file {} listing of cp2k force files missing.".format(DEF_FILE_LIST))
+            warning("Default file listing of cp2k force files missing: '{}'".format(DEF_FILE_LIST))
         else:
-            warning("Specified file {} listing cp2k force files missing.".format(args.file_list))
+            warning("Specified file listing cp2k force files missing: '{}'".format(args.file_list))
         parser.print_help()
-        return args, INPUT_ERROR
+        return [], INPUT_ERROR
 
     if args.out_dir:
         if not os.path.isdir(args.out_dir):
-            warning("Cannot find specified output directory {}. Check input.".format(args.out_dir))
+            warning("Cannot find specified output directory: '{}'".format(args.out_dir))
             parser.print_help()
-            return args, INPUT_ERROR
+            return [], INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -183,29 +141,36 @@ def process_cp2k_force_file(f_file, out_dir):
                 try:
                     if sum_pat.match(split_line[0]):
                         sums = np.asarray(map(float, split_line[4:])) * au_to_N
+                        if len(sums) != 4:
+                            raise InvalidDataError("Did not find the expected four force values (x, y, z, total)")
                         # sums_str = ' '.join([str(atom_num)] + ['%8.3f'%F for F in sums])
                         f_out = create_out_fname(f_file, prefix=OUT_FILE_PREFIX, base_dir=out_dir, ext='')
                         list_to_file(to_print, f_out)
                         return np.append([atom_num], sums)
-                except ValueError as e:
-                    warning('Check file {} sum line in the third ATOMIC FORCES section, as it does not appear to '
-                            'contain the expected data: \n {}\n'
-                            'Continuing to the next line in the file list'.format(f_file, line), e)
+                except (ValueError, InvalidDataError) as e:
+                    warning("{}\n"
+                            "Check file: {}\n"
+                            "   Line 'SUM OF ATOMIC FORCES' in the third 'ATOMIC FORCES' section: {}\n"
+                            "Continuing to the next line in the file list".format(e, f_file, line))
                     return None
 
                 try:
+                    if len(split_line) != 6:
+                        raise InvalidDataError("Did not find six expected values (Atom Kind Element X Y Z)")
                     atom_num = int(split_line[0])
                     # kind = int(split_line[1])
                     # element = split_line[2]
                     xyz = np.asarray(map(float, split_line[3:])) * au_to_N
                     to_print.append([atom_num] + xyz.tolist())
-                except ValueError as e:
-                    warning('Check file {} line {} in the third ATOMIC FORCES section, as it does not appear to '
-                            'contain all six expected columns of data (Atom Kind Element X Y Z): \n {}\n'
-                            'Continuing to the next line in the file list'.format(f_file, line_count, line), e)
+                except (ValueError, InvalidDataError) as e:
+                    warning("{}\n"
+                            "Check file: {}\n"
+                            "  line {} in the third 'ATOMIC FORCES' section: {}\n"
+                            "Continuing to the next line in the file list".format(e, f_file, line_count, line))
                     return None
-    warning('Reached end of file {} without encountering a third SUM OF ATOMIC FORCES section. '
-            'Continuing to the next line in the file list.'.format(f_file))
+    warning("Invalid file: {}\n"
+            "Reached end of file without encountering a third 'SUM OF ATOMIC FORCES' section. "
+            "Continuing to the next line in the file list.".format(f_file))
     return None
 
 
