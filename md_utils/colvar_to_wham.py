@@ -10,7 +10,7 @@ from __future__ import print_function
 import logging
 import math
 
-from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file)
+from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file, allow_write)
 
 __author__ = 'hmayes'
 
@@ -130,12 +130,11 @@ def main(argv=None):
                 continue
             for colvar_path in ([os.path.join(f_dir, tgt) for tgt in files]):
                 proc_data = calc_for_wham(colvar_path)
-                out_fname = create_out_fname(colvar_path, prefix=OUT_PFX)
-                if os.path.exists(out_fname) and not args.overwrite:
-                    logger.warn("Not overwriting existing file '%s'", out_fname)
-                    continue
-                list_to_file([str(d['r']) for d in proc_data if 'r' in d], out_fname)
-                #write_csv(proc_data, out_fname, COLVAR_WHAM_KEY_SEQ, extrasaction="ignore")
+                f_name = create_out_fname(colvar_path, prefix=OUT_PFX)
+                if allow_write(f_name, overwrite=args.overwrite):
+                    list_to_file([str(d['r']) for d in proc_data if 'r' in d], f_name)
+                    #write_csv(proc_data, f_name, COLVAR_WHAM_KEY_SEQ, extrasaction="ignore")
+                    print("Wrote file {}".format(f_name))
 
     return 0  # success
 

@@ -16,22 +16,13 @@ import numpy as np
 from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, pbc_dist, \
     warning, process_cfg, find_dump_section_state
 
-PRE_RES = 'pre_prot_res'
-PROT_RES = 'prot_res'
-POST_RES = 'post_prot_res'
-EXCESS_H = 'excess_proton'
-HYD_MOL = 'h3o_mol'
-WAT_MOL = 'wat_mol'
-POST_WAT = 'post_wat'
 
 __author__ = 'hmayes'
-
 
 # Logging
 logger = logging.getLogger('evbd2d')
 logging.basicConfig(filename='evbd2d.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
-
 
 # Error Codes
 # The good status code
@@ -59,6 +50,14 @@ PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
 PROT_TYPE_IGNORE_ATOMS = 'prot_res_type_ignore_atoms'
 OUT_BASE_DIR = 'output_directory'
 REPROD_TPL = 'reproduce_tpl_flag'
+
+PRE_RES = 'pre_prot_res'
+PROT_RES = 'prot_res'
+POST_RES = 'post_prot_res'
+EXCESS_H = 'excess_proton'
+HYD_MOL = 'h3o_mol'
+WAT_MOL = 'wat_mol'
+POST_WAT = 'post_wat'
 
 # Config keys to allow calculating charge at intermediate points:
 LAST_P1 = 'last_p1'

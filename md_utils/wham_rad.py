@@ -9,10 +9,10 @@ import logging
 import math
 
 from md_utils.md_common import (find_files_by_dir, write_csv,
-                                calc_kbt, create_out_fname)
+                                calc_kbt, create_out_fname, allow_write, GOOD_RET, INPUT_ERROR)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
-__author__ = 'cmayes'
+__author__ = 'mayes'
 
 import argparse
 import os
@@ -24,9 +24,6 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('wham_rad')
 
 # Constants #
-
-GOOD_RET = 0
-INPUT_ERROR = 1
 
 OUT_PFX = 'rad_'
 
@@ -77,7 +74,7 @@ def calc_rad(src_file, kbt):
                 except ValueError:
                     w_res[FREE_KEY] = sw_line[1]
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, w_line)
+                logger.debug("Error {} for line {}".format(e, w_line))
             w_res[CORR_KEY] = calc_corr(w_res[COORD_KEY], w_res[FREE_KEY], kbt)
             res_lines.append(w_res)
     return res_lines
@@ -86,7 +83,7 @@ def calc_rad(src_file, kbt):
 def to_zero_point(corr_res):
     """
     # Sets the highest free energy value as zero for the given data set.
-    Sets the free energy value at the furthers coordinate as zero for the given data set.
+    Sets the free energy value at the furthest coordinate as zero for the given data set.
 
     :param corr_res: The data set to orient.
     :return: The data set reoriented relative to the highest free energy value.
@@ -134,7 +131,10 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Creates a radial correction value for each line '
-                                                 'of the target file(s).')
+                                                 'of the target file(s). \n'
+                                                 'The output is a three-column file: original coord, original free'
+                                                 ' energy, radially-corrected free-energy (with zero set to equal'
+                                                 ' the furthest (highest) coordinate corrected free energy).')
     parser.add_argument("-d", "--base_dir", help="The starting point for a file search "
                                                  "(defaults to current directory)",
                         default=os.getcwd())
@@ -180,13 +180,12 @@ def main(argv=None):
                 continue
             for pmf_path in ([os.path.join(f_dir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))
-                out_fname = create_out_fname(pmf_path, prefix=OUT_PFX)
-                if os.path.exists(out_fname) and not args.overwrite:
-                    logger.warn("Not overwriting existing file '%s'", out_fname)
-                    continue
-                write_csv(proc_data, out_fname, RAD_KEY_SEQ)
+                f_name = create_out_fname(pmf_path, prefix=OUT_PFX)
+                if allow_write(f_name, overwrite=args.overwrite):
+                    write_csv(proc_data, f_name, RAD_KEY_SEQ)
+                    print("Wrote file {}".format(f_name))
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

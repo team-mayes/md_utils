@@ -34,7 +34,7 @@ import logging
 import math
 
 from md_utils.md_common import (find_files_by_dir,
-                                read_csv, write_csv, calc_kbt, create_out_fname, warning)
+                                read_csv, write_csv, calc_kbt, create_out_fname, warning, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 __author__ = 'mayes'
@@ -96,12 +96,10 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     :param basedir: The base directory to target (uses the source file's base directory
         if not specified)
     """
-    out_fname = create_out_fname(src_file, prefix=OUT_PFX, base_dir=basedir)
-    if os.path.exists(out_fname) and not overwrite:
-        warning("Not overwriting existing file {}".format(out_fname))
-        return
-    write_csv(result, out_fname, OUT_KEY_SEQ)
-    print("Wrote file {}".format(out_fname))
+    f_name = create_out_fname(src_file, prefix=OUT_PFX, base_dir=basedir)
+    if allow_write(f_name, overwrite=overwrite):
+        write_csv(result, f_name, OUT_KEY_SEQ)
+        print("Wrote file {}".format(f_name))
 
 
 def calc_pka(file_data, kbt, coord_ts=None):

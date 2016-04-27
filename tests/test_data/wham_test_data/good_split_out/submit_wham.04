@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --constraint=ib
+#SBATCH --job-name=wham
+#SBATCH --output=wham.out
+#SBATCH --error=wham.err
+#SBATCH --time=04:00:00
+#SBATCH --partition=westmere
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --exclusive
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=hmayes@hmayes.com
+
+wham 1.00 6.00 50 0.0001 310.0 0 meta.04_01 PMF.04_01 > wham.04_01.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.04_02 PMF.04_02 > wham.04_02.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.04_03 PMF.04_03 > wham.04_03.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.04_04 PMF.04_04 > wham.04_04.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.04_05 PMF.04_05 > wham.04_05.txt
+

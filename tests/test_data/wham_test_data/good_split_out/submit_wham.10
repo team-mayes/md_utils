@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --constraint=ib
+#SBATCH --job-name=wham
+#SBATCH --output=wham.out
+#SBATCH --error=wham.err
+#SBATCH --time=04:00:00
+#SBATCH --partition=westmere
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --exclusive
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=hmayes@hmayes.com
+
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_01 PMF.10_01 > wham.10_01.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_02 PMF.10_02 > wham.10_02.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_03 PMF.10_03 > wham.10_03.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_04 PMF.10_04 > wham.10_04.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_05 PMF.10_05 > wham.10_05.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_06 PMF.10_06 > wham.10_06.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_07 PMF.10_07 > wham.10_07.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_08 PMF.10_08 > wham.10_08.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_09 PMF.10_09 > wham.10_09.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_10 PMF.10_10 > wham.10_10.txt
+wham 1.00 6.00 50 0.0001 310.0 0 meta.10_11 PMF.10_11 > wham.10_11.txt
+

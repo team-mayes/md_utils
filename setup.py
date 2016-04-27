@@ -39,7 +39,6 @@ setup(
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data_edit = md_utils.data_edit:main',
                                       'dump_edit = md_utils.dump_edit:main',
-                                      # TODO: improve coverage: 88%
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',
                                       'fes_combo = md_utils.fes_combo:main',
