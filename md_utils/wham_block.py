@@ -2,7 +2,8 @@
 # coding=utf-8
 
 """
-Block averages input data for WHAM.
+Block averages input data for WHAM, used to test data convergence.
+(first half, first quarter, first eighth...)
 """
 
 from __future__ import print_function, division
@@ -10,11 +11,11 @@ import logging
 
 import six
 
-from md_utils.md_common import find_files_by_dir, chunk, allow_write, str_to_file
+from md_utils.md_common import find_files_by_dir, chunk, allow_write, str_to_file, GOOD_RET, warning, INVALID_DATA
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
                            DIR_KEY, LINES_KEY, STEP_SUBMIT_FNAME,
                            fill_submit_wham, DEF_BASE_SUBMIT_TPL,
-                           DEF_LINE_SUBMIT_TPL)
+                           DEF_LINE_SUBMIT_TPL, TemplateNotReadableError)
 from md_utils.wham_split import read_tpl
 
 __author__ = 'cmayes'
@@ -69,11 +70,10 @@ def write_avg_rmsd(tgt_dir, rmsd, overwrite=False):
     :param overwrite: Whether to overwrite existing files.
     """
     for rmsd_fname, data in rmsd.items():
-        tgt_file = os.path.join(tgt_dir, rmsd_fname)
-        if os.path.exists(tgt_file) and not overwrite:
-            logger.warn("Not overwriting existing RMSD file '%s'", tgt_file)
-            continue
-        write_rmsd(data, tgt_file)
+        f_name = os.path.join(tgt_dir, rmsd_fname)
+        if allow_write(f_name, overwrite=overwrite):
+            write_rmsd(data, f_name)
+            print("Wrote file {}".format(f_name))
 
 
 def write_meta(tgt_dir, meta, step, overwrite=False):
@@ -86,18 +86,18 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
     :param overwrite: Whether to overwrite an existing meta file.
     """
     step_meta = STEP_META_FNAME.format(step)
-    meta_tgt = os.path.join(tgt_dir, step_meta)
-    if os.path.exists(meta_tgt) and not overwrite:
-        logger.warn("Not overwriting existing meta file '%s'", meta_tgt)
-        return
-    with open(meta_tgt, 'w') as mfile:
-        for mline in meta[LINES_KEY]:
-            rmsd_loc = os.path.join("{:02d}".format(step),
-                                    os.path.basename(mline[0]))
-            mfile.write(rmsd_loc)
-            mfile.write('\t')
-            mfile.write('\t'.join(mline[1:]))
-            mfile.write('\n')
+    f_name = os.path.join(tgt_dir, step_meta)
+    if allow_write(f_name, overwrite=overwrite):
+        with open(f_name, 'w') as m_file:
+            for m_line in meta[LINES_KEY]:
+                rmsd_loc = os.path.join("{:02d}".format(step),
+                                        os.path.basename(m_line[0]))
+                m_file.write(rmsd_loc)
+                m_file.write('\t')
+                m_file.write('\t'.join(m_line[1:]))
+                m_file.write('\n')
+        print("Wrote file {}".format(f_name))
+
 
 # Logic #
 
@@ -191,7 +191,7 @@ def parse_cmdline(argv=None):
                         action='store_true')
     args = parser.parse_args(argv)
 
-    return args, 0
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -202,14 +202,18 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
 
-    for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
-        for meta_file in meta_files:
-            block_average(os.path.join(meta_dir, meta_file), args.steps, args.overwrite)
+    try:
+        for meta_dir, meta_files in find_files_by_dir(args.base_dir, args.pattern).items():
+            for meta_file in meta_files:
+                block_average(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
+    except TemplateNotReadableError as e:
+        warning(e)
+        return INVALID_DATA
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

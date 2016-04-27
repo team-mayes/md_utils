@@ -77,6 +77,7 @@ INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
 
+
 # Exceptions #
 
 class MdError(Exception):
@@ -357,7 +358,6 @@ def silent_remove(filename):
             raise
 
 
-# TODO: Use this instead of duplicate logic in project.
 def allow_write(f_loc, overwrite=False):
     """
     Returns whether to allow writing to the given location.
@@ -367,7 +367,7 @@ def allow_write(f_loc, overwrite=False):
     :return: Whether to allow writing to the given location.
     """
     if os.path.exists(f_loc) and not overwrite:
-        logger.warn("Not overwriting existing location '%s'", f_loc)
+        warning("Not overwriting existing file '{}'".format(f_loc))
         return False
     return True
 

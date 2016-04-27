@@ -9,19 +9,18 @@ import math
 
 import os
 
-from md_utils.md_common import BOLTZ_CONST, capture_stderr, capture_stdout
-from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point, main
+from md_utils.md_common import BOLTZ_CONST, capture_stderr, capture_stdout, silent_remove, diff_lines
+from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point, main, OUT_PFX
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 
-# Experimental temperature was 310 Kelvin
-INF = "inf"
-EXP_TEMP = 310
-EXP_KBT = BOLTZ_CONST * EXP_TEMP
+__author__ = 'mayes'
 
-__author__ = 'cmayes'
+# Directories #
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'wham_test_data')
+
 
 ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
@@ -29,8 +28,21 @@ ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_FNAME = "PMF_test.txt"
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
-# Shared Methods #
+# noinspection PyUnresolvedReferences
+ORIG_WHAM_OUT = os.path.join(DATA_DIR, OUT_PFX + ORIG_WHAM_FNAME)
+GOOD_ORIG_WHAM_OUT = os.path.join(SUB_DATA_DIR, 'good_' + OUT_PFX + ORIG_WHAM_FNAME)
+# noinspection PyUnresolvedReferences
+SHORT_WHAM_OUT = os.path.join(DATA_DIR, OUT_PFX + SHORT_WHAM_FNAME)
+GOOD_SHORT_WHAM_OUT = os.path.join(SUB_DATA_DIR, 'good_' + OUT_PFX + SHORT_WHAM_FNAME)
 
+
+# Experimental temperature was 310 Kelvin
+INF = "inf"
+EXP_TEMP = 310
+EXP_KBT = BOLTZ_CONST * EXP_TEMP
+
+
+# Shared Methods #
 
 def zpe_check(test_inst, zpe):
     """Tests that the zero-point energy value has been properly applied.
@@ -85,3 +97,11 @@ class TestMain(unittest.TestCase):
         with capture_stdout(main, []) as output:
             self.assertTrue("Creates a radial correction value" in output)
 
+    def testSomeArgs(self):
+        try:
+            main([str(EXP_TEMP), "-o"])
+            self.assertFalse(diff_lines(ORIG_WHAM_OUT, GOOD_ORIG_WHAM_OUT))
+            self.assertFalse(diff_lines(SHORT_WHAM_OUT, GOOD_SHORT_WHAM_OUT))
+        finally:
+            silent_remove(ORIG_WHAM_OUT)
+            silent_remove(SHORT_WHAM_OUT)

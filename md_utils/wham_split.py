@@ -11,7 +11,7 @@ import logging
 import math
 
 from md_utils.md_common import (find_files_by_dir, chunk, file_to_str,
-                                allow_write, str_to_file, warning)
+                                allow_write, str_to_file, warning, GOOD_RET, INVALID_DATA)
 from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            LINES_KEY, DEF_BASE_SUBMIT_TPL,
                            DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
@@ -54,18 +54,17 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
     """
     for step_part in range(1, step + 2):
         step_meta = STEP_META_FNAME.format(step, step_part)
-        meta_tgt = os.path.join(tgt_dir, step_meta)
-        if os.path.exists(meta_tgt) and not overwrite:
-            logger.warn("Not overwriting existing meta file '%s'", meta_tgt)
-            return
-        with open(meta_tgt, 'w') as mfile:
-            for mline in meta[LINES_KEY]:
-                    rmsd_loc = os.path.join(SPLIT_DIR_FMT.format(step, step_part),
-                                            os.path.basename(mline[0]))
-                    mfile.write(rmsd_loc)
-                    mfile.write('\t')
-                    mfile.write('\t'.join(mline[1:]))
-                    mfile.write('\n')
+        f_name = os.path.join(tgt_dir, step_meta)
+        if allow_write(f_name, overwrite=overwrite):
+            with open(f_name, 'w') as m_file:
+                for m_line in meta[LINES_KEY]:
+                        rmsd_loc = os.path.join(SPLIT_DIR_FMT.format(step, step_part),
+                                                os.path.basename(m_line[0]))
+                        m_file.write(rmsd_loc)
+                        m_file.write('\t')
+                        m_file.write('\t'.join(m_line[1:]))
+                        m_file.write('\n')
+            print("Wrote file {}".format(f_name))
 
 
 def read_tpl(tpl_loc):
@@ -97,6 +96,7 @@ def write_submit(tgt_dir, sub_tpl_base, sub_tpl_line, step, overwrite=False):
     if allow_write(sub_file, overwrite):
         wham_fill = fill_submit_wham(sub_tpl_base, sub_tpl_line, step, use_part=True)
         str_to_file(wham_fill, sub_file)
+        print("Wrote file: {}".format(sub_file))
 
 
 def rmsd_split(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=None):
@@ -132,11 +132,10 @@ def rmsd_split(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=
                                             format(step, step_part))
                 if not os.path.exists(rmsd_tgt_dir):
                     os.makedirs(rmsd_tgt_dir)
-                tgt_file = os.path.join(rmsd_tgt_dir, rmsd_fname)
-                if os.path.exists(tgt_file) and not overwrite:
-                    logger.warn("Not overwriting existing RMSD file '%s'", tgt_file)
-                    continue
-                write_rmsd(rmsd_chunks[step_part - 1], tgt_file)
+                f_name = os.path.join(rmsd_tgt_dir, rmsd_fname)
+                if allow_write(f_name, overwrite=overwrite):
+                    write_rmsd(rmsd_chunks[step_part - 1], f_name)
+                    print("Wrote file {}".format(f_name))
 
         write_meta(base_dir, meta, step, overwrite)
         write_submit(base_dir, sub_tpl_base, sub_tpl_line, step, overwrite)
@@ -169,7 +168,7 @@ def parse_cmdline(argv=None):
 
     args = parser.parse_args(argv)
 
-    return args, 0
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -180,7 +179,7 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
 
     try:
@@ -189,9 +188,9 @@ def main(argv=None):
                 rmsd_split(os.path.join(meta_dir, meta_file), args.steps, overwrite=args.overwrite)
     except TemplateNotReadableError as e:
         warning(e)
-        return 3
+        return INVALID_DATA
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':
