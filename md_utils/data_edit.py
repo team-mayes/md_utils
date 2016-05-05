@@ -38,6 +38,7 @@ BOND_TYPE_DICT_FILE = 'bond_type_dict_filename'
 ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
 DIHE_TYPE_DICT_FILE = 'dihedral_type_dict_filename'
 IMPR_TYPE_DICT_FILE = 'improper_type_dict_filename'
+PRINT_OWN_ATOMS = 'print_interactions_owned_by_atoms'
 PRINT_DATA_ATOMS = 'print_interactions_involving_atoms'
 SORT_ME = 'data_sort_flag'
 
@@ -58,6 +59,7 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 ANGL_TYPE_DICT_FILE: None,
                 DIHE_TYPE_DICT_FILE: None,
                 IMPR_TYPE_DICT_FILE: None,
+                PRINT_OWN_ATOMS: [],
                 PRINT_DATA_ATOMS: [],
                 PRINT_ATOM_TYPES: [],
                 PRINT_BOND_TYPES: [],
@@ -293,7 +295,6 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 # Rename the following to make it easier to follow:
                 type_count = TYPE_SEC_DICT[section][0]
-                # TODO: continue here, highlight when owned
                 highlight_types = cfg[TYPE_SEC_DICT[section][1]]
                 change_dict = type_dict[TYPE_SEC_DICT[section][2]]
 
@@ -335,7 +336,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 content[section].append(s_line)
 
-                if atom_id in cfg[PRINT_DATA_ATOMS]:
+                if atom_id in cfg[PRINT_DATA_ATOMS] or atom_id in cfg[PRINT_OWN_ATOMS]:
                     highlight_content[section].append(s_line)
 
                 if count == nums_dict[NUM_ATOMS]:
@@ -364,6 +365,14 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     if atom_id in atom_id_dict:
                         new_atoms[index] = atom_id_dict[atom_id]
                     if atom_id in cfg[PRINT_DATA_ATOMS]:
+                        highlight_line = True
+
+                # check for ownership
+                if section == SEC_BONDS:
+                    if atoms[0] in cfg[PRINT_OWN_ATOMS]:
+                        highlight_line = True
+                else:
+                    if atoms[1] in cfg[PRINT_OWN_ATOMS]:
                         highlight_line = True
 
                 if s_line[1] in type_dict[section]:
@@ -417,7 +426,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
         list_to_file(data_content, f_name)
         print('Completed writing {}'.format(f_name))
 
-    if len(cfg[PRINT_DATA_ATOMS]) > 0:
+    if (len(cfg[PRINT_DATA_ATOMS]) + len(cfg[PRINT_OWN_ATOMS])) > 0:
         f_name = create_out_fname(data_file, suffix='_selected', ext='.txt')
         list_to_file(select_data_content, f_name)
         print('Completed writing {}'.format(f_name))

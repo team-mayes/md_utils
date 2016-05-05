@@ -21,6 +21,7 @@ GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
 IMP_ATOMS_BAD_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_bad_input.ini')
 IMP_ATOMS_TYPO_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_key_typo.ini')
 GLUE_GLUP_IMP_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms.ini')
+GLUE_GLUP_OWN_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_own_atoms.ini')
 RETYPE_INI = os.path.join(SUB_DATA_DIR, 'data_retype.ini')
 BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_data.ini')
 SORT_INI = os.path.join(SUB_DATA_DIR, 'data_sort.ini')
@@ -42,9 +43,11 @@ GLUP_GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good.data')
 # noinspection PyUnresolvedReferences
 GLUE_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected.txt')
 GLUE_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected_good.txt')
+GLUE_SELECT_OWN_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glu_deprot_selected_owned_good.txt')
 # noinspection PyUnresolvedReferences
 GLUP_SELECT_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selected.txt')
 GLUP_SELECT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selected_good.txt')
+GLUP_SELECT_OWN_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_new_good_selected_owned_good.txt')
 # noinspection PyUnresolvedReferences
 GLUP_RETYPE_OUT = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_to_retype_new.data')
 GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retyped_good.data')
@@ -95,11 +98,20 @@ class TestDataEdit(unittest.TestCase):
         with capture_stderr(main, ["-c", IMP_ATOMS_BAD_INI]) as output:
             self.assertTrue("Problem with config vals on key print_dihedral_types: invalid literal for int()" in output)
 
+
     def testImptAtoms(self):
         try:
             main(["-c", GLUE_GLUP_IMP_ATOMS_INI])
             self.assertFalse(diff_lines(GLUE_SELECT_OUT, GLUE_SELECT_OUT_GOOD))
             self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OUT_GOOD))
+        finally:
+            [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
+
+    def testOwnAtoms(self):
+        try:
+            main(["-c", GLUE_GLUP_OWN_ATOMS_INI])
+            self.assertFalse(diff_lines(GLUE_SELECT_OUT, GLUE_SELECT_OWN_OUT_GOOD))
+            self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OWN_OUT_GOOD))
         finally:
             [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
 
