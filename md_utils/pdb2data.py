@@ -64,7 +64,7 @@ DEF_CFG_VALS = {PDBS_FILE: 'pdb_list.txt',
                 PDB_Z_LAST_CHAR: 54,
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
-             }
+            }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -77,6 +77,7 @@ ATOM_TYPE_DICT = 'atom_type_dict'
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
+
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -91,7 +92,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)),def_cfg_vals=DEF_CFG_VALS, req_keys=REQ_KEYS)
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), def_cfg_vals=DEF_CFG_VALS, req_keys=REQ_KEYS)
     return main_proc
 
 
@@ -107,10 +108,9 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(description='Creates lammps data files from pdb files, given a template data file.'
                                                  'The required input file provides the name/location of the '
                                                  'template file and a file with a list of data files to convert.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/pdb2data/pdb2data.ini. "
-                                               "The default file name is pdb2data.ini, located in the "
-                                               "base directory where the program as run.",
+    parser.add_argument("-c", "--config", help="The location of the configuration file. "
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -130,22 +130,18 @@ def parse_cmdline(argv):
 def process_data_tpl(cfg):
     dict_loc = cfg[ATOM_DICT_FILE]
     tpl_loc = cfg[DATA_TPL_FILE]
-    tpl_data = {}
-    tpl_data[HEAD_CONTENT] = []
-    tpl_data[ATOMS_CONTENT] = []
-    tpl_data[TAIL_CONTENT] = []
-    tpl_data[ATOM_TYPE_DICT] = {}
+    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: [], ATOM_TYPE_DICT: {}}
     section = SEC_HEAD
     num_atoms_pat = re.compile(r"(\d+).*atoms$")
     atoms_pat = re.compile(r"^Atoms.*")
     bond_pat = re.compile(r"^Bond.*")
 
-    with open(dict_loc) as csvfile:
-        for line in csv.reader(csvfile):
+    with open(dict_loc) as csv_file:
+        for line in csv.reader(csv_file):
             try:
                 tpl_data[ATOM_TYPE_DICT][line[0]] = int(line[1])
             except ValueError as e:
-                logger.debug("Could not convert value %s to int.", line[1])
+                logger.debug("{}: Could not convert value {} to int.".format(e, line[1]))
 
     with open(tpl_loc) as f:
         for line in f.readlines():
@@ -181,14 +177,14 @@ def process_data_tpl(cfg):
                 end = ' '.join(split_line[7:])
                 # atom_struct = [atom_num, mol_num, atom_type, charge,end]
                 # tpl_data[ATOMS_CONTENT].append(atom_struct)
-                tpl_data[ATOMS_CONTENT].append([atom_num, mol_num, atom_type, charge,end])
+                tpl_data[ATOMS_CONTENT].append([atom_num, mol_num, atom_type, charge, end])
             # tail_content to contain everything after the 'Atoms' section
             elif section == SEC_TAIL:
                 tpl_data[TAIL_CONTENT].append(line)
 
     # Validate data section
     if len(tpl_data[ATOMS_CONTENT]) != tpl_data[NUM_ATOMS]:
-        raise InvalidDataError('The length of the "Atoms" section ({}) does not equal ' \
+        raise InvalidDataError('The length of the "Atoms" section ({}) does not equal '
                                'the number of atoms ({}).'.format(len(tpl_data[ATOMS_CONTENT]), tpl_data[NUM_ATOMS]))
 
     if logger.isEnabledFor(logging.DEBUG):
@@ -211,29 +207,28 @@ def process_pdb_files(cfg, data_tpl_content):
                 for line in d.readlines():
                     pdb_section = line[:cfg[PDB_SECTION_LAST_CHAR]]
                     if pdb_section == 'ATOM  ':
-                        atom_nums = line[cfg[PDB_SECTION_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
-                        atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_INFO_LAST_CHAR]]
-                        # TODO: check with Chris: I was going to put a try here (both for making int and float); not needed?
+                        # atom_nums = line[cfg[PDB_SECTION_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
+                        # atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_INFO_LAST_CHAR]]
                         # There is already a try when calling the subroutine, so maybe I don't need to?
-                        mol_num = int(line[cfg[PDB_ATOM_INFO_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
+                        # mol_num = int(line[cfg[PDB_ATOM_INFO_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
                         pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
                         pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
                         pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
-                        last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
-                        # TODO: data checking!
+                        # last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
                         # if data_tpl_content[ATOMS_CONTENT][atom_num][2] !=data_tpl_content[ATOM_TYPE_DICT][atom_type]:
-                        #     print(atom_num,atom_type, data_tpl_content[ATOMS_CONTENT][atom_num][2],data_tpl_content[ATOM_TYPE_DICT][atom_type])
+                        #     print(atom_num,atom_type, data_tpl_content[ATOMS_CONTENT][atom_num][2],
+                        # data_tpl_content[ATOM_TYPE_DICT][atom_type])
                         # # For printing a dictionary
                         # new_atom_type_dict[atom_type] = data_tpl_content[ATOMS_CONTENT][atom_num][2]
-                        pdb_atom_line.append(data_tpl_content[ATOMS_CONTENT][atom_num][:4]+
-                                             [pdb_x,pdb_y,pdb_z]+data_tpl_content[ATOMS_CONTENT][atom_num][4:])
+                        pdb_atom_line.append(data_tpl_content[ATOMS_CONTENT][atom_num][:4] +
+                                             [pdb_x, pdb_y, pdb_z] + data_tpl_content[ATOMS_CONTENT][atom_num][4:])
                         atom_num += 1
             if atom_num != data_tpl_content[NUM_ATOMS]:
                 raise InvalidDataError('The length of the "Atoms" section ({}) in the pdb does not equal '
                                        'the number of atoms in the data template file ({}).'
                                        ''.format(len(atom_num),
                                                  data_tpl_content[NUM_ATOMS]))
-            d_out = create_out_fname(pdb_file, suffix='_from_py' , ext='.data')
+            d_out = create_out_fname(pdb_file, suffix='_from_py', ext='.data')
             list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_atom_line + data_tpl_content[TAIL_CONTENT],
                          d_out)
             print('Wrote file: {}'.format(d_out))
@@ -256,7 +251,6 @@ def main(argv=None):
     except InvalidDataError as e:
         warning("Problems reading data template:", e)
         return INVALID_DATA
-
 
     return GOOD_RET  # success
 
