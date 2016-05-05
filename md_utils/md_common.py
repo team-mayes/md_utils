@@ -785,14 +785,13 @@ def diff_lines(floc1, floc2):
     diff_lines_list = []
     diff_plus_lines = []
     diff_neg_lines = []
-    close_enough = False
-    with open(floc1) as file1:
-        with open(floc2) as file2:
+    with open(floc1, 'r') as file1:
+        with open(floc2, 'r') as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
     for line in diff:
         if line.startswith('-') or line.startswith('+'):
             diff_lines_list.append(line)
-            # line may be space or comma-separated. First, remove difflib's two-charatcter code,
+            # line may be space or comma-separated. First, remove difflib's two-character code,
             #   then split on comma, then clean up white space (and split on white-space, just in case)
             #   then convert to number
             s_line = [conv_num(x.strip()) for x in line[2:].split(',')]
@@ -804,20 +803,28 @@ def diff_lines(floc1, floc2):
     if len(diff_plus_lines) == len(diff_neg_lines):
         # if the same number of lines, there is a chance that the difference is only due to difference in
         # floating point precision. Check each value of the line, split on whitespace or comma
-        close_enough = True
         for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
-            for item_plus, item_neg in zip(line_plus, line_neg):
-                if isinstance(item_plus, float) and isinstance(item_neg, float):
-                    if abs(item_plus - item_plus) < TOL:
-                        close_enough = close_enough and True
-                else:
-                    if item_plus != item_neg:
-                        close_enough = False
-
-    if not close_enough:
-        return diff_lines_list
+            if len(line_plus) == len(line_neg):
+                for item_plus, item_neg in zip(line_plus, line_neg):
+                    if isinstance(item_plus, float) and isinstance(item_neg, float):
+                        # if difference greater than the tolerance, the difference is not just precision
+                        float_diff = abs(item_plus - item_neg)
+                        calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
+                        if float_diff > calc_tol:
+                            warning("Values {} and {} differ by {}, which is greater than the calculated tolerance ({})"
+                                    "".format(item_plus, item_neg, float_diff, calc_tol))
+                            return diff_lines_list
+                    else:
+                        # not floats, so the difference is not just precision
+                        if item_plus != item_neg:
+                            return diff_lines_list
+            # Not the same number of item in the lines, so return the non-empty list
+            else:
+                return diff_lines_list
+    # Not the same number of lines, so return the non-empty list
     else:
-        return []
+        return diff_lines_list
+    return []
 
 
 # Data Structures #

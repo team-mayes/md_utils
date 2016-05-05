@@ -17,6 +17,7 @@ DEF_INPUT = os.path.join(SUB_DATA_DIR, DEF_ARRAY_FILE)
 HEADER_INPUT = os.path.join(SUB_DATA_DIR, "qm_box_sizes_header.txt")
 CSV_INPUT = os.path.join(SUB_DATA_DIR, "qm_box_sizes.csv")
 CSV_HEADER_INPUT = os.path.join(SUB_DATA_DIR, "qm_box_sizes_header.csv")
+# CSV_HEADER_INPUT2 = os.path.join(SUB_DATA_DIR, "all_sum_dru_san_tight_small_fit.csv")
 VEC_INPUT = os.path.join(SUB_DATA_DIR, "vector_input.txt")
 BAD_INPUT = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input.txt')
 BAD_INPUT2 = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input2.txt')
@@ -133,3 +134,15 @@ class TestPerCol(unittest.TestCase):
                 self.assertFalse(diff_lines(CSV_HEADER_OUT, GOOD_CSV_HEADER_OUT))
         finally:
             silent_remove(CSV_HEADER_OUT)
+
+    # def testCsvHeader2(self):
+    #     """
+    #     This input file has a header that starts with a '#' so is ignored by np.loadtxt
+    #     """
+    #     main(["-f", CSV_HEADER_INPUT2, "-n", "-d", ","])
+        # try:
+        #     with capture_stdout(main, ["-f", CSV_HEADER_INPUT2, "-n", "-d", ","]) as output:
+        #         self.assertTrue(GOOD_OUT in output)
+        #         self.assertFalse(diff_lines(CSV_HEADER_OUT, GOOD_CSV_HEADER_OUT))
+        # finally:
+        #     silent_remove(CSV_HEADER_OUT)

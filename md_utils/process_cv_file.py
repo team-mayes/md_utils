@@ -39,7 +39,6 @@ CV_FILE_LIST = 'cv_file_list'
 DEF_FILE_LIST = 'cv_list.txt'
 
 # Defaults
-DEF_CFG_FILE = 'align_timestep.ini'
 # Set notation
 DEF_CFG_VALS = {CV_FILE_LIST: 'evb_list.txt', }
 REQ_KEYS = { }
@@ -74,8 +73,8 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(description='Converts plumed cv list to align with lammps/evb cv list: '
                                                  'first column as timestep (int) in fs; second column as cv value.')
     parser.add_argument("-f", "--file_list", help="The location of the file with the list of cv files (one per line). "
-                                             "The default name is {} in the folder where the program is "
-                                             "run.".format(DEF_FILE_LIST), default=DEF_FILE_LIST)
+                                                  "The default name is {} in the folder where the program is "
+                                                  "run.".format(DEF_FILE_LIST), default=DEF_FILE_LIST)
     parser.add_argument("-t", "--timestep_col", help="The column with the timestep (base zero): default is {}.".format(0), default=0)
     parser.add_argument("-tc", "--timestep_conv", help="Multiplication factor to convert timestep. default is {}.".format(1000), default=1000)
     parser.add_argument("-cv", "--cv_col", help="The column with the cv value (base zero): default is {}.".format(1), default=1)
@@ -148,7 +147,6 @@ def process_files(cfg):
                 process_cv_file(line, cfg.timestep_col, cfg.cv_col, row_index, cfg.timestep_conv)
             else:
                 warning("In file list {}, file {} was not found.".format(cfg.file_list, line))
-
 
     #         files = [x.strip() for x in file_line.split(',')]
     #         print(files)
