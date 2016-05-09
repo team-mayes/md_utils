@@ -20,7 +20,6 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 INVALID_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
-LONG_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_long.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
