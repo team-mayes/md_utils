@@ -595,6 +595,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
         if mode == 'w':
             writer.writeheader()
         writer.writerows(data)
+        print("Wrote file: {}".format(out_fname))
 
 
 # Other input/output files

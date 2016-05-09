@@ -16,6 +16,7 @@ __author__ = 'hmayes'
 # Directories #
 
 TEST_DIR = os.path.dirname(__file__)
+MAIN_DIR = os.path.dirname(TEST_DIR)
 DATA_DIR = os.path.join(TEST_DIR, 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'evbd2d')
 
@@ -44,7 +45,7 @@ GLU_GOOD_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990_good.
 GLU_DATA_TPL = os.path.join(SUB_DATA_DIR, 'glue_tpl.data')
 
 # noinspection PyUnresolvedReferences
-REPROD_TPL = os.path.join(TEST_DIR, 'reproduced_tpl.data')
+REPROD_TPL = os.path.join(MAIN_DIR, 'reproduced_tpl.data')
 # noinspection PyUnresolvedReferences
 DEF_PROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_10.data')
 # noinspection PyUnresolvedReferences
@@ -70,6 +71,7 @@ class TestEVBDump2Data(unittest.TestCase):
         Also checks that can handle and empty line
         and a dump file that was cut off
         """
+        # main(["-c", SERCA_INI])
         with capture_stderr(evbdump2data.main, ["-c", SERCA_INI]) as output:
             # Make sure it handles the extra empty line
             self.assertFalse("WARNING:  Problems reading file" in output)
@@ -96,7 +98,7 @@ class TestEVBDump2Data(unittest.TestCase):
         silent_remove(REPROD_TPL)
 
     def testGlu(self):
-        evbdump2data.main(["-c", GLU_INI])
+        # evbdump2data.main(["-c", GLU_INI])
         try:
             with capture_stdout(evbdump2data.main, ["-c", GLU_INI]) as output:
                 # Checking intermediate charge calculation
@@ -112,9 +114,10 @@ class TestEVBDump2Data(unittest.TestCase):
             silent_remove(REPROD_TPL)
 
     def testGluBadDump(self):
+        # main(["-c", GLU_BAD_DATA_INI])
         try:
-            with capture_stderr(evbdump2data.main, ["-c", GLU_BAD_DATA_INI]) as output:
-                self.assertTrue("Problems reading data: Unexpected line in file test_data/evbd2d/glu_bad.dump: "
+            with capture_stderr(main, ["-c", GLU_BAD_DATA_INI]) as output:
+                self.assertTrue("Problems reading data: Unexpected line in file tests/test_data/evbd2d/glu_bad.dump: "
                                 "ITEM: XYZ MS id mol type q x y z" in output)
         finally:
             silent_remove(REPROD_TPL)

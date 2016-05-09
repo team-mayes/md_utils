@@ -13,6 +13,7 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 __author__ = 'hmayes'
 
 TEST_DIR = os.path.dirname(__file__)
+MAIN_DIR = os.path.dirname(TEST_DIR)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'fitevb')
 
@@ -25,7 +26,7 @@ MISS_PARAM_INI_PATH = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_param.ini
 GOOD_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_vii_good.inp')
 GOOD_NO_VII_FIT_OUT_PATH = os.path.join(SUB_DATA_DIR, 'fit_not_vii_good.inp')
 # noinspection PyUnresolvedReferences
-DEF_OUT_PATH = os.path.join(TEST_DIR, 'fit.inp')
+DEF_OUT_PATH = os.path.join(MAIN_DIR, 'fit.inp')
 
 
 class TestFitEVBSetup(unittest.TestCase):

@@ -1,1 +1,1 @@
-test_data/data2pdb/glue_hm.data
+tests/test_data/data2pdb/glue_hm.data

@@ -1,1 +1,1 @@
-test_data/data2pdb/0.625_20c_reorder_retype_548990.data
+tests/test_data/data2pdb/0.625_20c_reorder_retype_548990.data

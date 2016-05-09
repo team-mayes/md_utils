@@ -1,3 +1,3 @@
-test_data/cp2k_files/15_2_502000_bad.dat
-test_data/cp2k_files/20_1_508000_too_short.dat
-test_data/cp2k_files/20_1_508000_bad.dat
+tests/test_data/cp2k_files/15_2_502000_bad.dat
+tests/test_data/cp2k_files/20_1_508000_too_short.dat
+tests/test_data/cp2k_files/20_1_508000_bad.dat

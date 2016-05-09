@@ -118,6 +118,7 @@ def process_files(comp_f_list, col_name, f_out):
         # make sure col_name appears first by taking it out before sorting
         headers.remove(col_name)
         write_csv(final_dict, f_out, [col_name] + sorted(headers))
+
     else:
         raise InvalidDataError("No common values found for column {} among all files. "
                                "No output is created.".format(col_name))

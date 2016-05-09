@@ -13,6 +13,7 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 __author__ = 'hmayes'
 
 TEST_DIR = os.path.dirname(__file__)
+MAIN_DIR = os.path.dirname(TEST_DIR)
 DATA_DIR = os.path.join(TEST_DIR, 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'align_col')
 
@@ -24,7 +25,7 @@ NO_COL_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_no_timestep.txt')
 NO_FILE_CMP_LIST = os.path.join(SUB_DATA_DIR, 'compare_list_no_file.txt')
 
 # noinspection PyUnresolvedReferences
-DEF_OUT = os.path.join(TEST_DIR, 'combined_data.csv')
+DEF_OUT = os.path.join(MAIN_DIR, 'combined_data.csv')
 
 GOOD_OUT = os.path.join(SUB_DATA_DIR, 'align12_output_good.csv')
 GOOD_MULTI_OUT = os.path.join(SUB_DATA_DIR, 'combined_data_multi_good.csv')
