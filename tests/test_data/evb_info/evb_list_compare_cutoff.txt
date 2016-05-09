@@ -1,6 +1,6 @@
-test_data/evb_info/1.250_0a_2.5_short.evb
-test_data/evb_info/1.250_0a_3.0_short.evb
-test_data/evb_info/1.250_0a_3.5_short.evb
-test_data/evb_info/1.250_0a_4.0_short.evb
-test_data/evb_info/1.250_0a_8.0_short.evb
-test_data/evb_info/1.250_0a_4.0_c2_6_short.evb
+tests/test_data/evb_info/1.250_0a_2.5_short.evb
+tests/test_data/evb_info/1.250_0a_3.0_short.evb
+tests/test_data/evb_info/1.250_0a_3.5_short.evb
+tests/test_data/evb_info/1.250_0a_4.0_short.evb
+tests/test_data/evb_info/1.250_0a_8.0_short.evb
+tests/test_data/evb_info/1.250_0a_4.0_c2_6_short.evb

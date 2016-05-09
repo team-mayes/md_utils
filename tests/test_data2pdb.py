@@ -13,6 +13,7 @@ logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
 __author__ = 'hmayes'
 
 TEST_DIR = os.path.dirname(__file__)
+MAIN_DIR = os.path.dirname(TEST_DIR)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'data2pdb')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data2pdb.ini')
@@ -33,7 +34,7 @@ GOOD_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_hm_good.pdb')
 GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990.pdb')
 GOOD_GLU_OUT = os.path.join(SUB_DATA_DIR, '0.625_20c_reorder_retype_548990_good.pdb')
 
-DEF_DICT_OUT = os.path.join(TEST_DIR, 'atom_dict.json')
+DEF_DICT_OUT = os.path.join(MAIN_DIR, 'atom_dict.json')
 GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 
@@ -56,6 +57,8 @@ class TestData2PDB(unittest.TestCase):
     def testDefIni(self):
         try:
             main(["-c", DEF_INI])
+
+            print("hello", PDB_OUT)
             # for debugging:
             # with open(PDB_TPL) as f:
             #     with open(PDB_TPL_OUT) as g:

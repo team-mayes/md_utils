@@ -1,2 +1,2 @@
-test_data/dump_edit/0.625_20c_short.dump
+tests/test_data/dump_edit/0.625_20c_short.dump
 

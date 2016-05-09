@@ -98,7 +98,6 @@ class TestDataEdit(unittest.TestCase):
         with capture_stderr(main, ["-c", IMP_ATOMS_BAD_INI]) as output:
             self.assertTrue("Problem with config vals on key print_dihedral_types: invalid literal for int()" in output)
 
-
     def testImptAtoms(self):
         try:
             main(["-c", GLUE_GLUP_IMP_ATOMS_INI])
@@ -120,7 +119,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertTrue("Unexpected key 'print_interaction_involving_atoms' in configuration" in output)
 
     def testBadData(self):
-        # main(["-c", BAD_DATA_INI])
+        main(["-c", BAD_DATA_INI])
         with capture_stderr(main, ["-c", BAD_DATA_INI]) as output:
             self.assertTrue("Problems reading data" in output)
 

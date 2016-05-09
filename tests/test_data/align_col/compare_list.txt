@@ -1,2 +1,2 @@
-test_data/align_col/align_input1.csv
-test_data/align_col/align_input2.csv
+tests/test_data/align_col/align_input1.csv
+tests/test_data/align_col/align_input2.csv

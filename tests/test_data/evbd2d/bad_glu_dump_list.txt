@@ -1,1 +1,1 @@
-test_data/evbd2d/glu_bad.dump
+tests/test_data/evbd2d/glu_bad.dump
