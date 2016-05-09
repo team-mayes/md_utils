@@ -57,8 +57,6 @@ class TestData2PDB(unittest.TestCase):
     def testDefIni(self):
         try:
             main(["-c", DEF_INI])
-
-            print("hello", PDB_OUT)
             # for debugging:
             # with open(PDB_TPL) as f:
             #     with open(PDB_TPL_OUT) as g:

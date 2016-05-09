@@ -64,11 +64,6 @@ htmlcov/
 tests/test_data/path_bin/100th_CEC_z2_4.log
 tests/test_data/path_bin/100th_CEC_z2_4.xyz
 **/pressed_*
-tests/test_data/data2pdb/*pdb
-tests/test_data/data2pdb/*.csv
-tests/test_data/data2data/*.csv
-tests/test_data/pdb2data/*.txt
-tests/test_data/data2data/*.data
 *temp
 tests/test_data/small_tests/add_head_tail_input_amend.txt
 tests/test_data/to_sort/*
@@ -90,3 +85,4 @@ tests/test_data/lammps_proc/glue_dump_incomp_gofrs.csv
 tests/reproduced_tpl.data
 tests/test_data/evbd2d/0.625_20c_reorder_retype_548990.data
 tests/test_data/evb_info/*
+tests/test_data/cp2k_files/REF_15_2_502000
