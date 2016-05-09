@@ -1,2 +1,2 @@
 source_file,pKa,max_loc,max_val
-/Users/Heather/bee/code/python/md_utils/tests/test_data/calc_pka/rad_PMF_last2ns3_1.txt,4.703673609510859,2.2,-0.2647879598491105
+rad_PMF_last2ns3_1.txt,4.703673609510859,2.2,-0.2647879598491105

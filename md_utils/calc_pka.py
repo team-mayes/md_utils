@@ -191,11 +191,12 @@ def main(argv=None):
     try:
         if args.src_file is not None:
             file_data = read_csv(args.src_file, data_conv=KEY_CONV)
+            f_base_name = os.path.basename(args.src_file)
             try:
                 pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
-                result = [{SRC_KEY: args.src_file, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
+                result = [{SRC_KEY: f_base_name, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
             except NoMaxError:
-                result = [{SRC_KEY: args.src_file, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
+                result = [{SRC_KEY: f_base_name, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
             write_result(result, args.src_file, args.overwrite)
         else:
             found_files = find_files_by_dir(args.base_dir, args.pattern)
