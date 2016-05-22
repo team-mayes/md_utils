@@ -9,7 +9,7 @@ import ConfigParser
 import os
 
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, write_csv
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, write_csv
 import sys
 import argparse
 
@@ -54,9 +54,9 @@ PROP_LIST = [LOW, HIGH, DESCRIP]
 # Defaults
 MAIN_SEC_DEF_CFG_VALS = {INP_FILE: 'fit.inp',
                          OUT_BASE_DIR: None,
-                }
+                         }
 PARAM_SEC_DEF_CFG_VALS = {GROUP_NAMES: 'NOT_SPECIFIED',
-                }
+                          }
 DEF_FIT_VII = False
 DEF_CFG_FILE = 'fitevb_setup.ini'
 DEF_BEST_FILE = 'fit.best'
@@ -65,13 +65,11 @@ DEF_DESCRIP = ''
 PRINT_FORMAT = '%12.6f  %12.6f  : %s\n'
 
 
-def read_cfg(floc, cfg_proc=process_cfg):
+def read_cfg(floc):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
 
     :param floc: The location of the file to read.
-    :param cfg_proc: The processor to use for the raw configuration values.  Uses default values when the raw
-        value is missing.
     :return: A dict of the processed configuration file's data.
     """
     config = ConfigParser.ConfigParser()
@@ -141,7 +139,7 @@ def process_output_file(data_file):
     of sections and parameters in constants.
     @return: initial values to use in fitting, with both the high and low values set to that initial value
     """
-    raw_vals = np.loadtxt(data_file,dtype=np.float64)
+    raw_vals = np.loadtxt(data_file, dtype=np.float64)
     vals = {}
     index = 0
     for section in PARAM_SECS:
@@ -159,7 +157,7 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     Use that to seed the inp_vals (used for printing) and overwrite with initial values if a parameter
     is not to be fit in the current step.
     @param initial_vals: parameter values from last fitting iteration
-    @param cfg: configuration values, wheter the Vii parameter is to be fit
+    @param cfg: configuration values, whether the Vii parameter is to be fit
     @return:
     """
     # dict to collect data to print
@@ -178,11 +176,11 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
                     for prop in initial_vals[param]:
                         inp_vals[param][prop] = initial_vals[param][prop]
 
-    with open(cfg[MAIN_SEC][INP_FILE], 'w') as inpfile:
+    with open(cfg[MAIN_SEC][INP_FILE], 'w') as inp_file:
         for section in PARAM_SECS:
-            inpfile.write('FIT  {} {}\n'.format(section, cfg[section][GROUP_NAMES]))
+            inp_file.write('FIT  {} {}\n'.format(section, cfg[section][GROUP_NAMES]))
             for param in FIT_PARAMS[section]:
-                inpfile.write(PRINT_FORMAT % (inp_vals[param][LOW], inp_vals[param][HIGH], inp_vals[param][DESCRIP]))
+                inp_file.write(PRINT_FORMAT % (inp_vals[param][LOW], inp_vals[param][HIGH], inp_vals[param][DESCRIP]))
 
 
 def process_raw_cfg(raw_cfg):
@@ -207,7 +205,7 @@ def process_raw_cfg(raw_cfg):
                         vals.append(DEF_DESCRIP)
                     try:
                         section_dict[entry[0]] = {LOW: float(vals[0]), HIGH: float(vals[1]), DESCRIP: vals[2]}
-                    except ValueError as e:
+                    except ValueError:
                         warning("In configuration file section {}, expected comma-separated numerical lower range "
                                 "value, upper-range value, and (optional) description (i.e. '-10,10,d_OO') for key {}. "
                                 "Found {}. Please check input.".format(section, entry[0], entry[1]))
@@ -263,18 +261,18 @@ def get_resid(base_dir, base_name='ga.total', ):
         with open(ga_total_file) as g:
             for line in reversed(g.readlines()):
                 if "Best" in line:
-                    splitline = line.split()
+                    split_line = line.split()
                     try:
-                        resid = float(splitline[-1])
+                        resid = float(split_line[-1])
                         break
-                    except:
+                    except ValueError:
                         continue
     return resid
 
 
 def make_summary(output_file, summary_file, cfg):
     low, high, headers = get_param_info(cfg)
-    latest_output = np.loadtxt(output_file,dtype=np.float64)
+    latest_output = np.loadtxt(output_file, dtype=np.float64)
 
     # append last best resid
     low = np.append(low, np.nan)
@@ -286,28 +284,31 @@ def make_summary(output_file, summary_file, cfg):
     if os.path.isfile(summary_file):
         last_row = None
         percent_diffs = []
-        previous_output = np.loadtxt(summary_file,dtype=np.float64)
+        previous_output = np.loadtxt(summary_file, dtype=np.float64)
         all_output = np.vstack((previous_output, latest_output))
         for row in all_output:
             if last_row is not None:
                 diff = row - last_row
-                perc_diff = {}
+                percent_diff = {}
                 # Check data for small values, hitting upper or lower bound, and calc % diff
                 for index, val in enumerate(np.nditer(row)):
                     if abs(val) < TOL:
-                        warning("Small value ({}) encountered for parameter {} (col {}).".format(val, headers[index], index))
+                        warning("Small value ({}) encountered for parameter {} (col {})"
+                                "".format(val, headers[index], index))
                     if abs(diff[index]) > TOL:
                         if abs(last_row[index]) > TOL:
-                            perc_diff[headers[index]] = "%8.2f" % (diff[index] / last_row[index] * 100)
+                            percent_diff[headers[index]] = "%8.2f" % (diff[index] / last_row[index] * 100)
                         else:
-                            perc_diff[headers[index]] = '        '
+                            percent_diff[headers[index]] = '        '
                         if abs(val-low[index]) < TOL:
-                            warning("Value ({}) near lower bound ({}) encountered for parameter {} (col {}).".format(val, low[index], headers[index], index))
+                            warning("Value ({}) near lower bound ({}) encountered for parameter {} (col {})."
+                                    "".format(val, low[index], headers[index], index))
                         if abs(val-high[index]) < TOL:
-                            warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {}).".format(val, high[index], headers[index], index))
+                            warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {})."
+                                    "".format(val, high[index], headers[index], index))
                     else:
-                        perc_diff[headers[index]] = '        '
-                percent_diffs.append(perc_diff)
+                        percent_diff[headers[index]] = '        '
+                percent_diffs.append(percent_diff)
             last_row = row
 
         # format for gnuplot and np.loadtxt
@@ -321,7 +322,7 @@ def make_summary(output_file, summary_file, cfg):
             np.savetxt(s_file, all_output, fmt='%8.6f', delimiter=',')
         print('Wrote file: {}'.format(f_out))
 
-        # in adddition to csv (above), print format for gnuplot and np.loadtxt
+        # in addition to csv (above), print format for gnuplot and np.loadtxt
         with open(summary_file, 'w') as s_file:
             np.savetxt(s_file, all_output, fmt='%12.6f')
             print(summary_file)

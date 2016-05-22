@@ -43,7 +43,7 @@ def parse_cmdline(argv=None):
     parser.add_argument('-s', '--skel_dir', default=DEF_SKEL_LOC,
                         help="Specify skel directory.", metavar="SKEL")
     parser.add_argument("-t", "--tgt_dir", help="The target directory for the copy "
-                                                 "(defaults to current directory)",
+                                                "(defaults to current directory)",
                         default=os.getcwd())
     args = parser.parse_args(argv)
 

@@ -145,7 +145,7 @@ def calc_k(temp, delta_gibbs):
     Returns the rate coefficient calculated from Transition State Theory in inverse seconds
     @param temp: the temperature in Kelvin
     @param delta_gibbs: the change in Gibbs free energy in kcal/mol
-    @return: rate coefficient in inverse sections
+    @return: rate coefficient in inverse seconds
     """
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (R * temp))
 
@@ -489,6 +489,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
         copystat(src, dst)
     except OSError as why:
         # can't copy file access times on Windows
+        # noinspection PyUnresolvedReferences
         if why.winerror is None:
             errors.extend((src, dst, str(why)))
     if errors:
@@ -667,6 +668,13 @@ def to_int_list(raw_val):
     return return_vals
 
 
+def to_list(raw_val):
+    return_vals = []
+    for val in raw_val.split(','):
+        return_vals.append(val.strip())
+    return return_vals
+
+
 def str_to_bool(s):
     """
     Basic converter for Python boolean values written as a str.
@@ -699,7 +707,7 @@ def fmt_row_data(raw_data, fmt_str):
     return fmt_rows
 
 
-def conv_raw_val(param, def_val):
+def conv_raw_val(param, def_val, int_list=True):
     """
     Converts the given parameter into the given type (default returns the raw value).  Returns the default value
     if the param is None.
@@ -721,11 +729,14 @@ def conv_raw_val(param, def_val):
     if isinstance(def_val, float):
         return float(param)
     if isinstance(def_val, list):
-        return to_int_list(param)
+        if int_list:
+            return to_int_list(param)
+        else:
+            return to_list(param)
     return param
 
 
-def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
+def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
     """
     Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
     default value's type.
@@ -739,7 +750,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None):
     key = None
     try:
         for key, def_val in def_cfg_vals.items():
-            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val)
+            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val, int_list)
         for key, type_func in req_keys.items():
             proc_cfg[key] = type_func(raw_cfg[key])
     except KeyError as e:
@@ -807,7 +818,9 @@ def diff_lines(floc1, floc2):
         for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
             if len(line_plus) == len(line_neg):
                 for item_plus, item_neg in zip(line_plus, line_neg):
+                    print("yeo", item_neg, item_plus)
                     if isinstance(item_plus, float) and isinstance(item_neg, float):
+                        print("yeo", item_neg, item_plus)
                         # if difference greater than the tolerance, the difference is not just precision
                         float_diff = abs(item_plus - item_neg)
                         calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
@@ -856,4 +869,3 @@ def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_N
         return sec_box_size
     elif atoms_pat.match(line):
         return sec_atoms
-

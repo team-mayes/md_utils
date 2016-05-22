@@ -10,12 +10,9 @@ Read cp2k force output files
 ----1 a.u. force = 8.2387225(14)x10-8 N ; 1 J / m = 1 N  ; 1.0e-10 m = 1 A ;
                    6.022140857E+23 particles / mol ; 1 kcal = 4.1484 J
 --- Thus, 1185.820922 a.u. force = 1 kcal/mol
-
-CALC_OH_DIST: the hydroxyl OH distance on the protonatable residue (when protonated)
 """
 
 from __future__ import print_function
-import logging
 import os
 import re
 import sys
@@ -27,13 +24,6 @@ from md_utils.md_common import InvalidDataError, warning, create_out_fname, list
 
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('hydroxyl_oh_dist')
-logging.basicConfig(filename='hydroxyl_oh_dist.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
 
 # Error Codes
 # The good status code

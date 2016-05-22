@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-For combining data from multiple files based on a common timestep. Convert plumed cv output to evb cv output style
+Converts plumed cv output to evb cv output style
 (keep only the first 2 columns; multiply the first by 1000 (ps to fs) and make an int
 """
 
@@ -41,7 +41,7 @@ DEF_FILE_LIST = 'cv_list.txt'
 # Defaults
 # Set notation
 DEF_CFG_VALS = {CV_FILE_LIST: 'evb_list.txt', }
-REQ_KEYS = { }
+REQ_KEYS = {}
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -75,11 +75,14 @@ def parse_cmdline(argv):
     parser.add_argument("-f", "--file_list", help="The location of the file with the list of cv files (one per line). "
                                                   "The default name is {} in the folder where the program is "
                                                   "run.".format(DEF_FILE_LIST), default=DEF_FILE_LIST)
-    parser.add_argument("-t", "--timestep_col", help="The column with the timestep (base zero): default is {}.".format(0), default=0)
-    parser.add_argument("-tc", "--timestep_conv", help="Multiplication factor to convert timestep. default is {}.".format(1000), default=1000)
-    parser.add_argument("-cv", "--cv_col", help="The column with the cv value (base zero): default is {}.".format(1), default=1)
-    parser.add_argument('-s', "--skip_header_row", help='Skips the first row as a header: default is True.', default=True)
-
+    parser.add_argument("-t", "--timestep_col", help="The column with the timestep (base zero): default is {}"
+                                                     "".format(0), default=0)
+    parser.add_argument("-tc", "--timestep_conv", help="Multiplication factor to convert timestep. default is {}"
+                                                       "".format(1000), default=1000)
+    parser.add_argument("-cv", "--cv_col", help="The column with the cv value (base zero): default is {}"
+                                                "".format(1), default=1)
+    parser.add_argument('-s', "--skip_header_row", help='Skips the first row as a header: default is True'
+                                                        '', default=True)
 
     args = None
     try:
@@ -101,7 +104,6 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, INPUT_ERROR
 
-
     return args, GOOD_RET
 
 
@@ -114,11 +116,12 @@ def process_cv_file(cv_file, time_col, cv_col, row_index, time_conv):
             else:
                 data = [x.strip() for x in line.split()]
                 try:
-                    timestep =  int(float(data[time_col]) * time_conv)
+                    timestep = int(float(data[time_col]) * time_conv)
                     cv = float(data[cv_col])
                     data_to_print.append([timestep, cv])
                 except ValueError as e:
-                    warning("Excepted a number for the time_column ({}) and cv column({}). Found {} and {}.".format(time_col, cv_col, data[time_col]), data[cv_col], e)
+                    warning("Excepted a number for the time_column ({}) and cv column({}). Found {} and {}."
+                            "".format(time_col, cv_col, data[time_col]), data[cv_col], e)
                     return INVALID_DATA
     d_out = create_out_fname(cv_file, suffix='_converted', ext='.txt')
     list_to_file(data_to_print, d_out)
@@ -127,7 +130,6 @@ def process_cv_file(cv_file, time_col, cv_col, row_index, time_conv):
     d_out = create_out_fname(cv_file, suffix='_converted', ext='.csv')
     list_to_file(data_to_print, d_out, delimiter=',')
     print('Wrote file: {}'.format(d_out))
-
 
 
 def process_files(cfg):

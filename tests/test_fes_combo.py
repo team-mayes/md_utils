@@ -4,8 +4,8 @@ import logging
 import os
 import unittest
 
-from md_utils.md_common import find_files_by_dir
-from md_utils.fes_combo import combine, DEF_FILE_PAT, DEF_TGT, map_fes, extract_header, write_combo
+from md_utils.md_common import find_files_by_dir, capture_stdout, silent_remove, diff_lines, capture_stderr
+from md_utils.fes_combo import combine, DEF_FILE_PAT, DEF_TGT, map_fes, extract_header, write_combo, main
 
 __author__ = 'cmayes'
 
@@ -20,13 +20,17 @@ FES_ALL_DIR = 'fes_all'
 FES_MULTI_DIR = 'multi'
 FES_SINGLE_DIR = '1.00'
 FES_TWO_DIR = '5.50'
+FES_NO_FILE_DIR = '77.00'
+FES_ALREADY_THERE_DIR = 'no_overwrite'
 HEADER_FILE = 'fes_headers.txt'
 HEADER_DIR = os.path.join(DATA_DIR, HEADER_FILE)
 # Source Dirs #
 FES_OUT_BASE = os.path.join(DATA_DIR, FES_OUT_DIR)
 FES_OUT_SINGLE = os.path.join(FES_OUT_BASE, FES_SINGLE_DIR)
 FES_OUT_TWO = os.path.join(FES_OUT_BASE, FES_TWO_DIR)
+FES_OUT_NONE = os.path.join(FES_OUT_BASE, FES_NO_FILE_DIR)
 FES_OUT_MULTI = os.path.join(FES_OUT_BASE, FES_MULTI_DIR)
+FES_OUT_NO_OVERWRITE = os.path.join(FES_OUT_BASE, FES_ALREADY_THERE_DIR)
 # Target Files #
 FES_ALL_BASE = os.path.join(DATA_DIR, FES_ALL_DIR)
 FES_ALL_SINGLE = os.path.join(FES_ALL_BASE, FES_SINGLE_DIR, DEF_TGT)
@@ -34,6 +38,7 @@ FES_ALL_TWO = os.path.join(FES_ALL_BASE, FES_TWO_DIR, DEF_TGT)
 FES_ALL_MULTI = os.path.join(FES_ALL_BASE, FES_MULTI_DIR, DEF_TGT)
 # Target writers #
 FES_ALL_MULTI_FILE = os.path.join(FES_OUT_BASE, FES_MULTI_DIR, DEF_TGT)
+GOOD_FES_ALL_MULTI_FILE = os.path.join(FES_OUT_BASE, FES_MULTI_DIR, "all_fes_good.csv")
 
 
 def header_lines(tgt_file):
@@ -102,3 +107,29 @@ class TestFesCombo(unittest.TestCase):
             self.assertEqual(map_fes(FES_ALL_MULTI), map_fes(FES_ALL_MULTI_FILE))
         finally:
             os.remove(FES_ALL_MULTI_FILE)
+
+
+class TestFesComboMain(unittest.TestCase):
+    def testNoArgs(self):
+        try:
+            main(["-d", FES_OUT_MULTI])
+            self.assertFalse(diff_lines(FES_ALL_MULTI_FILE, GOOD_FES_ALL_MULTI_FILE))
+        finally:
+            silent_remove(FES_ALL_MULTI_FILE)
+
+    def testBadArg(self):
+        with capture_stderr(main, ["-@"]) as output:
+            self.assertTrue("unrecognized arguments" in output)
+
+    def testNoComboFiles(self):
+        with capture_stdout(main, ["-d", FES_OUT_NONE]) as output:
+            self.assertTrue("Found 0 dirs with files to combine" in output)
+
+    def testNoOverwrite(self):
+        # main(["-d", FES_OUT_NO_OVERWRITE])
+        with capture_stderr(main, ["-d", FES_OUT_NO_OVERWRITE]) as output:
+            self.assertTrue("already exists" in output)
+
+    def testHelpOption(self):
+        with capture_stdout(main, ["-h"]) as output:
+            self.assertTrue("optional arguments" in output)

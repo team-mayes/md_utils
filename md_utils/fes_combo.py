@@ -10,7 +10,7 @@ timestep values take precedence.
 from __future__ import print_function
 import logging
 
-from md_utils.md_common import find_files_by_dir
+from md_utils.md_common import find_files_by_dir, GOOD_RET, INPUT_ERROR, warning
 
 __author__ = 'cmayes'
 
@@ -44,10 +44,10 @@ def combine(tgt_files):
     """
     mapped_files = {}
     for tgt_file in tgt_files:
-        fkey, fmap = map_fes(tgt_file)
+        f_key, f_map = map_fes(tgt_file)
 
-        if fkey is not None:
-            mapped_files[fkey] = fmap
+        if f_key is not None:
+            mapped_files[f_key] = f_map
 
     combo_dict = {}
     for key, cur_dict in sorted(mapped_files.items()):
@@ -64,18 +64,18 @@ def map_fes(tgt_file):
     :param tgt_file: The file location to process.
     :return: A dict with each FES data line mapped to its int timestep value.
     """
-    fmap = {}
+    f_map = {}
     first_key = None
     with open(tgt_file) as tf:
-        for tline in tf:
+        for t_line in tf:
             try:
-                tstep = int(tline.strip().split()[0].strip())
-                fmap[tstep] = tline
+                tstep = int(t_line.strip().split()[0].strip())
+                f_map[tstep] = t_line
                 if first_key is None:
                     first_key = tstep
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, tline)
-    return first_key, fmap
+                logger.debug("Error '%s' for line '%s'", e, t_line)
+    return first_key, f_map
 
 
 def extract_header(tgt_file):
@@ -86,19 +86,19 @@ def extract_header(tgt_file):
     :return: The headers for the given file.
     """
     with open(tgt_file) as tf:
-        hlines = []
-        for tline in tf:
-            sline = tline.strip().split()
-            if len(sline) < 2:
-                hlines.append(tline)
+        h_lines = []
+        for t_line in tf:
+            s_line = t_line.strip().split()
+            if len(s_line) < 2:
+                h_lines.append(t_line)
                 continue
             try:
                 # If we have a timestep, this is not a header line
-                int(sline[0])
+                int(s_line[0])
                 break
             except ValueError:
-                hlines.append(tline)
-        return hlines
+                h_lines.append(t_line)
+        return h_lines
 
 
 def write_combo(headers, combo, combo_file):
@@ -109,13 +109,14 @@ def write_combo(headers, combo, combo_file):
     :param combo_file: The file location for the output.
     """
     with open(combo_file, 'w') as f:
-        for hline in headers:
-            if not hline:
+        for h_line in headers:
+            if not h_line:
                 f.write(os.linesep)
             else:
-                f.write(hline)
+                f.write(h_line)
         for key, line in sorted(combo.items()):
             f.write(line)
+    print("Wrote file {}".format(combo_file))
 
 # CLI Processing #
 
@@ -145,9 +146,17 @@ def parse_cmdline(argv):
     parser.add_argument('-o', "--overwrite", help='Overwrite existing target file',
                         action='store_true')
 
-    args = parser.parse_args(argv)
+    args = None
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
-    return args, 0
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -158,23 +167,23 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET or args is None:
         return ret
     found_files = find_files_by_dir(args.base_dir, args.pattern)
-    logger.debug("Found '%d' dirs with files to combine", len(found_files))
-    for fdir, files in found_files.iteritems():
+    print("Found {} dirs with files to combine".format(len(found_files)))
+    for f_dir, files in found_files.iteritems():
         if not files:
-            logger.warn("No files found for dir '%s'", fdir)
+            logger.warn("No files with pattern '{}' found for dir '{}'".format(args.pattern, f_dir))
             continue
-        combo_file = os.path.join(fdir, args.target_file)
+        combo_file = os.path.join(f_dir, args.target_file)
         if os.path.exists(combo_file) and not args.overwrite:
-            logger.warning("Target file '%s' already exists.  Skipping dir '%s'",
-                           combo_file, fdir)
+            warning("Target file already exists: '{}' \n"
+                    "Skipping dir '{}'".format(combo_file, f_dir))
             continue
-        combo = combine([os.path.join(fdir, tgt) for tgt in files])
-        write_combo(extract_header(os.path.join(fdir, files[0])), combo, combo_file)
+        combo = combine([os.path.join(f_dir, tgt) for tgt in files])
+        write_combo(extract_header(os.path.join(f_dir, files[0])), combo, combo_file)
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

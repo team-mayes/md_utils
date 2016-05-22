@@ -61,7 +61,8 @@ def expected_dir_data():
             os.path.abspath(os.path.join(FES_DIR, "2.75")): ['fes.out', 'fes_cont.out'],
             os.path.abspath(os.path.join(FES_DIR, "5.50")): ['fes.out', 'fes_cont.out'],
             os.path.abspath(os.path.join(FES_DIR, "multi")): ['fes.out', 'fes_cont.out',
-                                                              'fes_cont2.out', 'fes_cont3.out'], }
+                                                              'fes_cont2.out', 'fes_cont3.out'],
+            os.path.abspath(os.path.join(FES_DIR, "no_overwrite")): ['fes.out'], }
 
 
 def csv_data():
@@ -87,6 +88,7 @@ def is_one_of_type(val, types):
             result = True
     return result
 
+
 # Tests #
 
 class TestRateCalc(unittest.TestCase):
@@ -98,6 +100,30 @@ class TestRateCalc(unittest.TestCase):
         delta_g = 53.7306
         rate_coeff = calc_k(temp, delta_g)
         self.assertEqual(rate_coeff, 1.648326791137026)
+
+    # def test_calc_k_real(self):
+    #     temp = 300.0
+    #     delta_g = 36
+    #     rate_coeff = calc_k(temp, delta_g)
+    #     rate_coeff2 = calc_k(temp, 12.3)
+    #     print(rate_coeff2/rate_coeff)
+    #     print("Rate coefficient in s^-1: {}".format(rate_coeff))
+    #     print("Timescale in s: {}".format(1/rate_coeff))
+    #     print("Timescale in min: {}".format(1/rate_coeff/60))
+    #     print("Timescale in hours: {}".format(1/rate_coeff/60/60))
+    #     print("Timescale in days: {}".format(1/rate_coeff/60/60/24))
+    #     print("Timescale in months: {}".format(1/rate_coeff/60/60/24/30))
+    #     print("Timescale in years: {}".format(1/rate_coeff/60/60/24/365.25))
+    #
+    #
+    # def test_calc_k_real2(self):
+    #     temp = 300.0
+    #     delta_g = 12.3
+    #     rate_coeff = calc_k(temp, delta_g)
+    #     print("Rate coefficient in s^-1: {}".format(rate_coeff))
+    #     print("Timescale in s: {}".format(1/rate_coeff))
+    #     print("Timescale in ms: {}".format(1000/rate_coeff))
+    #     print("Timescale in mircoseconds: {}".format(1000*1000/rate_coeff))
 
 
 class TestFindFiles(unittest.TestCase):

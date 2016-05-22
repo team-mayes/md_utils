@@ -41,6 +41,7 @@ setup(
                                       'dump_edit = md_utils.dump_edit:main',
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',
+                                      'filter_col_data = md_utils.filter_col_data:main',
                                       'fes_combo = md_utils.fes_combo:main',
                                       'fitevb_setup = md_utils.fitevb_setup:main',
                                       'lammps_dist = md_utils.lammps_dist:main',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Grabs selected data from evb output files:
+Collects selected data from evb output files:
 Total number of states; states in each shell; summary of these states (max, min, avg, std)
 For each step:
 timestep, highest prot ci^2, 2 highest water ci^2, identity of water molecules
