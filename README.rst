@@ -16,8 +16,9 @@ Utility scripts for MD data
 * Free software: BSD license
 * Documentation: https://md_utils.readthedocs.org.
 
+
 Package organization
--------
+--------------------
 
 This packaging process is based on https://jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
 

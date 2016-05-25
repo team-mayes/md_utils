@@ -5,13 +5,16 @@ return a file that has lines filtered by specified min and max values
 """
 
 from __future__ import print_function
+
+import argparse
+import sys
+
+import numpy as np
+# noinspection PyCompatibility
 import ConfigParser
 
 from md_utils.md_common import (InvalidDataError, warning,
                                 np_float_array_from_file, create_out_fname, list_to_file, dequote, process_cfg)
-import sys
-import argparse
-import numpy as np
 
 __author__ = 'hmayes'
 

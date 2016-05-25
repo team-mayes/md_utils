@@ -83,6 +83,8 @@ def process_files(comp_f_list, col_name, f_out):
     Want to grab the timestep, first and 2nd mole found, first and 2nd ci^2
     print the timestep, residue ci^2
     @param comp_f_list: list of file names to process
+    @param col_name: name of column to use for alignment
+    @param f_out: name of file to be created
     @return: @raise InvalidDataError:
     """
     timesteps = None

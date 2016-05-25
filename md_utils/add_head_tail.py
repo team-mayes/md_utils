@@ -26,6 +26,7 @@ DEF_END_STR = ''
 DEF_NEW_FNAME = None
 MISSING_FILE = "missing_file"
 
+
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
@@ -36,7 +37,7 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = ThrowingArgumentParser(description='Reads in a file and adds a begging and/or end to each line. '
-                                                 'The first argument must be the name of the file to be read.')
+                                                'The first argument must be the name of the file to be read.')
     # Below, it is a positional argument, that is required.
     parser.add_argument("file", help="The location of the file to be amended (required).", default=MISSING_FILE, )
     parser.add_argument("-b", "--begin", help="String to add to the beginning of a line.",
@@ -53,7 +54,8 @@ def parse_cmdline(argv):
             parser.print_help()
             return args, INPUT_ERROR
         if args.begin == DEF_BEGIN_STR and args.end == DEF_END_STR:
-            warning("Return file will be the same as the input, as no begin or end strings were passed. Use -h for help.")
+            warning("Return file will be the same as the input, as no begin or end strings were passed. "
+                    "Use -h for help.")
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -71,11 +73,11 @@ def process_file(f_name, b_str, e_str, new_f_name):
     if new_f_name is None:
         new_f_name = create_out_fname(f_name, suffix='_amend')
 
-    with open(new_f_name, 'w') as myfile:
+    with open(new_f_name, 'w') as w_file:
         with open(f_name) as f:
             for line in f:
                 line = line.strip()
-                myfile.write(b_str + line + e_str + "\n")
+                w_file.write(b_str + line + e_str + "\n")
     return
 
 

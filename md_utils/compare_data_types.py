@@ -4,6 +4,7 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 from collections import defaultdict
 import logging
@@ -36,7 +37,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-DATAS_FILE = 'data_list_file'
+DATA_FILES = 'data_list_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
 BOND_TYPE_DICT_FILE = 'bond_type_dict_filename'
 ANGL_TYPE_DICT_FILE = 'angle_type_dict_filename'
@@ -47,16 +48,14 @@ MAKE_DICT = 'make_dictionary_flag'
 # Defaults
 DEF_CFG_FILE = 'compare_data_types.ini'
 # Set notation
-DEF_CFG_VALS = {DATAS_FILE: 'data_list.txt', MAKE_DICT: False,
+DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', MAKE_DICT: False,
                 ATOM_TYPE_DICT_FILE: 'atom_type_dict_old_new.csv',
                 BOND_TYPE_DICT_FILE: 'bond_type_dict_old_new.csv',
                 ANGL_TYPE_DICT_FILE: 'angle_type_dict_old_new.csv',
                 DIHE_TYPE_DICT_FILE: 'dihe_type_dict_old_new.csv',
                 IMPR_TYPE_DICT_FILE: 'impr_type_dict_old_new.csv',
-}
-REQ_KEYS = {
-    # ATOM_TYPE_DICT_FILE: str, ANGL_TYPE_DICT_FILE: str,
-}
+                }
+REQ_KEYS = {}
 
 # From data file
 NUM_ATOMS = 'num_atoms'
@@ -189,16 +188,17 @@ def read_2int_dict(dict_file):
     """ Reads a two-field csv of integer values from dictionary and passes back as a dictionary
     """
     two_item_dict = {}
-    with open(dict_file) as csvfile:
-        for line in csv.reader(csvfile):
+    with open(dict_file) as csv_file:
+        for line in csv.reader(csv_file):
             if len(line) == 0:
                 continue
             if len(line) != 2:
-                raise ValueError('Expected two entries per line on dictionary file file {}'.format(csvfile))
+                raise ValueError('Expected two entries per line on dictionary file file {}'.format(csv_file))
             try:
                 two_item_dict[int(line[0])] = int(line[1])
-            except ValueError as e:
-                logger.debug("Could not convert line %s of file %s to two integers.", line, csvfile)
+            except ValueError:
+                warning("Could not convert line the following line to two integers: {}\n "
+                        "in file: {}".format(line, csv_file))
     return two_item_dict
 
 
@@ -278,9 +278,10 @@ def find_header_values(line, num_dict):
 
 
 def print_2int_dict(file_name, dict_list):
-    with open(file_name, 'w') as myfile:
+    with open(file_name, 'w') as d_file:
+        # noinspection PyCompatibility
         for key, value in dict_list.iteritems():
-            myfile.write('%d,%d' % (key, value) + '\n')
+            d_file.write('%d,%d' % (key, value) + '\n')
 
 
 def process_data_files(cfg):
@@ -313,13 +314,13 @@ def process_data_files(cfg):
         dihe_coef = {}
         impr_coef = {}
         atom_type_dict = read_2int_dict(cfg[ATOM_TYPE_DICT_FILE])
-        bond_type_dict = read_2int_dict(cfg[BOND_TYPE_DICT_FILE])
+        # bond_type_dict = read_2int_dict(cfg[BOND_TYPE_DICT_FILE])
         angl_type_dict = read_2int_dict(cfg[ANGL_TYPE_DICT_FILE])
         dihe_type_dict = read_2int_dict(cfg[DIHE_TYPE_DICT_FILE])
         impr_type_dict = read_2int_dict(cfg[IMPR_TYPE_DICT_FILE])
 
     first_file = True
-    with open(cfg[DATAS_FILE]) as f:
+    with open(cfg[DATA_FILES]) as f:
         for data_file in f.readlines():
             data_file = data_file.strip()
             with open(data_file) as d:
@@ -358,7 +359,7 @@ def process_data_files(cfg):
                                     masses[new_atom_type] = mass
                                 else:
                                     print('atom type {} does not appear in the dictionary. Its mass is {}:'.format(
-                                        atom_type,mass))
+                                        atom_type, mass))
                             else:
                                 if atom_type in masses:
                                     if masses[atom_type] != mass:
@@ -383,7 +384,7 @@ def process_data_files(cfg):
                                     pairs[new_atom_type] = pair_line
                                 else:
                                     print('atom type {} does not appear in the dictionary. Its coeffs are {}:'.format(
-                                        atom_type,pair_line))
+                                        atom_type, pair_line))
                             else:
                                 if atom_type in pairs:
                                     if pairs[atom_type] != pair_line:
@@ -408,21 +409,18 @@ def process_data_files(cfg):
                                     new_angl_type = angl_type_dict[angle_type]
                                     angl_coef[new_angl_type] = angl_line
                                 else:
-                                    print('Angl type {} does not appear in the dictionary. Its coeff are {}:'.format(
-                                        angle_type,angl_line))
+                                    print('Angl type {} does not appear in the dictionary. Its coeff are {}:'
+                                          ''.format(angle_type, angl_line))
                             else:
                                 if angle_type in angl_coef:
-                                    if angl_coef[angle_type] !=  angl_line:
+                                    if angl_coef[angle_type] != angl_line:
                                         print('Error: mismatch on line: ', line)
-                                        print(angl_coef[angle_type],angl_line)
+                                        print(angl_coef[angle_type], angl_line)
                                         break
-                                    # else:
-                                    #     print(angle_type, angl_line, angl_coef[angle_type], 'good')
                                 else:
                                     print('Key for this line does not match first file:', line)
                                     break
                         if count == nums_dict[NUM_ANGL_TYP]:
-                            # print(angl_coef)
                             print('Completed reading', section)
                             section = None
                     elif section == SEC_DIHE_COEFF:
@@ -438,16 +436,16 @@ def process_data_files(cfg):
                                     dihe_coef[new_dihe_type] = dihe_line
                                 else:
                                     print('Dihe type {} does not appear in the dictionary. Its coeff are: {}'.format(
-                                        dihe_type,dihe_line))
+                                        dihe_type, dihe_line))
                             else:
                                 if dihe_type in dihe_coef:
                                     if dihe_coef[dihe_type] != dihe_line:
                                         print('Error: mismatch on line: ', line)
-                                        print(dihe_coef[dihe_type],dihe_line)
+                                        print(dihe_coef[dihe_type], dihe_line)
                                         break
                                 else:
                                     print('Dihe type {} does not appear in the dictionary. Its coeff are: {}'.format(
-                                        dihe_type,dihe_line))
+                                        dihe_type, dihe_line))
                         # Check after increment because the counter started at 0
                         if count == nums_dict[NUM_DIHE_TYP]:
                             print('Completed reading', section)
@@ -467,19 +465,19 @@ def process_data_files(cfg):
                                     impr_coef[new_impr_type] = impr_line
                                 else:
                                     print('impr type {} does not appear in the dictionary. Its coeff are: {}'.format(
-                                        impr_type,impr_line))
+                                        impr_type, impr_line))
                             else:
                                 print(impr_type)
                                 if impr_type in impr_coef:
-                                    if impr_coef[impr_type] !=  impr_line:
+                                    if impr_coef[impr_type] != impr_line:
                                         print('Error: mismatch on line: ', line)
-                                        print(impr_coef[impr_type],impr_line)
+                                        print(impr_coef[impr_type], impr_line)
                                         break
                                     else:
                                         print(impr_type, impr_line, impr_coef[impr_type], 'good')
                                 else:
                                     print('impr type {} does not appear in the dictionary. Its coeff are: {}'.format(
-                                        impr_type,impr_line))
+                                        impr_type, impr_line))
                         if count == nums_dict[NUM_IMPR_TYP]:
                             print('Completed reading', section)
                             section = None
@@ -603,7 +601,7 @@ def process_data_files(cfg):
                                     if key in dihe_match[key]:
                                         dihe_dict[key] = key
                                     else:
-                                        print('New dihedral type for {}: {}'.format(key,dihe_match[key]))
+                                        print('New dihedral type for {}: {}'.format(key, dihe_match[key]))
                                 print('Completed reading', section)
                                 section = None
                     elif section == SEC_IMPRS:
@@ -665,7 +663,7 @@ def main(argv=None):
     # Read template and data files
     cfg = args.config
     try:
-        if cfg[MAKE_DICT] == True:
+        if cfg[MAKE_DICT]:
             pass
             # TODO: use code from data2data to make atom type dict
             # data_tpl_content = process_data_tpl(cfg)

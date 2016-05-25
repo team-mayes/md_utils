@@ -25,6 +25,7 @@ import os
 from shutil import copy2, Error, copystat
 import six
 import sys
+# noinspection PyCompatibility
 from cStringIO import StringIO
 from contextlib import contextmanager
 import matplotlib.pyplot as pyPlt
@@ -108,7 +109,8 @@ def warning(*objs):
 
 # Test utilities
 
-## From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
+
+# From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
 @contextmanager
 def capture_stdout(command, *args, **kwargs):
     out, sys.stdout = sys.stdout, StringIO()
@@ -134,8 +136,8 @@ def calc_kbt(temp_k):
     """
     Returns the given temperature in Kelvin multiplied by Boltzmann's Constant.
 
-    :param temp_k: A temperature in Kelvin.
-    :return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
+    @param temp_k: A temperature in Kelvin.
+    @return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
     """
     return BOLTZ_CONST * temp_k
 
@@ -157,8 +159,8 @@ def xyz_distance(fir, sec):
 
     TODO: Consider adding numpy optimization if lib is present.
 
-    :param fir: The first XYZ coordinate.
-    :param sec: The second XYZ coordinate.
+    @param fir: The first XYZ coordinate.
+    @param sec: The second XYZ coordinate.
     :returns:  float -- The Euclidean distance between the given points.
     :raises: KeyError
     """
@@ -235,11 +237,11 @@ def chunk(seq, chunk_size, process=iter):
     """Yields items from an iterator in iterable chunks.
     From https://gist.github.com/ksamuel/1275417
 
-    :param seq: The sequence to chunk.
-    :param chunk_size: The size of the returned chunks.
-    :param process: The function to use for creating the iterator.  Useful for iterating over different
+    @param seq: The sequence to chunk.
+    @param chunk_size: The size of the returned chunks.
+    @param process: The function to use for creating the iterator.  Useful for iterating over different
     data structures.
-    :return: Chunks of the given size from the given sequence.
+    @return: Chunks of the given size from the given sequence.
     """
     it = iter(seq)
     while True:
@@ -267,8 +269,8 @@ def file_to_str(fname):
     """
     Reads and returns the contents of the given file.
 
-    :param fname: The location of the file to read.
-    :return: The contents of the given file.
+    @param fname: The location of the file to read.
+    @return: The contents of the given file.
     :raises: IOError if the file can't be opened for reading.
     """
     with open(fname) as f:
@@ -278,9 +280,10 @@ def file_to_str(fname):
 def str_to_file(str_val, fname, mode='w'):
     """
     Writes the string to the given file.
-
-    :param str_val: The string to write.
-    :param fname: The location of the file to write.
+    @param str_val: The string to write.
+    @param fname: The location of the file to write
+    @param mode: default mode is to overwrite file
+    @return:
     """
     with open(fname, mode) as f:
         f.write(str_val)
@@ -290,6 +293,8 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
     @param data_file: file expected to have space-separated values, with the same number of entries per line
+    @param delimiter: default is a space-separated file
+    @param header: default is no header; alternately, specify number of header lines
     @return: a numpy array or InvalidDataError if np.loadtxt was unsuccessful
     """
     try:
@@ -349,7 +354,7 @@ def silent_remove(filename):
     Removes the target file name, catching and ignoring errors that indicate that the
     file does not exist.
 
-    :param filename: The file to remove.
+    @param filename: The file to remove.
     """
     try:
         os.remove(filename)
@@ -362,9 +367,9 @@ def allow_write(f_loc, overwrite=False):
     """
     Returns whether to allow writing to the given location.
 
-    :param f_loc: The location to check.
-    :param overwrite: Whether to allow overwriting an existing location.
-    :return: Whether to allow writing to the given location.
+    @param f_loc: The location to check.
+    @param overwrite: Whether to allow overwriting an existing location.
+    @return: Whether to allow writing to the given location.
     """
     if os.path.exists(f_loc) and not overwrite:
         warning("Not overwriting existing file '{}'".format(f_loc))
@@ -376,7 +381,7 @@ def move_existing_file(f_loc):
     """
     Renames an existing file using a timestamp based on the move time.
 
-    :param f_loc: The location to check.
+    @param f_loc: The location to check.
     """
     if os.path.exists(f_loc):
         shutil.move(f_loc, create_backup_filename(f_loc))
@@ -385,13 +390,13 @@ def move_existing_file(f_loc):
 def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
-    :param src_file: The file to process.
-    :param suffix: The file prefix to add, if specified.
-    :param suffix: The file suffix to append, if specified.
-    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
-    :param ext: The extension to use instead of the source file's extension;
+    @param src_file: The file to process.
+    @param prefix: The file prefix to add, if specified.
+    @param suffix: The file suffix to append, if specified.
+    @param base_dir: The base directory to use; defaults to `src_file`'s directory.
+    @param ext: The extension to use instead of the source file's extension;
         defaults to the `scr_file`'s extension.
-    :return: The output file name.
+    @return: The output file name.
     """
 
     if base_dir is None:
@@ -410,9 +415,9 @@ def find_files_by_dir(tgt_dir, pat):
     """Recursively searches the target directory tree for files matching the given pattern.
     The results are returned as a dict with a list of found files keyed by the absolute
     directory name.
-    :param tgt_dir: The target base directory.
-    :param pat: The file pattern to search for.
-    :return: A dict where absolute directory names are keys for lists of found file names
+    @param tgt_dir: The target base directory.
+    @param pat: The file pattern to search for.
+    @return: A dict where absolute directory names are keys for lists of found file names
         that match the given pattern.
     """
     match_dirs = {}
@@ -450,10 +455,10 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
     XXX Consider this example code rather than the ultimate tool.
 
-    :param src: The source directory.
-    :param dst: The destination directory.
-    :param symlinks: Whether to follow symbolic links.
-    :param ignore: A callable for items to ignore at a given level.
+    @param src: The source directory.
+    @param dst: The destination directory.
+    @param symlinks: Whether to follow symbolic links.
+    @param ignore: A callable for items to ignore at a given level.
     """
     names = os.listdir(src)
     if ignore is not None:
@@ -502,8 +507,8 @@ def read_csv_header(src_file):
     """Returns a list containing the values from the first row of the given CSV
     file or None if the file is empty.
 
-    :param src_file: The CSV file to read.
-    :return: The first row or None if empty.
+    @param src_file: The CSV file to read.
+    @return: The first row or None if empty.
     """
     with open(src_file) as csv_file:
         for row in csv.reader(csv_file):
@@ -539,12 +544,12 @@ def read_csv(src_file, data_conv=None, all_conv=None):
     Reads the given CSV (comma-separated with a first-line header row) and returns a list of
     dicts where each dict contains a row's data keyed by the header row.
 
-    :param src_file: The CSV to read.
-    :param data_conv: A map of header keys to conversion functions.  Note that values
+    @param src_file: The CSV to read.
+    @param data_conv: A map of header keys to conversion functions.  Note that values
         that throw a TypeError from an attempted conversion are left as strings in the result.
-    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+    @param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
         takes precedence.
-    :return: A list of dicts containing the file's data.
+    @return: A list of dicts containing the file's data.
     """
     result = []
     with open(src_file) as csv_file:
@@ -558,13 +563,13 @@ def read_csv_to_dict(src_file, col_name, data_conv=None, all_conv=None):
     Reads the given CSV (comma-separated with a first-line header row) and returns a
     dict of dicts indexed on the given col_name. Each dict contains a row's data keyed by the header row.
 
-    :param src_file: The CSV to read.
-    :param col_name: the name of the column to index on
-    :param data_conv: A map of header keys to conversion functions.  Note that values
+    @param src_file: The CSV to read.
+    @param col_name: the name of the column to index on
+    @param data_conv: A map of header keys to conversion functions.  Note that values
         that throw a TypeError from an attempted conversion are left as strings in the result.
-    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+    @param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
         takes precedence.
-    :return: A list of dicts containing the file's data.
+    @return: A list of dicts containing the file's data.
     """
     result = {}
     with open(src_file) as csv_file:
@@ -585,11 +590,12 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
     """
     Writes the given data to the given file location.
 
-    :param data: The data to write (list of dicts).
-    :param out_fname: The name of the file to write to.
-    :param fieldnames: The sequence of field names to use for the header.
-    :param extrasaction: What to do when there are extra keys.  Acceptable
+    @param data: The data to write (list of dicts).
+    @param out_fname: The name of the file to write to.
+    @param fieldnames: The sequence of field names to use for the header.
+    @param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
+    @param mode: default mode is to overwrite file
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction)
@@ -611,6 +617,7 @@ def read_int_dict(d_file, one_to_one=True):
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
     @param d_file: the files with csv of old_id,new_id
+    @param one_to_one: flag to check for one-to-one mapping in the dict
     @return: int_dict
     """
     int_dict = {}
@@ -678,9 +685,9 @@ def to_list(raw_val):
 def str_to_bool(s):
     """
     Basic converter for Python boolean values written as a str.
-    :param s: The value to convert.
-    :return: The boolean value of the given string.
-    :raises: ValueError if the string value cannot be converted.
+    @param s: The value to convert.
+    @return: The boolean value of the given string.
+    @raises: ValueError if the string value cannot be converted.
     """
     if s == 'True':
         return True
@@ -694,9 +701,9 @@ def fmt_row_data(raw_data, fmt_str):
     """ Formats the values in the dicts in the given list of raw data using
     the given format string.
 
-    :param raw_data: The list of dicts to format.
-    :param fmt_str: The format string to use when formatting.
-    :return: The formatted list of dicts.
+    @param raw_data: The list of dicts to format.
+    @param fmt_str: The format string to use when formatting.
+    @return: The formatted list of dicts.
     """
     fmt_rows = []
     for row in raw_data:
@@ -711,9 +718,10 @@ def conv_raw_val(param, def_val, int_list=True):
     """
     Converts the given parameter into the given type (default returns the raw value).  Returns the default value
     if the param is None.
-    :param param: The value to convert.
-    :param def_val: The value that determines the type to target.
-    :return: The converted parameter value.
+    @param param: The value to convert.
+    @param def_val: The value that determines the type to target.
+    @param int_list: flag to specify if lists should converted to a list of integers
+    @return: The converted parameter value.
     """
     if param is None:
         return def_val
@@ -724,8 +732,6 @@ def conv_raw_val(param, def_val, int_list=True):
             return False
     if isinstance(def_val, int):
         return int(param)
-    if isinstance(def_val, long):
-        return long(param)
     if isinstance(def_val, float):
         return float(param)
     if isinstance(def_val, list):
@@ -737,11 +743,16 @@ def conv_raw_val(param, def_val, int_list=True):
 
 
 def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
+
     """
     Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
     default value's type.
-    :param raw_cfg: The configuration map.
-    :return: The processed configuration.
+    @param raw_cfg: The configuration map.
+    @param def_cfg_vals: dictionary of default values
+    @param req_keys: dictionary of required types
+    @param int_list: flag to specify if lists should converted to a list of integers
+    @return: The processed configuration.
+
     """
     proc_cfg = {}
     for key in raw_cfg:

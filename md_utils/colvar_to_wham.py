@@ -9,14 +9,13 @@ values to WHAM. Echos the timestep from the COLVAR file.
 from __future__ import print_function
 import logging
 import math
-
+import argparse
+import os
+import sys
 from md_utils.md_common import (find_files_by_dir, create_out_fname, write_csv, list_to_file, allow_write)
 
 __author__ = 'hmayes'
 
-import argparse
-import os
-import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -44,10 +43,13 @@ DEF_FILE_PAT = 'COLVAR*'
 # Logic #
 
 def calc_r(dx, dy, dz):
-    """Calculates the radial distance (R) for the given dx, dy, dz (X1-X2, Y1-Y2, Z1-Z2)
+    """
+    Calculates the radial distance (R) for the given dx, dy, dz (X1-X2, Y1-Y2, Z1-Z2)
 
-    :param dx, dy, dz: the  (X1-X2, Y1-Y2, Z1-Z2) for timestep under consideration.
-    :return: radial distance.
+    @param dx: the (X1-X2, Y1-Y2, Z1-Z2) for timestep under consideration.
+    @param dy: ditto
+    @param dz: ditto
+    @return: radial distance.
     """
     return math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
 
@@ -56,7 +58,7 @@ def calc_for_wham(src_file):
     """
     Calculates the radial distance for each line, returning a list of dicts.
 
-    :param src_file: The file with the data to correct.
+    @param src_file: The file with the data to correct.
     :return: The radial distance of the file as a list of dicts.
     """
     res_lines = []
@@ -85,7 +87,7 @@ def calc_for_wham(src_file):
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
-    :param argv: is a list of arguments, or `None` for ``sys.argv[1:]``.
+    @param argv: is a list of arguments, or `None` for ``sys.argv[1:]``.
     """
     if argv is None:
         argv = sys.argv[1:]
@@ -111,7 +113,7 @@ def parse_cmdline(argv):
 def main(argv=None):
     """ Runs the main program.
 
-    :param argv: The command line arguments.
+    @param argv: The command line arguments.
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
@@ -124,6 +126,7 @@ def main(argv=None):
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
+        # noinspection PyCompatibility
         for f_dir, files in found_files.iteritems():
             if not files:
                 logger.warn("No files found for dir '%s'", f_dir)
@@ -133,7 +136,7 @@ def main(argv=None):
                 f_name = create_out_fname(colvar_path, prefix=OUT_PFX)
                 if allow_write(f_name, overwrite=args.overwrite):
                     list_to_file([str(d['r']) for d in proc_data if 'r' in d], f_name)
-                    #write_csv(proc_data, f_name, COLVAR_WHAM_KEY_SEQ, extrasaction="ignore")
+                    # write_csv(proc_data, f_name, COLVAR_WHAM_KEY_SEQ, extrasaction="ignore")
                     print("Wrote file {}".format(f_name))
 
     return 0  # success

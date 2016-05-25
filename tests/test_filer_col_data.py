@@ -26,6 +26,7 @@ CSV_OUT = os.path.join(SUB_DATA_DIR, "filtered_column_data.csv")
 GOOD_CSV_OUT = os.path.join(SUB_DATA_DIR, "filtered_column_data_good.csv")
 GOOD_NO_MIN_OUT = os.path.join(SUB_DATA_DIR, "filtered_column_max_only_good.csv")
 
+
 class TestPerCol(unittest.TestCase):
     def testNoArgs(self):
         # main([])

@@ -32,16 +32,15 @@ data for a set of coordinates.
 from __future__ import print_function
 import logging
 import math
-
+import argparse
+import os
+import sys
 from md_utils.md_common import (find_files_by_dir,
                                 read_csv, write_csv, calc_kbt, create_out_fname, warning, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
 
 __author__ = 'mayes'
 
-import argparse
-import os
-import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -84,6 +83,7 @@ NO_MAX_ERR = "No local max found"
 class NoMaxError(Exception):
     pass
 
+
 # Logic #
 
 
@@ -107,6 +107,7 @@ def calc_pka(file_data, kbt, coord_ts=None):
 
     :param file_data: The list of dicts to process.
     :param kbt: The experimental temperature multiplied by Boltzmann's Constant.
+    :param coord_ts: specified user parameter; integrate to this coordinate value
     :return: The PKA for the given data set or an error string if no local max is found.
     """
     sum_for_pka = 0.0
@@ -133,6 +134,7 @@ def calc_pka(file_data, kbt, coord_ts=None):
             if cur_coord >= coord_ts:
                 logger.info("Integrating to input TS coordinate '%f' with value '%f'", cur_coord, cur_corr)
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
+
 
 # CLI Processing #
 

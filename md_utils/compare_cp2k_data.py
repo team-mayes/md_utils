@@ -4,6 +4,7 @@ Get selected info from the file
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 import logging
 import re
@@ -20,7 +21,6 @@ __author__ = 'hmayes'
 logger = logging.getLogger('cp2k_get_info')
 logging.basicConfig(filename='cp2k_get_info.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes
@@ -44,10 +44,8 @@ DATA_FILE = 'data_file'
 # Defaults
 DEF_CFG_FILE = 'cp2k_get_info.ini'
 # Set notation
-DEF_CFG_VALS = {
-}
-REQ_KEYS = {CHK_FILE: str, DATA_FILE: str,
-}
+DEF_CFG_VALS = {}
+REQ_KEYS = {CHK_FILE: str, DATA_FILE: str, }
 
 # Sections
 SEC_HEAD = 'head_section'
@@ -89,9 +87,9 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Grabs selected info from the designated file.'
-                                                 'The required input file provides the location of the '
-                                                 'file. Optional info is an atom index for the last atom not to consider.')
+    parser = argparse.ArgumentParser(description='Grabs selected info from the designated file. '
+                                                 'The required input file provides the location of the file. '
+                                                 'Optional info is an atom index for the last atom not to consider.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
@@ -122,15 +120,8 @@ def process_data_file(cfg):
     total_charge = 0.0
 
     # For debugging total charge
-    key_atom_ids = {}
-    key_atom_ids['last_p1']    = 15436
-    key_atom_ids[15436] = 'last_p1'
-    key_atom_ids[16327] = 'last_p2'
-    key_atom_ids[16328] = 'lone_pot'
-    key_atom_ids[65640] = 'last_lipid'
-    key_atom_ids[65644] = 'last_hyd'
-    key_atom_ids[213877] = 'last_water'
-    key_atom_ids[213992] = 'last_pot'
+    key_atom_ids = {'last_p1': 15436, 15436: 'last_p1', 16327: 'last_p2', 16328: 'lone_pot', 65640: 'last_lipid',
+                    65644: 'last_hyd', 213877: 'last_water', 213992: 'last_pot'}
 
     with open(tpl_loc) as f:
         for line in f:
@@ -158,7 +149,7 @@ def process_data_file(cfg):
                 charge = float(split_line[3])
                 try:
                     atom_descrip = split_line[8]
-                except:
+                except IndexError:
                     atom_descrip = ''
                 atom_struct = [atom_num, mol_num, atom_type, charge, atom_descrip]
                 atoms_content.append(atom_struct)
@@ -166,10 +157,11 @@ def process_data_file(cfg):
 
                 if atom_num == num_atoms:
                     section = SEC_TAIL
-                    ## Also check total charge
+                    # Also check total charge
                     print('Total charge is: {}'.format(total_charge))
                 elif atom_num in key_atom_ids:
-                    print('After atom {} ({}), the total charge is: {}'.format(atom_num, key_atom_ids[atom_num], total_charge))
+                    print('After atom {} ({}), the total charge is: {}'.format(atom_num, key_atom_ids[atom_num],
+                                                                               total_charge))
 
             elif section == SEC_TAIL:
                 break
@@ -182,12 +174,10 @@ def process_data_file(cfg):
     return atoms_content, num_atoms
 
 
-
 def process_cp2k_out_file(cfg, num_atoms):
 
     cp2k_loc = cfg[CHK_FILE]
     mm_charge_data = []
-
 
     section = SEC_HEAD
     mm_charge_pat = re.compile(r".*MM    POINT CHARGES.*")
@@ -217,7 +207,7 @@ def process_cp2k_out_file(cfg, num_atoms):
                     else:
                         # Got to the next section
                         print('Finished section after reading {} mm atoms, which is less than the '
-                                               '{} atoms in the data file.'.format(len(mm_charge_data), num_atoms))
+                              '{} atoms in the data file.'.format(len(mm_charge_data), num_atoms))
                         # raise InvalidDataError('Finished section after reading {} mm atoms, which is less than the '
                         #                        '{} atoms in the data file.'.format(len(mm_charge_data), num_atoms))
                         break
@@ -241,11 +231,12 @@ def process_cp2k_out_file(cfg, num_atoms):
 
 
 def compare_data(data_atoms, mm_charge_data):
-    for id, entry in enumerate(mm_charge_data):
-        if id < 3:
-            print(data_atoms[id], entry)
-        if abs(data_atoms[id][3] - entry[2]) > TOL:
-            print('Check me out! {} vs {}'.format(data_atoms[id], entry))
+    for atom_id, entry in enumerate(mm_charge_data):
+        if atom_id < 3:
+            print(data_atoms[atom_id], entry)
+        if abs(data_atoms[atom_id][3] - entry[2]) > TOL:
+            print('Check me out! {} vs {}'.format(data_atoms[atom_id], entry))
+
 
 def main(argv=None):
     # Read input
@@ -253,7 +244,6 @@ def main(argv=None):
     # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET:
         return ret
-
 
     # Read template and data files
     cfg = args.config

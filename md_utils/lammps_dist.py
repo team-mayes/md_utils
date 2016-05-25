@@ -59,6 +59,7 @@ def write_results(out_fname, dist_data, atom_pairs):
         for tstep, pair_dists in dist_data.items():
             t_str = str(tstep)
             dist_row = [t_str]
+            pair = None
             try:
                 for pair in atom_pairs:
                     dist_row.append("{:.6f}".format(pair_dists[pair]))

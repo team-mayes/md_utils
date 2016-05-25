@@ -4,7 +4,6 @@
 Common WHAM logic.
 """
 import logging
-
 import os
 
 __author__ = 'cmayes'
@@ -58,9 +57,9 @@ def read_meta(meta_file):
     """
     meta = {LOC_KEY: meta_file, DIR_KEY: os.path.dirname(os.path.abspath(meta_file))}
     lines = []
-    with open(meta_file) as mfile:
-        for mline in mfile:
-            lines.append(mline.strip().split())
+    with open(meta_file) as m_file:
+        for m_line in m_file:
+            lines.append(m_line.strip().split())
     meta[LINES_KEY] = lines
     return meta
 
@@ -73,14 +72,14 @@ def read_rmsd(fname):
     :return: The values in the RMSD file.
     """
     rmsd_values = []
-    with open(fname) as rfile:
+    with open(fname) as r_file:
         row_val = None
-        for rline in rfile:
+        for r_line in r_file:
             try:
-                row_val = rline.split()[1]
+                row_val = r_line.split()[1]
                 rmsd_values.append(float(row_val))
             except IndexError:
-                logger.warn("RMSD Line '%s' did not have two fields", rline)
+                logger.warn("RMSD Line '%s' did not have two fields", r_line)
             except TypeError:
                 logger.warn("RMSD Value '%s' is not a float", row_val)
     return rmsd_values
@@ -108,10 +107,10 @@ def write_rmsd(data, tgt_file):
     :param data: The list of data to write.
     :param tgt_file: The target file location.
     """
-    with open(tgt_file, 'w') as wfile:
+    with open(tgt_file, 'w') as w_file:
         for i, rmsd_val in enumerate(data, 1):
-            wfile.write("\t".join((str(i), str(rmsd_val))))
-            wfile.write("\n")
+            w_file.write("\t".join((str(i), str(rmsd_val))))
+            w_file.write("\n")
 
 
 def fill_submit_wham(base_tpl, line_tpl, cur_step, use_part=False):

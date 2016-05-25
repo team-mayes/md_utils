@@ -9,21 +9,15 @@ from __future__ import print_function
 import csv
 import logging
 import re
-
 import numpy as np
-
 from md_utils.md_common import (find_files_by_dir, read_csv, allow_write, warning, GOOD_RET, INPUT_ERROR)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
-
-
-OUT_FNAME_FMT = "avg_rad_PMF.{}.csv"
-
-__author__ = 'cmayes'
-
 import argparse
 import os
 import sys
 from collections import defaultdict
+
+__author__ = 'cmayes'
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -35,6 +29,8 @@ logger = logging.getLogger('calc_split_avg')
 DEF_FILE_PAT = 'rad_PMF*'
 MEAN_KEY = 'mean'
 STDEV_KEY = 'stdev'
+
+OUT_FNAME_FMT = "avg_rad_PMF.{}.csv"
 
 OUT_KEY_SEQ = [COORD_KEY, MEAN_KEY, STDEV_KEY]
 

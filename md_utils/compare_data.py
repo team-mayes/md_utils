@@ -4,6 +4,7 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 from collections import defaultdict
 import logging
@@ -133,7 +134,7 @@ def find_section_state(line, current_section):
     if masses_pat.match(line):
         return SEC_MASSES
     elif pair_pat.match(line):
-        return SEC_PAIR_COEFF 
+        return SEC_PAIR_COEFF
     elif angl_pat.match(line):
         return SEC_ANGL_COEFF
     elif dihe_pat.match(line):
@@ -327,6 +328,7 @@ def process_data_files(cfg):
                         split_line = line.split()
                         # atoms_line = map(int,split_line[1:3]) + [round(x, 4) for x in  map(float,split_line[3:7])]
                         atom_id = split_line[0]
+                        # noinspection PyTypeChecker
                         atoms_line = map(int, split_line[1:3]) + [round(float(split_line[3]), 4)]
                         if first_file:
                             atoms[atom_id] = atoms_line
