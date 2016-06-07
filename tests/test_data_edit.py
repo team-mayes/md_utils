@@ -25,6 +25,7 @@ GLUE_GLUP_OWN_ATOMS_INI = os.path.join(SUB_DATA_DIR, 'data_print_own_atoms.ini')
 RETYPE_INI = os.path.join(SUB_DATA_DIR, 'data_retype.ini')
 BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_data.ini')
 SORT_INI = os.path.join(SUB_DATA_DIR, 'data_sort.ini')
+COMPARE_INI = os.path.join(SUB_DATA_DIR, 'data_compare.ini')
 
 # Output files
 
@@ -54,6 +55,7 @@ GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retype
 # noinspection PyUnresolvedReferences
 GLUP_SORT_OUT = os.path.join(SUB_DATA_DIR, 'glup_new_new.data')
 GLUP_SORT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_new_sorted.data')
+COMP_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glup_autopsf.txt')
 
 
 class TestDataEdit(unittest.TestCase):
@@ -140,14 +142,20 @@ class TestDataEdit(unittest.TestCase):
     def testSort(self):
         try:
             main(["-c", SORT_INI])
+            self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
+        finally:
+            silent_remove(GLUP_SORT_OUT)
+
+    def testCompare(self):
+        try:
+            main(["-c", COMPARE_INI])
             # with open(GLUP_SORT_OUT) as f:
             #     with open(GLUP_SORT_OUT_GOOD) as g:
             #         for d_line, g_line in zip(f, g):
             #             if d_line.strip() != g_line.strip():
             #                 print(d_line.strip())
             #                 print(g_line.strip())
-            self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
+            # self.assertFalse(diff_lines(COMP_OUT, COMP_OUT_GOOD))
         finally:
-            silent_remove(GLUP_SORT_OUT)
-            # pass
-
+            # silent_remove(COMP_OUT)
+            pass

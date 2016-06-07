@@ -107,3 +107,4 @@ fitevb_setup
 
 process_cv_file
   converts plumed cv output to evb cv output style
+

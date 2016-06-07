@@ -10,7 +10,6 @@ logging.basicConfig(filename='data2data.log', filemode='w', level=logging.DEBUG)
 
 __author__ = 'hmayes'
 
-
 # Directories #
 
 TEST_DIR = os.path.dirname(__file__)
@@ -50,13 +49,11 @@ GLUP_GLUE_ATOM_NUM_DICT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_glue_atom_num_di
 GLUP_GLUE_ATOM_TYPE_DICT = os.path.join(SUB_DATA_DIR, 'glup_glue_atom_type_dict_old_new.csv')
 GLUP_GLUE_ATOM_TYPE_DICT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_glue_atom_type_dict_old_new_good.csv')
 
-
 # For comparison:
 GLU_DEPROT_DATA = os.path.join(SUB_DATA_DIR, 'glu_deprot.data')
 
 
 class TestData2Data(unittest.TestCase):
-
     def testNoDefault(self):
         with capture_stderr(data2data.main, []) as output:
             self.assertTrue("Could not read file" in output)
@@ -124,7 +121,6 @@ class TestData2Data(unittest.TestCase):
         with capture_stderr(data2data.main, ["-c", GLUE_SERCA_DICT_INI]) as output:
             self.assertTrue("Number of atoms (214084) in the file" in output)
             self.assertTrue("atoms (1429) in the template file" in output)
-
         # try:
         #     data2data.main(["-c", ])
         # finally:

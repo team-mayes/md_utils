@@ -4,6 +4,7 @@ Reorders a lammps data file
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 from operator import itemgetter
 import os
@@ -32,6 +33,7 @@ MAIN_SEC = 'main'
 # Config keys
 DATA_FILES = 'data_list_file'
 DATA_FILE = 'data_file'
+DATA_COMP = 'data_comp_file'
 ATOM_ID_DICT_FILE = 'atom_reorder_dict_filename'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
 BOND_TYPE_DICT_FILE = 'bond_type_dict_filename'
@@ -53,6 +55,7 @@ DEF_CFG_FILE = 'data_edit.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 DATA_FILE: None,
+                DATA_COMP: None,
                 ATOM_ID_DICT_FILE: None,
                 ATOM_TYPE_DICT_FILE: None,
                 BOND_TYPE_DICT_FILE: None,
@@ -97,7 +100,10 @@ NUM_DIHE_TYP = 'num_dihe_typ'
 NUM_IMPR_TYP = 'num_impr_typ'
 
 # the last entry in the tuple is for the type_dicts key
-
+# For these sections, keeps track of:
+#   * total number of entries
+#   * list of types to print
+#   * dictionary of any changes to make
 TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
                  SEC_PAIR_COEFF: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
                  SEC_BOND_COEFF: (NUM_BOND_TYP, PRINT_BOND_TYPES, SEC_BONDS),
@@ -105,6 +111,16 @@ TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
                  SEC_DIHE_COEFF: (NUM_DIHE_TYP, PRINT_DIHEDRAL_TYPES, SEC_DIHES),
                  SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES, SEC_IMPRS),
                  }
+
+#  number of columns for comparison
+COMP_SEC_COL_DICT = {SEC_ATOMS: 4,
+                     SEC_MASSES: 2,
+                     SEC_PAIR_COEFF: 5,
+                     SEC_BOND_COEFF: 3,
+                     SEC_ANGL_COEFF: 5,
+                     SEC_DIHE_COEFF: 5,
+                     SEC_IMPR_COEFF: 3,
+                     }
 
 # For these sections, keeps track of:
 #   * total number of entries
@@ -203,6 +219,7 @@ def find_section_state(line, current_section, section_order, content, highlight_
     @param current_section: current section
     @param section_order: list keeping track of when find an new section
     @param content: dictionary; add a new key for each section found
+    @param highlight_content: keep a list of selected content to output (interactions with specified atoms)
     @return: the section currently reading, count
     """
     for section, pattern in SEC_PAT_DICT.items():
@@ -230,7 +247,7 @@ def find_header_values(line, nums_dict):
             if nums_dict[num_key] is None:
                 pattern_match = pattern.match(line)
                 if pattern_match:
-                  # regex is 1-based
+                    # regex is 1-based
                     nums_dict[num_key] = int(pattern_match.group(1))
                     return
     except (ValueError, KeyError) as e:
@@ -238,6 +255,14 @@ def find_header_values(line, nums_dict):
 
 
 def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
+    """
+    Reads each section and gathers data for various options
+    @param cfg:
+    @param data_file:
+    @param atom_id_dict:
+    @param type_dict:
+    @return:
+    """
     # Easier to pass when contained in a dictionary
     nums_dict = {}
     num_dict_headers = [NUM_ATOMS, NUM_ATOM_TYP, NUM_BONDS, NUM_BOND_TYP, NUM_ANGLS, NUM_ANGL_TYP,
@@ -383,6 +408,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 else:
                     end = []
 
+                # noinspection PyTypeChecker
                 line_struct = s_line[0:2] + new_atoms + end
                 content[section].append(line_struct)
 
@@ -403,12 +429,21 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                             content[section].sort(key=itemgetter(4))
                             content[section].sort(key=itemgetter(2))
                             content[section].sort(key=itemgetter(3))
+                        # noinspection PyAssignmentToLoopOrWithParameter
                         for index, line in enumerate(content[section]):
                             line[0] = index + 1
                     section = None
                 else:
                     count += 1
 
+    if cfg[DATA_COMP] is None:
+        print_content(atom_id_dict, cfg, content, data_file, highlight_content, section_order, type_dict)
+        return
+    else:
+        return content, section_order
+
+
+def print_content(atom_id_dict, cfg, content, data_file, highlight_content, section_order, type_dict):
     data_content = content[SEC_HEAD]
     select_data_content = []
     for section in section_order:
@@ -420,12 +455,10 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
     dict_lens = len(atom_id_dict)
     for name, t_dict in type_dict.items():
         dict_lens += len(t_dict)
-
     if dict_lens > 0 or cfg[SORT_ME]:
         f_name = create_out_fname(data_file, suffix='_new', ext='.data')
         list_to_file(data_content, f_name)
         print('Completed writing {}'.format(f_name))
-
     if (len(cfg[PRINT_DATA_ATOMS]) + len(cfg[PRINT_OWN_ATOMS])) > 0:
         f_name = create_out_fname(data_file, suffix='_selected', ext='.txt')
         list_to_file(select_data_content, f_name)
@@ -442,6 +475,151 @@ def process_data_files(cfg, atom_id_dict, type_dicts):
                 proc_data_file(cfg, data_file, atom_id_dict, type_dicts,)
     if cfg[DATA_FILE] is not None:
         proc_data_file(cfg, cfg[DATA_FILE], atom_id_dict, type_dicts,)
+
+
+def compare_heads(list1, list2, diff_list):
+    """
+    Convert a list to a dictionary and see how they are different
+    @param list1: list of strings
+    @param list2: second list of strings
+    @param diff_list: collection of differences between lists
+    """
+    for line in list1:
+        if line not in list2:
+            diff_list.append("+ " + line)
+    for line in list2:
+        if line not in list1:
+            diff_list.append("- " + line)
+
+
+def compare_types(list1, list2, num_col_to_compare, diff_list):
+    """
+    Determine if select entries are identical
+    @param list1:
+    @param list2:
+    @param num_col_to_compare:
+    @param diff_list: collection of differences between lists
+    """
+    len1 = len(list1)
+    len2 = len(list2)
+    min_len = min(len1, len2)
+    for line_id in range(min_len):
+        if list1[line_id][:num_col_to_compare] != list2[line_id][:num_col_to_compare]:
+            diff_list.append(["+ "] + list1[line_id])
+            diff_list.append(["- "] + list2[line_id])
+
+    for line_id in range(min_len, len1):
+        diff_list.append(["+ "] + list1[line_id])
+    for line_id in range(min_len, len2):
+        diff_list.append(["- "] + list2[line_id])
+
+
+def comp_files(cfg, atom_id_dict, type_dicts):
+    """
+    Compares each section of data files
+    @param cfg: configuration information for current run
+    @param atom_id_dict: dictionary for changing the atom id
+    @param type_dicts: dictionary for changing atom and interaction types
+    @return:
+    """
+    first_content, first_section_order = proc_data_file(cfg, cfg[DATA_FILE], atom_id_dict, type_dicts,)
+    second_content, second_section_order = proc_data_file(cfg, cfg[DATA_COMP], atom_id_dict, type_dicts,)
+
+    for section in second_section_order:
+        if section not in first_section_order:
+            warning("Section '{}' found in the file: {}\n"
+                    "   but not in file: {}"
+                    "   This section will be skipped\n".format(section, cfg[DATA_COMP], cfg[DATA_FILE]))
+
+    diffs = ["Differences in head section:"]
+    compare_heads(first_content[SEC_HEAD], second_content[SEC_HEAD], diffs)
+
+    for section in first_section_order:
+        diffs.append("\nDifferences in section '{}':".format(section))
+        if section not in first_section_order:
+            warning("Section '{}' found in the file: {}\n"
+                    "   but not in file: {}"
+                    "   This section will be skipped\n".format(section, cfg[DATA_FILE], cfg[DATA_COMP]))
+        elif section in COMP_SEC_COL_DICT:
+            num_col_to_compare = COMP_SEC_COL_DICT[section]
+            compare_types(first_content[section], second_content[section], num_col_to_compare, diffs)
+        elif section in [SEC_ATOMS, SEC_VELOS]:
+            print(first_content[section][0])
+
+#     s_line = line.split()
+#     try:
+#         atom_id = int(s_line[0])
+#         atom_type = int(s_line[2])
+#     except (ValueError, KeyError) as e:
+#         raise InvalidDataError("Error {} on line: {}\n  in file: {}".format(e, line, data_file))
+#
+#     if atom_id in atom_id_dict:
+#         s_line[0] = atom_id_dict[atom_id]
+#     else:
+#         s_line[0] = atom_id
+#
+#     if atom_type in type_dict[SEC_ATOMS]:
+#         s_line[2] = type_dict[SEC_ATOMS][atom_type]
+#
+#     content[section].append(s_line)
+#
+#     if atom_id in cfg[PRINT_DATA_ATOMS] or atom_id in cfg[PRINT_OWN_ATOMS]:
+#         highlight_content[section].append(s_line)
+#
+#     if count == nums_dict[NUM_ATOMS]:
+#         content[section].sort()
+#         highlight_content[section].sort()
+#         section = None
+#     else:
+#         count += 1
+# elif section in NUM_SEC_DICT:
+# highlight_line = False
+# tot_num_key = NUM_SEC_DICT[section][0]
+# if tot_num_key not in nums_dict:
+#     raise InvalidDataError("Found section {}, but did not find number of bonds "
+#                            "in the header.".format(section))
+#
+# min_col_num = NUM_SEC_DICT[section][1]
+# s_line = line.split()
+# try:
+#     s_line[1] = int(s_line[1])
+#     atoms = map(int, s_line[2:min_col_num])
+# except (ValueError, KeyError) as e:
+#     raise InvalidDataError("Error {} reading line: {} \n  in section {} of file: {} "
+#                            "".format(e, line, section, data_file))
+# new_atoms = atoms
+# for index, atom_id in enumerate(atoms):
+#     if atom_id in atom_id_dict:
+#         new_atoms[index] = atom_id_dict[atom_id]
+#     if atom_id in cfg[PRINT_DATA_ATOMS]:
+#         highlight_line = True
+#
+# # check for ownership
+# if section == SEC_BONDS:
+#     if atoms[0] in cfg[PRINT_OWN_ATOMS]:
+#         highlight_line = True
+# else:
+#     if atoms[1] in cfg[PRINT_OWN_ATOMS]:
+#         highlight_line = True
+#
+# if s_line[1] in type_dict[section]:
+#     s_line[1] = type_dict[section][s_line[1]]
+#
+# if len(s_line) > min_col_num:
+#     end = s_line[min_col_num:]
+# else:
+#     end = []
+#
+# # noinspection PyTypeChecker
+# line_struct = s_line[0:2] + new_atoms + end
+# content[section].append(line_struct)
+
+
+
+
+    f_name = create_out_fname(cfg[DATA_COMP], prefix='diffs_', ext='.txt')
+    list_to_file(diffs, f_name)
+    print('Completed writing {}'.format(f_name))
 
 
 def main(argv=None):
@@ -473,7 +651,10 @@ def main(argv=None):
         type_dicts[SEC_ANGLS] = read_int_dict(cfg[ANGL_TYPE_DICT_FILE], one_to_one=False)
         type_dicts[SEC_DIHES] = read_int_dict(cfg[DIHE_TYPE_DICT_FILE], one_to_one=False)
         type_dicts[SEC_IMPRS] = read_int_dict(cfg[IMPR_TYPE_DICT_FILE], one_to_one=False)
-        process_data_files(cfg, atom_id_dict, type_dicts)
+        if cfg[DATA_COMP] is None:
+            process_data_files(cfg, atom_id_dict, type_dicts)
+        else:
+            comp_files(cfg, atom_id_dict, type_dicts)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
