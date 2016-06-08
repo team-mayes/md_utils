@@ -30,8 +30,12 @@ Installation instructions
 
 1. Clone the git repository or update to the latest version (git pull)
 2. From the fit repository folder, run ''python setup.py sdist"
-3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version (the *.tar.gz that you created in the previous step) (see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
-4. To allow the scripts to be found anywhere on your computer using your terminal screen, making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
+3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  
+   "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version 
+   (the *.tar.gz that you created in the previous step) 
+   (see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
+4. To allow the scripts to be found anywhere on your computer using your terminal screen, 
+   making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
 
 
 Example use:
@@ -40,28 +44,30 @@ Example use:
    https://github.com/team-mayes/md_utils/tree/master/tests/test_data/data_edit
    (FYI, config files end with "ini" and there are a variety here, meant
    to work or fail, to test functionality).
+2. To see if the installation worked, try running with the help option. All scripts in 
+   this package have such an option, which will briefly tell you about the code::
+       data_edit -h
 
-To see if it works, try running with the help option. All scripts in this package
-have such an option, which will briefly tell you about the code:
-"data_edit -h"
+3. To only have the program print interactions "owned" by atom numbers 1
+   and 2 in a data file called "my_file.data", make a file called (for example) 
+   "print_owned_atoms.ini", with
+   the following text::
+       [main]
+       data_file = my_file.data
+       print_interactions_owned_by_atoms = 1,2
+   
+   This assumes that my_file.data is in the same file as the
+   configuration file. You can have as many atom numbers as you wish;
+   just separate them by commas.
 
-To only have the program print interactions "owned" by atom numbers 1
-and 2 in a data file called "my_file.data", make a file called (for example) 
-"print_owned_atoms.ini", with
-the following text:
-    [main]
-    data_file = my_file.data
-    print_interactions_owned_by_atoms = 1,2
+4. Run::
+       data_edit -c print_owned_atoms.ini
 
-This assumes that my_file.data is in the same file as the
-configuration file. You can have as many atom numbers as you wish;
-just separate them by commas.
+-------
+Scripts
+-------
 
-Now, run:
-'data_edit -c print_owned_atoms.ini"
-
-
-Scripts for combining/processing output:
+For combining/processing output:
 -------
 
 align_on_col
@@ -93,7 +99,7 @@ press_dups
   column (RMSD by default)  Compressed lines have their values averaged.
 
 
-Scripts for PMF calculations:
+For PMF calculations:
 -------
 
 md_init
@@ -110,7 +116,7 @@ calc_pka
   From the wham_rad output, calculates the pKa.
 
 
-Scripts for Processing LAMMPS output:
+For processing LAMMPS output:
 -------
 
 data_edit
@@ -134,7 +140,7 @@ lammps_proc_data
   (when protonated). This script assumes we care about one protonatable residue in a simulation with a PBC.
 
 
-Scripts for RAPTOR or EVBFit/RMDFit:
+For RAPTOR or EVBFit/RMDFit:
 -------
 
 convert_cp2k_forces
