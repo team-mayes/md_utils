@@ -25,11 +25,11 @@ This packaging process is based on https://jeffknupp.com/blog/2013/08/16/open-so
 Scripts added to the package aim have at least 90% test coverage.
 
 
-Installation instructions
+Installation/upgrade instructions
 -------
 
 1. Clone the git repository or update to the latest version (git pull)
-2. From the fit repository folder, run ''python setup.py sdist"
+2. From the git repository folder, run ''python setup.py sdist"
 3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  
    "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version 
    (the *.tar.gz that you created in the previous step) 

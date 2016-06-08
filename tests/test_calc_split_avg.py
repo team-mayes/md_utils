@@ -36,7 +36,7 @@ BINNED_FILES = {'02': ['rad_PMF.02_01', 'rad_PMF.02_02', 'rad_PMF.02_03'], '01':
 
 # noinspection PyUnresolvedReferences
 DEF_OUT = os.path.join(DATA_DIR, 'avg_rad_PMF.02.csv')
-GOOD_OUT = os.path.join(DATA_DIR, 'avg_rad_PMF.02_good.csv')
+GOOD_OUT = os.path.join(DATA_DIR, 'avg_rad_PMF.02_Good.csv')
 
 
 class TestBinFileNames(unittest.TestCase):
