@@ -17,6 +17,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'data_edit')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data_reorder.ini')
 SERCA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_serca.ini')
 BAD_DICT_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_dict.ini')
+BAD_LIST_INI = os.path.join(SUB_DATA_DIR, 'data_bad_list.ini')
 GLUP_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_glup_glue.ini')
 IMP_ATOMS_BAD_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_bad_input.ini')
 IMP_ATOMS_TYPO_INI = os.path.join(SUB_DATA_DIR, 'data_print_impt_atoms_key_typo.ini')
@@ -26,6 +27,8 @@ RETYPE_INI = os.path.join(SUB_DATA_DIR, 'data_retype.ini')
 BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'data_reorder_bad_data.ini')
 SORT_INI = os.path.join(SUB_DATA_DIR, 'data_sort.ini')
 COMPARE_INI = os.path.join(SUB_DATA_DIR, 'data_compare.ini')
+COMP_DIH_INI = os.path.join(SUB_DATA_DIR, 'data_compare_dih.ini')
+COMP_DIH_ALT_INI = os.path.join(SUB_DATA_DIR, 'data_compare_dih_alt_order.ini')
 
 # Output files
 
@@ -55,11 +58,16 @@ GLUP_RETYPE_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_autopsf_reordered_retype
 # noinspection PyUnresolvedReferences
 GLUP_SORT_OUT = os.path.join(SUB_DATA_DIR, 'glup_new_new.data')
 GLUP_SORT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_new_sorted.data')
-COMP_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glup_autopsf.txt')
+# noinspection PyUnresolvedReferences
+COMP_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glup_autopsf_reordered_retyped_good.txt')
+COMP_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_good.txt')
+COMP_DIH_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_dih_good.txt')
+# noinspection PyUnresolvedReferences
+COMP_DIH_ALT_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glu_deprot_only_dih.txt')
+COMP_DIH_ALT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_dih_alt_good.txt')
 
 
 class TestDataEdit(unittest.TestCase):
-
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("Could not read file" in output)
@@ -83,6 +91,11 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(SERCA_1_OUT, SERCA_1_GOOD_OUT))
             silent_remove(SERCA_0_OUT)
             silent_remove(SERCA_1_OUT)
+
+    def testBadFileList(self):
+        # main(["-c", BAD_LIST_INI])
+        with capture_stderr(main, ["-c", BAD_LIST_INI]) as output:
+            self.assertTrue("Did not find a list of data files at the path" in output)
 
     def testBadDict(self):
         with capture_stderr(main, ["-c", BAD_DICT_INI]) as output:
@@ -149,13 +162,24 @@ class TestDataEdit(unittest.TestCase):
     def testCompare(self):
         try:
             main(["-c", COMPARE_INI])
-            # with open(GLUP_SORT_OUT) as f:
-            #     with open(GLUP_SORT_OUT_GOOD) as g:
-            #         for d_line, g_line in zip(f, g):
-            #             if d_line.strip() != g_line.strip():
-            #                 print(d_line.strip())
-            #                 print(g_line.strip())
-            # self.assertFalse(diff_lines(COMP_OUT, COMP_OUT_GOOD))
+            self.assertFalse(diff_lines(COMP_OUT, COMP_OUT_GOOD))
         finally:
-            # silent_remove(COMP_OUT)
-            pass
+            silent_remove(COMP_OUT)
+
+    def testCompDih(self):
+        # Test it is okay with sections in the 2nd but not first file
+        with capture_stderr(main, ["-c", COMP_DIH_INI]) as output:
+            self.assertTrue("WARNING:  Skipping section" in output)
+        try:
+            self.assertFalse(diff_lines(COMP_OUT, COMP_DIH_OUT_GOOD))
+        finally:
+            silent_remove(COMP_OUT)
+
+    def testCompDihAlt(self):
+        # Test it is okay with sections in the 1st but not 2nd file
+        with capture_stderr(main, ["-c", COMP_DIH_ALT_INI]) as output:
+            self.assertTrue("WARNING:  Skipping section" in output)
+        try:
+            self.assertFalse(diff_lines(COMP_DIH_ALT_OUT, COMP_DIH_ALT_OUT_GOOD))
+        finally:
+            silent_remove(COMP_DIH_ALT_OUT)
