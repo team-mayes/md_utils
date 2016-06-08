@@ -30,20 +30,16 @@ Installation instructions
 
 1. Clone the git repository or update to the latest version (git pull)
 2. From the fit repository folder, run ''python setup.py sdist"
-3. Run "pip install dist/md_utils-XXX.tar.gz --user" or 
-"pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current 
-version (the *.tar.gz that you created in the previous step)
-(see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
-4. To allow the scripts to be found anywhere on your computer using your terminal screen,
-making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
+3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version (the *.tar.gz that you created in the previous step) (see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
+4. To allow the scripts to be found anywhere on your computer using your terminal screen, making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
 
 
 Example use:
 
-Update a configuration file like one found in the folder
-https://github.com/team-mayes/md_utils/tree/master/tests/test_data/data_edit
-(FYI, config files end with "ini" and there are a variety here, meant
-to work or fail, to test functionality).
+1. Update a configuration file like one found in the folder 
+   https://github.com/team-mayes/md_utils/tree/master/tests/test_data/data_edit
+   (FYI, config files end with "ini" and there are a variety here, meant
+   to work or fail, to test functionality).
 
 To see if it works, try running with the help option. All scripts in this package
 have such an option, which will briefly tell you about the code:
