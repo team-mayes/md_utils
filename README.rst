@@ -123,13 +123,13 @@ For processing LAMMPS output:
 
 data_edit
   offers a range of options to: 
-    * produce a new, edited data file (such as renumbering interactions types)
-        see example scripts in tests/test_data/data_edit: data_reorder.ini, data_retype.ini, data_sort.ini
-    * output selected data (i.e. interactions involving or owned by a particular atom number)
-        see example scripts in tests/test_data/data_edit: data_print_impt_atoms.ini, data_print_own_atoms.ini
-    * compare two data files and output only "meaningful" differences (ignore formatting differences, 
+  * produce a new, edited data file (such as renumbering interactions types)
+      see example scripts in tests/test_data/data_edit: data_reorder.ini, data_retype.ini, data_sort.ini
+  * output selected data (i.e. interactions involving or owned by a particular atom number)
+      see example scripts in tests/test_data/data_edit: data_print_impt_atoms.ini, data_print_own_atoms.ini
+  * compare two data files and output only "meaningful" differences (ignore formatting differences, 
     order of bonds, angles, dihedrals, atom XYZ coords, notes...)
-        see example script tests/test_data/data_edit/data_compare.ini
+      see example script tests/test_data/data_edit/data_compare.ini
 
 dump_edit
   available options include renumbering atoms or molecules and producing a new file with a subset of timesteps
