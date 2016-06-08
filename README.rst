@@ -25,14 +25,48 @@ This packaging process is based on https://jeffknupp.com/blog/2013/08/16/open-so
 Scripts added to the package aim have at least 90% test coverage.
 
 
-Scripts
+Installation instructions
 -------
 
+1. Clone the git repository or update to the latest version (git pull)
+2. From the fit repository folder, run ''python setup.py sdist"
+3. Run "pip install dist/md_utils-XXX.tar.gz --user" or 
+"pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current 
+version (the *.tar.gz that you created in the previous step)
+(see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
+4. To allow the scripts to be found anywhere on your computer using your terminal screen,
+making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
 
-Scripts
+
+Example use:
+
+Update a configuration file like one found in the folder
+https://github.com/team-mayes/md_utils/tree/master/tests/test_data/data_edit
+(FYI, config files end with "ini" and there are a variety here, meant
+to work or fail, to test functionality).
+
+To see if it works, try running with the help option. All scripts in this package
+have such an option, which will briefly tell you about the code:
+"data_edit -h"
+
+To only have the program print interactions "owned" by atom numbers 1
+and 2 in a data file called "my_file.data", make a file called (for example) 
+"print_owned_atoms.ini", with
+the following text:
+    [main]
+    data_file = my_file.data
+    print_interactions_owned_by_atoms = 1,2
+
+This assumes that my_file.data is in the same file as the
+configuration file. You can have as many atom numbers as you wish;
+just separate them by commas.
+
+Now, run:
+'data_edit -c print_owned_atoms.ini"
+
+
+Scripts for combining/processing output:
 -------
-
-Combining/processing output:
 
 align_on_col
   For combining data from multiple files based on a common timestep. All other data will be ignored or, if in logging
@@ -63,7 +97,8 @@ press_dups
   column (RMSD by default)  Compressed lines have their values averaged.
 
 
-For PMF calculations:
+Scripts for PMF calculations:
+-------
 
 md_init
   Initializes a location for running md utilities. Specifically, it makes template files for creating wham input.
@@ -79,18 +114,16 @@ calc_pka
   From the wham_rad output, calculates the pKa.
 
 
-Processing LAMMPS output:
+Scripts for Processing LAMMPS output:
+-------
 
 data_edit
   offers a range of options to: 
   * produce a new, edited data file (such as renumbering interactions types)
-    ** see example scripts in tests/test_data/data_edit: data_reorder.ini, 
-       data_retype.ini, data_sort.ini
+    ** see example scripts in tests/test_data/data_edit: data_reorder.ini, data_retype.ini, data_sort.ini
   * output selected data (i.e. interactions involving or owned by a particular atom number)
-    ** see example scripts in tests/test_data/data_edit: data_print_impt_atoms.ini, 
-       data_print_own_atoms.ini
-  * compare two data files and output only "meaningful" differences (ignore formatting
-       differences, order of bonds, angles, dihedrals, atom XYZ coords, notes...)
+    ** see example scripts in tests/test_data/data_edit: data_print_impt_atoms.ini, data_print_own_atoms.ini
+  * compare two data files and output only "meaningful" differences (ignore formatting differences, order of bonds, angles, dihedrals, atom XYZ coords, notes...)
     ** see example script tests/test_data/data_edit/data_compare.ini
 
 dump_edit
@@ -105,7 +138,8 @@ lammps_proc_data
   (when protonated). This script assumes we care about one protonatable residue in a simulation with a PBC.
 
 
-For RAPTOR or EVBFit/RMDFit:
+Scripts for RAPTOR or EVBFit/RMDFit:
+-------
 
 convert_cp2k_forces
   cp2k force output files
