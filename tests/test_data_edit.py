@@ -74,6 +74,9 @@ class TestDataEdit(unittest.TestCase):
         with capture_stdout(main, []) as output:
             self.assertTrue("optional arguments" in output)
 
+    def testBadIni(self):
+        main(["-c", "ghost.ini"])
+
     def testDefIni(self):
         try:
             main(["-c", DEF_INI])
@@ -93,7 +96,6 @@ class TestDataEdit(unittest.TestCase):
             silent_remove(SERCA_1_OUT)
 
     def testBadFileList(self):
-        # main(["-c", BAD_LIST_INI])
         with capture_stderr(main, ["-c", BAD_LIST_INI]) as output:
             self.assertTrue("Did not find a list of data files at the path" in output)
 

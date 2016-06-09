@@ -29,7 +29,12 @@ Installation/upgrade instructions
 -------
 
 1. Clone the git repository or update to the latest version (git pull)
-2. From the git repository folder, run ''python setup.py sdist"
+2. From the git repository folder, 
+   run either::
+      pip install --upgrade  md_utils --user 
+    
+      pip install --upgrade  md_utils --user 
+ ''python setup.py sdist"
 3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  
    "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version 
    (the *.tar.gz that you created in the previous step) 
