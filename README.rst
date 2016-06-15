@@ -31,15 +31,16 @@ Installation/upgrade instructions
 1. Clone the git repository or update to the latest version (git pull)
 2. From the git repository folder, 
    run either::
+      pip install md_utils --user 
+   or::
       pip install --upgrade  md_utils --user 
-    
-      pip install --upgrade  md_utils --user 
- ''python setup.py sdist"
-3. Run "pip install dist/md_utils-XXX.tar.gz --user" or  
-   "pip install --upgrade dist/md_utils-XXX.tar.gz --user", where XXX is the current version 
+   or::
+      python setup.py sdist
+      pip install dist/md_utils-XXX.tar.gz --user"  
+   where XXX is the current version (add --upgrade if previously installed) 
    (the *.tar.gz that you created in the previous step) 
    (see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
-4. To allow the scripts to be found anywhere on your computer using your terminal screen, 
+3. To allow the scripts to be found anywhere on your computer using your terminal screen, 
    making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
 
 

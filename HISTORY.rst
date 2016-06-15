@@ -3,7 +3,12 @@
 History
 -------
 
-0.8.0 (2016-04-20)
+0.8.1 (2016-06-14)
+------------------
+
+* Now correctly sorts differences between data files, ignoring comments, unimportant ordering...
+
+0.8.0
 ------------------
 
 * Added capabilty to data_edit: now will show differences between data files, ignoring comments, unimportant ordering...

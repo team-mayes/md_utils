@@ -384,6 +384,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 min_col_num = NUM_SEC_DICT[section][1]
                 s_line = line.split()
                 try:
+                    s_line[0] = int(s_line[0])
                     s_line[1] = int(s_line[1])
                     atoms = map(int, s_line[2:min_col_num])
                 except (ValueError, KeyError) as e:
@@ -519,6 +520,9 @@ def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list):
     # dict used to connect whole line with set representation
     dict1 = {}
     dict2 = {}
+    # temporary lists to allow sorting
+    new_list1 = []
+    new_list2 = []
     for line in list1:
         str_rep = str(line[first_col_comp:last_col_to_compare])
         set1.add(str_rep)
@@ -529,13 +533,12 @@ def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list):
         dict2[str_rep] = line
     only1 = list(set1.difference(set2))
     only2 = list(set2.difference(set1))
-    only1.sort()
-    only2.sort()
     for entry in only1:
-        diff_list.append([FILE1_SIGN] + dict1[entry])
+        new_list1.append([FILE1_SIGN] + dict1[entry])
     for entry in only2:
-        diff_list.append([FILE2_SIGN] + dict2[entry])
-
+        new_list2.append([FILE2_SIGN] + dict2[entry])
+    diff_list += sorted(new_list1, key=itemgetter(1))
+    diff_list += sorted(new_list2, key=itemgetter(1))
 
 def comp_files(cfg, atom_id_dict, type_dicts):
     """

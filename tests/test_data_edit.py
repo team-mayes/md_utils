@@ -60,7 +60,8 @@ GLUP_SORT_OUT = os.path.join(SUB_DATA_DIR, 'glup_new_new.data')
 GLUP_SORT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'glup_new_sorted.data')
 # noinspection PyUnresolvedReferences
 COMP_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glup_autopsf_reordered_retyped_good.txt')
-COMP_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_good.txt')
+COMP1_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glup_to_compare.txt')
+COMP1_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_good.txt')
 COMP_DIH_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_dih_good.txt')
 # noinspection PyUnresolvedReferences
 COMP_DIH_ALT_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glu_deprot_only_dih.txt')
@@ -164,9 +165,9 @@ class TestDataEdit(unittest.TestCase):
     def testCompare(self):
         try:
             main(["-c", COMPARE_INI])
-            self.assertFalse(diff_lines(COMP_OUT, COMP_OUT_GOOD))
+            self.assertFalse(diff_lines(COMP1_OUT, COMP1_OUT_GOOD))
         finally:
-            silent_remove(COMP_OUT)
+            silent_remove(COMP1_OUT)
 
     def testCompDih(self):
         # Test it is okay with sections in the 2nd but not first file
