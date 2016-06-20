@@ -112,9 +112,6 @@ path_bin
   Creates a summary VMD XYZ file (and separate log file) that averages a
   set of coordinates (one set of XYZ coordinates per line) from an input file.
 
-pdb_edit
-  Creates a new version of a pdb file applying options such as renumbering molecules.
-
 per_col_stats
   Given a file with columns of data, returns the min, max, avg, and std dev per column. Optionally, it can return
   the maximum value from each column plus a "buffer" length (useful for preparing CP2K input for FitEVB).
@@ -170,6 +167,9 @@ lammps_dist
 lammps_proc_data
   From lammps dump file(s), finds key distance, such as the hydroxyl OH distance on the protonatable residue
   (when protonated). This script assumes we care about one protonatable residue in a simulation with a PBC.
+
+pdb_edit
+  Creates a new version of a pdb file applying options such as renumbering molecules.
 
 
 For RAPTOR or EVBFit/RMDFit:

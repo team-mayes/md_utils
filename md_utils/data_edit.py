@@ -320,7 +320,8 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     coeff_id = int(s_line[0])
                 except ValueError as e:
                     raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: "
-                                           "{}".format(e, line, data_file))
+                                           "{}. \nCheck number of lines in the section to make sure that they "
+                                           "match the number specified in the header section.".format(e, line, data_file))
 
                 # Rename the following to make it easier to follow:
                 type_count = TYPE_SEC_DICT[section][0]
