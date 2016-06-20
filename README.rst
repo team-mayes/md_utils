@@ -25,26 +25,35 @@ This packaging process is based on https://jeffknupp.com/blog/2013/08/16/open-so
 Scripts added to the package aim have at least 90% test coverage.
 
 
-Installation/upgrade instructions
+Installation
 -------
 
-1. Clone the git repository or update to the latest version (git pull)
-2. From the git repository folder, 
-   run either::
+1. Make sure python is installed. Python 2.7 is recommended. The package is meant to be python 3 compatible, 
+   but expentensively tested only on Python 2.7. There are many ways to install it. For example, see http://conda.pydata.org/miniconda.html
+2. From the base folder where you would like the set of files (a new folder will be created, by default called md_utils)::
+   git clone https://github.com/team-mayes/md_utils.git
+3. From the git repository folder
+   a. see https://pip.pypa.io/en/stable/installing/ to installif you don't have pip installed
+   b. run::
       pip install md_utils --user 
-   or::
-      pip install --upgrade  md_utils --user 
-   or::
+   c. alternately (the * below will change based on current version; this is created in the first step)::
       python setup.py sdist
-      pip install dist/md_utils-XXX.tar.gz --user"  
-   where XXX is the current version (add --upgrade if previously installed) 
-   (the *.tar.gz that you created in the previous step) 
-   (see https://pip.pypa.io/en/stable/installing/ if you don't have pip installed)
-3. To allow the scripts to be found anywhere on your computer using your terminal screen, 
-   making sure the following path is in your .bashrc or .bash_profile paths: $HOME/.local/bin
+      pip install dist/md_utils-*.tar.gz --user  
+4. To allow the scripts to be found anywhere on your computer using your terminal screen, 
+   making sure the following path is in your .bashrc or .bash_profile path, and remember to source that file 
+   after an update:: $HOME/.local/bin
+
+Upgrade
+-------
+
+1. From the location of your cloned git repository, make sure you have the latest files::
+git pull
+
+      pip install --upgrade  md_utils --user 
+2. 
 
 
-Example:
+Example
 -------
 
 1. Update a configuration file like one found in the folder 
