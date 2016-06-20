@@ -33,12 +33,12 @@ Installation
 2. From the base folder where you would like the set of files (a new folder will be created, by default called md_utils)::
    git clone https://github.com/team-mayes/md_utils.git
 3. From the git repository folder
-   a. see https://pip.pypa.io/en/stable/installing/ to install if you don't have pip installed
-   b. run::
-          pip install md_utils --user 
-   c. alternately (the * below will change based on current version; this is created in the first step)::
-          python setup.py sdist
-          pip install dist/md_utils-*.tar.gz --user  
+      a. see https://pip.pypa.io/en/stable/installing/ to install if you don't have pip installed
+      b. run::
+         pip install md_utils --user 
+      c. alternately (the * below will change based on current version; this is created in the first step)::
+         python setup.py sdist
+         pip install dist/md_utils-*.tar.gz --user  
 4. To allow the scripts to be found anywhere on your computer using your terminal screen, 
    making sure the following path is in your .bashrc or .bash_profile path, and remember to source that file 
    after an update:: $HOME/.local/bin
@@ -47,7 +47,6 @@ Upgrade
 -------
 
 From the location of your cloned git repository, make sure you have the latest files, then use pip to update::
-
 git pull
 pip install --upgrade  md_utils --user 
 
