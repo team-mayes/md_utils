@@ -12,8 +12,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_int_dict,
-                                )
+from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_int_dict)
 
 __author__ = 'hmayes'
 
@@ -112,6 +111,21 @@ TYPE_SEC_DICT = {SEC_MASSES: (NUM_ATOM_TYP, PRINT_ATOM_TYPES, SEC_ATOMS),
                  SEC_IMPR_COEFF: (NUM_IMPR_TYP, PRINT_IMPROPER_TYPES, SEC_IMPRS),
                  }
 
+SEC_FORMAT_DICT = {SEC_ATOMS: ("{:8d} {:>7} {:>5} {:>9.2f} {:>11.3f} {:>11.3f} {:>11.3f}  ", 7),
+                   SEC_MASSES: ("{:8d} {:>10}  ", 2),
+                   SEC_PAIR_COEFF: ("{:8d} {:>10} {:>10} {:>10} {:>10}  ", 5),
+                   SEC_BOND_COEFF: ("{:8d} {:>10} {:>10}  ", 3),
+                   SEC_ANGL_COEFF: ("{:>8} {:>10} {:>10} {:>10} {:>10}  ", 5),
+                   SEC_DIHE_COEFF: ("{:>8} {:>10} {:>10} {:>10} {:>10}  ", 5),
+                   SEC_IMPR_COEFF: ("{:8d} {:>10} {:>10}  ", 3),
+                   SEC_BONDS: ("{:>8} {:>7} {:>7} {:>7}  ", 4),
+                   SEC_ANGLS: ("{:>8} {:>7} {:>7} {:>7} {:>7}  ", 5),
+                   SEC_DIHES: ("{:>8} {:>7} {:>7} {:>7} {:>7} {:>7}  ", 6),
+                   SEC_IMPRS: ("{:>8} {:>7} {:>7} {:>7} {:>7} {:>7}  ", 6),
+                   SEC_VELOS: ("{:>8} {:>11.5f} {:>11.5f} {:>11.5f}  ", 4),
+                   }
+# {:8d} {:>10}  {:}".format(s_line[0], s_line[1], " ".join(s_line[2:]
+
 #  number of columns for comparison, for sections in which order is maintained
 COMP_ORD_SEC_COL_DICT = {SEC_ATOMS: 4,
                          SEC_MASSES: 2,
@@ -158,6 +172,8 @@ SEC_PAT_DICT = {SEC_MASSES: re.compile(r"^Masses.*"),
 # For output from comparing data files; how indicate it came from the first file or second
 FILE1_SIGN = "+ "
 FILE2_SIGN = "- "
+# tolerance for comparing output files
+COMP_TOL = 0.00001
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -210,6 +226,9 @@ def parse_cmdline(argv):
     except InvalidDataError as e:
         warning(e)
         return args, INVALID_DATA
+    except ConfigParser.MissingSectionHeaderError as e:
+        warning(e)
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -275,6 +294,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
     with open(data_file) as d:
         print("Reading file: {}".format(data_file))
         section = SEC_HEAD
+        found_box_size = False
         section_order = []
         count = 0
         for key in num_dict_headers:
@@ -300,8 +320,18 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 else:
                     section, count = find_section_state(line, section, section_order, content, highlight_content)
                     if section == SEC_HEAD:
-                        content[SEC_HEAD].append(line)
-                        find_header_values(line, nums_dict)
+                        s_line = line.split()
+                        try:
+                            # For the box sizes:
+                            s_line[0:2] = map(float, s_line[0:2])
+                            if not found_box_size:
+                                found_box_size = True
+                                content[SEC_HEAD].append("")
+                            content[SEC_HEAD].append('{:12.5f} {:12.5f} {:} {:}'.format(*s_line))
+                        except ValueError:
+                            s_line[0] = int(s_line[0])
+                            content[SEC_HEAD].append('{:12d}  {:}'.format(s_line[0], " ".join(s_line[1:])))
+                            find_header_values(line, nums_dict)
                     else:
                         # Upon exiting header, see if have minimum data needed
                         if nums_dict[NUM_ATOMS] is None:
@@ -319,9 +349,9 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 try:
                     coeff_id = int(s_line[0])
                 except ValueError as e:
-                    raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: "
-                                           "{}. \nCheck number of lines in the section to make sure that they "
-                                           "match the number specified in the header section.".format(e, line, data_file))
+                    raise InvalidDataError("Encountered error '{}' reading line: {} \n  in file: {}\n"
+                                           "Check number of lines in the section to make sure that they match the "
+                                           "number specified in the header section.".format(e, line, data_file))
 
                 # Rename the following to make it easier to follow:
                 type_count = TYPE_SEC_DICT[section][0]
@@ -336,7 +366,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 content[section].append(s_line)
 
                 if coeff_id in highlight_types:
-                    highlight_content[section].append(line)
+                    highlight_content[section].append(s_line)
                 if type_count in nums_dict:
                     if count == nums_dict[type_count]:
                         content[section].sort()
@@ -348,13 +378,40 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                     raise InvalidDataError("Found section {}, but did not find number of entries for that section "
                                            "in the header.".format(section))
 
-            elif section in [SEC_ATOMS, SEC_VELOS]:
+            elif section == SEC_VELOS:
+                s_line = line.split()
+                try:
+                    atom_id = int(s_line[0])
+                except (ValueError, KeyError) as e:
+                    raise InvalidDataError("In section '{}', Error {} on line: {}\n  in file: {}"
+                                           "".format(section, e, line, data_file))
+                if atom_id in atom_id_dict:
+                    s_line[0] = atom_id_dict[atom_id]
+                else:
+                    s_line[0] = atom_id
+                content[section].append(s_line)
+
+                if atom_id in cfg[PRINT_DATA_ATOMS] or atom_id in cfg[PRINT_OWN_ATOMS]:
+                    highlight_content[section].append(s_line)
+
+                for col in range(1, 4):
+                    s_line[col] = float(s_line[col])
+
+                if count == nums_dict[NUM_ATOMS]:
+                    content[section].sort()
+                    highlight_content[section].sort()
+                    section = None
+                else:
+                    count += 1
+
+            elif section == SEC_ATOMS:
                 s_line = line.split()
                 try:
                     atom_id = int(s_line[0])
                     atom_type = int(s_line[2])
                 except (ValueError, KeyError) as e:
-                    raise InvalidDataError("Error {} on line: {}\n  in file: {}".format(e, line, data_file))
+                    raise InvalidDataError("In section '{}', Error {} on line: {}\n  in file: {}"
+                                           "".format(section, e, line, data_file))
 
                 if atom_id in atom_id_dict:
                     s_line[0] = atom_id_dict[atom_id]
@@ -363,6 +420,9 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
 
                 if atom_type in type_dict[SEC_ATOMS]:
                     s_line[2] = type_dict[SEC_ATOMS][atom_type]
+
+                for col in range(3, 7):
+                    s_line[col] = float(s_line[col])
 
                 content[section].append(s_line)
 
@@ -454,8 +514,14 @@ def print_content(atom_id_dict, cfg, content, data_file, highlight_content, sect
     select_data_content = []
     for section in section_order:
         # empty list will become an empty line
-        data_content += [''] + [section, ''] + content[section]
-        select_data_content += [section] + highlight_content[section]
+        data_content += [''] + [section, '']
+        select_data_content += [section]
+        sec_format = SEC_FORMAT_DICT[section][0]
+        comment_col = SEC_FORMAT_DICT[section][1]
+        for line in content[section]:
+            data_content.append(sec_format.format(*line[:comment_col]) + " ".join(line[comment_col:]))
+        for line in highlight_content[section]:
+            select_data_content.append(sec_format.format(*line[:comment_col]) + " ".join(line[comment_col:]))
 
     # Only print a "new" data file if something is changed
     dict_lens = len(atom_id_dict)
@@ -498,7 +564,7 @@ def compare_heads(list1, list2, diff_list):
             diff_list.append(FILE2_SIGN + line)
 
 
-def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list):
+def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list, sec_format, comment_col):
     """
     Determine if section entries are meaningfully different. That is it ignores:
     * diffs in formatting
@@ -514,6 +580,8 @@ def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list):
     @param last_col_to_compare: the last col in the lists within the main list that should be compared (excludes
              notes, X, Y, Z coords for the Atoms section...)
     @param diff_list: collection of (meaningful) differences between lists
+    @param sec_format: pretty formatting for non-comment columns (section-specific)
+    @param comment_col: index of the comment column
     """
     # sets used to compare differences
     set1 = set()
@@ -538,8 +606,44 @@ def compare_lists(list1, list2, first_col_comp, last_col_to_compare, diff_list):
         new_list1.append([FILE1_SIGN] + dict1[entry])
     for entry in only2:
         new_list2.append([FILE2_SIGN] + dict2[entry])
-    diff_list += sorted(new_list1, key=itemgetter(1))
-    diff_list += sorted(new_list2, key=itemgetter(1))
+
+    # Now, check that they are truly different, not just because of floating point representation
+    # Only the sections that have first_col_comp == 0 have floats
+    if first_col_comp == 0:
+        float_dict1 = {}
+        lines_to_remove1 = []
+        float_dict2 = {}
+        lines_to_remove2 = []
+        for line1 in new_list1:
+            # add one to col number because added the file sign to the beginning of the list
+            float_dict1[line1[1]] = ([float(line1[x]) for x in range(first_col_comp+1, last_col_to_compare+1)], line1)
+        for line2 in new_list2:
+            # add one to col number because added the file sign to the beginning of the list
+            float_dict2[line2[1]] = ([float(line2[x]) for x in range(first_col_comp+1, last_col_to_compare+1)], line2)
+        for line_key in float_dict1:
+            if line_key in float_dict2:
+                within_tol = True
+                for col1, col2 in zip(float_dict1[line_key][0], float_dict2[line_key][0]):
+                    # if difference greater than the tolerance, the difference is not just precision
+                    float_diff = abs(col1 - col2)
+                    calc_tol = max(COMP_TOL * max(abs(col1), abs(col2)), COMP_TOL)
+                    if float_diff > calc_tol:
+                        within_tol = False
+                        break
+                if within_tol:
+                    lines_to_remove1.append(float_dict1[line_key][1])
+                    lines_to_remove2.append(float_dict2[line_key][1])
+        for line in lines_to_remove1:
+            new_list1.remove(line)
+        for line in lines_to_remove2:
+            new_list2.remove(line)
+
+    new_list1 = sorted(new_list1, key=itemgetter(1))
+    new_list2 = sorted(new_list2, key=itemgetter(1))
+
+    for line in new_list1 + new_list2:
+        diff_list.append(line[0] + sec_format.format(*line[1:comment_col+1]) + " ".join(line[comment_col+1:]))
+
 
 def comp_files(cfg, atom_id_dict, type_dicts):
     """
@@ -569,11 +673,13 @@ def comp_files(cfg, atom_id_dict, type_dicts):
         elif section in COMP_ORD_SEC_COL_DICT:
             diffs.append("\nDifferences in section '{}':".format(section))
             num_col_to_compare = COMP_ORD_SEC_COL_DICT[section]
-            compare_lists(first_content[section], second_content[section], 0, num_col_to_compare, diffs)
+            compare_lists(first_content[section], second_content[section], 0, num_col_to_compare, diffs,
+                          SEC_FORMAT_DICT[section][0], SEC_FORMAT_DICT[section][1])
         elif section in NUM_SEC_DICT:
             diffs.append("\nDifferences in section '{}':".format(section))
             num_col_to_compare = NUM_SEC_DICT[section][1]
-            compare_lists(first_content[section], second_content[section], 1, num_col_to_compare, diffs)
+            compare_lists(first_content[section], second_content[section], 1, num_col_to_compare, diffs,
+                          SEC_FORMAT_DICT[section][0], SEC_FORMAT_DICT[section][1])
         else:
             print("Encountered unexpected section '{}'".format(section))
 

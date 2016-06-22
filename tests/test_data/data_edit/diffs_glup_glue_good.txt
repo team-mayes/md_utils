@@ -1,126 +1,126 @@
 Differences in head section:
 + Created by charmm2lammps v1.8.1 on Thu Mar 31 12:32:29 CDT 2016
-+ 514  angles
-+ 64  dihedrals
-+ 17  atom types
-+ 17  bond types
-+ 31  angle types
++          514  angles
++           64  dihedrals
++           17  atom types
++           17  bond types
++           31  angle types
 - Created by charmm2lammps v1.8.1 on Wed Mar 30 14:50:25 CDT 2016
-- 512  angles
-- 62  dihedrals
-- 18  atom types
-- 19  bond types
-- 32  angle types
+-          512  angles
+-           62  dihedrals
+-           18  atom types
+-           19  bond types
+-           32  angle types
 
 Differences in section 'Masses':
-+  14 12.011 # CC
-+  17 15.999 # OC
--  18 15.999 # OB
--  19 15.999 # OH1
--  20 12.011 # CD
++       14     12.011  # CC
++       17     15.999  # OC
+-       18     15.999  # OB
+-       19     15.999  # OH1
+-       20     12.011  # CD
 
 Differences in section 'Pair Coeffs':
-+  14 0.07 3.563595 0.07 3.563595 # CC
-+  17 0.12 3.029056 0.12 3.029056 # OC
--  18 0.12 3.029056 0.12 2.494516 # OB
--  19 0.1521 3.153781 0.1521 3.153781 # OH1
--  20 0.07 3.563595 0.07 3.563595 # CD
++       14       0.07   3.563595       0.07   3.563595  # CC
++       17       0.12   3.029056       0.12   3.029056  # OC
+-       18       0.12   3.029056       0.12   2.494516  # OB
+-       19     0.1521   3.153781     0.1521   3.153781  # OH1
+-       20       0.07   3.563595       0.07   3.563595  # CD
 
 Differences in section 'Atoms':
-+  10 1 8 0.09 -1.135 -5.992 1.73 # HA3
-+  22 1 11 -0.28 0.673 -0.826 1.124 # CT2
-+  25 1 14 0.62 -0.012 0.03 0.003 # CC
-+  26 1 17 -0.76 -0.93 -0.307 -0.7 # OC
-+  27 1 17 -0.76 0.616 1.203 -0.251 # OC
-+  28 2 3 -0.32 9.491 2.147 -7.819 # OTH
-+  29 2 4 0.44 9.094 2.844 -8.458 # HTH
-+  30 2 4 0.44 8.682 1.8 -7.286 # HTH
-+  31 2 4 0.44 -11.995 10.497 -10.45 # HTH
-+  100 25 1 0.41 -6.909 4.74 4.848 # HT
--  10 1 8 0.091 -1.135 -5.992 1.73 # HA3
--  22 1 11 -0.21 0.673 -0.826 1.124 # CT2 # CHANGE CHARGE
--  25 1 20 0.75 -0.012 0.03 0.003 # CD # RETYPE
--  26 1 18 -0.55 -0.93 -0.307 -0.7 # OB # RETYPE
--  27 1 19 -0.61 0.616 1.203 -0.251 # OH1 # RETYPE
--  28 2 2 -0.32 9.491 2.147 -7.819 # OT # RETYPE
--  29 2 1 0.44 9.094 2.844 -8.458 # HT # RETYPE
--  30 2 1 0.44 8.682 1.8 -7.286 # HT # RETYPE
--  31 1 5 0.44 0.186 1.638 -1.042 # H # RETYPE
--  100 25 1 0.411 -6.909 4.74 4.848 # HT
++       10       1     8      0.09      -1.135      -5.992       1.730  # HA3
++       22       1    11     -0.28       0.673      -0.826       1.124  # CT2
++       25       1    14      0.62      -0.012       0.030       0.003  # CC
++       26       1    17     -0.76      -0.930      -0.307      -0.700  # OC
++       27       1    17     -0.76       0.616       1.203      -0.251  # OC
++       28       2     3     -0.32       9.491       2.147      -7.819  # OTH
++       29       2     4      0.44       9.094       2.844      -8.458  # HTH
++       30       2     4      0.44       8.682       1.800      -7.286  # HTH
++       31       2     4      0.44     -11.995      10.497     -10.450  # HTH
++      100      25     1      0.41      -6.909       4.740       4.848  # HT
+-       10       1     8      0.09      -1.135      -5.992       1.730  # HA3
+-       22       1    11     -0.21       0.673      -0.826       1.124  # CT2 # CHANGE CHARGE
+-       25       1    20      0.75      -0.012       0.030       0.003  # CD # RETYPE
+-       26       1    18     -0.55      -0.930      -0.307      -0.700  # OB # RETYPE
+-       27       1    19     -0.61       0.616       1.203      -0.251  # OH1 # RETYPE
+-       28       2     2     -0.32       9.491       2.147      -7.819  # OT # RETYPE
+-       29       2     1      0.44       9.094       2.844      -8.458  # HT # RETYPE
+-       30       2     1      0.44       8.682       1.800      -7.286  # HT # RETYPE
+-       31       1     5      0.44       0.186       1.638      -1.042  # H # RETYPE
+-      100      25     1      0.41      -6.909       4.740       4.848  # HT
 
 Differences in section 'Bond Coeffs':
-+  6 525 1.26 # CC OC
--  18 750 1.22 # CD OB
--  19 230 1.4 # CD OH1
--  20 545 0.96 # H OH1
++        6        525       1.26  # CC OC
+-       18        750       1.22  # CD OB
+-       19        230        1.4  # CD OH1
+-       20        545       0.96  # H OH1
 
 Differences in section 'Bonds':
-+  25 6 25 26 # CC OC
-+  26 6 27 25 # CC OC
-+  27 17 28 29 # HTH OTH
-+  28 17 28 30 # HTH OTH
-+  29 17 28 31 # HTH OTH
--  8 18 25 26 # CD OB # RETYPE
--  9 19 27 25 # CD OH1 # RETYPE
--  27 20 27 31 # H OH1 # RETYPE
--  28 16 28 29 # HT OT # RETYPE
--  29 16 28 30 # HT OT # RETYPE
++       25       6      25      26  # CC OC
++       26       6      27      25  # CC OC
++       27      17      28      29  # HTH OTH
++       28      17      28      30  # HTH OTH
++       29      17      28      31  # HTH OTH
+-        8      18      25      26  # CD OB # RETYPE
+-        9      19      27      25  # CD OH1 # RETYPE
+-       27      20      27      31  # H OH1 # RETYPE
+-       28      16      28      29  # HT OT # RETYPE
+-       29      16      28      30  # HT OT # RETYPE
 
 Differences in section 'Angle Coeffs':
-+  15 40 118 50 2.388 # CT2 CC OC
-+  30 80 122.5 0 0 # NH1 C O
-+  31 100 124 70 2.225 # OC CC OC
--  31 80 122.5 0 0 # NH1 C O
--  32 70 125 20 2.442 # CT2 CD OB
--  33 55 110.5 0 0 # CT2 CD OH1
--  34 50 123 210 2.262 # OB CD OH1
++       15         40        118         50      2.388  # CT2 CC OC
++       30         80      122.5          0          0  # NH1 C O
++       31        100        124         70      2.225  # OC CC OC
+-       31         80      122.5          0          0  # NH1 C O
+-       32         70        125         20      2.442  # CT2 CD OB
+-       33         55      110.5          0          0  # CT2 CD OH1
+-       34         50        123        210      2.262  # OB CD OH1
 
 Differences in section 'Angles':
-+  38 15 22 25 26 # CT2 CC OC
-+  39 15 22 25 27 # CT2 CC OC
-+  45 31 27 25 26 # OC CC OC
-+  46 29 29 28 30 # HTH OTH HTH
-+  47 29 29 28 31 # HTH OTH HTH
-+  48 29 30 28 31 # HTH OTH HTH
--  20 32 22 25 26 # CT2 CD OB # RETYPE
--  21 33 22 25 27 # CT2 CD OH1 # RETYPE
--  45 34 27 25 26 # OB CD OH1 # RETYPE
--  47 28 29 28 30 # HT OT HT # RETYPE
++       38      15      22      25      26  # CT2 CC OC
++       39      15      22      25      27  # CT2 CC OC
++       45      31      27      25      26  # OC CC OC
++       46      29      29      28      30  # HTH OTH HTH
++       47      29      29      28      31  # HTH OTH HTH
++       48      29      30      28      31  # HTH OTH HTH
+-       20      32      22      25      26  # CT2 CD OB # RETYPE
+-       21      33      22      25      27  # CT2 CD OH1 # RETYPE
+-       45      34      27      25      26  # OB CD OH1 # RETYPE
+-       47      28      29      28      30  # HT OT HT # RETYPE
 
 Differences in section 'Dihedral Coeffs':
-+  10 0 1 180 1 # CC CT2 CT2A CT1
-+  11 0.38 2 180 0 # CC CT2 CT2A CT1
-+  12 0.59 3 180 0 # CC CT2 CT2A CT1
-+  28 0.05 6 180 1 # CT2A CT2 CC OC
-+  34 0.05 6 180 1 # HA2 CT2 CC OC
--  44 0.19 3 0 1 # CD CT2 CT2A CT1
--  45 0 6 180 1 # CT2A CT2 CD OB
--  46 0 6 180 1 # CT2A CT2 CD OH1
--  47 0 6 180 1 # HA2 CT2 CD OB
--  48 0 6 180 1 # HA2 CT2 CD OH1
++       10          0          1        180          1  # CC CT2 CT2A CT1
++       11       0.38          2        180          0  # CC CT2 CT2A CT1
++       12       0.59          3        180          0  # CC CT2 CT2A CT1
++       28       0.05          6        180          1  # CT2A CT2 CC OC
++       34       0.05          6        180          1  # HA2 CT2 CC OC
+-       44       0.19          3          0          1  # CD CT2 CT2A CT1
+-       45          0          6        180          1  # CT2A CT2 CD OB
+-       46          0          6        180          1  # CT2A CT2 CD OH1
+-       47          0          6        180          1  # HA2 CT2 CD OB
+-       48          0          6        180          1  # HA2 CT2 CD OH1
 
 Differences in section 'Dihedrals':
-+  45 10 17 19 22 25 # CC CT2 CT2A CT1
-+  46 11 17 19 22 25 # CC CT2 CT2A CT1
-+  47 12 17 19 22 25 # CC CT2 CT2A CT1
-+  53 28 19 22 25 27 # CT2A CT2 CC OC
-+  54 28 19 22 25 26 # CT2A CT2 CC OC
-+  61 34 23 22 25 27 # HA2 CT2 CC OC
-+  62 34 23 22 25 26 # HA2 CT2 CC OC
-+  63 34 24 22 25 27 # HA2 CT2 CC OC
-+  64 34 24 22 25 26 # HA2 CT2 CC OC
--  47 44 17 19 22 25 # CD CT2 CT2A CT1 # RETYPE
--  51 45 19 22 25 26 # CT2A CT2 CD OB # RETYPE
--  52 46 19 22 25 27 # CT2A CT2 CD OH1 # RETYPE
--  59 47 23 22 25 26 # HA2 CT2 CD OB # RETYPE
--  60 48 23 22 25 27 # HA2 CT2 CD OH1 # RETYPE
--  61 47 24 22 25 26 # HA2 CT2 CD OB # RETYPE
--  62 48 24 22 25 27 # HA2 CT2 CD OH1 # RETYPE
++       45      10      17      19      22      25  # CC CT2 CT2A CT1
++       46      11      17      19      22      25  # CC CT2 CT2A CT1
++       47      12      17      19      22      25  # CC CT2 CT2A CT1
++       53      28      19      22      25      27  # CT2A CT2 CC OC
++       54      28      19      22      25      26  # CT2A CT2 CC OC
++       61      34      23      22      25      27  # HA2 CT2 CC OC
++       62      34      23      22      25      26  # HA2 CT2 CC OC
++       63      34      24      22      25      27  # HA2 CT2 CC OC
++       64      34      24      22      25      26  # HA2 CT2 CC OC
+-       47      44      17      19      22      25  # CD CT2 CT2A CT1 # RETYPE
+-       51      45      19      22      25      26  # CT2A CT2 CD OB # RETYPE
+-       52      46      19      22      25      27  # CT2A CT2 CD OH1 # RETYPE
+-       59      47      23      22      25      26  # HA2 CT2 CD OB # RETYPE
+-       60      48      23      22      25      27  # HA2 CT2 CD OH1 # RETYPE
+-       61      47      24      22      25      26  # HA2 CT2 CD OB # RETYPE
+-       62      48      24      22      25      27  # HA2 CT2 CD OH1 # RETYPE
 
 Differences in section 'Improper Coeffs':
-+  3 96 0 # CC CT2 OC OC
--  6 100 0 # CD CT2 OH1 OB
++        3         96          0  # CC CT2 OC OC
+-        6        100          0  # CD CT2 OH1 OB
 
 Differences in section 'Impropers':
-+  5 3 25 22 27 26 # CC CT2 OC OC
--  5 6 25 22 27 26 # CD CT2 OH1 OB # RETYPE
++        5       3      25      22      27      26  # CC CT2 OC OC
+-        5       6      25      22      27      26  # CD CT2 OH1 OB # RETYPE

@@ -1,82 +1,82 @@
 Masses
-9 12.011 # C
-16 15.999 # O
+       9     12.011  # C
+      16     15.999  # O
 Pair Coeffs
-9 0.11 3.563595 0.11 3.563595 # C
-16 0.12 3.029056 0.12 2.494516 # O
+       9       0.11   3.563595       0.11   3.563595  # C
+      16       0.12   3.029056       0.12   2.494516  # O
 Atoms
-1 1 9 0.51 1.593 -3.81 0.565 # C
-2 1 16 -0.51 1.903 -4.744 1.314 # O
+       1       1     9      0.51       1.593      -3.810       0.565  # C
+       2       1    16     -0.51       1.903      -4.744       1.314  # O
 Bond Coeffs
-1 250 1.49 # C CT1
-3 370 1.345 # C NH1
-4 620 1.23 # C O
+       1        250       1.49  # C CT1
+       3        370      1.345  # C NH1
+       4        620       1.23  # C O
 Bonds
-8 3 1 3 # C NH1
-9 1 1 17 # C CT1
-10 4 2 1 # C O
+       8       3       1       3  # C NH1
+       9       1       1      17  # C CT1
+      10       4       2       1  # C O
 Angle Coeffs
-1 52 108 0 0 # C CT1 CT2A
-2 50 109.5 0 0 # C CT1 HB1
-3 50 107 0 0 # C CT1 NH1
-6 50 120 0 0 # C NH1 CT3
-7 34 123 0 0 # C NH1 H
-10 80 116.5 0 0 # CT1 C NH1
-11 80 121 0 0 # CT1 C O
-31 80 122.5 0 0 # NH1 C O
+       1         52        108          0          0  # C CT1 CT2A
+       2         50      109.5          0          0  # C CT1 HB1
+       3         50        107          0          0  # C CT1 NH1
+       6         50        120          0          0  # C NH1 CT3
+       7         34        123          0          0  # C NH1 H
+      10         80      116.5          0          0  # CT1 C NH1
+      11         80        121          0          0  # CT1 C O
+      31         80      122.5          0          0  # NH1 C O
 Angles
-9 2 1 17 18 # C CT1 HB1
-10 6 1 3 5 # C NH1 CT3
-11 7 1 3 4 # C NH1 H
-15 31 3 1 2 # NH1 C O
-16 10 3 1 17 # CT1 C NH1
-32 3 15 17 1 # C CT1 NH1
-38 11 17 1 2 # CT1 C O
-43 1 19 17 1 # C CT1 CT2A
+       9       2       1      17      18  # C CT1 HB1
+      10       6       1       3       5  # C NH1 CT3
+      11       7       1       3       4  # C NH1 H
+      15      31       3       1       2  # NH1 C O
+      16      10       3       1      17  # CT1 C NH1
+      32       3      15      17       1  # C CT1 NH1
+      38      11      17       1       2  # CT1 C O
+      43       1      19      17       1  # C CT1 CT2A
 Dihedral Coeffs
-1 0.11 1 0 1 # C CT1 CT2A CT2
-2 0.98 2 180 0 # C CT1 CT2A CT2
-3 1.6 3 180 0 # C CT1 CT2A CT2
-4 0.2 3 0 1 # C CT1 CT2A HA2
-5 0.2 1 180 1 # C CT1 NH1 C
-6 0 1 0 1 # C CT1 NH1 H
-9 0 3 0 1 # C NH1 CT3 HA3
-12 1.6 1 0 1 # CT1 C NH1 CT3
-13 2.5 2 180 0 # CT1 C NH1 CT3
-14 2.5 2 180 1 # CT1 C NH1 H
-23 0 1 0 1 # CT2A CT1 C NH1
-24 1.4 1 0 1 # CT2A CT1 C O
-29 2.5 2 180 1 # CT3 NH1 C O
-30 2.5 2 180 1 # H NH1 C O
-40 0 1 0 1 # HB1 CT1 C NH1
-41 0 1 0 1 # HB1 CT1 C O
-42 0.6 1 0 1 # NH1 C CT1 NH1
-43 0 1 0 1 # NH1 CT1 C O
+       1       0.11          1          0          1  # C CT1 CT2A CT2
+       2       0.98          2        180          0  # C CT1 CT2A CT2
+       3        1.6          3        180          0  # C CT1 CT2A CT2
+       4        0.2          3          0          1  # C CT1 CT2A HA2
+       5        0.2          1        180          1  # C CT1 NH1 C
+       6          0          1          0          1  # C CT1 NH1 H
+       9          0          3          0          1  # C NH1 CT3 HA3
+      12        1.6          1          0          1  # CT1 C NH1 CT3
+      13        2.5          2        180          0  # CT1 C NH1 CT3
+      14        2.5          2        180          1  # CT1 C NH1 H
+      23          0          1          0          1  # CT2A CT1 C NH1
+      24        1.4          1          0          1  # CT2A CT1 C O
+      29        2.5          2        180          1  # CT3 NH1 C O
+      30        2.5          2        180          1  # H NH1 C O
+      40          0          1          0          1  # HB1 CT1 C NH1
+      41          0          1          0          1  # HB1 CT1 C O
+      42        0.6          1          0          1  # NH1 C CT1 NH1
+      43          0          1          0          1  # NH1 CT1 C O
 Dihedrals
-5 1 1 17 19 22 # C CT1 CT2A CT2
-6 2 1 17 19 22 # C CT1 CT2A CT2
-7 3 1 17 19 22 # C CT1 CT2A CT2
-8 4 1 17 19 20 # C CT1 CT2A HA2
-9 4 1 17 19 21 # C CT1 CT2A HA2
-10 5 1 17 15 13 # C CT1 NH1 C
-11 6 1 17 15 16 # C CT1 NH1 H
-12 9 1 3 5 6 # C NH1 CT3 HA3
-13 9 1 3 5 7 # C NH1 CT3 HA3
-14 9 1 3 5 8 # C NH1 CT3 HA3
-15 30 2 1 3 4 # H NH1 C O
-16 29 2 1 3 5 # CT3 NH1 C O
-17 24 2 1 17 19 # CT2A CT1 C O
-18 43 2 1 17 15 # NH1 CT1 C O
-19 41 2 1 17 18 # HB1 CT1 C O
-20 23 3 1 17 19 # CT2A CT1 C NH1
-21 42 3 1 17 15 # NH1 C CT1 NH1
-22 40 3 1 17 18 # HB1 CT1 C NH1
-23 14 4 3 1 17 # CT1 C NH1 H
-27 12 5 3 1 17 # CT1 C NH1 CT3
-28 13 5 3 1 17 # CT1 C NH1 CT3
+       5       1       1      17      19      22  # C CT1 CT2A CT2
+       6       2       1      17      19      22  # C CT1 CT2A CT2
+       7       3       1      17      19      22  # C CT1 CT2A CT2
+       8       4       1      17      19      20  # C CT1 CT2A HA2
+       9       4       1      17      19      21  # C CT1 CT2A HA2
+      10       5       1      17      15      13  # C CT1 NH1 C
+      11       6       1      17      15      16  # C CT1 NH1 H
+      12       9       1       3       5       6  # C NH1 CT3 HA3
+      13       9       1       3       5       7  # C NH1 CT3 HA3
+      14       9       1       3       5       8  # C NH1 CT3 HA3
+      15      30       2       1       3       4  # H NH1 C O
+      16      29       2       1       3       5  # CT3 NH1 C O
+      17      24       2       1      17      19  # CT2A CT1 C O
+      18      43       2       1      17      15  # NH1 CT1 C O
+      19      41       2       1      17      18  # HB1 CT1 C O
+      20      23       3       1      17      19  # CT2A CT1 C NH1
+      21      42       3       1      17      15  # NH1 C CT1 NH1
+      22      40       3       1      17      18  # HB1 CT1 C NH1
+      23      14       4       3       1      17  # CT1 C NH1 H
+      27      12       5       3       1      17  # CT1 C NH1 CT3
+      28      13       5       3       1      17  # CT1 C NH1 CT3
 Improper Coeffs
-1 120 0 # C CT1 NH1 O
-5 20 0 # H CT3 C NH1
+       1        120          0  # C CT1 NH1 O
+       5         20          0  # H CT3 C NH1
 Impropers
-2 1 1 17 3 2 # C CT1 NH1 O
-3 5 3 1 5 4 # H CT3 C NH1
+       2       1       1      17       3       2  # C CT1 NH1 O
+       3       5       3       1       5       4  # H CT3 C NH1

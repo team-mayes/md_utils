@@ -29,6 +29,9 @@ SORT_INI = os.path.join(SUB_DATA_DIR, 'data_sort.ini')
 COMPARE_INI = os.path.join(SUB_DATA_DIR, 'data_compare.ini')
 COMP_DIH_INI = os.path.join(SUB_DATA_DIR, 'data_compare_dih.ini')
 COMP_DIH_ALT_INI = os.path.join(SUB_DATA_DIR, 'data_compare_dih_alt_order.ini')
+COMP_FROM_LAMMPS_INI = os.path.join(SUB_DATA_DIR, 'data_compare_from_lammps.ini')
+SORT_FROM_LAMMPS_INI = os.path.join(SUB_DATA_DIR, 'data_sort_highlight_from_lammps.ini')
+
 
 # Output files
 
@@ -66,6 +69,15 @@ COMP_DIH_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_dih_good.txt')
 # noinspection PyUnresolvedReferences
 COMP_DIH_ALT_OUT = os.path.join(SUB_DATA_DIR, 'diffs_glu_deprot_only_dih.txt')
 COMP_DIH_ALT_OUT_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_glup_glue_dih_alt_good.txt')
+# noinspection PyUnresolvedReferences
+COMP_FROM_LAMMPS = os.path.join(SUB_DATA_DIR, 'diffs_0.875_0_deprot.txt')
+COMP_FROM_LAMMPS_GOOD = os.path.join(SUB_DATA_DIR, 'diffs_0.875_0_deprot_good.txt')
+# noinspection PyUnresolvedReferences
+SORT_FROM_LAMMPS = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_new.data')
+SORT_FROM_LAMMPS_GOOD = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_new_good.data')
+# noinspection PyUnresolvedReferences
+SELECT_FROM_LAMMPS = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_selected.txt')
+SELECT_FROM_LAMMPS_GOOD = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_selected_good.txt')
 
 
 class TestDataEdit(unittest.TestCase):
@@ -76,6 +88,11 @@ class TestDataEdit(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testBadIni(self):
+        # Accidentally give it a non-config file
+        with capture_stderr(main, ["-c", COMP1_OUT_GOOD]) as output:
+            self.assertTrue("File contains no section headers" in output)
+
+    def testNoIni(self):
         main(["-c", "ghost.ini"])
 
     def testDefIni(self):
@@ -84,6 +101,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
         finally:
             silent_remove(DEF_OUT)
+            # pass
 
     def testSerca(self):
         """
@@ -111,6 +129,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_OUT, GLUP_GOOD_OUT))
         finally:
             silent_remove(GLUP_OUT)
+            # pass
 
     def testImptAtomsBadInput(self):
         with capture_stderr(main, ["-c", IMP_ATOMS_BAD_INI]) as output:
@@ -123,6 +142,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OUT_GOOD))
         finally:
             [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
+            # pass
 
     def testOwnAtoms(self):
         try:
@@ -131,6 +151,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OWN_OUT_GOOD))
         finally:
             [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
+            # pass
 
     def testKeyTypo(self):
         with capture_stderr(main, ["-c", IMP_ATOMS_TYPO_INI]) as output:
@@ -154,6 +175,7 @@ class TestDataEdit(unittest.TestCase):
             #                 print(g_line.strip())
         finally:
             silent_remove(GLUP_RETYPE_OUT)
+            # pass
 
     def testSort(self):
         try:
@@ -161,6 +183,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
         finally:
             silent_remove(GLUP_SORT_OUT)
+            # pass
 
     def testCompare(self):
         try:
@@ -168,15 +191,19 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(COMP1_OUT, COMP1_OUT_GOOD))
         finally:
             silent_remove(COMP1_OUT)
+            # pass
 
     def testCompDih(self):
         # Test it is okay with sections in the 2nd but not first file
         with capture_stderr(main, ["-c", COMP_DIH_INI]) as output:
             self.assertTrue("WARNING:  Skipping section" in output)
         try:
+            print(COMP_OUT, COMP_DIH_OUT_GOOD)
             self.assertFalse(diff_lines(COMP_OUT, COMP_DIH_OUT_GOOD))
+
         finally:
             silent_remove(COMP_OUT)
+            # pass
 
     def testCompDihAlt(self):
         # Test it is okay with sections in the 1st but not 2nd file
@@ -186,3 +213,21 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(COMP_DIH_ALT_OUT, COMP_DIH_ALT_OUT_GOOD))
         finally:
             silent_remove(COMP_DIH_ALT_OUT)
+
+    def testDataFromLammps(self):
+        try:
+            main(["-c", COMP_FROM_LAMMPS_INI])
+            self.assertFalse(diff_lines(COMP_FROM_LAMMPS, COMP_FROM_LAMMPS_GOOD))
+        finally:
+            silent_remove(COMP_FROM_LAMMPS)
+            # pass
+
+    def testSortFromLammps(self):
+        try:
+            main(["-c", SORT_FROM_LAMMPS_INI])
+            self.assertFalse(diff_lines(SORT_FROM_LAMMPS, SORT_FROM_LAMMPS_GOOD))
+            self.assertFalse(diff_lines(SELECT_FROM_LAMMPS, SELECT_FROM_LAMMPS_GOOD))
+        finally:
+            silent_remove(SORT_FROM_LAMMPS)
+            silent_remove(SELECT_FROM_LAMMPS)
+            # pass

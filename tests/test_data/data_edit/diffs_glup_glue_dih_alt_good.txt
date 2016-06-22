@@ -1,43 +1,43 @@
 Differences in head section:
 + Created by charmm2lammps v1.8.1 on Wed Mar 30 14:50:25 CDT 2016
-+ 512  angles
-+ 62  dihedrals
-+ 18  atom types
-+ 19  bond types
-+ 32  angle types
++          512  angles
++           62  dihedrals
++           18  atom types
++           19  bond types
++           32  angle types
 - Created by charmm2lammps v1.8.1 on Thu Mar 31 12:32:29 CDT 2016
-- 514  angles
-- 64  dihedrals
-- 17  atom types
-- 17  bond types
-- 31  angle types
+-          514  angles
+-           64  dihedrals
+-           17  atom types
+-           17  bond types
+-           31  angle types
 
 Differences in section 'Dihedral Coeffs':
-+  44 0.19 3 0 1 # CD CT2 CT2A CT1
-+  45 0 6 180 1 # CT2A CT2 CD OB
-+  46 0 6 180 1 # CT2A CT2 CD OH1
-+  47 0 6 180 1 # HA2 CT2 CD OB
-+  48 0 6 180 1 # HA2 CT2 CD OH1
--  10 0 1 180 1 # CC CT2 CT2A CT1
--  11 0.38 2 180 0 # CC CT2 CT2A CT1
--  12 0.59 3 180 0 # CC CT2 CT2A CT1
--  28 0.05 6 180 1 # CT2A CT2 CC OC
--  34 0.05 6 180 1 # HA2 CT2 CC OC
++       44       0.19          3          0          1  # CD CT2 CT2A CT1
++       45          0          6        180          1  # CT2A CT2 CD OB
++       46          0          6        180          1  # CT2A CT2 CD OH1
++       47          0          6        180          1  # HA2 CT2 CD OB
++       48          0          6        180          1  # HA2 CT2 CD OH1
+-       10          0          1        180          1  # CC CT2 CT2A CT1
+-       11       0.38          2        180          0  # CC CT2 CT2A CT1
+-       12       0.59          3        180          0  # CC CT2 CT2A CT1
+-       28       0.05          6        180          1  # CT2A CT2 CC OC
+-       34       0.05          6        180          1  # HA2 CT2 CC OC
 
 Differences in section 'Dihedrals':
-+  47 44 17 19 22 25 # CD CT2 CT2A CT1 # RETYPE
-+  51 45 19 22 25 26 # CT2A CT2 CD OB # RETYPE
-+  52 46 19 22 25 27 # CT2A CT2 CD OH1 # RETYPE
-+  59 47 23 22 25 26 # HA2 CT2 CD OB # RETYPE
-+  61 47 24 22 25 26 # HA2 CT2 CD OB # RETYPE
-+  60 48 23 22 25 27 # HA2 CT2 CD OH1 # RETYPE
-+  62 48 24 22 25 27 # HA2 CT2 CD OH1 # RETYPE
--  45 10 17 19 22 25 # CC CT2 CT2A CT1
--  46 11 17 19 22 25 # CC CT2 CT2A CT1
--  47 12 17 19 22 25 # CC CT2 CT2A CT1
--  54 28 19 22 25 26 # CT2A CT2 CC OC
--  53 28 19 22 25 27 # CT2A CT2 CC OC
--  62 34 23 22 25 26 # HA2 CT2 CC OC
--  61 34 23 22 25 27 # HA2 CT2 CC OC
--  64 34 24 22 25 26 # HA2 CT2 CC OC
--  63 34 24 22 25 27 # HA2 CT2 CC OC
++       47      44      17      19      22      25  # CD CT2 CT2A CT1 # RETYPE
++       51      45      19      22      25      26  # CT2A CT2 CD OB # RETYPE
++       52      46      19      22      25      27  # CT2A CT2 CD OH1 # RETYPE
++       59      47      23      22      25      26  # HA2 CT2 CD OB # RETYPE
++       60      48      23      22      25      27  # HA2 CT2 CD OH1 # RETYPE
++       61      47      24      22      25      26  # HA2 CT2 CD OB # RETYPE
++       62      48      24      22      25      27  # HA2 CT2 CD OH1 # RETYPE
+-       45      10      17      19      22      25  # CC CT2 CT2A CT1
+-       46      11      17      19      22      25  # CC CT2 CT2A CT1
+-       47      12      17      19      22      25  # CC CT2 CT2A CT1
+-       53      28      19      22      25      27  # CT2A CT2 CC OC
+-       54      28      19      22      25      26  # CT2A CT2 CC OC
+-       61      34      23      22      25      27  # HA2 CT2 CC OC
+-       62      34      23      22      25      26  # HA2 CT2 CC OC
+-       63      34      24      22      25      27  # HA2 CT2 CC OC
+-       64      34      24      22      25      26  # HA2 CT2 CC OC
