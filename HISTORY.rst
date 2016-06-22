@@ -3,6 +3,12 @@
 History
 -------
 
+0.8.2 (2016-06-22)
+------------------
+
+* Updated data_edit so that output is formatted into columns. Additionally, when comparing data files, lines that
+differ only by more a specified tolerance (~1e-5) are now ignored.
+
 0.8.1 (2016-06-14)
 ------------------
 
