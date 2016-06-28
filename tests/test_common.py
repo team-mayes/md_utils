@@ -7,12 +7,11 @@ import logging
 import shutil
 import tempfile
 import unittest
-
 import os
 
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote)
+                                create_out_fname, dequote, quote, conv_raw_val)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -47,6 +46,8 @@ GHOST = 'ghost'
 
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
+NOT_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_diff_val.csv')
+MISS_COL_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_miss_val.csv')
 MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
 
 IMPROP_SEC = os.path.join(SUB_DATA_DIR, 'glue_improp.data')
@@ -123,7 +124,7 @@ class TestRateCalc(unittest.TestCase):
     #     print("Rate coefficient in s^-1: {}".format(rate_coeff))
     #     print("Timescale in s: {}".format(1/rate_coeff))
     #     print("Timescale in ms: {}".format(1000/rate_coeff))
-    #     print("Timescale in mircoseconds: {}".format(1000*1000/rate_coeff))
+    #     print("Timescale in microseconds: {}".format(1000*1000/rate_coeff))
 
 
 class TestFindFiles(unittest.TestCase):
@@ -248,6 +249,18 @@ class TestDiffLines(unittest.TestCase):
     def testMachinePrecDiff2(self):
         self.assertFalse(diff_lines(ALMOST_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
 
+    def testDiff(self):
+        print("hello ", diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        # self.assertTrue(diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        # self.assertTrue(diff_lines(GOOD_OH_DIST_OUT_PATH, NOT_OH_DIST_OUT_PATH))
+
+    def testDiffColNum(self):
+        hello = diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        for line in hello:
+            print(line)
+        self.assertTrue(diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        self.assertTrue(diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_COL_OH_DIST_OUT_PATH))
+
     def testMissLine(self):
         diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
         self.assertTrue(len(diff_line_list) == 1)
@@ -259,21 +272,43 @@ class TestDiffLines(unittest.TestCase):
         self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT))
 
 
-class TestDequote(unittest.TestCase):
-    def testNoQuotes(self):
-        raw = GHOST
-        proc = dequote(raw)
-        self.assertTrue(raw == proc)
-        self.assertTrue(GHOST == proc)
+class TestQuoteDeQuote(unittest.TestCase):
+    def testQuoting(self):
+        self.assertTrue(quote((0, 1)) == '"(0, 1)"')
 
-    def testSingleQuotes(self):
-        raw = "'" + GHOST + "'"
-        proc = dequote(raw)
-        self.assertFalse(raw == proc)
-        self.assertTrue(GHOST == proc)
+    def testNoQuotingNeeded(self):
+        self.assertTrue(quote('"(0, 1)"') == '"(0, 1)"')
 
-    def testDoubleQuotes(self):
-        raw = '"' + GHOST + '"'
-        proc = dequote(raw)
-        self.assertFalse(raw == proc)
-        self.assertTrue(GHOST == proc)
+    def testDequote(self):
+        self.assertTrue(dequote('"(0, 1)"') == '(0, 1)')
+
+    def testNoDequoteNeeded(self):
+        self.assertTrue(dequote("(0, 1)") == '(0, 1)')
+
+    def testDequoteUnmatched(self):
+        self.assertTrue(dequote('"' + '(0, 1)') == '"(0, 1)')
+
+
+class TestConversions(unittest.TestCase):
+    def testNotBool(self):
+        try:
+            str_to_bool("hello")
+        except ValueError as e:
+            self.assertTrue("Cannot covert" in e.message)
+
+    def testIntList(self):
+        int_str = '2,3,4'
+        int_list = [2, 3, 4]
+        self.assertEquals(int_list, conv_raw_val(int_str, []))
+
+    def testNotIntMissFlag(self):
+        non_int_str = 'a,b,c'
+        try:
+            conv_raw_val(non_int_str, [])
+        except ValueError as e:
+            self.assertTrue("invalid literal for int()" in e.message)
+
+    def testNotIntList(self):
+        non_int_str = 'a,b,c'
+        non_int_list = ['a', 'b', 'c']
+        self.assertEquals(non_int_list, conv_raw_val(non_int_str, [], int_list=False))

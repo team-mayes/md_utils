@@ -8,7 +8,7 @@ alternately: returns maximum x, y, and z coordinates, plus the values after a bu
 from __future__ import print_function
 
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_file, dequote)
+                                np_float_array_from_file, create_out_fname, list_to_file, dequote, quote)
 import sys
 import argparse
 
@@ -68,16 +68,14 @@ def parse_cmdline(argv):
 
 def process_file(data_file, len_buffer, delimiter=' ', header=False):
     try:
-        dim_vectors = np_float_array_from_file(data_file, delimiter=delimiter, header=header)
+        dim_vectors, header_row = np_float_array_from_file(data_file, delimiter=delimiter, header=header)
     except InvalidDataError as e:
         raise InvalidDataError("{}\n"
                                "Run program with '-h' to see options, such as specifying header row (-n) "
                                "and/or delimiter (-d)".format(e))
 
     if header:
-        with open(data_file, 'r') as f:
-            header_row = f.readline().strip()
-            to_print = [['" "'] + header_row.split(delimiter)]
+        to_print = [['" "'] + [quote(col) for col in header_row]]
     else:
         to_print = []
 
@@ -94,9 +92,9 @@ def process_file(data_file, len_buffer, delimiter=' ', header=False):
     for index, row in enumerate(to_print):
         if index == 0 and header:
                 print("{:>26s} {}".format(dequote(row[0]),
-                                          ' '.join(['{:>12s}'.format(dequote(x.strip())) for x in row[1:]])))
+                                          ' '.join(['{:>16s}'.format(dequote(x.strip())) for x in row[1:]])))
         else:
-            print("{:>26s} {}".format(dequote(row[0]), ' '.join(['{:12.6f}'.format(x) for x in row[1:]])))
+            print("{:>26s} {}".format(dequote(row[0]), ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv')
     list_to_file(to_print, f_name, delimiter=',')

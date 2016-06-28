@@ -292,44 +292,50 @@ def str_to_file(str_val, fname, mode='w'):
 def np_float_array_from_file(data_file, delimiter=" ", header=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
-    @param data_file: file expected to have space-separated values, with the same number of entries per line
+    @param data_file: file expected to have space-separated values, with the same number of entries per row
     @param delimiter: default is a space-separated file
     @param header: default is no header; alternately, specify number of header lines
-    @return: a numpy array or InvalidDataError if np.loadtxt was unsuccessful
+    @return: a numpy array or InvalidDataError if unsuccessful, followed by the header_row (None if none specified)
     """
-    try:
-        dim_vectors = np.genfromtxt(data_file, dtype=np.float64, delimiter=delimiter, skip_header=header)
-        if np.isnan(np.min(dim_vectors)):
-            warning("Encountered an entry which could not be converted to a float. 'nan' will be returned for "
-                    "for the stats for that column.")
-    except ValueError:
-        with open(data_file) as d:
-            first_line = None
-            for line in d:
-                line = line.strip()
-                try:
-                    f_line = [float(x) for x in line.split()]
-                except ValueError:
-                    warning("Could not convert the following line to floats: {}\nStats will "
-                            "not be calculated for the affected column(s)".format(line))
-                    continue
-                if first_line is None:
-                    first_line = f_line
-                else:
-                    if len(f_line) != len(first_line):
-                        raise InvalidDataError("File could not be read as an array of floats: {}\n  Expected "
-                                               "space-separated values with an equal number of columns per row.\n  "
-                                               "However, found {} values on the first line ({})\n  "
-                                               "           and {} values on the later line ({})"
-                                               "".format(data_file,
-                                                         len(first_line), first_line,
-                                                         len(f_line), f_line))
-        raise InvalidDataError("File could not be read as an array of floats: {}\n Expected space-separated values "
-                               "with an equal number of columns per row.".format(data_file))
-    if len(dim_vectors.shape) == 1:
-        raise InvalidDataError("File contains a vector, not an array of floats: {}\n".format(data_file))
+    header_row = None
+    with open(data_file) as csv_file:
+        csv_list = list(csv.reader(csv_file, delimiter=delimiter))
+    if header:
+        header_row = csv_list[0]
 
-    return dim_vectors
+    try:
+        data_array = np.genfromtxt(data_file, dtype=np.float64, delimiter=delimiter, skip_header=header)
+    except ValueError:
+        data_array = None
+        line_len = None
+        for row in csv_list[1:]:
+            if len(row) == 0:
+                continue
+            s_len = len(row)
+            if line_len is None:
+                line_len = s_len
+            elif s_len != line_len:
+                raise InvalidDataError('File could not be read as an array of floats: {}\n  Expected '
+                                       'values separated by "{}" with an equal number of columns per row.\n'
+                                       '  However, found {} values on the first data row'
+                                       '  and {} values on the later row: "{}")'
+                                       ''.format(data_file, delimiter, line_len, s_len, row))
+            data_vector = np.empty([line_len], dtype=np.float64)
+            for col in range(line_len):
+                try:
+                    data_vector[col] = float(row[col])
+                except ValueError:
+                    data_vector[col] = np.nan
+            if data_array is None:
+                data_array = np.copy(data_vector)
+            else:
+                data_array = np.vstack((data_array, data_vector))
+    if len(data_array.shape) == 1:
+        raise InvalidDataError("File contains a vector, not an array of floats: {}\n".format(data_file))
+    if np.isnan(data_array).any():
+        warning("Encountered entry (or entries) which could not be converted to a float. "
+                "'nan' will be returned for the stats for that column.")
+    return data_array, header_row
 
 
 def create_backup_filename(orig):
@@ -784,6 +790,15 @@ def dequote(s):
     return s
 
 
+def quote(s):
+    """
+    Converts a variable into a quoted string
+    """
+    if (s[0] == s[-1]) and s.startswith(("'", '"')):
+        return str(s)
+    return '"' + str(s) + '"'
+
+
 # Comparisons #
 
 def conv_num(s):
@@ -826,30 +841,32 @@ def diff_lines(floc1, floc2):
     if len(diff_plus_lines) == len(diff_neg_lines):
         # if the same number of lines, there is a chance that the difference is only due to difference in
         # floating point precision. Check each value of the line, split on whitespace or comma
+        diff_lines_list = []
         for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
             if len(line_plus) == len(line_neg):
+                print("Checking for differences between: ", line_neg, line_plus)
                 for item_plus, item_neg in zip(line_plus, line_neg):
-                    print("yeo", item_neg, item_plus)
                     if isinstance(item_plus, float) and isinstance(item_neg, float):
-                        print("yeo", item_neg, item_plus)
                         # if difference greater than the tolerance, the difference is not just precision
                         float_diff = abs(item_plus - item_neg)
                         calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
                         if float_diff > calc_tol:
                             warning("Values {} and {} differ by {}, which is greater than the calculated tolerance ({})"
                                     "".format(item_plus, item_neg, float_diff, calc_tol))
-                            return diff_lines_list
+                            diff_lines_list.append("- " + " ".join(map(str, line_neg)))
+                            diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
+                            break
                     else:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
-                            return diff_lines_list
-            # Not the same number of item in the lines, so return the non-empty list
+                            diff_lines_list.append("- " + " ".join(line_neg))
+                            diff_lines_list.append("+ " + " ".join(line_plus))
+                            break
+            # Not the same number of items in the lines
             else:
-                return diff_lines_list
-    # Not the same number of lines, so return the non-empty list
-    else:
-        return diff_lines_list
-    return []
+                diff_lines_list.append("- " + " ".join(map(str, line_neg)))
+                diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
+    return diff_lines_list
 
 
 # Data Structures #

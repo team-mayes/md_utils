@@ -8,13 +8,12 @@ from __future__ import print_function
 
 import argparse
 import sys
-
 import numpy as np
 # noinspection PyCompatibility
 import ConfigParser
 
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_file, dequote, process_cfg)
+                                np_float_array_from_file, create_out_fname, list_to_file, process_cfg)
 
 __author__ = 'hmayes'
 
@@ -134,15 +133,11 @@ def parse_cmdline(argv):
 
 def process_file(data_file,  mcfg, delimiter=','):
     try:
-        dim_vectors = np_float_array_from_file(data_file, delimiter=delimiter, header=1)
+        dim_vectors, headers = np_float_array_from_file(data_file, delimiter=delimiter, header=1)
     except InvalidDataError as e:
         raise InvalidDataError("{}\n"
                                "Run program with '-h' to see options, such as specifying "
                                "and/or delimiter (-d)".format(e))
-
-    with open(data_file, 'r') as f:
-        header_row = f.readline().strip()
-        headers = [dequote(x) for x in header_row.split(delimiter)]
 
     col_index_dict = {}
     for section in [MAX_SEC, MIN_SEC]:

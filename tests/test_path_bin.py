@@ -3,7 +3,6 @@
 """
 Tests path_bin.
 """
-import difflib
 
 import logging
 import unittest
@@ -60,6 +59,7 @@ class TestMain(unittest.TestCase):
     def testGood(self):
         try:
             main([PB_GOOD])
+            print(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ))
             self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ)))
             self.assertEqual(0, len(diff_lines(PB_GOOD_LOG, PB_REF_LOG)))
         finally:
@@ -88,6 +88,7 @@ class TestMain(unittest.TestCase):
 def check_idx_lines(self, xyz_list):
     """
     Verifies the length and data types of the values in each line of the given list.
+    :param self
     :param xyz_list: The list to check.
     """
     for key, vals in xyz_list.items():
