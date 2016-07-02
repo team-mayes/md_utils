@@ -23,6 +23,7 @@ BAD_INPUT = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input.txt')
 BAD_INPUT2 = os.path.join(SUB_DATA_DIR, 'bad_per_col_stats_input2.txt')
 MIXED_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output.csv")
 ALL_NAN_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output_no_floats.csv")
+HIST_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output_more.csv")
 
 # Output files #
 
@@ -42,6 +43,18 @@ GOOD_MIXED_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_good.csv")
 # noinspection PyUnresolvedReferences
 ALL_NAN_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_no_floats.csv")
 GOOD_ALL_NAN_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_no_floats_good.csv")
+# noinspection PyUnresolvedReferences
+HIST_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_more.csv")
+GOOD_HIST_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_more_good.csv")
+# noinspection PyUnresolvedReferences
+HIST_COUNT = os.path.join(SUB_DATA_DIR, "counts_msm_sum_output_more.csv")
+GOOD_HIST_COUNT = os.path.join(SUB_DATA_DIR, "counts_msm_sum_output_more_good.csv")
+# noinspection PyUnresolvedReferences
+HIST_PNG1 = os.path.join(SUB_DATA_DIR, "(1,0)_max_rls.png")
+# noinspection PyUnresolvedReferences
+HIST_PNG2 = os.path.join(SUB_DATA_DIR, "(1,0)_max_path.png")
+# noinspection PyUnresolvedReferences
+HIST_PNG3 = os.path.join(SUB_DATA_DIR, "(0,-1)_max_rls.png")
 
 # Test data #
 
@@ -171,3 +184,13 @@ class TestPerCol(unittest.TestCase):
         finally:
             silent_remove(ALL_NAN_OUT)
             # pass
+
+    def testHist(self):
+        try:
+            main(["-f", HIST_INPUT, "-n", "-d", ",", "-s"])
+            for p_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3]:
+                self.assertGreater(os.path.getsize(p_file), 10000)
+            self.assertFalse(diff_lines(HIST_COUNT, GOOD_HIST_COUNT))
+        finally:
+            [silent_remove(o_file) for o_file in [HIST_OUT, HIST_COUNT,
+                                                  HIST_PNG1, HIST_PNG2, HIST_PNG3]]

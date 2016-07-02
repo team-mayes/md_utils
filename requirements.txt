@@ -1,3 +1,4 @@
+seaborn
 matplotlib
 argparse>=1.2.1
 six>=1.9.0

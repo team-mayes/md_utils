@@ -28,7 +28,8 @@ import sys
 # noinspection PyCompatibility
 from cStringIO import StringIO
 from contextlib import contextmanager
-import matplotlib.pyplot as pyPlt
+import matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
 # logging.basicConfig(level=logging.DEBUG)
@@ -289,15 +290,17 @@ def str_to_file(str_val, fname, mode='w'):
         f.write(str_val)
 
 
-def np_float_array_from_file(data_file, delimiter=" ", header=False):
+def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
     @param data_file: file expected to have space-separated values, with the same number of entries per row
     @param delimiter: default is a space-separated file
     @param header: default is no header; alternately, specify number of header lines
+    @param gather_hist: default is false; gather data to make histogram of non-numerical data
     @return: a numpy array or InvalidDataError if unsuccessful, followed by the header_row (None if none specified)
     """
     header_row = None
+    hist_data = {}
     with open(data_file) as csv_file:
         csv_list = list(csv.reader(csv_file, delimiter=delimiter))
     if header:
@@ -308,7 +311,11 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False):
     except ValueError:
         data_array = None
         line_len = None
-        for row in csv_list[1:]:
+        if header:
+            first_line = 1
+        else:
+            first_line = 0
+        for row in csv_list[first_line:]:
             if len(row) == 0:
                 continue
             s_len = len(row)
@@ -326,6 +333,15 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False):
                     data_vector[col] = float(row[col])
                 except ValueError:
                     data_vector[col] = np.nan
+                    if gather_hist:
+                        col_key = str(row[col])
+                        if col in hist_data:
+                            if col_key in hist_data[col]:
+                                hist_data[col][col_key] += 1
+                            else:
+                                hist_data[col][col_key] = 1
+                        else:
+                            hist_data[col] = {col_key: 1}
             if data_array is None:
                 data_array = np.copy(data_vector)
             else:
@@ -335,7 +351,8 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False):
     if np.isnan(data_array).any():
         warning("Encountered entry (or entries) which could not be converted to a float. "
                 "'nan' will be returned for the stats for that column.")
-    return data_array, header_row
+    return data_array, header_row, hist_data
+
 
 
 def create_backup_filename(orig):
@@ -613,8 +630,8 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
 
 # Other input/output files
 
-def save_fig(name, base_dir=None):
-    pyPlt.savefig(base_dir + name, bbox_inches='tight')
+def save_fig(name, base_dir=""):
+    plt.savefig(base_dir + name, bbox_inches='tight')
 
 
 def read_int_dict(d_file, one_to_one=True):

@@ -7,6 +7,7 @@ This script assumes we care about one protonatable residue in a simulation with 
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 import logging
 import sys
@@ -173,7 +174,7 @@ OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
 
-## EVB Params
+# EVB Params
 # asp/glu common parameters
 d_0_OO = 2.400000
 d_0_OH = 1.000000
@@ -670,7 +671,7 @@ def process_dump_files(cfg):
     gofr_data = {}
     out_fieldnames = None
 
-    # If RDFS are to be calculated, initialize empty data structures
+    # If RDFs are to be calculated, initialize empty data structures
     if cfg[GOFR_OUTPUT]:
         g_dr = cfg[GOFR_DR]
         g_max = cfg[GOFR_MAX]

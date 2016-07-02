@@ -133,7 +133,7 @@ def parse_cmdline(argv):
 
 def process_file(data_file,  mcfg, delimiter=','):
     try:
-        dim_vectors, headers = np_float_array_from_file(data_file, delimiter=delimiter, header=1)
+        dim_vectors, headers, hist_data = np_float_array_from_file(data_file, delimiter=delimiter, header=1)
     except InvalidDataError as e:
         raise InvalidDataError("{}\n"
                                "Run program with '-h' to see options, such as specifying "
