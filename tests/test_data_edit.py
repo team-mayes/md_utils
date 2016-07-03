@@ -103,16 +103,17 @@ class TestDataEdit(unittest.TestCase):
             silent_remove(DEF_OUT)
             # pass
 
-    def testSerca(self):
-        """
-        Tests on another set of data, and a bad file location
-        """
-        with capture_stderr(main, ["-c", SERCA_INI]) as output:
-            self.assertTrue("No such file or directory" in output)
-            self.assertFalse(diff_lines(SERCA_0_OUT, SERCA_0_GOOD_OUT))
-            self.assertFalse(diff_lines(SERCA_1_OUT, SERCA_1_GOOD_OUT))
-            silent_remove(SERCA_0_OUT)
-            silent_remove(SERCA_1_OUT)
+    # def testSerca(self):
+    #     """
+    #     Tests on another set of data, and a bad file location
+    #     However, takes almost a minute to run, so commented out
+    #     """
+    #     with capture_stderr(main, ["-c", SERCA_INI]) as output:
+    #         self.assertTrue("No such file or directory" in output)
+    #         self.assertFalse(diff_lines(SERCA_0_OUT, SERCA_0_GOOD_OUT))
+    #         self.assertFalse(diff_lines(SERCA_1_OUT, SERCA_1_GOOD_OUT))
+    #         silent_remove(SERCA_0_OUT)
+    #         silent_remove(SERCA_1_OUT)
 
     def testBadFileList(self):
         with capture_stderr(main, ["-c", BAD_LIST_INI]) as output:
@@ -158,7 +159,6 @@ class TestDataEdit(unittest.TestCase):
             self.assertTrue("Unexpected key 'print_interaction_involving_atoms' in configuration" in output)
 
     def testBadData(self):
-        main(["-c", BAD_DATA_INI])
         with capture_stderr(main, ["-c", BAD_DATA_INI]) as output:
             self.assertTrue("Problems reading data" in output)
 

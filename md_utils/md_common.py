@@ -28,7 +28,8 @@ import sys
 # noinspection PyCompatibility
 from cStringIO import StringIO
 from contextlib import contextmanager
-import matplotlib; matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -352,7 +353,6 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
         warning("Encountered entry (or entries) which could not be converted to a float. "
                 "'nan' will be returned for the stats for that column.")
     return data_array, header_row, hist_data
-
 
 
 def create_backup_filename(orig):
