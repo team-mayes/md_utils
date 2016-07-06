@@ -157,6 +157,18 @@ data_edit
 
       see example script tests/test_data/data_edit/data_compare.ini
 
+data2pdb
+  * produces a pdb file with the coordinates from a data file, and everything else as in the pdb file
+
+      see example scripts in tests/test_data/data2odb: data2pdb.ini, data2pdb_glu_dict.ini ...
+
+  * specify a pdb template file with 'pdb_tpl_file'
+  * specify a single data file with 'data_file'
+  * specify a file that lists any number of data file names with 'data_list_file'
+  * specify an output directory with 'output_directory'
+  * make a dictionary by lining up the rows of the data and pdb files with 'make_dictionary_flag = True'
+  * use a dictionary to check alignment (proper ordering) of data file with 'use_atom_dict_flag = True'
+
 dump_edit
   available options include renumbering atoms or molecules and producing a new file with a subset of timesteps
 

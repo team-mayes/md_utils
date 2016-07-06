@@ -38,6 +38,7 @@ setup(
                                       'calc_split_avg = md_utils.calc_split_avg:main',
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data_edit = md_utils.data_edit:main',
+                                      'data2pdb = md_utils.data2pdb:main',
                                       'dump_edit = md_utils.dump_edit:main',
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',

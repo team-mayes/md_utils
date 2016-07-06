@@ -4,7 +4,9 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
+import os
 from collections import defaultdict
 import copy
 import json
@@ -37,7 +39,9 @@ MAIN_SEC = 'main'
 
 # Config keys
 PDB_TPL_FILE = 'pdb_tpl_file'
-DATA_FILES = 'data_list_file'
+DATA_FILES_FILE = 'data_list_file'
+DATA_FILES = 'data_files_list'
+DATA_FILE = 'data_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_file'
 CENTER_ATOM = 'center_to_atom_num'
 # PDB file info
@@ -55,12 +59,15 @@ OUT_BASE_DIR = 'output_directory'
 MAKE_DICT_BOOL = 'make_dictionary_flag'
 CHECK_ATOM_TYPE = 'use_atom_dict_flag'
 
+ATOMS_PAT = re.compile(r"^Atoms.*")
+NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
+
 # data file info
 
 # Defaults
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
-DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.json',
+DEF_CFG_VALS = {DATA_FILES_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.json',
                 PDB_FORMAT: '{:s}{:s}{:s}{:s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:s}',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
@@ -74,6 +81,7 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.jso
                 OUT_BASE_DIR: None,
                 MAKE_DICT_BOOL: False,
                 CHECK_ATOM_TYPE: False,
+                DATA_FILE: None,
                 }
 REQ_KEYS = {PDB_TPL_FILE: str,
             }
@@ -104,6 +112,19 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+
+    # To fix; have this as default!
+    main_proc[DATA_FILES] = []
+    if os.path.isfile(main_proc[DATA_FILES_FILE]):
+        with open(main_proc[DATA_FILES_FILE]) as f:
+            for data_file in f:
+                main_proc[DATA_FILES].append(data_file.strip())
+    if main_proc[DATA_FILE] is not None:
+        main_proc[DATA_FILES].append(main_proc[DATA_FILE])
+    if len(main_proc[DATA_FILES]) == 0:
+        raise InvalidDataError("No files to process: no '{}' specified and "
+                               "no list of files found for: {}".format(DATA_FILE, main_proc[DATA_FILES_FILE]))
+
     return main_proc
 
 
@@ -203,57 +224,62 @@ def make_dict(cfg, data_tpl_content):
     matched_atom_types = {}
     atom_type_dict = defaultdict(list)
     non_unique_charmm = []
-    with open(cfg[DATA_FILES]) as f:
-        for data_file in f:
-            data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-                for line in d:
-                    line = line.strip()
-                    # not currently keeping anything from the header; just check num atoms
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
+    pdb_atom_num = len(data_tpl_content[ATOMS_CONTENT])
+    for data_file in cfg[DATA_FILES]:
+        with open(data_file) as d:
+            section = SEC_HEAD
+            atom_id = 0
+            num_atoms = None
+            for line in d:
+                line = line.strip()
+                # not currently keeping anything from the header; just check num atoms
+                if section == SEC_HEAD:
+                    if atoms_pat.match(line):
+                        section = SEC_ATOMS
+                    elif num_atoms is None:
+                        atoms_match = num_atoms_pat.match(line)
+                        if atoms_match:
+                            # regex is 1-based
+                            num_atoms = int(atoms_match.group(1))
+                            if num_atoms != pdb_atom_num:
+                                raise InvalidDataError("Mismatched numbers of atoms: \n"
+                                                       "  Found {} atoms in file: {}\n"
+                                                       "    and {} atoms in file: {}\n"
+                                                       "".format(pdb_atom_num, cfg[PDB_TPL_FILE],
+                                                                 num_atoms, data_file))
+                elif section == SEC_ATOMS:
+                    if len(line) == 0:
+                        continue
+                    split_line = line.split()
 
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
+                    # keep lammps types as strings, because json saves as strings to be portable
+                    lammps_atom_type = split_line[2]
+                    # combine atom type with molecules/resid type
+                    charmm_atom_type = (data_tpl_content[ATOMS_CONTENT][atom_id][2] +
+                                        data_tpl_content[ATOMS_CONTENT][atom_id][3])
 
-                        # keep lammps types as strings, because json saves as strings to be portable
-                        lammps_atom_type = split_line[2]
-                        charmm_atom_type = data_tpl_content[ATOMS_CONTENT][atom_id][2] + \
-                                           data_tpl_content[ATOMS_CONTENT][atom_id][3]
+                    # Making the dictionary; use charmm as unique key. Do this first to verify library.
+                    if charmm_atom_type in matched_atom_types:
+                        # Check that we don't have conflicting matching
+                        if lammps_atom_type != matched_atom_types[charmm_atom_type]:
+                            if charmm_atom_type not in non_unique_charmm:
+                                print('Verify that this charmm type can have multiple lammps types: ',
+                                      charmm_atom_type)
+                                print('First collision for this charmm type occurred on atom:', atom_id + 1)
+                                non_unique_charmm.append(charmm_atom_type)
+                    else:
+                        matched_atom_types[charmm_atom_type] = lammps_atom_type
 
-                        # Making the dictionary; use charmm as unique key. Do this first to verify library.
-                        if charmm_atom_type in matched_atom_types:
-                            # Check that we don't have conflicting matching
-                            if lammps_atom_type != matched_atom_types[charmm_atom_type]:
-                                if charmm_atom_type not in non_unique_charmm:
-                                    print('Verify that this charmm type can have multiple lammps types: ',
-                                          charmm_atom_type)
-                                    print('First collision for this charmm type occurred on atom:', atom_id + 1)
-                                    non_unique_charmm.append(charmm_atom_type)
-                        else:
-                            matched_atom_types[charmm_atom_type] = lammps_atom_type
+                    # Don't add if already there
+                    if charmm_atom_type not in atom_type_dict[lammps_atom_type]:
+                        atom_type_dict[lammps_atom_type].append(charmm_atom_type)
 
-                        # Don't add if already there
-                        if charmm_atom_type not in atom_type_dict[lammps_atom_type]:
-                            atom_type_dict[lammps_atom_type].append(charmm_atom_type)
-
-                        atom_id += 1
-                        # Check after increment because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
-            print('Finished looking for dictionary values in file ', data_file)
+                    atom_id += 1
+                    # Check after increment because the counter started at 0
+                    if atom_id == num_atoms:
+                        # Since the tail will come only from the template, nothing more is needed.
+                        break
+        print('Finished looking for dictionary values in file ', data_file)
 
     with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as d_file:
         json.dump(atom_type_dict, d_file)
@@ -262,12 +288,10 @@ def make_dict(cfg, data_tpl_content):
 
 
 def process_data_files(cfg, data_tpl_content):
-    atoms_pat = re.compile(r"^Atoms.*")
-    num_atoms_pat = re.compile(r"(\d+).*atoms$")
     # Don't want to change the original template data when preparing to print the new file:
-    pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
 
     chk_atom_type = cfg[CHECK_ATOM_TYPE]
+    data_dict = {}
 
     if chk_atom_type:
         try:
@@ -278,77 +302,78 @@ def process_data_files(cfg, data_tpl_content):
                     "The program will continue without checking atom types.".format(cfg[ATOM_TYPE_DICT_FILE]), e)
             chk_atom_type = False
 
-    with open(cfg[DATA_FILES]) as f:
-        for data_file in f:
-            data_file = data_file.strip()
-            with open(data_file) as d:
-                section = SEC_HEAD
-                atom_id = 0
-                num_atoms = None
-                atom_types = []
+    for data_file in cfg[DATA_FILES]:
+        process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content)
 
-                for line in d:
-                    line = line.strip()
-                    # not currently keeping anything from the header; just check num atoms
-                    if section == SEC_HEAD:
-                        if atoms_pat.match(line):
-                            section = SEC_ATOMS
-                        elif num_atoms is None:
-                            atoms_match = num_atoms_pat.match(line)
-                            if atoms_match:
-                                # regex is 1-based
-                                num_atoms = int(atoms_match.group(1))
-                                if num_atoms != len(data_tpl_content[ATOMS_CONTENT]):
-                                    raise InvalidDataError('The number of atoms listed in the data file {} ({}) does '
-                                                           'not equal the number of atoms in the template file ({}).'
-                                                           ''.format(num_atoms, len(data_tpl_content[ATOMS_CONTENT]),
-                                                                     data_file))
 
-                    # atoms_content to contain only xyz; also perform some checking
-                    elif section == SEC_ATOMS:
-                        if len(line) == 0:
-                            continue
-                        split_line = line.split()
+def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content):
+    with open(data_file) as d:
+        pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
+        pdb_atom_num = len(pdb_data_section)
+        section = SEC_HEAD
+        atom_id = 0
+        num_atoms = None
+        atom_types = []
 
-                        # Not currently checking molecule number
-                        # If decide to do so, should make a count from 1 as the PDB is read; the PDB does not
-                        # have to start from 1, but the data file counts molecules from 1. For now, decided
-                        # checking atom type is a sufficient check
-                        # mol_num = int(split_line[1])
+        for line in d:
+            line = line.strip()
+            # not currently keeping anything from the header; just check num atoms
+            if section == SEC_HEAD:
+                if ATOMS_PAT.match(line):
+                    section = SEC_ATOMS
+                elif num_atoms is None:
+                    atoms_match = NUM_ATOMS_PAT.match(line)
+                    if atoms_match:
+                        # regex is 1-based
+                        num_atoms = int(atoms_match.group(1))
+                        if num_atoms != pdb_atom_num:
+                            raise InvalidDataError("Mismatched numbers of atoms: \n"
+                                                   "  Found {} atoms in file: {}\n"
+                                                   "    and {} atoms in file: {}\n"
+                                                   "".format(pdb_atom_num, cfg[PDB_TPL_FILE],
+                                                             num_atoms, data_file))
 
-                        # Keep as string; json save as string and this helps compare
-                        atom_types.append(split_line[2])
-                        pdb_data_section[atom_id][5:8] = map(float, split_line[4:7])
-                        atom_id += 1
-                        # Check after increment because the counter started at 0
-                        if atom_id == num_atoms:
-                            # Since the tail will come only from the template, nothing more is needed.
-                            break
+            # atoms_content to contain only xyz; also perform some checking
+            elif section == SEC_ATOMS:
+                if len(line) == 0:
+                    continue
+                split_line = line.split()
 
-            # Now that finished reading the file...
-            if atom_id != num_atoms:
-                raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal '
-                                       'the listed number of atoms ({}).'.format(data_file, atom_id, num_atoms))
+                # Not currently checking molecule number
+                # If decide to do so, should make a count from 1 as the PDB is read; the PDB does not
+                # have to start from 1, but the data file counts molecules from 1. For now, decided
+                # checking atom type is a sufficient check
+                # mol_num = int(split_line[1])
 
-            if chk_atom_type:
-                for data_type, atom in zip(atom_types, pdb_data_section):
-                    try:
-                        pdb_type = atom[2] + atom[3]
-                        if pdb_type not in data_dict[data_type]:
-                            warning('Did not find type {} in dictionary of values for atom_type {}: ({})'
-                                    ''.format(pdb_type, data_type, data_dict[data_type]))
-                        # print("atom", atom_type, data_dict[atom_type])
-                    except KeyError:
-                        warning('Did not find data file atom type {} in the atom type dictionary {}'
-                                ''.format(data_type, cfg[ATOM_TYPE_DICT_FILE]))
+                # Keep as string; json save as string and this helps compare
+                atom_types.append(split_line[2])
+                pdb_data_section[atom_id][5:8] = map(float, split_line[4:7])
+                atom_id += 1
+                # Check after increment because the counter started at 0
+                if atom_id == num_atoms:
+                    # Since the tail will come only from the template, nothing more is needed.
+                    break
 
-            f_name = create_out_fname(data_file, ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
-            list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_data_section + data_tpl_content[TAIL_CONTENT],
-                         f_name,
-                         list_format=cfg[PDB_FORMAT])
-
-            print('Completed writing {}'.format(f_name))
-    return
+    # Now that finished reading the file...
+    if atom_id != num_atoms:
+        raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal '
+                               'the listed number of atoms ({}).'.format(data_file, atom_id, num_atoms))
+    if chk_atom_type:
+        for data_type, atom in zip(atom_types, pdb_data_section):
+            try:
+                pdb_type = atom[2] + atom[3]
+                if pdb_type not in data_dict[data_type]:
+                    warning('Did not find type {} in dictionary of values for atom_type {}: ({})'
+                            ''.format(pdb_type, data_type, data_dict[data_type]))
+                    # print("atom", atom_type, data_dict[atom_type])
+            except KeyError:
+                warning('Did not find data file atom type {} in the atom type dictionary {}'
+                        ''.format(data_type, cfg[ATOM_TYPE_DICT_FILE]))
+    f_name = create_out_fname(data_file, ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
+    list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_data_section + data_tpl_content[TAIL_CONTENT],
+                 f_name,
+                 list_format=cfg[PDB_FORMAT])
+    print('Completed writing {}'.format(f_name))
 
 
 def main(argv=None):
@@ -370,7 +395,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

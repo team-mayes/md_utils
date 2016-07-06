@@ -1,0 +1,25 @@
+Created by charmm2lammps v1.8.1 on Tue Mar 29 15:10:58 CDT 2016; Edited by H. Mayes for Raptor
+
+        1428  atoms
+         961  bonds
+         514  angles
+          64  dihedrals
+           5  impropers
+
+          20  atom types
+          21  bond types
+          35  angle types
+          45  dihedral types
+           6  improper types
+
+   -12.12469     12.12469 xlo xhi
+   -12.12469     12.12469 ylo yhi
+   -12.12469     12.12469 zlo zhi
+
+Masses
+
+       1      1.008  # HT
+       2    15.9994  # OT
+       3    15.9994  # OTH
+       4      1.008  # HTH
+       5      1.008  # H

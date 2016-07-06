@@ -19,6 +19,10 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'data2pdb')
 DEF_INI = os.path.join(SUB_DATA_DIR, 'data2pdb.ini')
 TYPO_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_typo.ini')
 MISS_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_miss.ini')
+NO_FILES_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_no_files.ini')
+DIFF_ATOM_NUM_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_diff_atom_num.ini')
+DIFF_ATOM_NUM_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_dict_diff_atom_num.ini')
+GHOST_LIST_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_ghost_list.ini')
 GLU_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu.ini')
 GLU_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu_dict.ini')
 
@@ -38,7 +42,7 @@ DEF_DICT_OUT = os.path.join(MAIN_DIR, 'atom_dict.json')
 GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 
-class TestData2PDB(unittest.TestCase):
+class TestData2PDBNoOut(unittest.TestCase):
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("WARNING:  Problems reading file: Could not read file" in output)
@@ -54,6 +58,24 @@ class TestData2PDB(unittest.TestCase):
         with capture_stderr(main, ["-c", MISS_INI]) as output:
             self.assertTrue("WARNING:  Input data missing: 'Missing config val for key pdb_tpl_file'" in output)
 
+    def testNoFiles(self):
+        with capture_stderr(main, ["-c", NO_FILES_INI]) as output:
+            self.assertTrue("No files to process" in output)
+
+    def testNoFilesInList(self):
+        with capture_stderr(main, ["-c", GHOST_LIST_INI]) as output:
+            self.assertTrue("Problems reading file" in output)
+
+    def testDiffAtomNum(self):
+        with capture_stderr(main, ["-c", DIFF_ATOM_NUM_INI]) as output:
+            self.assertTrue("Mismatched numbers of atoms" in output)
+
+    def testDiffAtomNumDict(self):
+        with capture_stderr(main, ["-c", DIFF_ATOM_NUM_DICT_INI]) as output:
+            self.assertTrue("Mismatched numbers of atoms" in output)
+
+
+class TestData2PDB(unittest.TestCase):
     def testDefIni(self):
         try:
             main(["-c", DEF_INI])
