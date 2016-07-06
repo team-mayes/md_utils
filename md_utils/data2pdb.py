@@ -173,10 +173,15 @@ def process_pdb_tpl(cfg):
             if len(line) == 0:
                 continue
             line_head = line[:cfg[PDB_LINE_TYPE_LAST_CHAR]]
-
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
-            if line_head == 'REMARK' or line_head == 'CRYST1':
+            # match 5 letters so don't need to set up regex for the ones that have numbers following the letters
+            if line_head[:-2] in ['HEADE', 'TITLE', 'REMAR', 'CRYST', 'MODEL', 'COMPN',
+                                  'NUMMD', 'ORIGX', 'SCALE', 'SOURC', 'AUTHO', 'CAVEA',
+                                  'EXPDT', 'MDLTY', 'KEYWD', 'OBSLT', 'SPLIT', 'SPRSD',
+                                  'REVDA', 'JRNL ', 'DBREF', 'SEQRE', 'HET  ', 'HETNA',
+                                  'HETSY', 'FORMU', 'HELIX', 'SHEET', 'SSBON', 'LINK ',
+                                  'CISPE', 'SITE ', ]:
                 tpl_data[HEAD_CONTENT].append(line)
 
             # atoms_content to contain everything but the xyz

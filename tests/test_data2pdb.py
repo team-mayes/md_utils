@@ -43,6 +43,7 @@ GOOD_DICT = os.path.join(SUB_DATA_DIR, 'atom_dict_good.json')
 
 
 class TestData2PDBNoOut(unittest.TestCase):
+    # These all test failure cases
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("WARNING:  Problems reading file: Could not read file" in output)
@@ -76,20 +77,12 @@ class TestData2PDBNoOut(unittest.TestCase):
 
 
 class TestData2PDB(unittest.TestCase):
+    # These test/demonstrate different options
+
     def testDefIni(self):
+        main(["-c", DEF_INI])
         try:
             main(["-c", DEF_INI])
-            # for debugging:
-            # with open(PDB_TPL) as f:
-            #     with open(PDB_TPL_OUT) as g:
-            #         for d_line, g_line in zip(f, g):
-            #             if d_line.strip() != g_line.strip():
-            #                 print(d_line.strip())
-            #                 print(g_line.strip())
-
-            # will only be there is debugging is on
-            # if os.path.exists(PDB_TPL_OUT):
-            #     self.assertFalse(diff_lines(PDB_TPL_OUT, PDB_TPL))
             self.assertFalse(diff_lines(PDB_OUT, GOOD_PDB_OUT))
         finally:
             silent_remove(PDB_TPL_OUT)
