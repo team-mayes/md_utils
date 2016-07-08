@@ -13,7 +13,8 @@ import numpy as np
 import ConfigParser
 
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_file, process_cfg)
+                                create_out_fname, process_cfg, read_csv_to_list,
+                                list_to_csv)
 
 __author__ = 'hmayes'
 
@@ -132,12 +133,7 @@ def parse_cmdline(argv):
 
 
 def process_file(data_file,  mcfg, delimiter=','):
-    try:
-        dim_vectors, headers, hist_data = np_float_array_from_file(data_file, delimiter=delimiter, header=1)
-    except InvalidDataError as e:
-        raise InvalidDataError("{}\n"
-                               "Run program with '-h' to see options, such as specifying "
-                               "and/or delimiter (-d)".format(e))
+    list_vectors, headers = read_csv_to_list(data_file, delimiter=delimiter, header=True)
 
     col_index_dict = {}
     for section in [MAX_SEC, MIN_SEC]:
@@ -150,22 +146,23 @@ def process_file(data_file,  mcfg, delimiter=','):
                 raise InvalidDataError("Key '{}' found in configuration file but not in data file: "
                                        "{}".format(key, data_file))
 
-    initial_row_num = dim_vectors.shape[0]
-    keep_rows = np.ones(initial_row_num, dtype=bool)
-    for row_index, row in enumerate(dim_vectors):
+    initial_row_num = len(list_vectors)
+    filtered_vectors = []
+    for row in list_vectors:
+        keep_row = True
         for col, max_val in col_index_dict[MAX_SEC].items():
             if row[col] > max_val:
-                keep_rows[row_index] = False
+                keep_row = False
         for col, min_val in col_index_dict[MIN_SEC].items():
             if row[col] < min_val:
-                keep_rows[row_index] = False
+                keep_row = False
+        if keep_row:
+            filtered_vectors.append(row)
 
-    to_print = dim_vectors[keep_rows]
-
-    print("Keeping {} of {} rows based on filtering criteria".format(keep_rows.sum(), initial_row_num))
+    print("Keeping {} of {} rows based on filtering criteria".format(len(filtered_vectors), initial_row_num))
 
     f_name = create_out_fname(data_file, prefix='filtered_', ext='.csv')
-    list_to_file([headers] + list(to_print), f_name, delimiter=',')
+    list_to_csv([headers] + filtered_vectors, f_name, delimiter=',')
     print("Wrote file {}".format(f_name))
 
 

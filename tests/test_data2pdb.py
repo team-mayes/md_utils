@@ -22,9 +22,13 @@ MISS_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_miss.ini')
 NO_FILES_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_no_files.ini')
 DIFF_ATOM_NUM_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_diff_atom_num.ini')
 DIFF_ATOM_NUM_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_dict_diff_atom_num.ini')
+CUTOFF_DATA_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_cutoff.ini')
 GHOST_LIST_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_ghost_list.ini')
+NO_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_no_dict.ini')
 GLU_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu.ini')
 GLU_DICT_INI = os.path.join(SUB_DATA_DIR, 'data2pdb_glu_dict.ini')
+
+NOT_INI = os.path.join(SUB_DATA_DIR, 'glue_hm_cutoff.data')
 
 PDB_TPL = os.path.join(SUB_DATA_DIR, 'glue_hm_tpl.pdb')
 # noinspection PyUnresolvedReferences
@@ -74,6 +78,23 @@ class TestData2PDBNoOut(unittest.TestCase):
     def testDiffAtomNumDict(self):
         with capture_stderr(main, ["-c", DIFF_ATOM_NUM_DICT_INI]) as output:
             self.assertTrue("Mismatched numbers of atoms" in output)
+
+    def testCutoffData(self):
+        # An incomplete data file (as if stopped during copying)
+        # main(["-c", CUTOFF_DATA_INI])
+        with capture_stderr(main, ["-c", CUTOFF_DATA_INI]) as output:
+            self.assertTrue("atoms, but found" in output)
+
+    def testNotIni(self):
+        # gracefully fail if give the wrong file to the -c option
+        # main(["-c", NOT_INI])
+        with capture_stderr(main, ["-c", NOT_INI]) as output:
+            self.assertTrue("WARNING:  File contains no section headers" in output)
+
+    def testNoDictFound(self):
+        # main(["-c", NO_DICT_INI])
+        with capture_stderr(main, ["-c", NO_DICT_INI]) as output:
+            self.assertTrue("The program will continue without checking atom types" in output)
 
 
 class TestData2PDB(unittest.TestCase):

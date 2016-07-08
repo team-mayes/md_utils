@@ -25,13 +25,14 @@ import os
 from shutil import copy2, Error, copystat
 import six
 import sys
+
 # noinspection PyCompatibility
 from cStringIO import StringIO
 from contextlib import contextmanager
 import matplotlib
 matplotlib.use('Agg')
+# noinspection PyPep8
 import matplotlib.pyplot as plt
-
 
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -71,7 +72,6 @@ IMPR_COEFFS = 'Improper Coeffs'
 IMPRS = 'Impropers'
 LAMMPS_SECTION_NAMES = [MASSES, PAIR_COEFFS, ATOMS, BOND_COEFFS, BONDS, ANGLE_COEFFS, ANGLES,
                         DIHE_COEFFS, DIHES, IMPR_COEFFS, IMPRS]
-
 
 # Error Codes
 # The good status code
@@ -355,6 +355,29 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
     return data_array, header_row, hist_data
 
 
+def read_csv_to_list(data_file, delimiter=',', header=False):
+    """
+    Reads file of values; did not use np.loadtxt because can have floats and strings
+    @param data_file: name of delimiter-separated file with the same number of entries per row
+    @param delimiter: string: delimiter between column values
+    @param header: boolean to denote if file contains a header
+    @return: a list containing the data (removing header row, if one is specified) and a list containing the
+             header row (empty if no header row specified)
+    """
+    with open(data_file) as csv_file:
+        csv_list = list(csv.reader(csv_file, delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
+
+    header_row = []
+
+    if header:
+        first_line = 1
+        header_row = csv_list[0]
+    else:
+        first_line = 0
+
+    return csv_list[first_line:], header_row
+
+
 def create_backup_filename(orig):
     base, ext = os.path.splitext(orig)
     now = datetime.now()
@@ -628,6 +651,21 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
         print("Wrote file: {}".format(out_fname))
 
 
+def list_to_csv(data, out_fname, delimiter=',', mode='w'):
+    """
+    Writes the given data to the given file location.
+
+    @param data: The data to write (list of lists).
+    @param out_fname: The name of the file to write to.
+    @param delimiter: string
+    @param mode: default mode is to overwrite file
+    """
+    with open(out_fname, mode) as csv_file:
+        writer = csv.writer(csv_file, delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC)
+        writer.writerows(data)
+        print("Wrote file: {}".format(out_fname))
+
+
 # Other input/output files
 
 def save_fig(name, base_dir=""):
@@ -766,7 +804,6 @@ def conv_raw_val(param, def_val, int_list=True):
 
 
 def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
-
     """
     Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
     default value's type.

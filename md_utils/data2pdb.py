@@ -109,6 +109,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     """
     config = ConfigParser.ConfigParser()
     good_files = config.read(f_loc)
+
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
@@ -153,7 +154,7 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
-    except InvalidDataError as e:
+    except (InvalidDataError, ConfigParser.MissingSectionHeaderError) as e:
         warning(e)
         parser.print_help()
         return args, INVALID_DATA
@@ -176,7 +177,8 @@ def process_pdb_tpl(cfg):
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
             # match 5 letters so don't need to set up regex for the ones that have numbers following the letters
-            if line_head[:-2] in ['HEADE', 'TITLE', 'REMAR', 'CRYST', 'MODEL', 'COMPN',
+            # noinspection SpellCheckingInspection
+            if line_head[:-1] in ['HEADE', 'TITLE', 'REMAR', 'CRYST', 'MODEL', 'COMPN',
                                   'NUMMD', 'ORIGX', 'SCALE', 'SOURC', 'AUTHO', 'CAVEA',
                                   'EXPDT', 'MDLTY', 'KEYWD', 'OBSLT', 'SPLIT', 'SPRSD',
                                   'REVDA', 'JRNL ', 'DBREF', 'SEQRE', 'HET  ', 'HETNA',
@@ -361,8 +363,9 @@ def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content
 
     # Now that finished reading the file...
     if atom_id != num_atoms:
-        raise InvalidDataError('The number of atoms read from the file {} ({}) does not equal '
-                               'the listed number of atoms ({}).'.format(data_file, atom_id, num_atoms))
+        raise InvalidDataError('In data file: {}\n'
+                               '  header section lists {} atoms, but found {} atoms'.format(data_file,
+                                                                                            num_atoms, atom_id))
     if chk_atom_type:
         for data_type, atom in zip(atom_types, pdb_data_section):
             try:
