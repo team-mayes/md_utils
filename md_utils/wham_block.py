@@ -73,7 +73,6 @@ def write_avg_rmsd(tgt_dir, rmsd, overwrite=False):
         f_name = os.path.join(tgt_dir, rmsd_fname)
         if allow_write(f_name, overwrite=overwrite):
             write_rmsd(data, f_name)
-            print("Wrote file {}".format(f_name))
 
 
 def write_meta(tgt_dir, meta, step, overwrite=False):
@@ -96,7 +95,7 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
                 m_file.write('\t')
                 m_file.write('\t'.join(m_line[1:]))
                 m_file.write('\n')
-        print("Wrote file {}".format(f_name))
+        print("Wrote file: {}".format(f_name))
 
 
 # Logic #

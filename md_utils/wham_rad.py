@@ -174,6 +174,7 @@ def main(argv=None):
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '%d' dirs with files to process", len(found_files))
+        # noinspection PyCompatibility
         for f_dir, files in found_files.iteritems():
             if not files:
                 logger.warn("No files found for dir '%s'", f_dir)
@@ -183,8 +184,6 @@ def main(argv=None):
                 f_name = create_out_fname(pmf_path, prefix=OUT_PFX)
                 if allow_write(f_name, overwrite=args.overwrite):
                     write_csv(proc_data, f_name, RAD_KEY_SEQ)
-                    print("Wrote file {}".format(f_name))
-
     return GOOD_RET  # success
 
 

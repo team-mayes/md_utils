@@ -64,7 +64,7 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
                         m_file.write('\t')
                         m_file.write('\t'.join(m_line[1:]))
                         m_file.write('\n')
-            print("Wrote file {}".format(f_name))
+            print("Wrote file: {}".format(f_name))
 
 
 def read_tpl(tpl_loc):
@@ -135,7 +135,6 @@ def rmsd_split(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=
                 f_name = os.path.join(rmsd_tgt_dir, rmsd_fname)
                 if allow_write(f_name, overwrite=overwrite):
                     write_rmsd(rmsd_chunks[step_part - 1], f_name)
-                    print("Wrote file {}".format(f_name))
 
         write_meta(base_dir, meta, step, overwrite)
         write_submit(base_dir, sub_tpl_base, sub_tpl_line, step, overwrite)

@@ -113,18 +113,18 @@ def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_h
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv', base_dir=out_dir)
     list_to_file(to_print, f_name, delimiter=',')
-    print("Wrote file {}".format(f_name))
 
     if make_hist:
         create_hists(data_file, header_row, hist_data, out_dir)
 
 
-def create_hist_plot(hist_dict, header, out_dir):
+def create_hist_plot(hist_dict, header, out_dir, data_file):
     """
     See https://stanford.edu/~mwaskom/software/seaborn/examples/horizontal_barplot.html
     @param hist_dict: dict of label, count
     @param header: name of dictionary
     @param out_dir: str, name of directory where files are to be saved
+    @param data_file: name of data file
     @return: a list of lists (label, count)
     """
     # remove spaces in name
@@ -150,9 +150,9 @@ def create_hist_plot(hist_dict, header, out_dir):
     ax.set_title(header)
     plt.tight_layout()
 
-    f_name = os.path.join(out_dir, header)
+    f_name = create_out_fname(data_file, suffix=header, base_dir=out_dir, ext=".png")
     plt.savefig(f_name, dpi=300)
-    print("Wrote file {}".format(f_name+".png"))
+    print("Wrote file: {}".format(f_name))
 
     # quote strings for printing so csv properly read, and add header
     count_to_print = [[quote(header + "_key"), quote(header + "_count")]]
@@ -166,7 +166,7 @@ def create_hists(data_file, header_row, hist_data, out_dir):
     counts_to_print = []
     if len(hist_data) > 0:
         for col in hist_data:
-            count_to_print = create_hist_plot(hist_data[col], header_row[col], out_dir)
+            count_to_print = create_hist_plot(hist_data[col], header_row[col], out_dir, data_file)
 
             if len(counts_to_print) == 0:
                 counts_to_print = count_to_print
@@ -186,7 +186,6 @@ def create_hists(data_file, header_row, hist_data, out_dir):
                 counts_to_print = copy.deepcopy(combined_list)
     f_name = create_out_fname(data_file, prefix='counts_', ext='.csv', base_dir=out_dir)
     list_to_file(counts_to_print, f_name, delimiter=',')
-    print("Wrote file {}".format(f_name))
 
 
 def main(argv=None):

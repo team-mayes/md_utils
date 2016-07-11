@@ -116,7 +116,7 @@ def write_combo(headers, combo, combo_file):
                 f.write(h_line)
         for key, line in sorted(combo.items()):
             f.write(line)
-    print("Wrote file {}".format(combo_file))
+    print("Wrote file: {}".format(combo_file))
 
 # CLI Processing #
 

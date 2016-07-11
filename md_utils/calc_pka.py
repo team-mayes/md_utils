@@ -99,7 +99,6 @@ def write_result(result, src_file, overwrite=False, basedir=None):
     f_name = create_out_fname(src_file, prefix=OUT_PFX, base_dir=basedir)
     if allow_write(f_name, overwrite=overwrite):
         write_csv(result, f_name, OUT_KEY_SEQ)
-        print("Wrote file {}".format(f_name))
 
 
 def calc_pka(file_data, kbt, coord_ts=None):

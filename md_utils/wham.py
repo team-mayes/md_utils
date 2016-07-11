@@ -111,6 +111,7 @@ def write_rmsd(data, tgt_file):
         for i, rmsd_val in enumerate(data, 1):
             w_file.write("\t".join((str(i), str(rmsd_val))))
             w_file.write("\n")
+    print("Wrote file: {}".format(tgt_file))
 
 
 def fill_submit_wham(base_tpl, line_tpl, cur_step, use_part=False):

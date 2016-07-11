@@ -218,10 +218,7 @@ def process_pdb_tpl(cfg):
     if logger.isEnabledFor(logging.DEBUG):
         f_name = create_out_fname('reproduced_tpl', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
         list_to_file(tpl_data[HEAD_CONTENT] + tpl_data[ATOMS_CONTENT] + tpl_data[TAIL_CONTENT],
-                     f_name,
-                     list_format=cfg[PDB_FORMAT])
-        print("Wrote file {}".format(f_name))
-
+                     f_name, list_format=cfg[PDB_FORMAT])
     return tpl_data
 
 

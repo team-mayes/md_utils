@@ -163,7 +163,6 @@ def process_file(data_file,  mcfg, delimiter=','):
 
     f_name = create_out_fname(data_file, prefix='filtered_', ext='.csv')
     list_to_csv([headers] + filtered_vectors, f_name, delimiter=',')
-    print("Wrote file {}".format(f_name))
 
 
 def main(argv=None):

@@ -14,17 +14,32 @@ def quick_print():
     """
     # names = ["cl_pos_flow", "cl_neg_flow",]
     # names = ["h_pos_flow", "h_neg_flow",]
-    names = ["joint_flow"]
-    print("hello hello!!!")
-    for prefix in ["", "bth_"]:
+    names = ["1", "300"]
+    for prefix in ["cl_avg_bound", "pka_148", "pka_203"]:
         for name in names:
-            print("ErrorBars/T=4/L=4 {0}{1} Y,wave=({0}err_{1},{0}err_{1})".format(prefix, name))
+            print("ReplaceWave trace= Cl_rate_cl{0}, {1}_{0}\n"
+                  "ErrorBars {1}_{0} Y,wave=(err_{1}_{0},err_{1}_{0})".format(name, prefix))
     return True
 
 
 class TestReadData(unittest.TestCase):
     def testReadMeta(self):
         self.assertTrue(quick_print())
+
+
+def print_bin(int_list):
+    print("{} is:".format(str(int_list)))
+    for int_val in int_list:
+        if int_val == int_list[-1]:
+            print("{:05b}".format(int_val))
+        else:
+            print("{:05b} to".format(int_val))
+    return True
+
+
+class PrintBin(unittest.TestCase):
+    def testPrintBin(self):
+        self.assertTrue(print_bin([2,6,5,4,12,20,21,17,18]))
 
 
 class TestPlay(unittest.TestCase):

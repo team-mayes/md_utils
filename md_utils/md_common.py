@@ -648,7 +648,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
         if mode == 'w':
             writer.writeheader()
         writer.writerows(data)
-        print("Wrote file: {}".format(out_fname))
+    print("Wrote file: {}".format(out_fname))
 
 
 def list_to_csv(data, out_fname, delimiter=',', mode='w'):
@@ -725,6 +725,7 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
                     w_file.write(delimiter.join(map(str, line)) + "\n")
                 else:
                     w_file.write(list_format.format(*line) + '\n')
+    print("Wrote file: {}".format(fname))
 
 
 # Conversions #

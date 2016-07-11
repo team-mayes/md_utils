@@ -137,8 +137,6 @@ def main(argv=None):
                 if allow_write(f_name, overwrite=args.overwrite):
                     list_to_file([str(d['r']) for d in proc_data if 'r' in d], f_name)
                     # write_csv(proc_data, f_name, COLVAR_WHAM_KEY_SEQ, extrasaction="ignore")
-                    print("Wrote file {}".format(f_name))
-
     return 0  # success
 
 
