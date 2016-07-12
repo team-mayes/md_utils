@@ -1,5 +1,8 @@
-" ","(0, 1)_max_rls","(0, -1)_max_rls","(0, 1)_max_path"
-"Min value per column:",nan,nan,nan
-"Max value per column:",nan,nan,nan
-"Avg value per column:",nan,nan,nan
-"Std. dev. per column:",nan,nan,nan
+"","(0, 1)_max_rls","(0, -1)_max_rls","(0, 1)_max_path"
+"Min values:",nan,nan,nan
+"Max values:",nan,nan,nan
+"Avg values:",nan,nan,nan
+"Std dev:",nan,nan,nan
+"2.5% percentile:",nan,nan,nan
+"50.0% percentile:",nan,nan,nan
+"97.5% percentile:",nan,nan,nan

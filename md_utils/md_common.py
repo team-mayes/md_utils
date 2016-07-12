@@ -18,14 +18,12 @@ import shutil
 import errno
 import fnmatch
 from itertools import chain, islice
-
 import math
 import numpy as np
 import os
 from shutil import copy2, Error, copystat
 import six
 import sys
-
 # noinspection PyCompatibility
 from cStringIO import StringIO
 from contextlib import contextmanager
@@ -866,32 +864,43 @@ def conv_num(s):
             return s
 
 
-def diff_lines(floc1, floc2):
+def diff_lines(floc1, floc2, delimiter=",", csv_format=True):
     """
     Determine all lines in a file are equal.
     If not, test if the line is a csv that has floats and the difference is due to machine precision.
     If not, return all lines with differences.
     @param floc1: file location 1
     @param floc2: file location 1
+    @param delimiter: defaults to CSV
+    @param csv_format: if true, only split on delimiter when not enclosed in quotes
     @return: a list of the lines with differences
     """
     diff_lines_list = []
-    diff_plus_lines = []
-    diff_neg_lines = []
+    # Save diffs to strings to be converted to use csv parser
+    output_plus = ""
+    output_neg = ""
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
     for line in diff:
         if line.startswith('-') or line.startswith('+'):
             diff_lines_list.append(line)
-            # line may be space or comma-separated. First, remove difflib's two-character code,
-            #   then split on comma, then clean up white space (and split on white-space, just in case)
-            #   then convert to number
-            s_line = [conv_num(x.strip()) for x in line[2:].split(',')]
             if line.startswith('-'):
-                diff_plus_lines.append(s_line)
+                output_neg += line[2:]+'\n'
             elif line.startswith('+'):
-                diff_neg_lines.append(s_line)
+                output_plus += line[2:]+'\n'
+
+    if csv_format:
+        diff_plus_lines = list(csv.reader(StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
+        diff_neg_lines = list(csv.reader(StringIO(output_neg), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
+    else:
+        diff_plus_lines = output_plus.split('\n')
+        diff_neg_lines = output_neg.split('\n')
+        for diff_list in [diff_plus_lines, diff_neg_lines]:
+            for line_id in range(len(diff_list)):
+                diff_list[line_id] = diff_list[line_id].split(delimiter)
+            print(diff_plus_lines)
+
 
     if len(diff_plus_lines) == len(diff_neg_lines):
         # if the same number of lines, there is a chance that the difference is only due to difference in
@@ -914,8 +923,8 @@ def diff_lines(floc1, floc2):
                     else:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
-                            diff_lines_list.append("- " + " ".join(line_neg))
-                            diff_lines_list.append("+ " + " ".join(line_plus))
+                            diff_lines_list.append("- " + " ".join(map(str, line_neg)))
+                            diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
                             break
             # Not the same number of items in the lines
             else:

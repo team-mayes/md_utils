@@ -125,7 +125,7 @@ def write_results(bins, bin_data, src_file):
         xyz.write("{} {}\n".format(src_file, datetime.datetime.today()))
         with open(log_file, 'w') as bin_log:
             csv_log = csv.writer(bin_log)
-            csv_log.writerow(("bin", "count", "ax", "dx", "ay", "dy", "az", "dz"))
+            csv_log.writerow(["bin", "count","ax","dx","ay","dy","az","dz"])
             for cur_bin in bins:
                 if cur_bin in bin_data:
                     bin_coords = bin_data[cur_bin]

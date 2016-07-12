@@ -269,7 +269,7 @@ class TestDiffLines(unittest.TestCase):
     def testDiffOrd(self):
         # diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT)
         # print(diff_line_list)
-        self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT))
+        self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" "))
 
 
 class TestQuoteDeQuote(unittest.TestCase):

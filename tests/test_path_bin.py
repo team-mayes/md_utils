@@ -59,18 +59,19 @@ class TestMain(unittest.TestCase):
     def testGood(self):
         try:
             main([PB_GOOD])
-            print(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ))
-            self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ)))
+            self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ, delimiter=" ", csv_format=False)))
             self.assertEqual(0, len(diff_lines(PB_GOOD_LOG, PB_REF_LOG)))
         finally:
             silent_remove(PB_GOOD_LOG)
             silent_remove(PB_GOOD_XYZ)
+            # pass
 
     def testMoveExisting(self):
         try:
             self.assertFalse(find_backup_filenames(PB_GOOD_LOG))
             self.assertFalse(find_backup_filenames(PB_GOOD_XYZ))
             main([PB_GOOD])
+            # repeated on purpose to make back-up files
             main([PB_GOOD])
             log_backs = find_backup_filenames(PB_GOOD_LOG)
             self.assertEqual(1, len(log_backs))

@@ -39,7 +39,7 @@ def print_bin(int_list):
 
 class PrintBin(unittest.TestCase):
     def testPrintBin(self):
-        self.assertTrue(print_bin([2,6,5,4,12,20,21,17,18]))
+        self.assertTrue(print_bin([6,14,22,18,2,6]))
 
 
 class TestPlay(unittest.TestCase):

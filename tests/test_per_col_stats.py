@@ -59,10 +59,10 @@ HIST_PNG3 = os.path.join(SUB_DATA_DIR, "msm_sum_output_more(0,-1)_max_rls.png")
 
 # Test data #
 
-GOOD_OUT = "     Min value per column:        10.000000        14.995000        10.988000\n" \
-           "     Max value per column:        11.891000        15.605000        18.314000\n" \
-           "     Avg value per column:        11.092250        15.241000        16.348750\n" \
-           "     Std. dev. per column:         0.798138         0.299536         3.576376"
+GOOD_OUT = "       Min values:        10.000000        14.995000        10.988000\n" \
+           "       Max values:        11.891000        15.605000        18.314000\n" \
+           "       Avg values:        11.092250        15.241000        16.348750\n" \
+           "          Std dev:         0.798138         0.299536         3.576376"
 
 
 class TestPerCol(unittest.TestCase):
@@ -71,13 +71,14 @@ class TestPerCol(unittest.TestCase):
             self.assertTrue("Problems reading file" in output)
 
     def testDefInp(self):
-        # main(["-f", DEF_INPUT])
+        main(["-f", DEF_INPUT])
         try:
             with capture_stdout(main, ["-f", DEF_INPUT]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
         finally:
             silent_remove(CSV_OUT)
+            # pass
 
     def testArrayInp(self):
         # main(["-f", VEC_INPUT])
@@ -92,6 +93,7 @@ class TestPerCol(unittest.TestCase):
                 self.assertFalse(diff_lines(BAD_INPUT_OUT, GOOD_BAD_INPUT_OUT))
         finally:
             silent_remove(BAD_INPUT_OUT)
+            # pass
 
     def testIncDimen(self):
         # Test what happens when the lines do not all have the same number of dimensions
@@ -102,10 +104,10 @@ class TestPerCol(unittest.TestCase):
             self.assertTrue("2 values" in output)
 
     def testDefInpWithBuffer(self):
-        # main(["-f", DEF_INPUT, "-b", "6"])
+        main(["-f", DEF_INPUT, "-b", "6"])
         try:
             with capture_stdout(main, ["-f", DEF_INPUT, "-b", "6"]) as output:
-                self.assertTrue('Max value plus 6.0 buffer:'
+                self.assertTrue('Max plus 6.0 buffer:'
                                 '        17.891000        21.605000        24.314000' in output)
                 self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_BUFFER_OUT))
         finally:
@@ -128,24 +130,27 @@ class TestPerCol(unittest.TestCase):
         """
         This input file has a header that starts with a '#' so is ignored by np
         """
+        main(["-f", HEADER_INPUT])
         try:
             with capture_stdout(main, ["-f", HEADER_INPUT]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_HEADER_OUT, GOOD_CSV_OUT))
         finally:
             silent_remove(CSV_HEADER_OUT)
+            # pass
 
     def testCsv(self):
         """
         This input file has a header that starts with a '#' so is ignored by np.loadtxt
         """
-        # main(["-f", CSV_INPUT, "-d", ","])
+        main(["-f", CSV_INPUT, "-d", ","])
         try:
             with capture_stdout(main, ["-f", CSV_INPUT, "-d", ","]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
         finally:
             silent_remove(CSV_OUT)
+            # pass
 
     def testCsvHeader(self):
         """
@@ -191,6 +196,7 @@ class TestPerCol(unittest.TestCase):
             main(["-f", HIST_INPUT, "-n", "-d", ",", "-s"])
             for p_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3]:
                 self.assertGreater(os.path.getsize(p_file), 10000)
+            self.assertFalse(diff_lines(HIST_OUT, GOOD_HIST_OUT))
             self.assertFalse(diff_lines(HIST_COUNT, GOOD_HIST_COUNT))
         finally:
             [silent_remove(o_file) for o_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3,

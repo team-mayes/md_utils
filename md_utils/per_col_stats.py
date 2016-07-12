@@ -9,12 +9,14 @@ from __future__ import print_function
 
 import copy
 from operator import itemgetter
-import matplotlib; matplotlib.use('Agg')
+import matplotlib
 import seaborn as sns
 import pandas as pd
+import numpy as np
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_file, dequote, quote, )
+                                np_float_array_from_file, create_out_fname, list_to_csv)
 import sys
 import os
 import argparse
@@ -89,30 +91,38 @@ def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_h
                                "and/or delimiter (-d)".format(e))
 
     if header:
-        to_print = [['" "'] + [quote(col) for col in header_row]]
+        to_print = [[''] + header_row]
     else:
         to_print = []
 
     max_vector = dim_vectors.max(axis=0)
     min_vector = dim_vectors.min(axis=0)
-    to_print += [['"Min value per column:"'] + min_vector.tolist(),
-                 ['"Max value per column:"'] + max_vector.tolist(),
-                 ['"Avg value per column:"'] + dim_vectors.mean(axis=0).tolist(),
-                 ['"Std. dev. per column:"'] + dim_vectors.std(axis=0, ddof=1).tolist(),
+    # noinspection PyTypeChecker
+    to_print += [['Min values:'] + min_vector.tolist(),
+                 ['Max values:'] + max_vector.tolist(),
+                 ['Avg values:'] + dim_vectors.mean(axis=0).tolist(),
+                 ['Std dev:'] + dim_vectors.std(axis=0, ddof=1).tolist(),
+                 ['2.5% percentile:'] + np.percentile(dim_vectors, 2.5, axis=0).tolist(),
+                 ['50.0% percentile:'] + np.percentile(dim_vectors, 50, axis=0).tolist(),
+                 ['97.5% percentile:'] + np.percentile(dim_vectors, 97.5, axis=0).tolist(),
                  ]
     if len_buffer is not None:
-        to_print.append(['"Max value plus {} buffer:"'.format(len_buffer)] + (max_vector + len_buffer).tolist())
+        to_print.append(['Max plus {} buffer:'.format(len_buffer)] + (max_vector + len_buffer).tolist())
 
+    # Printing to standard out: do not print quotes around strings because using csv writer
     print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
     for index, row in enumerate(to_print):
+        # formatting for header
         if index == 0 and header:
-            print("{:>26s} {}".format(dequote(row[0]),
-                                      ' '.join(['{:>16s}'.format(dequote(x.strip())) for x in row[1:]])))
+            print("{:>18s} {}".format(row[0],
+                                      ' '.join(['{:>16s}'.format(x.strip()) for x in row[1:]])))
+        # formatting for vals
         else:
-            print("{:>26s} {}".format(dequote(row[0]), ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
+            print("{:>18s} {}".format(row[0], ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv', base_dir=out_dir)
-    list_to_file(to_print, f_name, delimiter=',')
+    list_to_csv(to_print, f_name)
+    # list_to_file(to_print, f_name, delimiter=',')
 
     if make_hist:
         create_hists(data_file, header_row, hist_data, out_dir)
@@ -155,9 +165,9 @@ def create_hist_plot(hist_dict, header, out_dir, data_file):
     print("Wrote file: {}".format(f_name))
 
     # quote strings for printing so csv properly read, and add header
-    count_to_print = [[quote(header + "_key"), quote(header + "_count")]]
+    count_to_print = [[header + "_key", header + "_count"]]
     for row in bar_data:
-        count_to_print.append([quote(row[0]), row[1]])
+        count_to_print.append([row[0], row[1]])
 
     return count_to_print
 
@@ -185,7 +195,7 @@ def create_hists(data_file, header_row, hist_data, out_dir):
                     combined_list.append([""] * width1 + count_to_print[row])
                 counts_to_print = copy.deepcopy(combined_list)
     f_name = create_out_fname(data_file, prefix='counts_', ext='.csv', base_dir=out_dir)
-    list_to_file(counts_to_print, f_name, delimiter=',')
+    list_to_csv(counts_to_print, f_name, delimiter=',')
 
 
 def main(argv=None):
