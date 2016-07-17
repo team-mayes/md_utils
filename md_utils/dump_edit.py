@@ -1,9 +1,10 @@
-    #!/usr/bin/env python
+#!/usr/bin/env python
 """
 Make a new dump file with a specified max number of timesteps and reorders atoms.
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 import logging
 import sys
@@ -135,9 +136,10 @@ def parse_cmdline(argv):
 def print_to_dump_file(head_content, atoms_struct, fname, mode='a'):
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
-
-    :param atoms_struct: The list atoms to write to file.
-    :param fname: The location of the file to write.
+    @param head_content: content to repeat for all files
+    @param atoms_struct: The list atoms to write to file.
+    @param fname: The location of the file to write.
+    @param mode: to append or write new file
     """
     with open(fname, mode) as w_file:
         for line in head_content:

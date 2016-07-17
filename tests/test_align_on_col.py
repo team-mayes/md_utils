@@ -77,4 +77,3 @@ class TestAlignCol(unittest.TestCase):
         with capture_stderr(align_on_col.main, ["-f", NO_COL_CMP_LIST]) as output:
             self.assertTrue("Could not find value" in output)
         silent_remove(DEF_OUT)
-

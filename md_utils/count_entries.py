@@ -19,7 +19,6 @@ logging.basicConfig(filename='max_dimen.log', filemode='w', level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
 
-
 # Error Codes
 # The good status code
 GOOD_RET = 0
@@ -31,6 +30,7 @@ INVALID_DATA = 3
 
 # Defaults
 DEF_NEW_FNAME = None
+
 
 def parse_cmdline(argv):
     """
@@ -76,7 +76,7 @@ def process_file(f_list, new_f_name):
                     split_line = line.split()
                     entries = len(split_line)
                     # For this purpose, subtract 1 (hydronium) and divide by 3
-                    water_mol_number = (entries -1 ) / 3
+                    water_mol_number = (entries - 1) / 3
                     if water_mol_number in value_dict:
                         value_dict[water_mol_number] += 1
                     else:
@@ -85,13 +85,10 @@ def process_file(f_list, new_f_name):
     if new_f_name is None:
         new_f_name = create_out_fname(f_list, suffix='_count')
 
-    with open(new_f_name, 'w') as myfile:
+    with open(new_f_name, 'w') as w_file:
         for key in value_dict:
-            myfile.write( str(key) + "," + str(value_dict[key]) + "\n")
+            w_file.write(str(key) + "," + str(value_dict[key]) + "\n")
             print(key, value_dict[key])
-
-    return
-
 
 
 def main(argv=None):

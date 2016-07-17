@@ -4,6 +4,7 @@ Get selected info from the file
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 import logging
 import re
@@ -97,10 +98,9 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(description='Grabs selected info from the designated file.'
                                                  'The required input file provides the location of the file. '
                                                  'Optional info is an atom index for the last atom not to consider.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini "
-                                               "format. See the example file /test/test_data/evbd2d/evb_chk_get_info.ini"
-                                               "The default file name is evb_chk_get_info.ini, located in the "
-                                               "base directory where the program as run.",
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
+                                               "The default file name is {}, located in the "
+                                               "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
     args = None
     try:
@@ -149,8 +149,6 @@ def print_vmd_list(atom_ids, fname, mode='w'):
     vmd_atom_ids = [a_id - 1 for a_id in atom_ids]
     with open(fname, mode) as m_file:
         m_file.write('{}'.format(' '.join(map(str, vmd_atom_ids))))
-    #print('index {}'.format(' '.join(map(str,vmd_atom_ids))))
-    return
 
 
 def process_file(cfg):
@@ -200,7 +198,7 @@ def process_file(cfg):
                                 h_ids.append(atom_num)
                             else:
                                 raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}'
-                                                       ''.format(atom_type,line))
+                                                       ''.format(atom_type, line))
 
                         if len(chk_data[ATOMS_CONTENT]) == chk_data[NUM_ATOMS]:
                             section = SEC_TAIL
@@ -209,8 +207,8 @@ def process_file(cfg):
                         break
 
             f_name = create_out_fname(data_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
-            print_qm_kind(h_ids,'H',f_name)
-            print_qm_kind(o_ids,'O',f_name,mode='a')
+            print_qm_kind(h_ids, 'H', f_name)
+            print_qm_kind(o_ids, 'O', f_name, mode='a')
             f_name = create_out_fname(data_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
             print_vmd_list(o_ids+h_ids, f_name)
 
@@ -220,7 +218,6 @@ def main(argv=None):
     args, ret = parse_cmdline(argv)
     if ret != GOOD_RET:
         return ret
-
 
     # Read template and data files
     cfg = args.config

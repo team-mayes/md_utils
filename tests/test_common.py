@@ -11,7 +11,7 @@ import os
 
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val, capture_stderr)
+                                create_out_fname, dequote, quote, conv_raw_val)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -265,7 +265,7 @@ class TestDiffLines(unittest.TestCase):
 
     def testDiffOrd(self):
         diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" ")
-        self.assertEquals(13,len(diff_line_list))
+        self.assertEquals(13, len(diff_line_list))
 
 
 class TestQuoteDeQuote(unittest.TestCase):
@@ -288,7 +288,7 @@ class TestQuoteDeQuote(unittest.TestCase):
 class TestConversions(unittest.TestCase):
     def testNotBool(self):
         try:
-            str_to_bool("hello")
+            str_to_bool("hello there neighbor")
         except ValueError as e:
             self.assertTrue("Cannot covert" in e.message)
 

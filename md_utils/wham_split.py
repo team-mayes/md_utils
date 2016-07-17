@@ -9,7 +9,9 @@ steps specified.
 from __future__ import print_function, division
 import logging
 import math
-
+import argparse
+import os
+import sys
 from md_utils.md_common import (find_files_by_dir, chunk, file_to_str,
                                 allow_write, str_to_file, warning, GOOD_RET, INVALID_DATA)
 from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
@@ -17,11 +19,7 @@ from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
                            TemplateNotReadableError)
 
-import argparse
-import os
-import sys
-
-__author__ = 'cmayes'
+__author__ = 'mayes'
 
 
 # Logging #

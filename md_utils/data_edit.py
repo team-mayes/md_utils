@@ -219,10 +219,10 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
-        parser.print_help()
-        return args, INPUT_ERROR
+    # except KeyError as e:
+    #     warning("Input data missing:", e)
+    #     parser.print_help()
+    #     return args, INPUT_ERROR
     except InvalidDataError as e:
         warning(e)
         return args, INVALID_DATA

@@ -6,7 +6,6 @@ Tests for wham_rad.
 
 import unittest
 import math
-
 import os
 
 from md_utils.md_common import BOLTZ_CONST, capture_stderr, capture_stdout, silent_remove, diff_lines
@@ -55,13 +54,10 @@ def zpe_check(test_inst, zpe):
         if corr == 0:
             test_inst.assertAlmostEqual(6.0, coord)
         else:
-            temp = corr < 0.0 or math.isinf(corr)
-            if temp is False:
-                print("temp", temp)
             test_inst.assertTrue(corr < 0.0 or math.isinf(corr))
 
-# Tests #
 
+# Tests #
 
 class TestCalcCorr(unittest.TestCase):
     def testCalcCorr(self):
@@ -89,8 +85,7 @@ class TestCalcRad(unittest.TestCase):
 class TestZeroPoint(unittest.TestCase):
 
     def testZeroPoint(self):
-        zpe = to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT))
-        print(zpe)
+        zpe = to_zero_point(calc_rad(ORIG_WHAM_PATH, EXP_KBT))
         zpe_check(self, zpe)
 
 

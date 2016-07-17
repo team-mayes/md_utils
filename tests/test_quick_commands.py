@@ -39,7 +39,7 @@ def print_bin(int_list):
 
 class PrintBin(unittest.TestCase):
     def testPrintBin(self):
-        self.assertTrue(print_bin([6,14,22,18,2,6]))
+        self.assertTrue(print_bin([6, 14, 22, 18, 2, 6]))
 
 
 class TestPlay(unittest.TestCase):
@@ -50,7 +50,7 @@ class TestPlay(unittest.TestCase):
         decimals = [0.1, 0.7, 0.4, 0.4, 0.5]
         new_list = list(itertools.chain(letters, booleans, decimals))
         print(new_list)
-        list1 = [["hello_key", "hello_val"],
+        list1 = [["hey_key", "hey_val"],
                  ["a", 5],
                  ["b", 2]]
         list2 = [["there_key", "there_val"],

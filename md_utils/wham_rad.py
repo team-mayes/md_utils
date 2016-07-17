@@ -6,19 +6,16 @@ Creates a radial correction value for each line of the target file(s).
 """
 from __future__ import print_function
 
-import csv
 import logging
 import math
-
+import argparse
+import os
+import sys
 from md_utils.md_common import (find_files_by_dir, write_csv,
                                 calc_kbt, create_out_fname, allow_write, GOOD_RET, INPUT_ERROR)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'mayes'
-
-import argparse
-import os
-import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -63,7 +60,6 @@ def calc_rad(src_file, kbt):
     :return: The corrected contents of the file as a list of dicts.
     """
     res_lines = []
-    print("hello source", src_file)
     with open(src_file) as wham:
         for w_line in wham:
             w_res = {}
