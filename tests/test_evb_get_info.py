@@ -19,7 +19,7 @@ __author__ = 'hmayes'
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'evb_info')
 
-# Input files #
+# Input files paired with output #
 
 INCOMP_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_missing_data.ini')
 BAD_PATH_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_path_path.ini')
@@ -50,9 +50,12 @@ GOOD_ONE_STATE_OUT2 = os.path.join(SUB_DATA_DIR, '31_3_ci_sq_good.csv')
 DEF_LIST_OUT = os.path.join(SUB_DATA_DIR, 'serca_evb_list_ci_sq.csv')
 GOOD_LIST_OUT = os.path.join(SUB_DATA_DIR, 'serca_evb_list_ci_sq_good.csv')
 
+BAD_KEY_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_key.ini')
+BAD_EVB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_evb.ini')
+NO_SUCH_EVB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_no_such_evb.ini')
 
-class TestEVBGetInfo(unittest.TestCase):
 
+class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testNoIni(self):
         with capture_stdout(main, []) as output:
             self.assertTrue("usage:" in output)
@@ -66,9 +69,27 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testBadPath(self):
+        main(["-c", BAD_PATH_INI])
         with capture_stderr(main, ["-c", BAD_PATH_INI]) as output:
+            self.assertTrue("Found no evb file names to read" in output)
+
+    def testBadKeyword(self):
+        # main(["-c", BAD_KEY_INI])
+        with capture_stderr(main, ["-c", BAD_KEY_INI]) as output:
+            self.assertTrue("Unexpected key" in output)
+
+    def testBadEVB(self):
+        # main(["-c", BAD_EVB_INI])
+        with capture_stderr(main, ["-c", BAD_EVB_INI]) as output:
+            self.assertTrue("Problems reading data" in output)
+
+    def testNoSuchEVB(self):
+        # main(["-c", NO_SUCH_EVB_INI])
+        with capture_stderr(main, ["-c", NO_SUCH_EVB_INI]) as output:
             self.assertTrue("No such file or directory" in output)
 
+
+class TestEVBGetInfo(unittest.TestCase):
     def testCiInfo(self):
         try:
             main(["-c", CI_INI])
@@ -90,6 +111,7 @@ class TestEVBGetInfo(unittest.TestCase):
         with capture_stderr(main, ["-c", CI_SUBSET_INI]) as output:
             self.assertTrue("found no data from" in output)
             self.assertFalse(diff_lines(DEF_CI_SUBSET_OUT, GOOD_CI_SUBSET_OUT))
+            silent_remove(DEF_CI_SUBSET_OUT)
             silent_remove(DEF_CI_OUT1)
             silent_remove(DEF_CI_OUT2)
 
@@ -104,6 +126,7 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_LIST_OUT, GOOD_LIST_OUT))
         finally:
             silent_remove(DEF_LIST_OUT)
+            # pass
 
     def testOneStateEachFileCiInfo(self):
         """
@@ -118,6 +141,7 @@ class TestEVBGetInfo(unittest.TestCase):
         finally:
             silent_remove(DEF_ONE_STATE_OUT)
             silent_remove(DEF_ONE_STATE_OUT2)
+            # pass
 
 
 class TestEVBGetInfoDiffLines(unittest.TestCase):
@@ -130,3 +154,4 @@ class TestEVBGetInfoDiffLines(unittest.TestCase):
         finally:
             silent_remove(DEF_CI_OUT1)
             silent_remove(DEF_CI_OUT2)
+            # pass

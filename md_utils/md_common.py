@@ -47,8 +47,9 @@ PLANCK_CONST = 9.53707E-14
 # Universal gas constant in kcal/mol K
 R = 0.001985877534
 
-# Tolerance based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
-TOL = 0.000000000000001
+# Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
+# found to be too stringent; multiplied by 1000
+TOL = 0.000000000001
 
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
@@ -597,7 +598,13 @@ def read_csv(src_file, data_conv=None, all_conv=None):
     """
     result = []
     with open(src_file) as csv_file:
-        for line in csv.DictReader(csv_file):
+        # try:
+        #     csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_NONNUMERIC)
+        #     for line in csv_reader:
+        #         result.append(convert_dict_line(all_conv, data_conv, line))
+        # except ValueError:
+        csv_reader = csv.DictReader(csv_file)
+        for line in csv_reader:
             result.append(convert_dict_line(all_conv, data_conv, line))
     return result
 
@@ -617,20 +624,29 @@ def read_csv_to_dict(src_file, col_name, data_conv=None, all_conv=None):
     """
     result = {}
     with open(src_file) as csv_file:
-        for line in csv.DictReader(csv_file):
-            val = convert_dict_line(all_conv, data_conv, line)
-            if col_name in val:
-                col_val = val[col_name]
-                if col_val in result:
-                    warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
-                result[col_val] = convert_dict_line(all_conv, data_conv, line)
-            else:
-                raise InvalidDataError("Could not find value for {} in file {} on line {}."
-                                       "".format(col_name, src_file, line))
+        try:
+            csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_NONNUMERIC)
+            create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file)
+        except ValueError:
+            csv_reader = csv.DictReader(csv_file)
+            create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file)
     return result
 
 
-def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
+def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
+    for line in csv_reader:
+        val = convert_dict_line(all_conv, data_conv, line)
+        if col_name in val:
+            col_val = val[col_name]
+            if col_val in result:
+                warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
+            result[col_val] = convert_dict_line(all_conv, data_conv, line)
+        else:
+            raise InvalidDataError("Could not find value for {} in file {} on line {}."
+                                   "".format(col_name, src_file, line))
+
+
+def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC):
     """
     Writes the given data to the given file location.
 
@@ -640,13 +656,17 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w'):
     @param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
     @param mode: default mode is to overwrite file
+    @param quote_style: dictates csv output style
     """
     with open(out_fname, mode) as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction)
+        writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
         if mode == 'w':
             writer.writeheader()
         writer.writerows(data)
-    print("Wrote file: {}".format(out_fname))
+    if mode == 'a':
+        print("Appended file: {}".format(out_fname))
+    elif mode == 'w':
+        print("Wrote file: {}".format(out_fname))
 
 
 def list_to_csv(data, out_fname, delimiter=',', mode='w'):
@@ -661,7 +681,7 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w'):
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC)
         writer.writerows(data)
-        print("Wrote file: {}".format(out_fname))
+    print("Wrote file: {}".format(out_fname))
 
 
 # Other input/output files
@@ -761,6 +781,9 @@ def fmt_row_data(raw_data, fmt_str):
     """ Formats the values in the dicts in the given list of raw data using
     the given format string.
 
+    *This may not be needed at all*
+    Now that I'm using csv.QUOTE_NONNUMERIC, generally don't want to format floats to strings
+
     @param raw_data: The list of dicts to format.
     @param fmt_str: The format string to use when formatting.
     @return: The formatted list of dicts.
@@ -852,6 +875,18 @@ def quote(s):
     return '"' + str(s) + '"'
 
 
+def single_quote(s):
+    """
+    Converts a variable into a quoted string
+    """
+    if s[0] == s[-1]:
+        if s.startswith("'"):
+            return str(s)
+        elif s.startswith('"'):
+            s = dequote(s)
+    return "'" + str(s) + "'"
+
+
 # Comparisons #
 
 def conv_num(s):
@@ -864,7 +899,7 @@ def conv_num(s):
             return s
 
 
-def diff_lines(floc1, floc2, delimiter=",", csv_format=True):
+def diff_lines(floc1, floc2, delimiter=","):
     """
     Determine all lines in a file are equal.
     If not, test if the line is a csv that has floats and the difference is due to machine precision.
@@ -872,7 +907,6 @@ def diff_lines(floc1, floc2, delimiter=",", csv_format=True):
     @param floc1: file location 1
     @param floc2: file location 1
     @param delimiter: defaults to CSV
-    @param csv_format: if true, only split on delimiter when not enclosed in quotes
     @return: a list of the lines with differences
     """
     diff_lines_list = []
@@ -890,17 +924,15 @@ def diff_lines(floc1, floc2, delimiter=",", csv_format=True):
             elif line.startswith('+'):
                 output_plus += line[2:]+'\n'
 
-    if csv_format:
+    try:
         diff_plus_lines = list(csv.reader(StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
         diff_neg_lines = list(csv.reader(StringIO(output_neg), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
-    else:
+    except ValueError:
         diff_plus_lines = output_plus.split('\n')
         diff_neg_lines = output_neg.split('\n')
         for diff_list in [diff_plus_lines, diff_neg_lines]:
             for line_id in range(len(diff_list)):
                 diff_list[line_id] = diff_list[line_id].split(delimiter)
-            print(diff_plus_lines)
-
 
     if len(diff_plus_lines) == len(diff_neg_lines):
         # if the same number of lines, there is a chance that the difference is only due to difference in
@@ -919,13 +951,13 @@ def diff_lines(floc1, floc2, delimiter=",", csv_format=True):
                                     "".format(item_plus, item_neg, float_diff, calc_tol))
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            break
+                            return diff_lines_list
                     else:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            break
+                            return diff_lines_list
             # Not the same number of items in the lines
             else:
                 diff_lines_list.append("- " + " ".join(map(str, line_neg)))

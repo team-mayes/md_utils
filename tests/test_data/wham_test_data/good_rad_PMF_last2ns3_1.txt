@@ -1,4 +1,4 @@
-coord,free_energy,corr
+"coord","free_energy","corr"
 1.0,inf,inf
 1.05,8.040678,-2.862360164495721
 1.1,4.966607,-5.879115409698652

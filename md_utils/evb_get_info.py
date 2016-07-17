@@ -17,6 +17,7 @@ just get highest prot ci^2, highest wat ci^2
 """
 
 from __future__ import print_function
+# noinspection PyCompatibility
 import ConfigParser
 from operator import itemgetter
 import re
@@ -24,8 +25,7 @@ import sys
 import argparse
 
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, write_csv
-
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, write_csv, single_quote
 
 __author__ = 'hmayes'
 
@@ -44,6 +44,7 @@ MAIN_SEC = 'main'
 
 # Config keys
 EVB_FILES = 'evb_list_file'
+EVB_FILE = 'evb_file'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 # IN_BASE_DIR = 'input_directory'
 OUT_BASE_DIR = 'output_directory'
@@ -61,6 +62,7 @@ SKIP_ONE_STATE = 'skip_one_state_flag'
 DEF_CFG_FILE = 'evb_get_info.ini'
 # Set notation
 DEF_CFG_VALS = {EVB_FILES: 'evb_list.txt',
+                EVB_FILE: None,
                 OUT_BASE_DIR: None,
                 PRINT_CI_SQ: True,
                 PRINT_CI_SUBSET: False,
@@ -154,6 +156,10 @@ def parse_cmdline(argv):
         return args, IO_ERROR
     except KeyError as e:
         warning("Input data missing:", e)
+        parser.print_help()
+        return args, INPUT_ERROR
+    except InvalidDataError as e:
+        warning(e)
         parser.print_help()
         return args, INPUT_ERROR
 
@@ -333,72 +339,77 @@ def process_evb_files(cfg):
     @return: @raise InvalidDataError:
     """
     first_file_flag = True
-    with open(cfg[EVB_FILES]) as f:
-        for evb_file in f:
-            evb_file = evb_file.strip()
-            if len(evb_file) > 0:
-                data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
-                no_print = []
-                if cfg[PRINT_PER_FILE] is True:
-                    if cfg[PRINT_KEY_PROPS]:
-                        if len(data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
-                                                     base_dir=cfg[OUT_BASE_DIR])
-                            write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
-                            print('Wrote file: {}'.format(f_out))
-                        else:
-                            no_print.append(PRINT_KEY_PROPS)
-                    if cfg[PRINT_CI_SUBSET]:
-                        if len(subset_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv',
-                                                     base_dir=cfg[OUT_BASE_DIR])
-                            write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
-                            print('Wrote file: {}'.format(f_out))
-                        else:
-                            no_print.append(PRINT_CI_SUBSET)
-                    if cfg[PRINT_CI_SQ]:
-                        if len(data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                            write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
-                            print('Wrote file: {}'.format(f_out))
-                        else:
-                            no_print.append(PRINT_CI_SQ)
-                    if cfg[PRINT_CEC]:
-                        if len(data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                            write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
-                            print('Wrote file: {}'.format(f_out))
-                        else:
-                            no_print.append(PRINT_CEC)
-                    if cfg[PRINT_WAT_MOL]:
-                        if len(wat_mol_data_to_print) > 0:
-                            f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv',
-                                                     base_dir=cfg[OUT_BASE_DIR])
-                            write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore")
-                            print('Wrote file: {}'.format(f_out))
-                        else:
-                            no_print.append(PRINT_WAT_MOL)
-                if len(no_print) > 0:
-                    warning("{} set to true, but found no data from {}. "
-                            "This output will not be printed.".format(no_print, evb_file))
-                if cfg[PRINT_PER_LIST]:
-                    if first_file_flag:
-                        print_mode = 'w'
-                        message = 'Wrote file: {}'
-                        first_file_flag = False
-                    else:
-                        print_mode = 'a'
-                        message = 'Appended file: {}'
-                    if cfg[PRINT_CI_SQ]:
-                        f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq', ext='.csv',
-                                                 base_dir=cfg[OUT_BASE_DIR])
-                        write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
-                        print(message.format(f_out))
-                    if cfg[PRINT_CI_SUBSET]:
-                        f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
-                                                 base_dir=cfg[OUT_BASE_DIR])
-                        write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
-                        print(message.format(f_out))
+    evb_file_list = []
+
+    if cfg[EVB_FILE] is not None:
+        evb_file_list.append(cfg[EVB_FILE])
+
+    try:
+        with open(cfg[EVB_FILES]) as f:
+            for evb_file in f:
+                evb_file_list.append(evb_file.strip())
+    except IOError as e:
+        warning("Problems reading file:", e)
+
+    if len(evb_file_list) == 0:
+        raise InvalidDataError("Found no evb file names to read. Specify one file with the keyword '{}' or \n"
+                               "a file containing a list of evb files with the keyword '{}'.".format(EVB_FILE,
+                                                                                                     EVB_FILES))
+
+    for evb_file in evb_file_list:
+        data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
+        no_print = []
+        if cfg[PRINT_PER_FILE] is True:
+            if cfg[PRINT_KEY_PROPS]:
+                if len(data_to_print) > 0:
+                    f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
+                                             base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
+                else:
+                    no_print.append(PRINT_KEY_PROPS)
+            if cfg[PRINT_CI_SUBSET]:
+                if len(subset_to_print) > 0:
+                    f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv',
+                                             base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                else:
+                    no_print.append(PRINT_CI_SUBSET)
+            if cfg[PRINT_CI_SQ]:
+                if len(data_to_print) > 0:
+                    f_out = create_out_fname(evb_file, suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                else:
+                    no_print.append(PRINT_CI_SQ)
+            if cfg[PRINT_CEC]:
+                if len(data_to_print) > 0:
+                    f_out = create_out_fname(evb_file, suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
+                else:
+                    no_print.append(PRINT_CEC)
+            if cfg[PRINT_WAT_MOL]:
+                if len(wat_mol_data_to_print) > 0:
+                    f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv',
+                                             base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore")
+                else:
+                    no_print.append(PRINT_WAT_MOL)
+        if len(no_print) > 0:
+            warning("{} set to true, but found no data from: {} \n"
+                    "No output will be printed for this file.".format(",".join(map(single_quote, no_print)), evb_file))
+        if cfg[PRINT_PER_LIST]:
+            if first_file_flag:
+                print_mode = 'w'
+                first_file_flag = False
+            else:
+                print_mode = 'a'
+            if cfg[PRINT_CI_SQ]:
+                f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq', ext='.csv',
+                                         base_dir=cfg[OUT_BASE_DIR])
+                write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+            if cfg[PRINT_CI_SUBSET]:
+                f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
+                                         base_dir=cfg[OUT_BASE_DIR])
+                write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
 
 
 def main(argv=None):
@@ -414,7 +425,7 @@ def main(argv=None):
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
-    except InvalidDataError as e:
+    except (InvalidDataError, ValueError) as e:
         warning("Problems reading data:", e)
         return INVALID_DATA
 

@@ -35,6 +35,7 @@ import math
 import argparse
 import os
 import sys
+import numpy as np
 from md_utils.md_common import (find_files_by_dir,
                                 read_csv, write_csv, calc_kbt, create_out_fname, warning, allow_write)
 from md_utils.wham import FREE_KEY, CORR_KEY, COORD_KEY
@@ -74,7 +75,7 @@ KEY_CONV = {FREE_KEY: float,
             MAX_LOC: float,
             MAX_VAL: float}
 
-NO_MAX_MSG = 'NONE'
+NO_MAX_RET = np.nan
 NO_MAX_ERR = "No local max found"
 
 
@@ -197,7 +198,7 @@ def main(argv=None):
                 pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
                 result = [{SRC_KEY: f_base_name, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord}]
             except NoMaxError:
-                result = [{SRC_KEY: f_base_name, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG, MAX_LOC: NO_MAX_MSG}]
+                result = [{SRC_KEY: f_base_name, PKA_KEY: NO_MAX_RET, MAX_VAL: NO_MAX_RET, MAX_LOC: NO_MAX_RET}]
             write_result(result, args.src_file, args.overwrite)
         else:
             found_files = find_files_by_dir(args.base_dir, args.pattern)
@@ -212,8 +213,8 @@ def main(argv=None):
                         pka, cur_corr, cur_coord = calc_pka(file_data, kbt, args.coord_ts)
                         results.append({SRC_KEY: fname, PKA_KEY: pka, MAX_VAL: cur_corr, MAX_LOC: cur_coord})
                     except NoMaxError:
-                        results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_MSG, MAX_VAL: NO_MAX_MSG,
-                                        MAX_LOC: NO_MAX_MSG})
+                        results.append({SRC_KEY: fname, PKA_KEY: NO_MAX_RET, MAX_VAL: NO_MAX_RET,
+                                        MAX_LOC: NO_MAX_RET})
 
                 write_result(results, os.path.basename(f_dir), args.overwrite,
                              basedir=os.path.dirname(f_dir))

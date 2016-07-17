@@ -5,6 +5,8 @@
 Creates a radial correction value for each line of the target file(s).
 """
 from __future__ import print_function
+
+import csv
 import logging
 import math
 
@@ -61,6 +63,7 @@ def calc_rad(src_file, kbt):
     :return: The corrected contents of the file as a list of dicts.
     """
     res_lines = []
+    print("hello source", src_file)
     with open(src_file) as wham:
         for w_line in wham:
             w_res = {}

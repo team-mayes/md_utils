@@ -4,24 +4,18 @@
 Tests for wham_rad.
 """
 
-import logging
-
-__author__ = 'cmayes'
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 import unittest
 import os
-from md_utils import press_dups
 from md_utils.md_common import silent_remove, diff_lines
-from md_utils.press_dups import avg_rows, compress_dups
+from md_utils.press_dups import avg_rows, compress_dups, main
+
+__author__ = 'mayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 DUPS_DIR = os.path.join(DATA_DIR, 'press_dups')
-WHIT_RAW = os.path.join(DUPS_DIR, 'proc_data_all_withhead0.75.csv')
-WHIT_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_withhead0.75.csv')
-WHIT_PRESS = os.path.join(DUPS_DIR, 'pressed_' + 'proc_data_all_withhead0.75.csv')
+HEAD_RAW = os.path.join(DUPS_DIR, 'proc_data_all_head0.75.csv')
+HEAD_STD = os.path.join(DUPS_DIR, 'std_proc_data_all_head0.75.csv')
+HEAD_PRESS = os.path.join(DUPS_DIR, 'pressed_' + 'proc_data_all_head0.75.csv')
 
 
 # Shared Methods #
@@ -45,10 +39,16 @@ class TestPressDups(unittest.TestCase):
         self.assertEquals(3, len(avg))
 
 
-class TestFromMain(unittest.TestCase):
-    def testWhithead075Data(self):
+class TestMainNoOutput(unittest.TestCase):
+    def testNoArg(self):
+        main([])
+
+
+class TestMain(unittest.TestCase):
+    def testWithHead075Data(self):
         try:
-            press_dups.main(argv=[WHIT_RAW])
-            self.assertEqual(0, len(diff_lines(WHIT_STD, WHIT_PRESS)))
+            main(argv=[HEAD_RAW])
+            self.assertFalse(diff_lines(HEAD_STD, HEAD_PRESS))
         finally:
-            silent_remove(WHIT_PRESS)
+            silent_remove(HEAD_PRESS)
+            # pass

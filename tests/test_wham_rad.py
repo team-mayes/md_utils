@@ -21,12 +21,13 @@ __author__ = 'mayes'
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'wham_test_data')
 
+DATA_FILE = ""
 
 ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
 SHORT_WHAM_FNAME = "PMF_test.txt"
-SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
+SHORT_WHAM_PATH = os.path.join(DATA_DIR, SHORT_WHAM_FNAME)
 
 # noinspection PyUnresolvedReferences
 ORIG_WHAM_OUT = os.path.join(DATA_DIR, OUT_PFX + ORIG_WHAM_FNAME)
@@ -54,6 +55,9 @@ def zpe_check(test_inst, zpe):
         if corr == 0:
             test_inst.assertAlmostEqual(6.0, coord)
         else:
+            temp = corr < 0.0 or math.isinf(corr)
+            if temp is False:
+                print("temp", temp)
             test_inst.assertTrue(corr < 0.0 or math.isinf(corr))
 
 # Tests #
@@ -86,6 +90,7 @@ class TestZeroPoint(unittest.TestCase):
 
     def testZeroPoint(self):
         zpe = to_zero_point(calc_rad(SHORT_WHAM_PATH, EXP_KBT))
+        print(zpe)
         zpe_check(self, zpe)
 
 
@@ -97,11 +102,19 @@ class TestMain(unittest.TestCase):
         with capture_stdout(main, []) as output:
             self.assertTrue("Creates a radial correction value" in output)
 
-    def testSomeArgs(self):
+    def testSpecOverwrite(self):
         try:
             main([str(EXP_TEMP), "-o"])
             self.assertFalse(diff_lines(ORIG_WHAM_OUT, GOOD_ORIG_WHAM_OUT))
             self.assertFalse(diff_lines(SHORT_WHAM_OUT, GOOD_SHORT_WHAM_OUT))
         finally:
             silent_remove(ORIG_WHAM_OUT)
+            silent_remove(SHORT_WHAM_OUT)
+            # pass
+
+    def testSpecFile(self):
+        try:
+            main([str(EXP_TEMP), "-f", SHORT_WHAM_PATH])
+            self.assertFalse(diff_lines(SHORT_WHAM_OUT, GOOD_SHORT_WHAM_OUT))
+        finally:
             silent_remove(SHORT_WHAM_OUT)

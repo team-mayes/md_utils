@@ -6,7 +6,6 @@ Tests for lammps_proc_data.py.
 import os
 import unittest
 
-from md_utils import lammps_proc_data
 from md_utils.lammps_proc_data import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
@@ -67,7 +66,8 @@ good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.c
                     'Continuing program.\nCompleted reading dumpfile'
 
 
-class TestLammpsProcData(unittest.TestCase):
+class TestLammpsProcDataNoOutput(unittest.TestCase):
+    # These tests only check for bad input
     def testNoInputFile(self):
         with capture_stderr(main) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
@@ -75,7 +75,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testInvalidData(self):
-        main(["-c", INVALID_INI])
+        # main(["-c", INVALID_INI])
         with capture_stderr(main, ["-c", INVALID_INI]) as output:
             self.assertTrue("Problem with config vals on key h3o_o_type: invalid literal for int" in output)
         with capture_stdout(main, ["-c", INVALID_INI]) as output:
@@ -92,39 +92,15 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertTrue("No such file or directory" in output)
 
     def testBadDump(self):
+        main(["-c", BAD_DUMP_INI])
         with capture_stderr(main, ["-c", BAD_DUMP_INI]) as output:
-            self.assertTrue("Problems reading data: Unexpected line in file " in output)
+            self.assertTrue("invalid literal for int()" in output)
 
     def testMissingConfig(self):
         with capture_stderr(main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("Input data missing" in output)
         with capture_stdout(main, ["-c", INCOMP_INI_PATH]) as output:
             self.assertTrue("optional arguments" in output)
-
-    def testOHDist(self):
-        try:
-            main(["-c", OH_DIST_INI_PATH])
-            self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
-        finally:
-            silent_remove(DEF_OUT_PATH)
-
-    def testMaxTimestepsCalcHIJ(self):
-        with capture_stdout(main, ["-c", HIJ_INI_PATH]) as output:
-            try:
-                self.assertTrue("Reached the maximum timesteps" in output)
-                self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
-            finally:
-                silent_remove(DEF_HIJ_OUT_PATH)
-
-    def testIncompDump(self):
-        try:
-            with capture_stderr(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
-                self.assertTrue("WARNING" in output)
-            with capture_stdout(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
-                self.assertTrue("Wrote file" in output)
-            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT, GOOD_HO_GOFR_OUT_PATH))
-        finally:
-            silent_remove(DEF_GOFR_INCOMP_OUT)
 
     def testIncompProtType(self):
         # main(["-c", INCOMP_PROT_O_INI])
@@ -136,12 +112,44 @@ class TestLammpsProcData(unittest.TestCase):
         with capture_stderr(main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
 
+
+class TestLammpsProcData(unittest.TestCase):
+    def testOHDist(self):
+        try:
+            main(["-c", OH_DIST_INI_PATH])
+            self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        finally:
+            silent_remove(DEF_OUT_PATH)
+            # pass
+
+    def testMaxTimestepsCalcHIJ(self):
+        main(["-c", HIJ_INI_PATH])
+        with capture_stdout(main, ["-c", HIJ_INI_PATH]) as output:
+            try:
+                self.assertTrue("Reached the maximum timesteps" in output)
+                self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
+            finally:
+                silent_remove(DEF_HIJ_OUT_PATH)
+                # pass
+
+    def testIncompDump(self):
+        try:
+            with capture_stderr(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
+                self.assertTrue("WARNING" in output)
+            with capture_stdout(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
+                self.assertTrue("Wrote file" in output)
+            self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT, GOOD_HO_GOFR_OUT_PATH))
+        finally:
+            silent_remove(DEF_GOFR_INCOMP_OUT)
+            # pass
+
     def testHOGofR(self):
         try:
             main(["-c", HO_GOFR_INI_PATH])
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
+            # pass
 
     def testOOGofR(self):
         try:
@@ -149,6 +157,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
+            # pass
 
     def testHHGofR(self):
         try:
@@ -156,6 +165,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
+            # pass
 
     def testOHGofR(self):
         try:
@@ -163,6 +173,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_OH_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_OUT)
+            # pass
 
     def testHO_OO_HH_OHGofR(self):
         try:
@@ -170,6 +181,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_GOFR_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT))
         finally:
             silent_remove(DEF_GOFR_OUT)
+            # pass
 
     def testHO_OO_HH_OHGofR_MaxSteps(self):
         # main(["-c", HO_OO_HH_OH_GOFR_INI_MAX_STEPS])
@@ -179,3 +191,4 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:
             silent_remove(DEF_MAX_STEPS_OUT)
+            # pass

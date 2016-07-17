@@ -17,11 +17,12 @@ from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
                            TemplateNotReadableError)
 
-__author__ = 'cmayes'
-
 import argparse
 import os
 import sys
+
+__author__ = 'cmayes'
+
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -35,7 +36,7 @@ DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
 
 # Constants #
-TPL_IO_ERR_MSG = "Couldn't read template at '{}'.  Have you run md_init in this directory?"
+TPL_IO_ERR_MSG = "Couldn't read template at:'{}' \nHave you run md_init in this directory?"
 STEP_DBG_MSG = "Step %d: Dividing %d lines from file %s into %d chunks of %d lines each."
 SPLIT_DIR_FMT = "{:02d}_{:02d}"
 STEP_META_FNAME = "meta." + SPLIT_DIR_FMT
@@ -76,8 +77,8 @@ def read_tpl(tpl_loc):
     """
     try:
         return file_to_str(tpl_loc)
-    except IOError as e:
-        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc), e)
+    except IOError:
+        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc))
 
 # Logic #
 

@@ -59,7 +59,7 @@ class TestMain(unittest.TestCase):
     def testGood(self):
         try:
             main([PB_GOOD])
-            self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ, delimiter=" ", csv_format=False)))
+            self.assertEqual(2, len(diff_lines(PB_GOOD_XYZ, PB_REF_XYZ, delimiter=" ")))
             self.assertEqual(0, len(diff_lines(PB_GOOD_LOG, PB_REF_LOG)))
         finally:
             silent_remove(PB_GOOD_LOG)
@@ -84,6 +84,7 @@ class TestMain(unittest.TestCase):
                 silent_remove(log_back)
             for xyz_back in find_backup_filenames(PB_GOOD_XYZ):
                 silent_remove(xyz_back)
+            pass
 
 
 def check_idx_lines(self, xyz_list):

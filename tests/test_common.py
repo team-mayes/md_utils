@@ -11,7 +11,7 @@ import os
 
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val)
+                                create_out_fname, dequote, quote, conv_raw_val, capture_stderr)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -250,26 +250,22 @@ class TestDiffLines(unittest.TestCase):
         self.assertFalse(diff_lines(ALMOST_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
 
     def testDiff(self):
-        print("hello ", diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
-        # self.assertTrue(diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
-        # self.assertTrue(diff_lines(GOOD_OH_DIST_OUT_PATH, NOT_OH_DIST_OUT_PATH))
+        diffs = diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        self.assertEquals(len(diffs), 2)
+        self.assertTrue("1.2132" in diffs[0])
 
     def testDiffColNum(self):
-        hello = diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
-        for line in hello:
-            print(line)
-        self.assertTrue(diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
-        self.assertTrue(diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_COL_OH_DIST_OUT_PATH))
+        diff_list_line = diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        self.assertEquals(len(diff_list_line), 2)
 
     def testMissLine(self):
         diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
-        self.assertTrue(len(diff_line_list) == 1)
+        self.assertEquals(len(diff_line_list), 1)
         self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])
 
     def testDiffOrd(self):
-        # diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT)
-        # print(diff_line_list)
-        self.assertTrue(diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" "))
+        diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" ")
+        self.assertEquals(13,len(diff_line_list))
 
 
 class TestQuoteDeQuote(unittest.TestCase):

@@ -8,7 +8,7 @@ import unittest
 import os
 
 from md_utils.calc_pka import calc_pka, NO_MAX_ERR, NoMaxError, main
-from md_utils.md_common import read_csv, calc_kbt, capture_stderr, diff_lines, silent_remove, capture_stdout
+from md_utils.md_common import read_csv, calc_kbt, capture_stderr, diff_lines, silent_remove
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
 
@@ -49,17 +49,29 @@ class TestCalcPkaPortions(unittest.TestCase):
         self.assertTrue(NO_MAX_ERR in context.exception.args)
 
 
-class TestCalcPkaMain(unittest.TestCase):
+class TestCalcPkaNoOutput(unittest.TestCase):
+    # Test how program handles imperfect/incomplete options/data
     def testTooFewArg(self):
         with capture_stderr(main, ["-d", PKA_DATA_DIR]) as output:
             self.assertTrue("error: too few arguments" in output)
 
+    def testNoFile(self):
+        with capture_stderr(main, [str(EXP_TEMP), "-f", "ghost.csv"]) as output:
+            self.assertTrue("No such file or directory: 'ghost.csv'" in output)
+
+    def testNoDir(self):
+        with capture_stderr(main, [str(EXP_TEMP), "-d", "ghost"]) as output:
+            self.assertTrue("WARNING:  No files found in specified directory 'ghost'" in output)
+
+
+class TestCalcPkaMain(unittest.TestCase):
     def testGoodDir(self):
         try:
             main([str(EXP_TEMP), "-d", PKA_DATA_DIR, "-o"])
             self.assertFalse(diff_lines(DEF_DIR_OUT, GOOD_DIR_OUT))
         finally:
             silent_remove(DEF_DIR_OUT)
+            # pass
 
     def testGoodFile(self):
         try:
@@ -67,6 +79,7 @@ class TestCalcPkaMain(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_FILE_OUT, GOOD_FILE_OUT))
         finally:
             silent_remove(DEF_FILE_OUT)
+            # pass
 
     def testDefineTS(self):
         """
@@ -83,11 +96,4 @@ class TestCalcPkaMain(unittest.TestCase):
                 self.assertTrue("Not overwriting existing file" in output)
         finally:
             silent_remove(DEF_FILE_OUT)
-
-    def testNoFile(self):
-        with capture_stderr(main, [str(EXP_TEMP), "-f", "ghost.csv"]) as output:
-            self.assertTrue("No such file or directory: 'ghost.csv'" in output)
-
-    def testNoDir(self):
-        with capture_stderr(main, [str(EXP_TEMP), "-d", "ghost"]) as output:
-            self.assertTrue("WARNING:  No files found in specified directory 'ghost'" in output)
+            # pass

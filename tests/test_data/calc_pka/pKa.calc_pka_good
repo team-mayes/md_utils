@@ -1,3 +1,3 @@
-source_file,pKa,max_loc,max_val
-rad_PMF_last2ns3_1.txt,4.703673609510859,2.2,-0.2647879598491105
-rad_PMF_no_max.txt,NONE,NONE,NONE
+"source_file","pKa","max_loc","max_val"
+"rad_PMF_last2ns3_1.txt",4.703673609510859,2.2,-0.2647879598491105
+"rad_PMF_no_max.txt",nan,nan,nan

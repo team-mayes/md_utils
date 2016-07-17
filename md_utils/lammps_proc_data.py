@@ -16,8 +16,7 @@ import argparse
 import numpy as np
 
 from md_utils.md_common import InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg, \
-    find_dump_section_state, write_csv, list_to_file
-
+    find_dump_section_state, write_csv, list_to_csv
 
 __author__ = 'hmayes'
 
@@ -41,7 +40,6 @@ MAIN_SEC = 'main'
 
 # Config keys
 DUMPS_FILE = 'dump_list_file'
-
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
@@ -161,6 +159,7 @@ OH_MAX = 'oh_max'
 OH_DIFF = 'oh_diff'
 R_OH = 'r_oh_dist'
 R_OO = 'r_oo_dist'
+Q_DOT = 'q_dotted'
 HIJ_AMINO = 'hij_amino'
 HIJ_ASP = 'hij_asp_params'
 HIJ_GLU = 'hij_glu_params'
@@ -172,7 +171,7 @@ HIJ_A3 = 'hij_water_termA3'
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
-HIJ_WATER_FIELDNAMES = [R_OO, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
+HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
 
 # EVB Params
 # asp/glu common parameters
@@ -235,11 +234,21 @@ def hij_amino(r, c1, c2, c3):
 
 
 def calc_q(r_o, r_op, r_h):
-    return np.add(r_o, r_op) / 2.0 - r_h
+    """
+    Calculates the 3-body term
+    @param r_o: x,y,z position of one oxygen donor/acceptor
+    @param r_op: x,y,z position of the other oxygen donor/acceptor
+    @param r_h: x,y,z position of the reactive H
+    @return: the dot-product of the vector q
+    """
+    q_vec = np.add(r_o, r_op) / 2.0 - r_h
+    # would an average be faster?
+    # q_vec = np.average(r_o, r_op) - r_h
+    return np.dot(q_vec, q_vec)
 
 
-def hij_water(r_oo, q_vec):
-    term_a1 = np.exp(-gamma * np.dot(q_vec, q_vec))
+def hij_water(r_oo, q_dot):
+    term_a1 = np.exp(-gamma * q_dot)
     term_a2 = 1 + P * np.exp(-k_water * (r_oo - D_OO_water) ** 2)
     term_a3 = 0.5 * (1 - np.tanh(beta * (r_oo - R_0_OO))) + Pp * np.exp(-a_water * (r_oo - r_0_OO))
     return V_ij_water * 1.1 * term_a1 * term_a2 * term_a3, term_a1, term_a2, term_a3
@@ -478,9 +487,9 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
         calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
     if cfg[CALC_HIJ_WATER_FORM]:
-        q_vec = calc_q(closest_o_to_ostar[XYZ_COORDS], prot_o[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
-        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_vec)
-        calc_results.update({R_OO: o_ostar_dist, HIJ_WATER: hij_wat,
+        q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], prot_o[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
+        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
+        calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
                              HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
 
     # Checks for required data
@@ -548,7 +557,10 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
                 # Reset variables
                 section = None
                 dump_atom_data = []
-                timestep = line
+                try:
+                    timestep = int(line)
+                except ValueError as e:
+                    raise InvalidDataError("In attempting to read an integer timestep, encountered error: {}".format(e))
                 timesteps_read += 1
                 if timesteps_read > cfg[MAX_TIMESTEPS]:
                     print("Reached the maximum timesteps per dumpfile ({}). "
@@ -649,14 +661,14 @@ def print_gofr(cfg, gofr_data):
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
 
     f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
-    print('Wrote file: {}'.format(f_out))
+    # list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
+    list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out)
 
 
-def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, message='Wrote file: {}'):
+def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames):
     f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
     write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
-    print(message.format(f_out))
+    print("Wrote file: {}".format(f_out))
 
 
 def ini_gofr_data(gofr_data, bin_count, bins, step_count):

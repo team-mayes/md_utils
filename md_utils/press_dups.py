@@ -10,10 +10,8 @@ import logging
 import sys
 from collections import defaultdict
 from functools import reduce
-
 import numpy as np
-
-from md_utils import md_common
+from md_utils.md_common import warning, GOOD_RET, read_csv, create_out_fname, write_csv, read_csv_header, INPUT_ERROR
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +80,15 @@ def parse_cmdline(argv=None):
                         help="Specify dupe column. (defaults to {})".format(DEF_COL_NAME),
                         metavar="DUPE_COL")
     parser.add_argument("file", help="The CSV file to process")
-    args = parser.parse_args(argv)
 
-    return args, 0
+    args = []
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        warning(e)
+        return args, INPUT_ERROR
+
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -95,15 +99,14 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET:
         return ret
 
-    deduped = compress_dups(md_common.read_csv(args.file, all_conv=float), args.column)
-    fmt_deduped = md_common.fmt_row_data(deduped, "{:.6f}")
-    md_common.write_csv(fmt_deduped, md_common.create_out_fname(args.file, prefix=PREFIX),
-                        md_common.read_csv_header(args.file))
+    deduped = compress_dups(read_csv(args.file, all_conv=float), args.column)
+    write_csv(deduped, create_out_fname(args.file, prefix=PREFIX),
+              read_csv_header(args.file))
 
-    return 0  # success
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':
