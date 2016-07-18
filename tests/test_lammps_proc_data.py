@@ -56,10 +56,10 @@ DEF_GOFR_INCOMP_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_incomp_gofrs.csv')
 # noinspection PyUnresolvedReferences
 DEF_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs.csv')
 
-HIJ_INI_PATH = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
+HIJ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 # noinspection PyUnresolvedReferences
-DEF_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
-GOOD_HIJ_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
+DEF_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
+GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -123,13 +123,13 @@ class TestLammpsProcData(unittest.TestCase):
             # pass
 
     def testMaxTimestepsCalcHIJ(self):
-        main(["-c", HIJ_INI_PATH])
-        with capture_stdout(main, ["-c", HIJ_INI_PATH]) as output:
+        # main(["-c", HIJ_INI])
+        with capture_stdout(main, ["-c", HIJ_INI]) as output:
             try:
                 self.assertTrue("Reached the maximum timesteps" in output)
-                self.assertFalse(diff_lines(DEF_HIJ_OUT_PATH, GOOD_HIJ_OUT_PATH))
+                self.assertFalse(diff_lines(DEF_HIJ_OUT, GOOD_HIJ_OUT))
             finally:
-                silent_remove(DEF_HIJ_OUT_PATH)
+                silent_remove(DEF_HIJ_OUT)
                 # pass
 
     def testIncompDump(self):

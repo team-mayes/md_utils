@@ -73,12 +73,13 @@ def process_file(f_name, b_str, e_str, new_f_name):
     if new_f_name is None:
         new_f_name = create_out_fname(f_name, suffix='_amend')
 
-    with open(new_f_name, 'w') as w_file:
-        with open(f_name) as f:
+    # open old file first; then if, there is a problem with it, no new file will be created
+    with open(f_name) as f:
+        with open(new_f_name, 'w') as w_file:
             for line in f:
                 line = line.strip()
                 w_file.write(b_str + line + e_str + "\n")
-    return
+    print("Wrote file: {}".format(new_f_name))
 
 
 def main(argv=None):

@@ -276,9 +276,10 @@ def process_evb_file(evb_file, cfg):
                     if eigen_sq[state] > max_prot_ci_sq:
                         max_prot_ci_sq = eigen_sq[state]
                         max_prot_state = state
+                        # TODO: see if I need to add logic here for an np.nan if only 1 state
                         # don't need to (and can't) match a neighboring water if only 1 state found
-                        if not one_state:
-                            max_max_prot_mol_a = state_list[state][MOL_A]
+                        # if not one_state:
+                        max_max_prot_mol_a = state_list[state][MOL_A]
                 for state in hyd_state_list:
                     water_molid = state_list[state][MOL_B]
                     if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
@@ -296,6 +297,9 @@ def process_evb_file(evb_file, cfg):
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq, MAX_HYD_MOL: max_hyd_wat_mol})
                 if cfg[PRINT_WAT_MOL]:
+                    if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
+                        prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: np.nan,
+                                                  MAX_HYD_CI_SQ: np.nan})
                     for mol in hyd_state_mol_dict:
                         prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: mol,
                                                   MAX_HYD_CI_SQ: hyd_state_mol_dict[mol]})
@@ -344,6 +348,8 @@ def process_evb_files(cfg):
     if cfg[EVB_FILE] is not None:
         evb_file_list.append(cfg[EVB_FILE])
 
+    # Separate try-catch block here because want it to continue rather than exit; exit below if there are no files to
+    # process
     try:
         with open(cfg[EVB_FILES]) as f:
             for evb_file in f:
@@ -410,6 +416,18 @@ def process_evb_files(cfg):
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
                 write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+            if cfg[PRINT_WAT_MOL]:
+                f_out = create_out_fname(cfg[EVB_FILES], suffix='_wat_mols', ext='.csv',
+                                         base_dir=cfg[OUT_BASE_DIR])
+                write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+            if cfg[PRINT_CEC]:
+
+                f_out = create_out_fname(cfg[EVB_FILES], suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+                write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+            if cfg[PRINT_KEY_PROPS]:
+                f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
+                                         base_dir=cfg[OUT_BASE_DIR])
+                write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore", mode=print_mode)
 
 
 def main(argv=None):

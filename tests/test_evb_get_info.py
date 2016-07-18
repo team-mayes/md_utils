@@ -54,6 +54,20 @@ BAD_KEY_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_key.ini')
 BAD_EVB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_evb.ini')
 NO_SUCH_EVB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_no_such_evb.ini')
 
+KEY_PROPS_INI = os.path.join(SUB_DATA_DIR, 'evb_get_key_props.ini')
+KEY_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info.csv')
+GOOD_KEY_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info_good.csv')
+
+WATER_MOL_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol.ini')
+WATER_MOL_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_wat_mols.csv')
+GOOD_WATER_MOL_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_wat_mols_good.csv')
+WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols.csv')
+GOOD_WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols_good.csv')
+
+WATER_MOL_COMB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol_combine.ini')
+WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols.csv')
+GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testNoIni(self):
@@ -143,13 +157,40 @@ class TestEVBGetInfo(unittest.TestCase):
             silent_remove(DEF_ONE_STATE_OUT2)
             # pass
 
+    def testKeyProps(self):
+        try:
+            main(["-c", KEY_PROPS_INI])
+            self.assertFalse(diff_lines(KEY_PROPS_OUT, GOOD_KEY_PROPS_OUT))
+        finally:
+            silent_remove(KEY_PROPS_OUT)
+            # pass
+
+    def testWaterMol(self):
+        try:
+            main(["-c", WATER_MOL_INI])
+            self.assertFalse(diff_lines(WATER_MOL_OUT1, GOOD_WATER_MOL_OUT1))
+            self.assertFalse(diff_lines(WATER_MOL_OUT2, GOOD_WATER_MOL_OUT2))
+        finally:
+            silent_remove(WATER_MOL_OUT1)
+            silent_remove(WATER_MOL_OUT2)
+            # pass
+
+    def testWaterMolCombine(self):
+        # Should skip the timestep with only 1 state
+        try:
+            main(["-c", WATER_MOL_COMB_INI])
+            self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
+        finally:
+            silent_remove(WATER_MOL_COMB_OUT)
+            # pass
+
 
 class TestEVBGetInfoDiffLines(unittest.TestCase):
     def testCiInfo(self):
         try:
             main(["-c", CI_INI])
             self.assertFalse(diff_lines(DEF_CI_OUT1, GOOD_CI_OUT1))
-            self.assertTrue(diff_lines(DEF_CI_OUT2, BAD_CI_OUT2))
+            self.assertEquals(1, len(diff_lines(DEF_CI_OUT2, BAD_CI_OUT2)))
             self.assertFalse(diff_lines(DEF_CI_OUT2, GOOD_CI_OUT2))
         finally:
             silent_remove(DEF_CI_OUT1)

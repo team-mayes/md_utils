@@ -664,7 +664,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
             writer.writeheader()
         writer.writerows(data)
     if mode == 'a':
-        print("Appended file: {}".format(out_fname))
+        print("  Appended: {}".format(out_fname))
     elif mode == 'w':
         print("Wrote file: {}".format(out_fname))
 
