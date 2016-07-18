@@ -174,19 +174,19 @@ def pbc_dist(a, b, box):
 
 
 def pbc_vector_diff(a, b, box):
-    # TODO: test pbc
-    vec = a - b
+    vec = np.subtract(a, b)
     return vec - box * np.asarray(map(round, vec / box))
 
 
-# def dot_product(v1, v2):
-#   return sum((a*b) for a, b in zip(v1, v2))
-#
-# def length(v):
-#   return math.sqrt(dot_product(v, v))
-#
+def pbc_vector_avg(a, b, box):
+    diff = pbc_vector_diff(a, b, box)
+    mid_pt = np.add(b, np.divide(diff, 2))
+    # mid-point may not be in the first periodic image. Make it so by getting its difference from the origin
+    return pbc_vector_diff(mid_pt, np.zeros(len(mid_pt)), box)
+
 # def angle(v1, v2):
 #   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
+
 
 def pbc_angle(p0, p1, p2, box):
     #

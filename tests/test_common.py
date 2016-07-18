@@ -8,10 +8,10 @@ import shutil
 import tempfile
 import unittest
 import os
-
+import numpy as np
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val)
+                                create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -52,6 +52,16 @@ MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_li
 
 IMPROP_SEC = os.path.join(SUB_DATA_DIR, 'glue_improp.data')
 IMPROP_SEC_ALT = os.path.join(SUB_DATA_DIR, 'glue_improp_diff_ord.data')
+
+# To test PBC math
+PBC_BOX = np.full(3, 24.25)
+A_VEC = [3.732, -1.803, -1.523]
+B_VEC = [4.117, 0.135, -2.518]
+GOOD_A_MINUS_B = np.array([-0.385, -1.938, 0.995])
+GOOD_A_B_AVG = np.array([3.9245, -0.834, -2.0205])
+C_VEC = [24.117, -20.135, -52.518]
+GOOD_A_MINUS_C = np.array([3.865, -5.918, 2.495])
+GOOD_A_C_AVG = np.array([1.7995, 1.156, -2.7705])
 
 
 def expected_dir_data():
@@ -307,4 +317,18 @@ class TestConversions(unittest.TestCase):
     def testNotIntList(self):
         non_int_str = 'a,b,c'
         non_int_list = ['a', 'b', 'c']
-        self.assertEquals(non_int_list, conv_raw_val(non_int_str, [], int_list=False))
+        self.assertEqual(non_int_list, conv_raw_val(non_int_str, [], int_list=False))
+
+
+class TestVectorPBCMath(unittest.TestCase):
+    def testSubtractInSameImage(self):
+        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
+
+    def testSubtractInDiffImages(self):
+        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, C_VEC, PBC_BOX), GOOD_A_MINUS_C))
+
+    def testAvgInSameImage(self):
+        self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, B_VEC, PBC_BOX), GOOD_A_B_AVG))
+
+    def testAvgInDiffImages(self):
+        self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, C_VEC, PBC_BOX), GOOD_A_C_AVG))

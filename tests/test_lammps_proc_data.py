@@ -151,6 +151,7 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
         finally:
             silent_remove(HIJ_ALT_OUT)
+            # pass
 
     def testIncompDump(self):
         try:

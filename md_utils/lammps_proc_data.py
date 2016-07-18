@@ -17,7 +17,7 @@ import argparse
 import numpy as np
 
 from md_utils.md_common import InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg, \
-    find_dump_section_state, write_csv, list_to_csv
+    find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg
 
 __author__ = 'hmayes'
 
@@ -238,15 +238,17 @@ def hij_amino(r, c1, c2, c3):
     return c1 * np.exp(-c2 * (r - c3) ** 2)
 
 
-def calc_q(r_o, r_op, r_h):
+def calc_q(r_o, r_op, r_h, box):
     """
-    Calculates the 3-body term
+    Calculates the 3-body term, keeping the pbc in mind
     @param r_o: x,y,z position of one oxygen donor/acceptor
     @param r_op: x,y,z position of the other oxygen donor/acceptor
     @param r_h: x,y,z position of the reactive H
+    @param box: the dimensions of the periodic box (assumed 90 degree angles)
     @return: the dot-product of the vector q
     """
-    q_vec = np.add(r_o, r_op) / 2.0 - r_h
+    # pbc_vector_avg
+    q_vec = np.subtract(pbc_vector_avg(r_o, r_op, box), r_h)
     # would an average be faster?
     # q_vec = np.average(r_o, r_op) - r_h
     return np.dot(q_vec, q_vec)
@@ -374,7 +376,7 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
 
 def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
     # initialize minimum distance to maximum distance possible in the periodic box (assume 90 degree corners)
-    min_dist = np.full(len(carboxyl_oxys), np.linalg.norm(box / 2))
+    min_dist = np.full(len(carboxyl_oxys), np.linalg.norm(np.divide(box, 2)))
     closest_h = {}
     alt_dist = np.nan
     for index, oxy in enumerate(carboxyl_oxys):
@@ -404,18 +406,19 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
                                    }
 
 
-def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, cfg):
+def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, h30_atom_type):
     """
     Calculate the minimum distance between a water oxygen and the protonatable oxygen atom closest to the excess proton
     @param water_oxys:
     @param o_star: the protonatable oxygen atom closest to the excess proton
     @param hydronium: the list of atoms in the hydronium, if there is a hydronium
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
-    @param cfg: configuration for the run
+    @param h30_atom_type: (int) lammps type for h30 oxygen atom
     @return: the water oxygen (or hydronium oxygen) closest to the o_star, and the distance between them
     """
     # initialize smallest distance to the maximum distance in a periodic box
-    min_dist = np.linalg.norm(box / 2)
+    min_dist = np.linalg.norm(np.divide(box, 2))
+    closest_o = None
     if not hydronium:
         # initialize minimum distance to maximum distance allowed in the PBC
         for wat_o in water_oxys:
@@ -425,7 +428,7 @@ def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, cfg):
                 closest_o = wat_o
     else:
         for atom in hydronium:
-            if atom[ATOM_TYPE] == cfg[H3O_O_TYPE]:
+            if atom[ATOM_TYPE] == h30_atom_type:
                 min_dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(o_star[XYZ_COORDS]), box)
                 closest_o = atom
 
@@ -443,10 +446,6 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     type2 = []
     calc_results = {}
     oh_dist_dict = {}
-    closest_o_to_ostar = {}
-    prot_o = {}
-    o_ostar_dist = {}
-    closest_excess_h = {}
     for atom in dump_atom_data:
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
@@ -492,12 +491,13 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_AMINO_FORM] or cfg[CALC_HIJ_WATER_FORM]:
         closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
                                                                             hydronium, box, cfg)
-    if cfg[CALC_HIJ_WATER_FORM]:
-        closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, cfg)
-        q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
-        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
-        calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
-                             HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
+        if cfg[CALC_HIJ_WATER_FORM]:
+            closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
+                                                                       cfg[H3O_O_TYPE])
+            q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
+            hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
+            calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
+                                 HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
     if cfg[CALC_OH_DIST]:
         if excess_proton is None:
             calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
