@@ -3,6 +3,11 @@
 History
 -------
 
+0.8.3 (2016-07-17)
+------------------
+
+* Now uses the csv.QUOTE_NONNUMERIC option for writing and reading, to automatically convert to floats
+
 0.8.2 (2016-06-22)
 ------------------
 
