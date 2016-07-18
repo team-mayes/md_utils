@@ -16,9 +16,11 @@ __author__ = 'hmayes'
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 
+# Check catching error
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 INVALID_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
+WRONG_WAT_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_wat_type.ini')
 
 OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
@@ -58,8 +60,13 @@ DEF_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs.csv')
 
 HIJ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 # noinspection PyUnresolvedReferences
-DEF_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
+HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
 GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
+
+HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
+# noinspection PyUnresolvedReferences
+HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, '0.875_20c_100ps_reorder_short_proc_data.csv')
+GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, '0.875_20c_100ps_reorder_short_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -92,7 +99,7 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
             self.assertTrue("No such file or directory" in output)
 
     def testBadDump(self):
-        main(["-c", BAD_DUMP_INI])
+        # main(["-c", BAD_DUMP_INI])
         with capture_stderr(main, ["-c", BAD_DUMP_INI]) as output:
             self.assertTrue("invalid literal for int()" in output)
 
@@ -112,6 +119,10 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
         with capture_stderr(main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
 
+    def testFindNoWater(self):
+        with capture_stderr(main, ["-c", WRONG_WAT_TYPE_INI]) as output:
+            self.assertTrue("no such atoms were found" in output)
+
 
 class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
@@ -124,20 +135,27 @@ class TestLammpsProcData(unittest.TestCase):
 
     def testMaxTimestepsCalcHIJ(self):
         # main(["-c", HIJ_INI])
-        with capture_stdout(main, ["-c", HIJ_INI]) as output:
-            try:
+        try:
+            with capture_stdout(main, ["-c", HIJ_INI]) as output:
                 self.assertTrue("Reached the maximum timesteps" in output)
-                self.assertFalse(diff_lines(DEF_HIJ_OUT, GOOD_HIJ_OUT))
-            finally:
-                silent_remove(DEF_HIJ_OUT)
-                # pass
+            self.assertFalse(diff_lines(HIJ_OUT, GOOD_HIJ_OUT))
+        finally:
+            silent_remove(HIJ_OUT)
+            # pass
+
+    def testHIJAlt(self):
+        try:
+            with capture_stderr(main, ["-c", HIJ_ALT_INI]) as output:
+                self.assertTrue("did not have the full list of atom numbers" in output)
+            # main(["-c", HIJ_ALT_INI])
+            self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
+        finally:
+            silent_remove(HIJ_ALT_OUT)
 
     def testIncompDump(self):
         try:
             with capture_stderr(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
                 self.assertTrue("WARNING" in output)
-            with capture_stdout(main, ["-c", INCOMP_DUMP_INI_PATH]) as output:
-                self.assertTrue("Wrote file" in output)
             self.assertFalse(diff_lines(DEF_GOFR_INCOMP_OUT, GOOD_HO_GOFR_OUT_PATH))
         finally:
             silent_remove(DEF_GOFR_INCOMP_OUT)

@@ -10,6 +10,7 @@ from __future__ import print_function
 # noinspection PyCompatibility
 import ConfigParser
 import logging
+import os
 import sys
 import argparse
 
@@ -39,7 +40,8 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-DUMPS_FILE = 'dump_list_file'
+DUMP_FILE_LIST = 'dump_list_file'
+DUMP_FILE = 'dump_file'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
@@ -86,6 +88,7 @@ CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
 CALC_HIJ_AMINO_FORM = 'calc_hij_amino_form_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
+COMBINE_OUTPUT = 'combine_output_flag'
 
 
 # TODO: talk to Chris about listing many angles, dihedrals
@@ -109,7 +112,8 @@ DEF_MAX_TIMESTEPS = 1000000000000
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
 # Set notation
-DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
+DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
+                DUMP_FILE: None,
                 PROT_H_IGNORE: [],
                 PROT_O_IDS: [],
                 OUT_BASE_DIR: None,
@@ -132,6 +136,7 @@ DEF_CFG_VALS = {DUMPS_FILE: 'list.txt',
                 GOFR_RAW_HIST: [],
                 MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
+                COMBINE_OUTPUT: False,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -368,14 +373,12 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
 
 
 def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
-    # initialize smallest distance to the closest distance
-    min_dist = np.zeros(len(carboxyl_oxys))
+    # initialize minimum distance to maximum distance possible in the periodic box (assume 90 degree corners)
+    min_dist = np.full(len(carboxyl_oxys), np.linalg.norm(box / 2))
     closest_h = {}
     alt_dist = np.nan
     for index, oxy in enumerate(carboxyl_oxys):
         if prot_h is None:
-            # initialize minimum distance to maximum distance allowed in the PBC
-            min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
             for atom in hydronium:
                 if atom[ATOM_TYPE] == cfg[H3O_H_TYPE]:
                     dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
@@ -387,6 +390,7 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
             closest_h[index] = prot_h
     index_min = np.argmin(min_dist)
     min_min = min_dist[index_min]
+    o_star = carboxyl_oxys[index_min]
     excess_proton = closest_h[index_min]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
@@ -394,42 +398,38 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
         if index != index_min:
             alt_dist = pbc_dist(np.asarray(excess_proton[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
     alt_min = np.amin(alt_dist)
-    return excess_proton, {OH_MIN: min_min,
-                           OH_MAX: alt_min,
-                           OH_DIFF: alt_min - min_min,
-                           }
+    return excess_proton, o_star, {OH_MIN: min_min,
+                                   OH_MAX: alt_min,
+                                   OH_DIFF: alt_min - min_min,
+                                   }
 
 
-def find_closest_o_to_ostar(carboxyl_oxys, water_oxys, hydronium, box, cfg):
-    # initialize smallest distance to the closest distance
-    min_dist = np.zeros(len(carboxyl_oxys))
-    closest_o = {}
-    alt_dist = np.nan
-    for index, co in enumerate(carboxyl_oxys):
-        if not hydronium:
-            # initialize minimum distance to maximum distance allowed in the PBC
-            min_dist[index] = np.linalg.norm(box / 2 - np.zeros(3))
-            for wat_o in water_oxys:
-                dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
-                if dist < min_dist[index]:
-                    min_dist[index] = dist
-                    closest_o[index] = wat_o
-        else:
-            for atom in hydronium:
-                if atom[ATOM_TYPE] == cfg[H3O_O_TYPE]:
-                    min_dist[index] = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
-                    closest_o[index] = atom
-    index_min = np.argmin(min_dist)
-    prot_o = carboxyl_oxys[index_min]
-    min_min = min_dist[index_min]
-    close_o = closest_o[index_min]
-    # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
-    # proton
-    for index, co in enumerate(carboxyl_oxys):
-        if index != index_min:
-            alt_dist = pbc_dist(np.asarray(close_o[XYZ_COORDS]), np.asarray(co[XYZ_COORDS]), box)
-    alt_min = np.amin(alt_dist)
-    return close_o, prot_o, min_min, alt_min
+def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, cfg):
+    """
+    Calculate the minimum distance between a water oxygen and the protonatable oxygen atom closest to the excess proton
+    @param water_oxys:
+    @param o_star: the protonatable oxygen atom closest to the excess proton
+    @param hydronium: the list of atoms in the hydronium, if there is a hydronium
+    @param box: the dimensions of the periodic box (assumed 90 degree angles)
+    @param cfg: configuration for the run
+    @return: the water oxygen (or hydronium oxygen) closest to the o_star, and the distance between them
+    """
+    # initialize smallest distance to the maximum distance in a periodic box
+    min_dist = np.linalg.norm(box / 2)
+    if not hydronium:
+        # initialize minimum distance to maximum distance allowed in the PBC
+        for wat_o in water_oxys:
+            dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), np.asarray(o_star[XYZ_COORDS]), box)
+            if dist < min_dist:
+                min_dist = dist
+                closest_o = wat_o
+    else:
+        for atom in hydronium:
+            if atom[ATOM_TYPE] == cfg[H3O_O_TYPE]:
+                min_dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(o_star[XYZ_COORDS]), box)
+                closest_o = atom
+
+    return closest_o, min_dist
 
 
 def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
@@ -465,17 +465,39 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
             if atom[ATOM_TYPE] == cfg[GOFR_TYPE2]:
                 type2.append(atom)
 
-    if cfg[PER_FRAME_OUTPUT]:
-        if len(carboxyl_oxys) != 2:
-            raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
-                                   'carboxylic oxygen atoms). Found {} such indices at timestep {}. '
-                                   'Check input data.'.format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
-                                                              len(carboxyl_oxys), timestep))
+    # Data checking
+    if excess_proton is None:
+        if len(hydronium) != 4:
+            raise InvalidDataError('No excess proton found, so expected to find exactly 4 hydronium atoms. '
+                                   'However, found {} hydronium atoms at timestep {}. '
+                                   'Check input data.'.format(len(hydronium), timestep))
+    else:
+        if len(hydronium) != 0:
+            raise InvalidDataError('Excess proton found, so expected to find exactly 0 hydronium atoms. '
+                                   'However, found {} hydronium atoms at timestep {}. '
+                                   'Check input data.'.format(len(hydronium), timestep))
+    if len(carboxyl_oxys) != 2:
+        raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
+                               'carboxylic oxygen atoms). Found {} such indices at timestep {}. '
+                               'Check input data.'.format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
+                                                          len(carboxyl_oxys), timestep))
+    if len(water_oxys) == 0:
+        raise InvalidDataError("The configuration file listed '{}' = {}, however no such atoms were found. "
+                               "Check input data.".format(WAT_O_TYPE, cfg[WAT_O_TYPE]))
+    if len(water_hs) == 0:
+        raise InvalidDataError("The configuration file listed '{}' = {}, however no such atoms were found. "
+                               "Check input data.".format(WAT_H_TYPE, cfg[WAT_H_TYPE]))
+
+    # Now start looking for data to report
     if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_AMINO_FORM] or cfg[CALC_HIJ_WATER_FORM]:
-        closest_excess_h, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton, hydronium, box, cfg)
+        closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
+                                                                            hydronium, box, cfg)
     if cfg[CALC_HIJ_WATER_FORM]:
-        closest_o_to_ostar, prot_o, o_ostar_dist, alt_ostar_dist = find_closest_o_to_ostar(carboxyl_oxys, water_oxys,
-                                                                                           hydronium, box, cfg)
+        closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, cfg)
+        q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
+        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
+        calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
+                             HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
     if cfg[CALC_OH_DIST]:
         if excess_proton is None:
             calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
@@ -486,11 +508,6 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
         hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
         calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
-    if cfg[CALC_HIJ_WATER_FORM]:
-        q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], prot_o[XYZ_COORDS], closest_excess_h[XYZ_COORDS])
-        hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
-        calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
-                             HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
 
     # Checks for required data
     if cfg[CALC_HO_GOFR] or cfg[CALC_OO_GOFR]:
@@ -538,8 +555,9 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     return calc_results
 
 
-def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode):
     with open(dump_file) as d:
+        print("Reading: {}".format(dump_file))
         section = None
         box = np.zeros((3,))
         box_counter = 1
@@ -569,7 +587,9 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames):
                     break
                 if timesteps_read % cfg[PRINT_TIMESTEPS] == 0:
                     if cfg[PER_FRAME_OUTPUT]:
-                        print_per_frame(dump_file, cfg, data_to_print, out_fieldnames)
+                        print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode)
+                        data_to_print = []
+                        write_mode = 'a'
                     if cfg[GOFR_OUTPUT]:
                         print_gofr(cfg, gofr_data)
                 result = {TIMESTEP: timestep}
@@ -660,15 +680,14 @@ def print_gofr(cfg, gofr_data):
             warning("Did not find any timesteps with the pairs in {}. "
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
 
-    f_out = create_out_fname(cfg[DUMPS_FILE], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
+    f_out = create_out_fname(cfg[DUMP_FILE_LIST], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
     # list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
     list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out)
 
 
-def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames):
+def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode):
     f_out = create_out_fname(dump_file, suffix='_proc_data', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore")
-    print("Wrote file: {}".format(f_out))
+    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode)
 
 
 def ini_gofr_data(gofr_data, bin_count, bins, step_count):
@@ -705,15 +724,34 @@ def process_dump_files(cfg):
     if cfg[PER_FRAME_OUTPUT]:
         out_fieldnames = setup_per_frame_output(cfg)
 
-    with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f:
+    dump_file_list = []
+
+    if os.path.isfile(cfg[DUMP_FILE_LIST]):
+        with open(cfg[DUMP_FILE_LIST]) as f:
+            for dump_file in f:
+                dump_file = dump_file.strip()
+                # skip any excess blank lines
+                if len(dump_file) > 0:
+                    dump_file_list.append(dump_file)
+    if cfg[DUMP_FILE] is not None:
+        dump_file_list.append(cfg[DUMP_FILE])
+
+    if len(dump_file_list) == 0:
+        raise InvalidDataError("Found no dump files to process. Use the configuration ('ini') file to specify the name "
+                               "of a single dump file with the keyword '{}' or a file listing dump files with the "
+                               "keyword '{}'.".format(DUMP_FILE, DUMP_FILE_LIST))
+
+    data_to_print = []
+    per_frame_write_mode = 'w'
+    for dump_file in dump_file_list:
+        if cfg[COMBINE_OUTPUT] is False:
             data_to_print = []
-            dump_file = dump_file.strip()
-            # skip any excess blank lines
-            if len(dump_file) > 0:
-                read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames)
-                if cfg[PER_FRAME_OUTPUT]:
-                    print_per_frame(dump_file, cfg, data_to_print, out_fieldnames)
+
+        read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, per_frame_write_mode)
+        if cfg[PER_FRAME_OUTPUT]:
+            print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, per_frame_write_mode)
+        if cfg[COMBINE_OUTPUT]:
+            per_frame_write_mode = 'a'
 
     if cfg[GOFR_OUTPUT]:
         print_gofr(cfg, gofr_data)
