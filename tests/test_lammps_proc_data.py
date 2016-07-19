@@ -6,7 +6,7 @@ Tests for lammps_proc_data.py.
 import os
 import unittest
 
-from md_utils.lammps_proc_data import main
+from md_utils.lammps_proc_data import main, WAT_H_TYPE, WAT_O_TYPE, PROT_O_IDS, H3O_O_TYPE, H3O_H_TYPE
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
@@ -20,9 +20,15 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 NO_ACTION_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_no_action.ini')
 INCOMP_INI_PATH = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_incomp.ini')
 INVALID_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_invalid.ini')
-WRONG_WAT_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_wat_type.ini')
+WRONG_CARB_O_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_carb_o.ini')
+WRONG_HYD_O_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_hyd_o_type.ini')
+WRONG_HYD_H_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_hyd_h_type.ini')
+WRONG_WAT_O_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_wat_o_type.ini')
+WRONG_WAT_H_TYPE_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_wrong_wat_h_type.ini')
+EXTRA_HYD_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_extra_hyd_atoms.ini')
+HYD_AND_H_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_hyd_and_h.ini')
 
-OH_DIST_INI_PATH = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
+OH_DIST_INI = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
 DEF_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
 GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
@@ -65,12 +71,12 @@ GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
 HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
 # noinspection PyUnresolvedReferences
-HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, '0.875_20c_100ps_reorder_short_proc_data.csv')
-GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, '0.875_20c_100ps_reorder_short_good.csv')
+HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data.csv')
+GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
-                    'Continuing program.\nCompleted reading dumpfile'
+                    'Continuing program.\nCompleted reading'
 
 
 class TestLammpsProcDataNoOutput(unittest.TestCase):
@@ -119,15 +125,51 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
         with capture_stderr(main, ["-c", INCOMP_GOFR_INI_PATH]) as output:
             self.assertTrue("a positive value" in output)
 
-    def testFindNoWater(self):
-        with capture_stderr(main, ["-c", WRONG_WAT_TYPE_INI]) as output:
+    def testHydAndH(self):
+        main(["-c", HYD_AND_H_INI])
+        with capture_stderr(main, ["-c", HYD_AND_H_INI]) as output:
+            for expected in [' 3 ', 'Excess proton', H3O_O_TYPE, H3O_H_TYPE]:
+                self.assertTrue(expected in output)
+
+    def testExtraHydAtoms(self):
+        main(["-c", EXTRA_HYD_INI])
+        with capture_stderr(main, ["-c", EXTRA_HYD_INI]) as output:
+            for expected in [' 7 ', 'No excess proton', H3O_O_TYPE, H3O_H_TYPE]:
+                self.assertTrue(expected in output)
+
+    def testFindNoCarbO(self):
+        # main(["-c", WRONG_CARB_O_INI])
+        with capture_stderr(main, ["-c", WRONG_CARB_O_INI]) as output:
+            self.assertTrue(PROT_O_IDS in output)
+
+    def testWrongHydH(self):
+        # main(["-c", WRONG_HYD_H_TYPE_INI])
+        with capture_stderr(main, ["-c", WRONG_HYD_H_TYPE_INI]) as output:
+            for expected in [' 1 ', 'No excess proton', H3O_O_TYPE, H3O_H_TYPE]:
+                self.assertTrue(expected in output)
+
+    def testWrongHydO(self):
+        # main(["-c", WRONG_HYD_O_TYPE_INI])
+        with capture_stderr(main, ["-c", WRONG_HYD_O_TYPE_INI]) as output:
+            for expected in [' 3 ', 'No excess proton', H3O_O_TYPE, H3O_H_TYPE]:
+                self.assertTrue(expected in output)
+
+    def testFindNoWatO(self):
+        with capture_stderr(main, ["-c", WRONG_WAT_O_TYPE_INI]) as output:
+            self.assertTrue(WAT_O_TYPE in output)
+            self.assertTrue("no such atoms were found" in output)
+
+    def testFindNoWatH(self):
+        # main(["-c", WRONG_WAT_H_TYPE_INI])
+        with capture_stderr(main, ["-c", WRONG_WAT_H_TYPE_INI]) as output:
+            self.assertTrue(WAT_H_TYPE in output)
             self.assertTrue("no such atoms were found" in output)
 
 
 class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
         try:
-            main(["-c", OH_DIST_INI_PATH])
+            main(["-c", OH_DIST_INI])
             self.assertFalse(diff_lines(DEF_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
         finally:
             silent_remove(DEF_OUT_PATH)
@@ -145,9 +187,9 @@ class TestLammpsProcData(unittest.TestCase):
 
     def testHIJAlt(self):
         try:
+            main(["-c", HIJ_ALT_INI])
             with capture_stderr(main, ["-c", HIJ_ALT_INI]) as output:
                 self.assertTrue("did not have the full list of atom numbers" in output)
-            # main(["-c", HIJ_ALT_INI])
             self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
         finally:
             silent_remove(HIJ_ALT_OUT)

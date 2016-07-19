@@ -54,28 +54,6 @@ GOFR_TYPE1 = 'gofr_type1'
 GOFR_TYPE2 = 'gofr_type2'
 OUT_BASE_DIR = 'output_directory'
 
-# for g(r) calcs
-GOFR_MAX = 'max_dist_for_gofr'
-GOFR_DR = 'delta_r_for_gofr'
-GOFR_BINS = 'bins_for_gofr'
-GOFR_RAW_HIST = 'raw_histogram_for_gofr'
-GOFR_R = 'gofr_r'
-GOFR_HO = 'gofr_hsow'
-GOFR_OO = 'gofr_osow'
-GOFR_HH = 'gofr_hshw'
-GOFR_OH = 'gofr_oshw'
-GOFR_TYPE = 'gofr_type'
-HO_BIN_COUNT = 'ho_bin_count'
-OO_BIN_COUNT = 'oo_bin_count'
-HH_BIN_COUNT = 'hh_bin_count'
-OH_BIN_COUNT = 'oh_bin_count'
-TYPE_BIN_COUNT = 'type_bin_count'
-HO_STEPS_COUNTED = 'ho_steps_counted'
-OO_STEPS_COUNTED = 'oo_steps_counted'
-HH_STEPS_COUNTED = 'hh_steps_counted'
-OH_STEPS_COUNTED = 'oh_steps_counted'
-TYPE_STEPS_COUNTED = 'type_steps_counted'
-
 # Types of calculations allowed
 # g(r) types
 CALC_HO_GOFR = 'calc_hstar_owat_gofr_flag'
@@ -83,13 +61,18 @@ CALC_OO_GOFR = 'calc_ostar_owat_gofr_flag'
 CALC_HH_GOFR = 'calc_hstar_hwat_gofr_flag'
 CALC_OH_GOFR = 'calc_ostar_hwat_gofr_flag'
 CALC_TYPE_GOFR = 'calc_gofr_spec_type_flag'
+# User inputs for g(r) calcs
+GOFR_MAX = 'max_dist_for_gofr'
+GOFR_DR = 'delta_r_for_gofr'
+GOFR_BINS = 'bins_for_gofr'
+GOFR_RAW_HIST = 'raw_histogram_for_gofr'
+
 # with output from every frame types
 CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
 CALC_HIJ_AMINO_FORM = 'calc_hij_amino_form_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 COMBINE_OUTPUT = 'combine_output_flag'
-
 
 # TODO: talk to Chris about listing many angles, dihedrals
 CALC_COORD_NUM = 'calc_coord_number'
@@ -156,6 +139,26 @@ MOL_NUM = 'mol_num'
 ATOM_TYPE = 'atom_type'
 CHARGE = 'charge'
 XYZ_COORDS = 'x,y,z'
+
+
+# for g(r) calcs
+GOFR_R = 'gofr_r'
+GOFR_HO = 'gofr_hsow'
+GOFR_OO = 'gofr_osow'
+GOFR_HH = 'gofr_hshw'
+GOFR_OH = 'gofr_oshw'
+GOFR_TYPE = 'gofr_type'
+HO_BIN_COUNT = 'ho_bin_count'
+OO_BIN_COUNT = 'oo_bin_count'
+HH_BIN_COUNT = 'hh_bin_count'
+OH_BIN_COUNT = 'oh_bin_count'
+TYPE_BIN_COUNT = 'type_bin_count'
+HO_STEPS_COUNTED = 'ho_steps_counted'
+OO_STEPS_COUNTED = 'oo_steps_counted'
+HH_STEPS_COUNTED = 'hh_steps_counted'
+OH_STEPS_COUNTED = 'oh_steps_counted'
+TYPE_STEPS_COUNTED = 'type_steps_counted'
+
 
 # Values to output
 TIMESTEP = 'timestep'
@@ -467,19 +470,23 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     # Data checking
     if excess_proton is None:
         if len(hydronium) != 4:
-            raise InvalidDataError('No excess proton found, so expected to find exactly 4 hydronium atoms. '
-                                   'However, found {} hydronium atoms at timestep {}. '
-                                   'Check input data.'.format(len(hydronium), timestep))
+            raise InvalidDataError("No excess proton found, so expected to find exactly 4 hydronium atoms.\n          "
+                                   "However, found {} hydronium atoms at timestep {}. "
+                                   "Check input data, including '{}' and '{}'.".format(len(hydronium), timestep,
+                                                                                       H3O_O_TYPE, H3O_H_TYPE))
     else:
         if len(hydronium) != 0:
-            raise InvalidDataError('Excess proton found, so expected to find exactly 0 hydronium atoms. '
+            raise InvalidDataError('Excess proton found, so expected to find exactly 0 hydronium atoms.\n          '
                                    'However, found {} hydronium atoms at timestep {}. '
-                                   'Check input data.'.format(len(hydronium), timestep))
+                                   "Check input data, including '{}' and '{}'.".format(len(hydronium), timestep,
+                                                                                       H3O_O_TYPE, H3O_H_TYPE))
+
     if len(carboxyl_oxys) != 2:
-        raise InvalidDataError('Expected to find exactly 2 atom indices {} in resid {} (to be treated as '
-                               'carboxylic oxygen atoms). Found {} such indices at timestep {}. '
-                               'Check input data.'.format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
-                                                          len(carboxyl_oxys), timestep))
+        raise InvalidDataError("Expected to find exactly 2 atom indices {} in resid {} (to be treated as "
+                               "carboxylic oxygen atoms). \n          Found {} such indices at timestep {}. "
+                               "Check input data, including '{}' and '{}'."
+                               "".format(cfg[PROT_O_IDS], cfg[PROT_RES_MOL_ID],
+                                         len(carboxyl_oxys), timestep, PROT_RES_MOL_ID, PROT_O_IDS))
     if len(water_oxys) == 0:
         raise InvalidDataError("The configuration file listed '{}' = {}, however no such atoms were found. "
                                "Check input data.".format(WAT_O_TYPE, cfg[WAT_O_TYPE]))
@@ -508,14 +515,6 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
         hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
         calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
-
-    # Checks for required data
-    if cfg[CALC_HO_GOFR] or cfg[CALC_OO_GOFR]:
-        if len(water_oxys) < 1:
-            raise InvalidDataError('Found no water oxygen atoms at timestep {}. Check input data.'.format(timestep))
-    if cfg[CALC_HH_GOFR] or cfg[CALC_OH_GOFR]:
-        if len(water_hs) < 1:
-            raise InvalidDataError('Found no water hydrogen atoms at timestep {}. Check input data.'.format(timestep))
 
     # For calcs requiring H* (proton on protonated residue) skip timesteps when there is no H* (residue deprotonated)
     if cfg[GOFR_OUTPUT]:
@@ -557,7 +556,8 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
 
 def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode):
     with open(dump_file) as d:
-        print("Reading: {}".format(dump_file))
+        # spaces here allow file name to line up with the "completed reading" print line
+        print("{:>17}: {}".format('Reading', dump_file))
         section = None
         box = np.zeros((3,))
         box_counter = 1
@@ -628,7 +628,7 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                     section = None
                 atom_counter += 1
     if atom_counter == 1:
-        print("Completed reading dumpfile {}.".format(dump_file))
+        print("Completed reading: {}".format(dump_file))
     else:
         warning("FYI: dump file {} step {} did not have the full list of atom numbers. "
                 "Continuing to next dump file.".format(dump_file, timestep))
@@ -741,15 +741,17 @@ def process_dump_files(cfg):
                                "of a single dump file with the keyword '{}' or a file listing dump files with the "
                                "keyword '{}'.".format(DUMP_FILE, DUMP_FILE_LIST))
 
-    data_to_print = []
     per_frame_write_mode = 'w'
+    base_out_file_name = cfg[DUMP_FILE_LIST]
     for dump_file in dump_file_list:
+        data_to_print = []
+        # output file base name to change at each iteration if not combining output
         if cfg[COMBINE_OUTPUT] is False:
-            data_to_print = []
-
+            base_out_file_name = dump_file
         read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, per_frame_write_mode)
         if cfg[PER_FRAME_OUTPUT]:
-            print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, per_frame_write_mode)
+            print_per_frame(base_out_file_name, cfg, data_to_print, out_fieldnames, per_frame_write_mode)
+        # if combining files, after first loop, always append to file
         if cfg[COMBINE_OUTPUT]:
             per_frame_write_mode = 'a'
 
