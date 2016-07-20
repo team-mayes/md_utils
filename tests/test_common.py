@@ -11,7 +11,8 @@ import os
 import numpy as np
 from md_utils.md_common import (find_files_by_dir, read_csv,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg)
+                                create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg,
+                                read_csv_dict, InvalidDataError)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -23,9 +24,16 @@ logger = logging.getLogger(__name__)
 
 # Constants #
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-SUB_DATA_DIR = os.path.join(DATA_DIR, 'lammps_proc')
+LAMMPS_PROC_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 FES_DIR = os.path.join(DATA_DIR, 'fes_out')
 CALC_PKA_DIR = 'calc_pka'
+PDB_DIR = os.path.join(DATA_DIR, 'pdb_edit')
+
+ELEM_DICT_FILE = os.path.join(PDB_DIR, 'element_dict.csv')
+ATOM_DICT_FILE = os.path.join(PDB_DIR, 'atom_reorder.csv')
+GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 10: 1, 11: 3, 12: 4, 13: 5, 14: 6,
+                  15: 7, 16: 8, 17: 9, 18: 10, 19: 11, 20: 12, 21: 13, 22: 14, 23: 15, 24: 16, 25: 17, 26: 18, 27: 19}
+
 
 CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMF_last2ns3_1.txt')
 FRENG_TYPES = [float, str]
@@ -44,14 +52,14 @@ GHOST = 'ghost'
 
 # Output files #
 
-GOOD_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
-ALMOST_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good_small_diff.csv')
-NOT_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_diff_val.csv')
-MISS_COL_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_miss_val.csv')
-MISS_LINE_OH_DIST_OUT_PATH = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_missing_line.csv')
+GOOD_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good.csv')
+ALMOST_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good_small_diff.csv')
+NOT_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_diff_val.csv')
+MISS_COL_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_miss_val.csv')
+MISS_LINE_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_missing_line.csv')
 
-IMPROP_SEC = os.path.join(SUB_DATA_DIR, 'glue_improp.data')
-IMPROP_SEC_ALT = os.path.join(SUB_DATA_DIR, 'glue_improp_diff_ord.data')
+IMPROP_SEC = os.path.join(LAMMPS_PROC_DIR, 'glue_improp.data')
+IMPROP_SEC_ALT = os.path.join(LAMMPS_PROC_DIR, 'glue_improp_diff_ord.data')
 
 # To test PBC math
 PBC_BOX = np.full(3, 24.25)
@@ -171,6 +179,37 @@ class TestCreateOutFname(unittest.TestCase):
         """
         self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
             os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
+
+class TestReadCsvDict(unittest.TestCase):
+    def testReadAtomNumDict(self):
+        # Will renumber atoms and then sort them
+        test_dict = read_csv_dict(ATOM_DICT_FILE)
+        self.assertEqual(test_dict, GOOD_ATOM_DICT)
+
+    def testReadPDBDict(self):
+        test_type = '  HY1 '
+        test_elem = ' H'
+        test_dict = read_csv_dict(ELEM_DICT_FILE, pdb_dict=True)
+        self.assertTrue(test_type in test_dict)
+        self.assertEquals(test_elem, test_dict[test_type])
+        self.assertEquals(31, len(test_dict))
+
+    def testStringDictAsInt(self):
+        # Check that fails elegantly by passing returning value error
+        try:
+            test_dict = read_csv_dict(ELEM_DICT_FILE, one_to_one=False)
+            self.assertFalse(test_dict)
+        except ValueError as e:
+            self.assertTrue("invalid literal for int()" in e.message)
+
+    def testStringDictCheckDups(self):
+        # Check that fails elegantly
+        try:
+            test_dict = read_csv_dict(ELEM_DICT_FILE, ints=False, )
+            self.assertFalse(test_dict)
+        except InvalidDataError as e:
+            self.assertTrue("Did not find a 1:1 mapping" in e.message)
 
 
 class TestReadCsv(unittest.TestCase):

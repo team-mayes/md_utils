@@ -12,7 +12,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_int_dict)
+from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_csv_dict)
 
 __author__ = 'hmayes'
 
@@ -711,12 +711,12 @@ def main(argv=None):
                   SEC_IMPRS: {}, }
 
     try:
-        atom_id_dict = read_int_dict(cfg[ATOM_ID_DICT_FILE], one_to_one=False)
-        type_dicts[SEC_ATOMS] = read_int_dict(cfg[ATOM_TYPE_DICT_FILE], one_to_one=False)
-        type_dicts[SEC_BONDS] = read_int_dict(cfg[BOND_TYPE_DICT_FILE], one_to_one=False)
-        type_dicts[SEC_ANGLS] = read_int_dict(cfg[ANGL_TYPE_DICT_FILE], one_to_one=False)
-        type_dicts[SEC_DIHES] = read_int_dict(cfg[DIHE_TYPE_DICT_FILE], one_to_one=False)
-        type_dicts[SEC_IMPRS] = read_int_dict(cfg[IMPR_TYPE_DICT_FILE], one_to_one=False)
+        atom_id_dict = read_csv_dict(cfg[ATOM_ID_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_ATOMS] = read_csv_dict(cfg[ATOM_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_BONDS] = read_csv_dict(cfg[BOND_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_ANGLS] = read_csv_dict(cfg[ANGL_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_DIHES] = read_csv_dict(cfg[DIHE_TYPE_DICT_FILE], one_to_one=False)
+        type_dicts[SEC_IMPRS] = read_csv_dict(cfg[IMPR_TYPE_DICT_FILE], one_to_one=False)
         if cfg[DATA_COMP] is None:
             process_data_files(cfg, atom_id_dict, type_dicts)
         else:

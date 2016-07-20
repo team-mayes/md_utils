@@ -11,7 +11,7 @@ import sys
 import argparse
 
 from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
-                                list_to_file, read_int_dict, LAMMPS_SECTION_NAMES)
+                                list_to_file, read_csv_dict, LAMMPS_SECTION_NAMES)
 
 __author__ = 'hmayes'
 
@@ -376,7 +376,7 @@ def main(argv=None):
 
         # Will return empty dicts if no file
         if not cfg[MAKE_ATOM_TYPE_DICT]:
-            old_new_atom_type_dict = read_int_dict(cfg[ATOM_TYPE_DICT_FILE])
+            old_new_atom_type_dict = read_csv_dict(cfg[ATOM_TYPE_DICT_FILE])
 
         process_data_files(cfg, data_tpl_content, old_new_atom_type_dict)
 

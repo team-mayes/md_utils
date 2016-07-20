@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 
 from md_utils.md_common import InvalidDataError, create_out_fname, warning, \
-    process_cfg, find_dump_section_state, read_int_dict, silent_remove
+    process_cfg, find_dump_section_state, read_csv_dict, silent_remove
 
 
 __author__ = 'hmayes'
@@ -253,9 +253,9 @@ def main(argv=None):
     # Read template and dump files
     cfg = args.config
     try:
-        atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        atom_type_dict = read_int_dict(cfg[ATOM_TYPE_FILE], one_to_one=False)
-        mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
+        atom_num_dict = read_csv_dict(cfg[ATOM_REORDER_FILE])
+        atom_type_dict = read_csv_dict(cfg[ATOM_TYPE_FILE], one_to_one=False)
+        mol_num_dict = read_csv_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
         process_dump_files(cfg, atom_num_dict, atom_type_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)

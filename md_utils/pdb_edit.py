@@ -8,11 +8,11 @@ from __future__ import print_function
 # noinspection PyCompatibility
 import ConfigParser
 import logging
-import re
+import os
 import sys
 import argparse
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_int_dict
+from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict
 
 __author__ = 'hmayes'
 
@@ -44,7 +44,7 @@ LAST_ADD_ELEM = 'last_atom_add_element'
 FIRST_WAT_ID = 'first_wat_atom'
 LAST_WAT_ID = 'last_wat_atom'
 ADD_ELEMENTS = 'add_element_types'
-CHECK_ELEMENT_DICT = 'check_element_dict'
+ELEMENT_DICT_FILE = 'atom_type_element_dict_file'
 OUT_BASE_DIR = 'output_directory'
 
 # PDB file info
@@ -62,9 +62,10 @@ PDB_FORMAT = 'pdb_print_format'
 
 # Defaults
 DEF_CFG_FILE = 'pdb_edit.ini'
-# Set notation
+DEF_ELEM_DICT_FILE = os.path.join(os.path.dirname(__file__), 'cfg', 'charmm36_atoms_elements.txt')
 DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 MOL_RENUM_FILE: None,
+                ELEMENT_DICT_FILE: None,
                 RENUM_MOL: False,
                 FIRST_ADD_ELEM: 1,
                 LAST_ADD_ELEM: np.inf,
@@ -72,7 +73,7 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 LAST_WAT_ID: np.nan,
                 OUT_BASE_DIR: None,
                 PDB_NEW_FILE: None,
-                PDB_FORMAT: '%s%s%s%s%4s    %8.3f%8.3f%8.3f%12s%2s%s',
+                PDB_FORMAT: '{:6s}{:>5}{:^6s}{:5s}{:>4}    {:8.3f}{:8.3f}{:8.3f}{:22s}{:>2s}{:s}',
                 PDB_LINE_TYPE_LAST_CHAR: 6,
                 PDB_ATOM_NUM_LAST_CHAR: 11,
                 PDB_ATOM_TYPE_LAST_CHAR: 17,
@@ -84,7 +85,6 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PDB_LAST_T_CHAR: 76,
                 PDB_LAST_ELEM_CHAR: 78,
                 ADD_ELEMENTS: False,
-                CHECK_ELEMENT_DICT: False,
                 }
 REQ_KEYS = {PDB_FILE: str,
             }
@@ -92,6 +92,34 @@ REQ_KEYS = {PDB_FILE: str,
 HEAD_CONTENT = 'head_content'
 ATOMS_CONTENT = 'atoms_content'
 TAIL_CONTENT = 'tail_content'
+
+
+# This is used when need to add atom types to PDB file
+C_ATOMS = ' C'
+O_ATOMS = ' O'
+H_ATOMS = ' H'
+N_ATOMS = ' N'
+P_ATOMS = ' P'
+S_ATOMS = ' S'
+CL_ATOMS = 'CL'
+NA_ATOMS = 'NA'
+K_ATOMS = ' K'
+LI_ATOMS = 'LI'
+MG_ATOMS = 'MG'
+CA_ATOMS = 'CA'
+RB_ATOMS = 'RB'
+CS_ATOMS = 'CS'
+BA_ATOMS = 'BA'
+ZN_ATOMS = 'ZN'
+CD_ATOMS = 'CD'
+
+
+def create_element_dict(dict_file):
+    # This is used when need to add atom types to PDB file
+    element_dict = {}
+    if dict_file is not None:
+        return read_csv_dict(dict_file, pdb_dict=True)
+    return element_dict
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -106,13 +134,15 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     config = ConfigParser.ConfigParser()
     good_files = config.read(f_loc)
     if not good_files:
-        raise IOError('Could not read file {}'.format(f_loc))
+        raise IOError('Could not read file: {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
 
-    # Data checking
-    if main_proc[ADD_ELEMENTS] and np.isnan(main_proc[LAST_ADD_ELEM]):
-        raise InvalidDataError("The option '{}' requires inputting an integer for '{}'.".format(ADD_ELEMENTS,
-                                                                                                LAST_ADD_ELEM))
+    # Assume that elements should be added if a dict file is give
+    if main_proc[ADD_ELEMENTS] and main_proc[ELEMENT_DICT_FILE] is None:
+        main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
+    if main_proc[ELEMENT_DICT_FILE] is not None:
+        main_proc[ADD_ELEMENTS] = True
+
     return main_proc
 
 
@@ -157,7 +187,7 @@ def pdb_atoms_to_file(pdb_format, list_val, fname, mode='w'):
     """
     with open(fname, mode) as w_file:
         for line in list_val:
-            w_file.write(pdb_format % tuple(line) + '\n')
+            w_file.write(pdb_format.format(*line) + '\n')
 
 
 def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
@@ -166,92 +196,11 @@ def print_pdb(head_data, atoms_data, tail_data, file_name, file_format):
     list_to_file(tail_data, file_name, mode='a', print_message=False)
 
 
-def make_atom_type_element_dict(atom_section, last_prot_atom):
-    """
-    To make a lists of PDB atom types according to element type
-    Used if need to fill in the last column of a PDB
-
-    @param atom_section: assumes the atom type is in entry index 2
-    @param last_prot_atom: used for adding atom type to the pdb
-    """
-    prot_atom_types = set()
-
-    c_pat = re.compile(r"^C.*")
-    c_atoms = []
-    h_pat = re.compile(r"^H.*")
-    h_atoms = []
-    o_pat = re.compile(r"^O.*")
-    o_atoms = []
-    n_pat = re.compile(r"^N.*")
-    n_atoms = []
-    s_pat = re.compile(r"^S.*")
-    s_atoms = []
-
-    for atom_id, entry in enumerate(atom_section):
-        if atom_id < last_prot_atom:
-            prot_atom_types.add(entry[2])
-
-    for atom in prot_atom_types:
-        atom_strip = atom.strip()
-        c_match = c_pat.match(atom_strip)
-        o_match = o_pat.match(atom_strip)
-        h_match = h_pat.match(atom_strip)
-        n_match = n_pat.match(atom_strip)
-        s_match = s_pat.match(atom_strip)
-        if c_match:
-            c_atoms.append(atom)
-        elif o_match:
-            o_atoms.append(atom)
-        elif h_match:
-            h_atoms.append(atom)
-        elif n_match:
-            n_atoms.append(atom)
-        elif s_match:
-            s_atoms.append(atom)
-        else:
-            raise InvalidDataError("Please add atom type '{}' to a dictionary of elements.".format(atom))
-            # atom_type_dict
-
-    # This printing is to check with VMD
-    print("Element/Atom type dictionaries, formatted to ease checking in VMD:")
-    print(' '.join(c_atoms))
-    print(' '.join(o_atoms))
-    print(' '.join(h_atoms))
-    print(' '.join(n_atoms))
-    print(' '.join(s_atoms))
-    # lists for python
-    print("Element/Atom type dictionaries, formatted as python dictionaries:")
-    print(c_atoms)
-    print(o_atoms)
-    print(h_atoms)
-    print(n_atoms)
-    print(s_atoms)
-
-
-def process_pdb(cfg, atom_num_dict, mol_num_dict):
+def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
     pdb_loc = cfg[PDB_FILE]
     pdb_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
-
-    # This is used when need to add atom types to PDB file
-    if cfg[ADD_ELEMENTS]:
-        c_atoms = ['  CA  ', '  CE3 ', '  CZ2 ', '  CB  ', '  CE  ', '  CD2 ', '  CD  ', '  CH2 ', '  CG1 ', '  CG  ',
-                   '  CD1 ', '  CZ3 ', '  CE1 ', '  CE2 ', '  CZ  ', '  CG2 ', '  C   ', '  CAT ', '  CAY ', '  CY  ']
-        o_atoms = ['  OG1 ', '  OT2 ', '  OG  ', '  OE1 ', '  OH  ', '  OD1 ', '  OT1 ', '  O   ', '  OE2 ', '  OD2 ',
-                   '  OY  ', '  OH2 ']
-        h_atoms = ['  HZ1 ', ' HD23 ', ' HG12 ', '  HD1 ', '  HE3 ', '  HA2 ', ' HD21 ', ' HH11 ', '  HG  ', '  HB2 ',
-                   '  HE  ', '  HE1 ', '  HT1 ', '  HT2 ', '  HA  ', ' HG11 ', ' HE21 ', '  HG2 ', '  HD3 ', '  HZ3 ',
-                   ' HG22 ', '  HB  ', '  HN  ', ' HD22 ', '  HA1 ', '  HE2 ', ' HE22 ', '  HB3 ', ' HD13 ', '  HD2 ',
-                   ' HH12 ', '  HH  ', ' HH22 ', '  HB1 ', ' HD11 ', '  HH2 ', '  HG1 ', '  HT3 ', ' HD12 ', ' HH21 ',
-                   ' HG21 ', '  HZ  ', '  HZ2 ', ' HG13 ', ' HG23 ', '  HNT ', '  HY1 ', '  HY2 ', '  HY3 ', '  H1  ',
-                   '  H2  ', '  H3  ']
-        n_atoms = ['  ND1 ', '  NH2 ', '  N   ', '  NE2 ', '  ND2 ', '  NE1 ', '  NH1 ', '  NE  ', '  NZ  ', '  NT  ']
-        s_atoms = ['  SD  ', '  SG  ']
-    else:
-        c_atoms = []
-        o_atoms = []
-        h_atoms = []
-        n_atoms = []
-        s_atoms = []
+    # to allow warning to be printed once and only once
+    missing_types = []
 
     with open(pdb_loc) as f:
         wat_count = 0
@@ -328,23 +277,16 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict):
                             if atom_type != '  H2  ':
                                 warning('Expected an H2 atom to be the second atom of a water molecule. '
                                         'Check line: {}'.format(line))
-                        # last_cols = '  0.00  0.00      S2   H'
                     wat_count += 1
 
                 if cfg[ADD_ELEMENTS] and atom_count <= cfg[LAST_ADD_ELEM]:
-                    if atom_type in c_atoms:
-                        element = '   C'
-                    elif atom_type in o_atoms:
-                        element = '   O'
-                    elif atom_type in h_atoms:
-                        element = '   H'
-                    elif atom_type in n_atoms:
-                        element = '   N'
-                    elif atom_type in s_atoms:
-                        element = '   S'
+                    if atom_type in element_dict:
+                        element = element_dict[atom_type]
                     else:
-                        warning("Please add atom type '{}' to dictionary of elements. This program will "
-                                "not add or replace an element type if not present.".format(atom_type))
+                        if atom_type not in missing_types:
+                            warning("Please add atom type '{}' to dictionary of elements. Will not write/overwrite "
+                                    "element type in the pdb output.".format(atom_type))
+                            missing_types.append(atom_type)
 
                 # For numbering molecules from 1 to end
                 if cfg[RENUM_MOL]:
@@ -374,17 +316,11 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict):
             else:
                 pdb_data[TAIL_CONTENT].append(line)
 
-    # CHECK_ELEMENT_DICT
-                # make_atom_type_element_dict
-
     # Only sort if there is renumbering
     if len(atom_num_dict) > 0:
         pdb_data[ATOMS_CONTENT] = sorted(atoms_content, key=lambda entry: entry[1])
     else:
         pdb_data[ATOMS_CONTENT] = atoms_content
-
-    if cfg[CHECK_ELEMENT_DICT]:
-        make_atom_type_element_dict(pdb_data[ATOMS_CONTENT], cfg[LAST_ADD_ELEM])
 
     if cfg[PDB_NEW_FILE] is None:
         f_name = create_out_fname(cfg[PDB_FILE], suffix="_new", base_dir=cfg[OUT_BASE_DIR])
@@ -404,18 +340,17 @@ def main(argv=None):
 
     cfg = args.config
 
-    # TODO, use make_atom_type_element_dict if needed
-
     # Read and process pdb files
     try:
-        atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
-        process_pdb(cfg, atom_num_dict, mol_num_dict)
+        atom_num_dict = read_csv_dict(cfg[ATOM_REORDER_FILE])
+        mol_num_dict = read_csv_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
+        element_dict = create_element_dict(cfg[ELEMENT_DICT_FILE])
+        process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
-    except InvalidDataError as e:
-        warning("Problems with input information:", e)
+    except (InvalidDataError, ValueError) as e:
+        warning("Problems with input:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

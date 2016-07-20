@@ -180,7 +180,7 @@ def pbc_vector_diff(a, b, box):
 
 def pbc_vector_avg(a, b, box):
     diff = pbc_vector_diff(a, b, box)
-    mid_pt = np.add(b, np.divide(diff, 2))
+    mid_pt = np.add(b, np.divide(diff, 2.0))
     # mid-point may not be in the first periodic image. Make it so by getting its difference from the origin
     return pbc_vector_diff(mid_pt, np.zeros(len(mid_pt)), box)
 
@@ -690,16 +690,22 @@ def save_fig(name, base_dir=""):
     plt.savefig(base_dir + name, bbox_inches='tight')
 
 
-def read_int_dict(d_file, one_to_one=True):
+def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False):
     """
     If an dictionary file is given, read it and return the dict[old]=new.
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
+
     @param d_file: the files with csv of old_id,new_id
+    @param ints: boolean to indicate if the values are to be read as integers
     @param one_to_one: flag to check for one-to-one mapping in the dict
-    @return: int_dict
+    @param pdb_dict: flag to format as required for the PDB output
+    @return: new_dict
     """
-    int_dict = {}
+    new_dict = {}
+    if pdb_dict:
+        ints = False
+        one_to_one = False
     # If d_file is None, return the empty dictionary, as no dictionary file was specified
     if d_file is not None:
         with open(d_file) as csv_file:
@@ -709,19 +715,37 @@ def read_int_dict(d_file, one_to_one=True):
                 if len(row) == 0:
                     continue
                 if len(row) == 2:
-                    int_dict[int(row[0])] = int(row[1])
+                    if pdb_dict:
+                        atom_type = row[0].strip()
+                        type_len = len(atom_type)
+                        element_type = row[1].strip()
+                        if len(element_type) > 2 or type_len > 4:
+                            raise InvalidDataError("Error reading line '{}' in file: {}\n  "
+                                                   "Expected to read atom_type,element_type, with atom type no more "
+                                                   "than 4 characters and element_type no more than 2."
+                                                   "".format(row, d_file))
+                        if type_len == 4:
+                            atom_type = ' {:s} '.format(atom_type)
+                        else:
+                            atom_type = '  {:4s}'.format(atom_type)
+                        new_dict[atom_type] = '{:>2s}'.format(element_type)
+                    elif ints:
+                        new_dict[int(row[0])] = int(row[1])
+                    else:
+                        new_dict[row[0]] = row[1]
                     key_count += 1
                 else:
-                    warning('Expected exactly two comma-separated values per row in file {}. '
-                            'Skipping row containing: {}.'.format(d_file, row))
-        if key_count == len(int_dict):
+                    raise InvalidDataError("Error reading line '{}' in file: {}\n"
+                                           "  Expected exactly two comma-separated values per row."
+                                           "".format(row, d_file))
+        if key_count == len(new_dict):
             if one_to_one:
-                for key in int_dict:
-                    if not (key in int_dict.values()):
+                for key in new_dict:
+                    if not (key in new_dict.values()):
                         raise InvalidDataError('Did not find a 1:1 mapping of key,val ids in {}'.format(d_file))
         else:
             raise InvalidDataError('A non-unique key value (first column) found in file: {}\n'.format(d_file))
-    return int_dict
+    return new_dict
 
 
 def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w', print_message=True):

@@ -11,7 +11,7 @@ import re
 import sys
 import argparse
 
-from md_utils.md_common import InvalidDataError, read_int_dict, warning, create_out_fname, process_cfg, list_to_file
+from md_utils.md_common import InvalidDataError, read_csv_dict, warning, create_out_fname, process_cfg, list_to_file
 
 __author__ = 'hmayes'
 
@@ -188,8 +188,8 @@ def main(argv=None):
 
     # Read and process pdb files
     try:
-        atom_num_dict = read_int_dict(cfg[ATOM_REORDER_FILE])
-        mol_num_dict = read_int_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
+        atom_num_dict = read_csv_dict(cfg[ATOM_REORDER_FILE])
+        mol_num_dict = read_csv_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
         process_psf(cfg, atom_num_dict, mol_num_dict)
     except IOError as e:
         warning("Problems reading file:", e)
