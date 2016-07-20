@@ -1,4 +1,4 @@
-============
+= ===========
 MD Utilities
 ============
 
@@ -182,6 +182,16 @@ lammps_proc_data
 
 pdb_edit
   Creates a new version of a pdb file applying options such as renumbering molecules.
+  * use the option "add_element_types = true" to fill in the column of element types (VMD dropped them for the protein section; CP2K wants them)
+      * by default, it will check all atoms. You can specify a range on which to perform this action with 'first_atom_add_element' and 'last_atom_add_element'
+      * it will only add the element type if it is in the internal atom_type/element dictionary (a warning will show if a type is not in the dictionary). Otherwise, it will leave those columns as they originally were.
+  * if the user specifies a 'first_wat_atom' and 'last_wat_atom', the program will check that the atoms are printed in the order OH2, H1, H2
+      * when using this option, if the first protein atom is not 1 (numbering begins at 1, like in a PDB, not 0, like VMD index), use the option "last_prot_atom = " to indicate the first protein atom num
+      * this options requires inputing the last protein atom id (add "last_prot_atom = X" to the configuration file, where X is the integer (decimal) atom number)
+  * by default, the output pdb name of a pdb file called 'struct.pdb' will be 'struct_new.pdb'. You can specify a new name with the keyword 'new_pdb_name'
+  * by default, the output directory will be the same as that for the input pdb. This can be changed with the 'output_directory' keyword
+  * the program will renumber atoms starting from 1 (using hex for atom numbers greater than 99999), using a dictionary to change order if a csv dictionary of "old,new" indexes is specified with 'atom_reorder_old_new_file'
+  * the program will renumber molecules starting from 1 if 'mol_renum_flag = True' is included in the configuration file. Molecules may also be renumbered with by specifying a csv dictionary of "old,new" indexes with 'mol_renum_old_new_file'
 
 
 For RAPTOR or EVBFit/RMDFit:

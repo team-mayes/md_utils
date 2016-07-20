@@ -724,7 +724,7 @@ def read_int_dict(d_file, one_to_one=True):
     return int_dict
 
 
-def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'):
+def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w', print_message=True):
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
 
@@ -732,6 +732,7 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
     @param fname: The location of the file to write.
     @param list_format: Specified formatting for the line if the line is  list.
     @param delimiter: If no format is given and the list contains lists, the delimiter will join items in the list.
+    @param print_message: boolean to determine whether to write to output if the file is printed or appended
     @param mode: write by default; can be changed to allow appending to file.
     """
     with open(fname, mode) as w_file:
@@ -743,7 +744,11 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
                     w_file.write(delimiter.join(map(str, line)) + "\n")
                 else:
                     w_file.write(list_format.format(*line) + '\n')
-    print("Wrote file: {}".format(fname))
+    if print_message:
+        if mode == 'w':
+            print("   Wrote file: {}".format(fname))
+        elif mode == 'a':
+            print("Appended file: {}".format(fname))
 
 
 # Conversions #
