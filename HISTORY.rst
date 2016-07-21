@@ -3,6 +3,13 @@
 History
 -------
 
+0.9.1 (2016-07-20)
+------------------
+
+* Updated pdb_edit to fill in the element column of a pdb file (sometime VMD removes it). The program uses
+a dictionary of atom_type,element based on CHARMM36. Users can specify a different mapping of PDB atom types to
+element types.
+
 0.9.0 (2016-07-17)
 ------------------
 
