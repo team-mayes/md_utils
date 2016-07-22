@@ -3,18 +3,27 @@
 Creates lammps data files from lammps dump files, given a template lammps data file.
 """
 
-from __future__ import print_function
-import ConfigParser
+from __future__ import print_function, absolute_import
+
+import os
+
+from future.utils import PY2
 from collections import defaultdict
 import logging
 import re
 import sys
 import argparse
-
 import numpy as np
 
 from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, pbc_dist, \
     warning, process_cfg, find_dump_section_state
+
+if PY2:
+    # noinspection PyCompatibility
+    from ConfigParser import *
+else:
+    # noinspection PyCompatibility
+    from configparser import *
 
 
 __author__ = 'hmayes'
@@ -40,6 +49,7 @@ MAIN_SEC = 'main'
 # Config keys
 DATA_TPL_FILE = 'data_tpl_file'
 DUMPS_FILE = 'dump_list_file'
+DUMP_FILE = 'dump_file'
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 H3O_O_TYPE = 'h3o_o_type'
@@ -72,6 +82,7 @@ LAST_ION1 = 'last_ion1'
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
+                DUMP_FILE: None,
                 PROT_H_IGNORE: [],
                 OUT_BASE_DIR: None,
                 LAST_P1: -1,
@@ -131,7 +142,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(f_loc)
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
@@ -240,7 +251,7 @@ def process_data_tpl(cfg):
                     tpl_data[WATER_MOLS][mol_num].append(atom_struct)
                 if atom_num == tpl_data[NUM_ATOMS]:
                     section = SEC_TAIL
-                    ## Perform checks total charge
+                    # Perform checks total charge
                     if abs(total_charge) < TOL:
                         print('The data file system is neutral (total charge {:.2e})'.format(total_charge))
                     else:
@@ -378,7 +389,6 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
             line = line.strip()
             if section is None:
                 section = find_dump_section_state(line)
-                #logger.debug("In process_dump_files, set section to %s.", section)
                 if section is None:
                     raise InvalidDataError('Unexpected line in file {}: {}'.format(dump_file, line))
             elif section == SEC_TIMESTEP:
@@ -503,14 +513,28 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
 
 
 def process_dump_files(cfg, data_tpl_content):
-    with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f:
-            dump_file = dump_file.strip()
-            # ignore blank lines in dump file list
-            if len(dump_file) == 0:
-                continue
-            else:
-                process_dump_file(cfg, data_tpl_content, dump_file)
+    if cfg[DUMP_FILE] is None:
+        dump_file_list = []
+    else:
+        dump_file_list = [cfg[DUMP_FILE]]
+    if os.path.isfile(cfg[DUMPS_FILE]):
+        with open(cfg[DUMPS_FILE]) as f:
+            for dump_file in f:
+                dump_file = dump_file.strip()
+                # ignore blank lines in dump file list
+                if len(dump_file) == 0:
+                    continue
+                else:
+                    dump_file_list.append(dump_file)
+    else:
+        warning("Did not find file: '{}'".format(cfg[DUMPS_FILE]))
+    if len(dump_file_list) == 0:
+        raise InvalidDataError("Found no files to process. In the configuration file, specify one file "
+                               "with the keyword '{}' or a list of "
+                               "files with the keyword '{}'".format(DUMP_FILE, DUMPS_FILE))
+    else:
+        for dump_file in dump_file_list:
+            process_dump_file(cfg, data_tpl_content, dump_file)
 
 
 def main(argv=None):
