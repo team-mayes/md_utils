@@ -16,6 +16,8 @@ GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised.psf')
 QMMM_OUT_INI = os.path.join(SUB_DATA_DIR, 'psf_make_qmmm_input.ini')
 QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id.dat')
 GOOD_QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id_good.dat')
+VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms.dat')
+GOOD_VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms_good.dat')
 
 # To catch problems...
 MOL_RENUM_REORDER_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_renum_reord.ini')
@@ -36,8 +38,10 @@ class TestPDBEdit(unittest.TestCase):
             with capture_stdout(main, ["-c", QMMM_OUT_INI]) as output:
                 self.assertTrue("Total charge from QMMM atoms: -1.0" in output)
             self.assertFalse(diff_lines(QMMM_OUT, GOOD_QMMM_OUT))
+            self.assertFalse(diff_lines(VMD_ATOMS_OUT, GOOD_VMD_ATOMS_OUT))
         finally:
             silent_remove(QMMM_OUT)
+            silent_remove(VMD_ATOMS_OUT)
             # pass
 
 

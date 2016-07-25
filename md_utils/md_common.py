@@ -785,9 +785,9 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
                     w_file.write(list_format.format(*line) + '\n')
     if print_message:
         if mode == 'w':
-            print("   Wrote file: {}".format(fname))
+            print("Wrote file: {}".format(fname))
         elif mode == 'a':
-            print("Appended file: {}".format(fname))
+            print("  Appended: {}".format(fname))
 
 
 def print_qm_kind(int_list, element_name, fname, mode='w'):
@@ -804,7 +804,7 @@ def print_qm_kind(int_list, element_name, fname, mode='w'):
         m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
         m_file.write('    &END QM_KIND\n')
     if mode == 'w':
-        print("   Wrote file: {}".format(fname))
+        print("Wrote file: {}".format(fname))
 
 
 def print_qm_links(c_alpha_dict, c_beta_dict, f_name, mode="w"):

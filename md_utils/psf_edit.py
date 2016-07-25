@@ -10,7 +10,8 @@ import re
 import sys
 import argparse
 from md_utils.md_common import InvalidDataError, read_csv_dict, warning, create_out_fname, process_cfg, list_to_file, \
-    create_element_dict, print_qm_kind, print_qm_links
+    create_element_dict, print_qm_kind, print_qm_links, list_to_csv
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -140,6 +141,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
         qmmm_elem_id_dict = {}
         ca_res_atom_id_dict = {}
         cb_res_atom_id_dict = {}
+        atoms_for_vmd = []
         qmmm_charge = 0
 
         # for RENUM_MOL
@@ -209,6 +211,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                         else:
                             qmmm_elem_id_dict[element] = [atom_num]
                         qmmm_charge += charge
+                        atoms_for_vmd.append(atom_num - 1)
 
                 if len(psf_data[ATOMS_CONTENT]) == num_atoms:
                     section = SEC_TAIL
@@ -231,13 +234,15 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                      f_name, list_format=cfg[PSF_FORMAT])
 
     if len(cfg[RESID_QMMM]) > 0:
+        print("Total charge from QMMM atoms: {}".format(qmmm_charge))
         f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
         print_mode = "w"
         for elem in qmmm_elem_id_dict:
             print_qm_kind(qmmm_elem_id_dict[elem], elem, f_name, mode=print_mode)
             print_mode = 'a'
         print_qm_links(ca_res_atom_id_dict, cb_res_atom_id_dict, f_name, mode=print_mode)
-        print("Total charge from QMMM atoms: {}".format(qmmm_charge))
+        f_name = create_out_fname('vmd_protein_atoms.dat', base_dir=cfg[OUT_BASE_DIR])
+        list_to_csv([atoms_for_vmd], f_name, delimiter=' ')
 
 
 def main(argv=None):
