@@ -91,6 +91,9 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
     if (len(main_proc[RESID_QMMM]) > 0) and main_proc[ELEMENT_DICT_FILE] is None:
         main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
+    if main_proc[RENUM_MOL] and main_proc[MOL_RENUM_FILE] is not None:
+        raise InvalidDataError("This program does not currently support both '{}' and '{}'"
+                               "".format(RENUM_MOL, MOL_RENUM_FILE))
     return main_proc
 
 
@@ -116,8 +119,8 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
+    except (KeyError, InvalidDataError) as e:
+        warning(e)
         parser.print_help()
         return args, INPUT_ERROR
 
@@ -138,6 +141,10 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
         ca_res_atom_id_dict = {}
         cb_res_atom_id_dict = {}
         qmmm_charge = 0
+
+        # for RENUM_MOL
+        last_resid = None
+        cur_mol_num = 0
 
         for line in f.readlines():
             s_line = line.strip()
@@ -174,6 +181,12 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                 if resid in mol_num_dict:
                     resid = mol_num_dict[resid]
 
+                if cfg[RENUM_MOL]:
+                    if resid != last_resid:
+                        last_resid = resid
+                        cur_mol_num += 1
+                    resid = cur_mol_num
+
                 atom_struct = [atom_num, segid, resid, resname, atom_type, charmm_type, charge, atom_wt, zero]
                 psf_data[ATOMS_CONTENT].append(atom_struct)
 
@@ -209,12 +222,13 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                 "cross-terms sections will not match.")
         psf_data[ATOMS_CONTENT] = sorted(psf_data[ATOMS_CONTENT], key=lambda entry: entry[0])
 
-    if cfg[PSF_NEW_FILE] is None:
-        f_name = create_out_fname(cfg[PSF_FILE], suffix="_new", base_dir=cfg[OUT_BASE_DIR])
-    else:
-        f_name = cfg[PSF_NEW_FILE]
-    list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT],
-                 f_name, list_format=cfg[PSF_FORMAT])
+    if cfg[RENUM_MOL] or len(atom_num_dict) + len(mol_num_dict) > 0:
+        if cfg[PSF_NEW_FILE] is None:
+            f_name = create_out_fname(cfg[PSF_FILE], suffix="_new", base_dir=cfg[OUT_BASE_DIR])
+        else:
+            f_name = cfg[PSF_NEW_FILE]
+        list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT],
+                     f_name, list_format=cfg[PSF_FORMAT])
 
     if len(cfg[RESID_QMMM]) > 0:
         f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
@@ -244,7 +258,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems with input information:", e)
+        warning(e)
         return INVALID_DATA
 
     return GOOD_RET  # success
