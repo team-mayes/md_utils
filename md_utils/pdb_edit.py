@@ -5,14 +5,21 @@ Edit a pdb file to provide missing data
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 import logging
 import os
 import sys
 import argparse
 import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict
+from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict, \
+    print_qm_kind, create_element_dict, print_qm_links
+
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
+
 
 __author__ = 'hmayes'
 
@@ -46,7 +53,7 @@ LAST_WAT_ID = 'last_wat_atom'
 ADD_ELEMENTS = 'add_element_types'
 ELEMENT_DICT_FILE = 'atom_type_element_dict_file'
 OUT_BASE_DIR = 'output_directory'
-RESID_BREAK_CA_CB = 'resids_qmmm_ca_cb_link'
+RESID_QMMM = 'resids_qmmm_ca_cb_link'
 
 # PDB file info
 PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
@@ -86,7 +93,7 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PDB_LAST_T_CHAR: 76,
                 PDB_LAST_ELEM_CHAR: 78,
                 ADD_ELEMENTS: False,
-                RESID_BREAK_CA_CB: []
+                RESID_QMMM: []
                 }
 REQ_KEYS = {PDB_FILE: str,
             }
@@ -115,25 +122,11 @@ BA_ATOMS = 'BA'
 ZN_ATOMS = 'ZN'
 CD_ATOMS = 'CD'
 
-
-def create_element_dict(dict_file):
-    # This is used when need to add atom types to PDB file
-    element_dict = {}
-    if dict_file is not None:
-        return read_csv_dict(dict_file, pdb_dict=True)
-    return element_dict
-
-
-def print_qm_links(resid, atom_dict):
-    """
-    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
-    @param resid: protein residue to be broken. Only used for comment line.
-    @param atom_dict: atom ids of CA and CB to be broken
-    """
-    # TODO: add functionality
-    print('! Break resid {} between CA and CB, and cap CB with hydrogen'.format(resid))
-    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
-          '    &END LINK '.format(atom_dict['CA'], atom_dict['CB']))
+# Atom types; used for making QMMM input
+C_ALPHA = '  CA  '
+C_BETA = '  CB  '
+SKIP_ATOM_TYPES = ['  C   ', '  O   ', '  NT  ', '  HNT ', '  CAT ', '  HT1 ', '  HT2 ', '  HT3 ', '  HA  ', '  CAY ',
+                   '  HY1 ', '  HY2 ', '  HY3 ', '  CY  ', '  OY  ', '  N   ', '  HN  ', ]
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -145,14 +138,14 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(f_loc)
     if not good_files:
         raise IOError('Could not read file: {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
 
-    # Assume that elements should be added if a dict file is give
-    if main_proc[ADD_ELEMENTS] and main_proc[ELEMENT_DICT_FILE] is None:
+    # Assume that elements should be added if a dict file is given
+    if (main_proc[ADD_ELEMENTS] or len(main_proc[RESID_QMMM]) > 0) and main_proc[ELEMENT_DICT_FILE] is None:
         main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
     if main_proc[ELEMENT_DICT_FILE] is not None:
         main_proc[ADD_ELEMENTS] = True
@@ -215,6 +208,9 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
     pdb_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
     # to allow warning to be printed once and only once
     missing_types = []
+    qmmm_elem_id_dict = {}
+    ca_res_atom_id_dict = {}
+    cb_res_atom_id_dict = {}
 
     with open(pdb_loc) as f:
         wat_count = 0
@@ -293,6 +289,25 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
                                         'Check line: {}'.format(line))
                     wat_count += 1
 
+                if mol_num in cfg[RESID_QMMM] and atom_type not in SKIP_ATOM_TYPES:
+                    if atom_type == C_ALPHA:
+                        ca_res_atom_id_dict[mol_num] = atom_id
+                    else:
+                        if atom_type == C_BETA:
+                            cb_res_atom_id_dict[mol_num] = atom_id
+                        if atom_type in element_dict:
+                            element = element_dict[atom_type]
+                        else:
+                            raise InvalidDataError("Did not find atom type '{}' in the element dictionary. Please "
+                                                   "provide a new atom type, element dictionary (using keyword {} "
+                                                   "in the configuration file) that includes all atom types in the "
+                                                   "residues identified with the '{}' key."
+                                                   "".format(atom_type, ELEMENT_DICT_FILE, RESID_QMMM))
+                        if element in qmmm_elem_id_dict:
+                            qmmm_elem_id_dict[element].append(atom_id)
+                        else:
+                            qmmm_elem_id_dict[element] = [atom_id]
+
                 if cfg[ADD_ELEMENTS] and atom_count <= cfg[LAST_ADD_ELEM]:
                     if atom_type in element_dict:
                         element = element_dict[atom_type]
@@ -343,7 +358,13 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
     print_pdb(pdb_data[HEAD_CONTENT], pdb_data[ATOMS_CONTENT], pdb_data[TAIL_CONTENT],
               f_name, cfg[PDB_FORMAT])
 
-    return
+    if len(cfg[RESID_QMMM]) > 0:
+        f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
+        print_mode = "w"
+        for elem in qmmm_elem_id_dict:
+            print_qm_kind(qmmm_elem_id_dict[elem], elem, f_name, mode=print_mode)
+            print_mode = 'a'
+        print_qm_links(ca_res_atom_id_dict, cb_res_atom_id_dict, f_name, mode=print_mode)
 
 
 def main(argv=None):

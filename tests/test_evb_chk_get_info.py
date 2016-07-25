@@ -21,6 +21,8 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'evb_chk')
 
 # Input files to catch if fails well #
 MISSING_KEY_INI = os.path.join(SUB_DATA_DIR, 'evb_chk_get_info_missing_key.ini')
+NO_EXCLUDE_INI = os.path.join(SUB_DATA_DIR, 'evb_chk_get_info_no_exclude.ini')
+WRONG_CHARGE_INI = os.path.join(SUB_DATA_DIR, 'evb_chk_get_info_wrong_expected_charge.ini')
 
 # Input files paired with output #
 DEF_INI = os.path.join(SUB_DATA_DIR, DEF_CFG_FILE)
@@ -29,7 +31,7 @@ GOOD_VMD_OUT = os.path.join(SUB_DATA_DIR, 'vmd_water_0.625_20c_short_reorder_545
 WATER_OUT = os.path.join(SUB_DATA_DIR, 'water_0.625_20c_short_reorder_545000.dat')
 GOOD_WATER_OUT = os.path.join(SUB_DATA_DIR, 'water_0.625_20c_short_reorder_545000_good.dat')
 
-CA_CB_LINK_INI = os.path.join(SUB_DATA_DIR, 'evb_chk_get_info_break_ca_cb_link.ini')
+CHECK_CHARGE_INI = os.path.join(SUB_DATA_DIR, "evb_chk_get_info_expected_charge.ini")
 
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
@@ -41,35 +43,25 @@ class TestEVBGetInfoNoOutput(unittest.TestCase):
             self.assertTrue("Problems reading file: Could not read file" in output)
 
     def testMissingInfo(self):
-        main(["-c", MISSING_KEY_INI])
+        # main(["-c", MISSING_KEY_INI])
         with capture_stderr(main, ["-c", MISSING_KEY_INI]) as output:
             self.assertTrue("Missing config val" in output)
 
-# #     def testBadPath(self):
-# #         main(["-c", BAD_PATH_INI])
-# #         with capture_stderr(main, ["-c", BAD_PATH_INI]) as output:
-# #             self.assertTrue("Found no evb file names to read" in output)
-# #
-# #     def testBadKeyword(self):
-# #         # main(["-c", BAD_KEY_INI])
-# #         with capture_stderr(main, ["-c", BAD_KEY_INI]) as output:
-# #             self.assertTrue("Unexpected key" in output)
-# #
-# #     def testBadEVB(self):
-# #         # main(["-c", BAD_EVB_INI])
-# #         with capture_stderr(main, ["-c", BAD_EVB_INI]) as output:
-# #             self.assertTrue("Problems reading data" in output)
-# #
-# #     def testNoSuchEVB(self):
-# #         # main(["-c", NO_SUCH_EVB_INI])
-# #         with capture_stderr(main, ["-c", NO_SUCH_EVB_INI]) as output:
-# #             self.assertTrue("No such file or directory" in output)
+    def testNoExclude(self):
+        with capture_stderr(main, ["-c", NO_EXCLUDE_INI]) as output:
+            self.assertTrue("Expected atom types" in output)
+
+    def testWrongCharge(self):
+        with capture_stderr(main, ["-c", WRONG_CHARGE_INI]) as output:
+            self.assertTrue("Expected a total charge of +2 but found +1" in output)
 
 
 class TestEVBGetInfo(unittest.TestCase):
     def testGood(self):
         try:
-            main(["-c", DEF_INI])
+            # main(["-c", DEF_INI])
+            with capture_stdout(main, ["-c", DEF_INI]) as output:
+                self.assertTrue("total charge" in output)
             self.assertFalse(diff_lines(VMD_OUT, GOOD_VMD_OUT))
             self.assertFalse(diff_lines(WATER_OUT, GOOD_WATER_OUT))
         finally:
@@ -77,12 +69,11 @@ class TestEVBGetInfo(unittest.TestCase):
             silent_remove(WATER_OUT)
             # pass
 
-    # def testCaCbLink(self):
-    #     try:
-    #         main(["-c", CA_CB_LINK_INI])
-    #         # self.assertFalse(diff_lines(VMD_OUT, GOOD_VMD_OUT))
-    #         # self.assertFalse(diff_lines(WATER_OUT, GOOD_WATER_OUT))
-    #     finally:
-    #         # silent_remove(VMD_OUT)
-    #         # silent_remove(WATER_OUT)
-    #         pass
+    def testCheckCharge(self):
+        try:
+            with capture_stdout(main, ["-c", CHECK_CHARGE_INI]) as output:
+                self.assertFalse("total charge" in output)
+        finally:
+            silent_remove(VMD_OUT)
+            silent_remove(WATER_OUT)
+            # pass

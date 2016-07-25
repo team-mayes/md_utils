@@ -1,0 +1,16 @@
+    &QM_KIND  C
+        MM_INDEX 19 22 25
+    &END QM_KIND
+    &QM_KIND  H
+        MM_INDEX 20 21 23 24
+    &END QM_KIND
+    &QM_KIND  O
+        MM_INDEX 26 27
+    &END QM_KIND
+    !! Break resid 1 between CA and CB, and cap CB with hydrogen
+    &LINK
+       MM_INDEX  17  !! CA
+       QM_INDEX  19  !! CB
+       LINK_TYPE  IMOMM
+       ALPHA_IMOMM  1.5
+    &END LINK

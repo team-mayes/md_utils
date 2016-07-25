@@ -4,13 +4,18 @@ Get selected info from the file
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 import re
 import sys
 import argparse
 
-from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg
+from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, print_qm_kind
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
+
 
 __author__ = 'hmayes'
 
@@ -31,6 +36,7 @@ MAIN_SEC = 'main'
 CHK_FILE_LIST = 'evb_chk_file_list'
 LAST_EXCLUDE_ID = 'exclude_atom_ids_through'
 OUT_BASE_DIR = 'output_base_directory'
+EXPECTED_CHARGE = 'expected_charge'
 
 # data file info
 
@@ -39,6 +45,7 @@ OUT_BASE_DIR = 'output_base_directory'
 DEF_CFG_FILE = 'evb_chk_get_info.ini'
 # Set notation
 DEF_CFG_VALS = {LAST_EXCLUDE_ID: 0, OUT_BASE_DIR: None,
+                EXPECTED_CHARGE: None,
                 }
 REQ_KEYS = {CHK_FILE_LIST: str,
             }
@@ -64,11 +71,13 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+    if main_proc[EXPECTED_CHARGE] is not None:
+        main_proc[EXPECTED_CHARGE] = int(main_proc[EXPECTED_CHARGE])
     return main_proc
 
 
@@ -103,23 +112,6 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def print_qm_kind(int_list, element_name, fname, mode='w'):
-    """
-    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
-
-    :param int_list: The list to write.
-    :param element_name: element type to designate
-    :param fname: The location of the file to write.
-    :param mode: default is to write to a new file. Use option to designate to append to existing file.
-    """
-    with open(fname, mode) as m_file:
-        m_file.write('    &QM_KIND {} \n'.format(element_name))
-        m_file.write('        MM_INDEX {} \n'.format(' '.join(map(str, int_list))))
-        m_file.write('    &END QM_KIND \n')
-    if mode == 'w':
-        print("Wrote file: {}".format(fname))
-
-
 def print_vmd_list(atom_ids, fname, mode='w'):
     # Change to base zero for VMD
     vmd_atom_ids = [a_id - 1 for a_id in atom_ids]
@@ -135,9 +127,9 @@ def process_file(cfg):
     last_exclude_id = cfg[LAST_EXCLUDE_ID]
 
     with open(chk_list_loc) as f:
-        for data_file in f:
-            data_file = data_file.strip()
-            with open(data_file) as d:
+        for chk_file in f:
+            chk_file = chk_file.strip()
+            with open(chk_file) as d:
                 chk_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
 
                 section = SEC_HEAD
@@ -174,8 +166,11 @@ def process_file(cfg):
                             elif atom_type == 'H':
                                 h_ids.append(atom_num)
                             else:
-                                raise InvalidDataError('Expected atom types are O and H. Found type {} for line:\n {}'
-                                                       ''.format(atom_type, line))
+                                raise InvalidDataError("Expected atom types are 'O' and 'H' (looking for water "
+                                                       "molecules only). Found type '{}' for line:\n {}\n"
+                                                       "Use the '{}' keyword to specify the last atom to exclude (i.e. "
+                                                       "the last protein atom)."
+                                                       "".format(atom_type, line, LAST_EXCLUDE_ID))
 
                         if len(chk_data[ATOMS_CONTENT]) == chk_data[NUM_ATOMS]:
                             section = SEC_TAIL
@@ -183,13 +178,33 @@ def process_file(cfg):
                     elif section == SEC_TAIL:
                         break
 
-            f_name = create_out_fname(data_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
+            # Data validation: checking total charge
+            num_o = len(o_ids)
+            num_h = len(h_ids)
+            total_charge = num_h - 2 * num_o
+            if cfg[EXPECTED_CHARGE] is None:
+                print("Found {} oxygen atoms and {} hydrogen atoms for a total charge of {}."
+                      "".format(num_o, num_h, add_sign(total_charge)))
+            else:
+                if total_charge != cfg[EXPECTED_CHARGE]:
+                    raise InvalidDataError("Expected a total charge of {} but found {} for file: {}"
+                                           "".format(add_sign(cfg[EXPECTED_CHARGE]), add_sign(total_charge), chk_file))
+
+            # printing!
+            f_name = create_out_fname(chk_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
                                       remove_prefix='CHK_')
             print_qm_kind(h_ids, 'H', f_name)
             print_qm_kind(o_ids, 'O', f_name, mode='a')
-            f_name = create_out_fname(data_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
+            f_name = create_out_fname(chk_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
                                       remove_prefix='CHK_')
             print_vmd_list(o_ids+h_ids, f_name)
+
+
+def add_sign(val):
+    if val > 0:
+        return "+" + str(val)
+    else:
+        return val
 
 
 def main(argv=None):

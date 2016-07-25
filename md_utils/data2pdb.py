@@ -12,13 +12,13 @@ import logging
 import re
 import sys
 import argparse
-from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, list_to_file, PY2
-if PY2:
+from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, list_to_file
+try:
     # noinspection PyCompatibility
-    from ConfigParser import *
-else:
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
+except ImportError:
     # noinspection PyCompatibility
-    from configparser import *
+    from configparser import ConfigParser, MissingSectionHeaderError
 
 __author__ = 'hmayes'
 

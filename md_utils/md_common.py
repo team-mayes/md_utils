@@ -438,6 +438,7 @@ def move_existing_file(f_loc):
 def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
+    @param remove_prefix: string to remove at the beginning of file name
     @param src_file: The file to process.
     @param prefix: The file prefix to add, if specified.
     @param suffix: The file suffix to append, if specified.
@@ -451,11 +452,10 @@ def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_di
         base_dir = os.path.dirname(src_file)
 
     file_name = os.path.basename(src_file)
-    if remove_prefix is None:
-        base_name = os.path.splitext(file_name)[0]
+    if remove_prefix is not None and file_name.startswith(remove_prefix):
+        base_name = file_name[len(remove_prefix):]
     else:
-        if file_name.startswith(remove_prefix):
-            base_name = file_name[len(remove_prefix):]
+        base_name = os.path.splitext(file_name)[0]
 
     if ext is None:
         ext = os.path.splitext(file_name)[1]
@@ -755,6 +755,14 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False):
     return new_dict
 
 
+def create_element_dict(dict_file, pdb_dict=True, one_to_one=False):
+    # This is used when need to add atom types to PDB file
+    element_dict = {}
+    if dict_file is not None:
+        return read_csv_dict(dict_file, pdb_dict=pdb_dict, ints=False, one_to_one=one_to_one)
+    return element_dict
+
+
 def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w', print_message=True):
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
@@ -780,6 +788,41 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
             print("   Wrote file: {}".format(fname))
         elif mode == 'a':
             print("Appended file: {}".format(fname))
+
+
+def print_qm_kind(int_list, element_name, fname, mode='w'):
+    """
+    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
+
+    @param int_list: The list to write.
+    @param element_name: element type to designate
+    @param fname: The location of the file to write.
+    @param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(fname, mode) as m_file:
+        m_file.write('    &QM_KIND {}\n'.format(element_name))
+        m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
+        m_file.write('    &END QM_KIND\n')
+    if mode == 'w':
+        print("   Wrote file: {}".format(fname))
+
+
+def print_qm_links(c_alpha_dict, c_beta_dict, f_name, mode="w"):
+    """
+    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
+    @param c_alpha_dict: dict of protein residue to be broken to c_alpha atom id
+    @param c_beta_dict: as above, but for c_beta
+    @param f_name: The location of the file to write.
+    @param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(f_name, mode) as m_file:
+        for resid in c_beta_dict:
+            m_file.write('    !! Break resid {} between CA and CB, and cap CB with hydrogen\n'
+                         '    &LINK\n       MM_INDEX  {}  !! CA\n       QM_INDEX  {}  !! CB\n'
+                         '       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
+                         '    &END LINK\n'.format(resid, c_alpha_dict[resid], c_beta_dict[resid]))
+    if mode == 'w':
+        print("Wrote file: {}".format(f_name))
 
 
 # Conversions #

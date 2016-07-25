@@ -45,8 +45,7 @@ def atom_distances(rst, atom_pairs):
                 row2 = atoms[pair[1]]
                 pair_dist[pair] = xyz_distance(row1[-3:], row2[-3:])
             except KeyError as e:
-                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(
-                    rst, tstep, e))
+                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
         results[tstep] = pair_dist
     return results
 
@@ -65,8 +64,7 @@ def write_results(out_fname, dist_data, atom_pairs):
                     dist_row.append("{:.6f}".format(pair_dists[pair]))
                 o_writer.writerow(dist_row)
             except KeyError as e:
-                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(
-                    "_".join(map(str, pair)), tstep, e))
+                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format("_".join(map(str, pair)), tstep, e))
 
 
 def parse_pairs(pair_files):
@@ -83,7 +81,7 @@ def parse_pairs(pair_files):
                 if len(pair) == 2:
                     pairs.append(tuple(map(int, pair)))
                 else:
-                    logger.warn("Skipping pair %s from file %s", pair, p_file)
+                    logger.warn("Skipping pair {} from file {}".format(pair, p_file))
     return unique_list(pairs)
 
 # CLI Processing #

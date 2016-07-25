@@ -4,8 +4,6 @@ Make a new dump file with a specified max number of timesteps and reorders atoms
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 import logging
 import os
 import sys
@@ -14,7 +12,12 @@ import numpy as np
 
 from md_utils.md_common import InvalidDataError, create_out_fname, warning, \
     process_cfg, find_dump_section_state, read_csv_dict, silent_remove
-
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -97,7 +100,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(f_loc)
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
@@ -277,7 +280,7 @@ def main(argv=None):
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

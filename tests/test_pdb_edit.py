@@ -32,7 +32,11 @@ EMRE_ADD_ELEMENT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_emre_add_element.ini
 EMRE_ADD_ELEMENT_OUT = os.path.join(SUB_DATA_DIR, 'emre_test_new.pdb')
 GOOD_EMRE_ADD_ELEMENT_OUT = os.path.join(SUB_DATA_DIR, 'emre_test_good.pdb')
 
-CA_CB_LINK_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_qm_links.ini')
+QMMM_OUT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_qmmm_output.ini')
+QMMM_PDB_IN = os.path.join(SUB_DATA_DIR, 'glue_revised.pdb')
+QMMM_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new.pdb')
+QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id.dat')
+GOOD_QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id_good.dat')
 
 # For catching errors
 ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
@@ -110,16 +114,15 @@ class TestPDBEditMain(unittest.TestCase):
         finally:
             silent_remove(EMRE_ADD_ELEMENT_OUT)
 
-    # TODO: add function and test!
-    # def testCaCbLink(self):
-    #     try:
-    #         main(["-c", CA_CB_LINK_INI])
-    #         # self.assertFalse(diff_lines(VMD_OUT, GOOD_VMD_OUT))
-    #         # self.assertFalse(diff_lines(WATER_OUT, GOOD_WATER_OUT))
-    #     finally:
-    #         # silent_remove(VMD_OUT)
-    #         # silent_remove(WATER_OUT)
-    #         pass
+    def testPrintQMMM(self):
+        try:
+            main(["-c", QMMM_OUT_INI])
+            self.assertFalse(diff_lines(QMMM_PDB_OUT, QMMM_PDB_IN))
+            self.assertFalse(diff_lines(QMMM_OUT, GOOD_QMMM_OUT))
+        finally:
+            silent_remove(QMMM_PDB_OUT)
+            silent_remove(QMMM_OUT)
+            # pass
 
 
 class TestPDBEditCatchImperfectInput(unittest.TestCase):
