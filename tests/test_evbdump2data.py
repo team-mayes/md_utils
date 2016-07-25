@@ -33,6 +33,8 @@ GLU_NEW_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_new_types.ini')
 GLU_BAD_ATOM_TYPE_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_type_mismatch.ini')
 GLU_BAD_DATA_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_bad_dump.ini')
 GLU_TYPO_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_typo.ini')
+GLU_ONE_FILE_INI = os.path.join(SUB_DATA_DIR, 'evbd2d_glu_test.ini')
+
 
 # Test output files #
 
@@ -52,7 +54,7 @@ DEF_PROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_10.data')
 DEF_DEPROT_OUT = os.path.join(SUB_DATA_DIR, 'serca_prot_deprot_20.data')
 
 
-class TestEVBDump2Data(unittest.TestCase):
+class TestEVBDump2DataFailWell(unittest.TestCase):
     def testNoIni(self):
         with capture_stdout(evbdump2data.main, []) as output:
             self.assertTrue("usage:" in output)
@@ -64,24 +66,6 @@ class TestEVBDump2Data(unittest.TestCase):
             self.assertTrue("Input data missing" in output)
         with capture_stdout(evbdump2data.main, ["-c", INCOMP_INI]) as output:
             self.assertTrue("optional arguments" in output)
-
-    def testSercaProtDeprot(self):
-        """
-        Tests a SERCA file that has a protonated and deprotonated state
-        Also checks that can handle and empty line
-        and a dump file that was cut off
-        """
-        # main(["-c", SERCA_INI])
-        with capture_stderr(evbdump2data.main, ["-c", SERCA_INI]) as output:
-            # Make sure it handles the extra empty line
-            self.assertFalse("WARNING:  Problems reading file" in output)
-            self.assertTrue("did not have the full list of atom numbers" in output)
-        try:
-            self.assertFalse(diff_lines(DEF_PROT_OUT, GOOD_PROT_OUT))
-            self.assertFalse(diff_lines(DEF_DEPROT_OUT, GOOD_DEPROT_OUT))
-        finally:
-            silent_remove(DEF_PROT_OUT)
-            silent_remove(DEF_DEPROT_OUT)
 
     def testNoWaterDump(self):
         with capture_stderr(evbdump2data.main, ["-c", GLU_NEW_INI]) as output:
@@ -96,22 +80,6 @@ class TestEVBDump2Data(unittest.TestCase):
         with capture_stderr(evbdump2data.main, ["-c", GLU_BAD_ATOM_TYPE_INI]) as output:
             self.assertTrue("Check the data file" in output)
         silent_remove(REPROD_TPL)
-
-    def testGlu(self):
-        # evbdump2data.main(["-c", GLU_INI])
-        try:
-            with capture_stdout(evbdump2data.main, ["-c", GLU_INI]) as output:
-                # Checking intermediate charge calculation
-                self.assertTrue("After atom 27 (last_p1), the total charge is: -1.000" in output)
-                self.assertTrue("system is neutral" in output)
-                self.assertTrue("After atom 31 (last_hyd), the total charge is" in output)
-                self.assertTrue(GLU_DEF_OUT in output)
-                self.assertFalse(diff_lines(GLU_DEF_OUT, GLU_GOOD_OUT))
-                self.assertTrue(REPROD_TPL in output)
-                self.assertFalse(diff_lines(REPROD_TPL, GLU_DATA_TPL))
-        finally:
-            silent_remove(GLU_DEF_OUT)
-            silent_remove(REPROD_TPL)
 
     def testGluBadDump(self):
         # main(["-c", GLU_BAD_DATA_INI])
@@ -145,3 +113,42 @@ class TestEVBDump2Data(unittest.TestCase):
     def testTypoIni(self):
         with capture_stderr(main, ["-c", GLU_TYPO_INI]) as output:
             self.assertTrue("WARNING:  Unexpected key 'reduce_tpl_flag' in configuration ('ini') file." in output)
+
+
+class TestEVBDump2Data(unittest.TestCase):
+    def testReadOneFile(self):
+        main(["-c", GLU_ONE_FILE_INI])
+
+    # def testSercaProtDeprot(self):
+    #     """
+    #     Tests a SERCA file that has a protonated and deprotonated state
+    #     Also checks that can handle and empty line
+    #     and a dump file that was cut off
+    #     """
+    #     # main(["-c", SERCA_INI])
+    #     try:
+    #         with capture_stderr(evbdump2data.main, ["-c", SERCA_INI]) as output:
+    #             # Make sure it handles the extra empty line
+    #             self.assertFalse("WARNING:  Problems reading file" in output)
+    #             self.assertTrue("did not have the full list of atom numbers" in output)
+    #         self.assertFalse(diff_lines(DEF_PROT_OUT, GOOD_PROT_OUT))
+    #         self.assertFalse(diff_lines(DEF_DEPROT_OUT, GOOD_DEPROT_OUT))
+    #     finally:
+    #         silent_remove(DEF_PROT_OUT)
+    #         silent_remove(DEF_DEPROT_OUT)
+
+    # def testGlu(self):
+    #     # evbdump2data.main(["-c", GLU_INI])
+    #     try:
+    #         with capture_stdout(evbdump2data.main, ["-c", GLU_INI]) as output:
+    #             # Checking intermediate charge calculation
+    #             self.assertTrue("After atom 27 (last_p1), the total charge is: -1.000" in output)
+    #             self.assertTrue("system is neutral" in output)
+    #             self.assertTrue("After atom 31 (last_hyd), the total charge is" in output)
+    #             self.assertTrue(GLU_DEF_OUT in output)
+    #             self.assertFalse(diff_lines(GLU_DEF_OUT, GLU_GOOD_OUT))
+    #             self.assertTrue(REPROD_TPL in output)
+    #             self.assertFalse(diff_lines(REPROD_TPL, GLU_DATA_TPL))
+    #     finally:
+    #         silent_remove(GLU_DEF_OUT)
+    #         silent_remove(REPROD_TPL)

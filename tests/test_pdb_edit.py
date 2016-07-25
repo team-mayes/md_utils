@@ -32,6 +32,8 @@ EMRE_ADD_ELEMENT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_emre_add_element.ini
 EMRE_ADD_ELEMENT_OUT = os.path.join(SUB_DATA_DIR, 'emre_test_new.pdb')
 GOOD_EMRE_ADD_ELEMENT_OUT = os.path.join(SUB_DATA_DIR, 'emre_test_good.pdb')
 
+CA_CB_LINK_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_qm_links.ini')
+
 # For catching errors
 ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
 ATOM_DICT_BAD_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_bad_reorder.ini')
@@ -107,6 +109,17 @@ class TestPDBEditMain(unittest.TestCase):
             self.assertFalse(diff_lines(EMRE_ADD_ELEMENT_OUT, GOOD_EMRE_ADD_ELEMENT_OUT))
         finally:
             silent_remove(EMRE_ADD_ELEMENT_OUT)
+
+    # TODO: add function and test!
+    # def testCaCbLink(self):
+    #     try:
+    #         main(["-c", CA_CB_LINK_INI])
+    #         # self.assertFalse(diff_lines(VMD_OUT, GOOD_VMD_OUT))
+    #         # self.assertFalse(diff_lines(WATER_OUT, GOOD_WATER_OUT))
+    #     finally:
+    #         # silent_remove(VMD_OUT)
+    #         # silent_remove(WATER_OUT)
+    #         pass
 
 
 class TestPDBEditCatchImperfectInput(unittest.TestCase):

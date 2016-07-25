@@ -40,6 +40,7 @@ setup(
                                       'data2pdb = md_utils.data2pdb:main',
                                       'data_edit = md_utils.data_edit:main',
                                       'dump_edit = md_utils.dump_edit:main',
+                                      'evb_chk_get_info = md_utils.evb_chk_get_info:main',
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',
                                       'filter_col_data = md_utils.filter_col_data:main',

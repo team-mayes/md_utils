@@ -4,8 +4,6 @@ Creates pdb data files from lammps data files, given a template pdb file.
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 import os
 from collections import defaultdict
 import copy
@@ -14,8 +12,13 @@ import logging
 import re
 import sys
 import argparse
-
-from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, list_to_file
+from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, list_to_file, PY2
+if PY2:
+    # noinspection PyCompatibility
+    from ConfigParser import *
+else:
+    # noinspection PyCompatibility
+    from configparser import *
 
 __author__ = 'hmayes'
 
@@ -107,7 +110,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(f_loc)
 
     if not good_files:
@@ -154,7 +157,7 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
-    except (InvalidDataError, ConfigParser.MissingSectionHeaderError) as e:
+    except (InvalidDataError, MissingSectionHeaderError) as e:
         warning(e)
         parser.print_help()
         return args, INVALID_DATA
@@ -378,7 +381,6 @@ def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content
     list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_data_section + data_tpl_content[TAIL_CONTENT],
                  f_name,
                  list_format=cfg[PDB_FORMAT])
-    print('Completed writing {}'.format(f_name))
 
 
 def main(argv=None):

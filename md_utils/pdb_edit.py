@@ -46,6 +46,7 @@ LAST_WAT_ID = 'last_wat_atom'
 ADD_ELEMENTS = 'add_element_types'
 ELEMENT_DICT_FILE = 'atom_type_element_dict_file'
 OUT_BASE_DIR = 'output_directory'
+RESID_BREAK_CA_CB = 'resids_qmmm_ca_cb_link'
 
 # PDB file info
 PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
@@ -85,6 +86,7 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PDB_LAST_T_CHAR: 76,
                 PDB_LAST_ELEM_CHAR: 78,
                 ADD_ELEMENTS: False,
+                RESID_BREAK_CA_CB: []
                 }
 REQ_KEYS = {PDB_FILE: str,
             }
@@ -120,6 +122,18 @@ def create_element_dict(dict_file):
     if dict_file is not None:
         return read_csv_dict(dict_file, pdb_dict=True)
     return element_dict
+
+
+def print_qm_links(resid, atom_dict):
+    """
+    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
+    @param resid: protein residue to be broken. Only used for comment line.
+    @param atom_dict: atom ids of CA and CB to be broken
+    """
+    # TODO: add functionality
+    print('! Break resid {} between CA and CB, and cap CB with hydrogen'.format(resid))
+    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
+          '    &END LINK '.format(atom_dict['CA'], atom_dict['CB']))
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):

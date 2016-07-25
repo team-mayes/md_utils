@@ -7,6 +7,7 @@ from __future__ import print_function
 # noinspection PyCompatibility
 import ConfigParser
 import logging
+import os
 import sys
 import argparse
 import numpy as np
@@ -38,6 +39,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
+DUMP_FILE = 'dump_file'
 DUMPS_FILE = 'dump_list_file'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 ATOM_TYPE_FILE = 'atom_type_old_new_file'
@@ -52,6 +54,7 @@ RENUM_START_MOL = 'first_shift_mol_num'
 DEF_CFG_FILE = 'dump_edit.ini'
 # Set notation
 DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
+                DUMP_FILE: None,
                 OUT_BASE_DIR: None,
                 ATOM_REORDER_FILE: None,
                 ATOM_TYPE_FILE: None,
@@ -227,21 +230,34 @@ def process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dic
                         section = None
                     counter += 1
     if counter == 1:
-        print("Completed reading dumpfile {}.".format(dump_file))
+        print("Completed reading: {}".format(dump_file))
     else:
         warning("Dump file {} step {} did not have the full list of atom numbers. "
                 "Continuing program.".format(dump_file, timestep))
 
 
 def process_dump_files(cfg, atom_num_dict, atom_type_dict, mol_num_dict):
-    with open(cfg[DUMPS_FILE]) as f:
-        for dump_file in f:
-            dump_file = dump_file.strip()
-            # ignore blank lines in dump file list
-            if len(dump_file) == 0:
-                continue
-            else:
-                process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dict)
+    if cfg[DUMP_FILE] is None:
+        dump_file_list = []
+    else:
+        dump_file_list = [cfg[DUMP_FILE]]
+    if os.path.isfile(cfg[DUMPS_FILE]):
+        with open(cfg[DUMPS_FILE]) as f:
+            for dump_file in f:
+                dump_file = dump_file.strip()
+                # ignore blank lines in dump file list
+                if len(dump_file) == 0:
+                    continue
+                else:
+                    dump_file_list.append(dump_file)
+    else:
+        warning("Did not find file: '{}'".format(cfg[DUMPS_FILE]))
+    if len(dump_file_list) == 0:
+        raise InvalidDataError("Found no files to process. In the configuration file, specify one file "
+                               "with the keyword '{}' or a list of "
+                               "files with the keyword '{}'".format(DUMP_FILE, DUMPS_FILE))
+    for dump_file in dump_file_list:
+        process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dict)
 
 
 def main(argv=None):

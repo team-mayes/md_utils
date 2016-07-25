@@ -59,7 +59,7 @@ PRINT_KEY_PROPS = 'print_key_props_flag'
 SKIP_ONE_STATE = 'skip_one_state_flag'
 
 # Defaults
-DEF_CFG_FILE = 'evb_get_info.ini'
+DEF_CFG_FILE = 'evb_chk_get_info.ini'
 # Set notation
 DEF_CFG_VALS = {EVB_FILES: 'evb_list.txt',
                 EVB_FILE: None,

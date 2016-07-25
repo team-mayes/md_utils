@@ -6,7 +6,6 @@ Get selected info from the file
 from __future__ import print_function
 # noinspection PyCompatibility
 import ConfigParser
-import logging
 import re
 import sys
 import argparse
@@ -14,12 +13,6 @@ import argparse
 from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('evb_chk_get_info')
-logging.basicConfig(filename='evb_chk_get_info.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes
@@ -36,7 +29,7 @@ MAIN_SEC = 'main'
 
 # Config keys
 CHK_FILE_LIST = 'evb_chk_file_list'
-LAST_EXCLUDE_ID = 'last_exclude_id'
+LAST_EXCLUDE_ID = 'exclude_atom_ids_through'
 OUT_BASE_DIR = 'output_base_directory'
 
 # data file info
@@ -60,13 +53,6 @@ NUM_ATOMS = 'num_atoms'
 HEAD_CONTENT = 'head_content'
 ATOMS_CONTENT = 'atoms_content'
 TAIL_CONTENT = 'tail_content'
-
-
-def to_int_list(raw_val):
-    return_vals = []
-    for val in raw_val.split(','):
-        return_vals.append(int(val.strip()))
-    return return_vals
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -95,10 +81,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Grabs selected info from the designated file.'
+    parser = argparse.ArgumentParser(description='Grabs selected info from the designated file. '
                                                  'The required input file provides the location of the file. '
                                                  'Optional info is an atom index for the last atom not to consider.')
-    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format."
+    parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
@@ -130,18 +116,8 @@ def print_qm_kind(int_list, element_name, fname, mode='w'):
         m_file.write('    &QM_KIND {} \n'.format(element_name))
         m_file.write('        MM_INDEX {} \n'.format(' '.join(map(str, int_list))))
         m_file.write('    &END QM_KIND \n')
-    return
-
-
-def print_qm_links(resid, atom_dict):
-    """
-    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
-    @param resid: protein residue to be broken. Only used for comment line.
-    @param atom_dict: atom ids of CA and CB to be broken
-    """
-    print('! Break resid {} between CA and CB, and cap CB with hydrogen'.format(resid))
-    print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
-          '    &END LINK '.format(atom_dict['CA'], atom_dict['CB']))
+    if mode == 'w':
+        print("Wrote file: {}".format(fname))
 
 
 def print_vmd_list(atom_ids, fname, mode='w'):
@@ -149,6 +125,7 @@ def print_vmd_list(atom_ids, fname, mode='w'):
     vmd_atom_ids = [a_id - 1 for a_id in atom_ids]
     with open(fname, mode) as m_file:
         m_file.write('{}'.format(' '.join(map(str, vmd_atom_ids))))
+    print("Wrote file: {}".format(fname))
 
 
 def process_file(cfg):
@@ -206,10 +183,12 @@ def process_file(cfg):
                     elif section == SEC_TAIL:
                         break
 
-            f_name = create_out_fname(data_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_out_fname(data_file, prefix='water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
+                                      remove_prefix='CHK_')
             print_qm_kind(h_ids, 'H', f_name)
             print_qm_kind(o_ids, 'O', f_name, mode='a')
-            f_name = create_out_fname(data_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR])
+            f_name = create_out_fname(data_file, prefix='vmd_water_', ext='.dat', base_dir=cfg[OUT_BASE_DIR],
+                                      remove_prefix='CHK_')
             print_vmd_list(o_ids+h_ids, f_name)
 
 
@@ -223,12 +202,12 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        psf_data_content = process_file(cfg)
+        process_file(cfg)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data template:", e)
+        warning("Problems reading data:", e)
         return INVALID_DATA
 
     # print(psf_data_content[ATOMS_CONTENT])

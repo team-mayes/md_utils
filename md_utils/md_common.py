@@ -79,6 +79,9 @@ INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
 
+PY2 = sys.version_info[0] == 2
+# PY3 = sys.version_info[0] == 3
+
 
 # Exceptions #
 
@@ -432,7 +435,7 @@ def move_existing_file(f_loc):
         shutil.move(f_loc, create_backup_filename(f_loc))
 
 
-def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
+def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
     @param src_file: The file to process.
@@ -448,7 +451,11 @@ def create_out_fname(src_file, prefix='', suffix='', base_dir=None, ext=None):
         base_dir = os.path.dirname(src_file)
 
     file_name = os.path.basename(src_file)
-    base_name = os.path.splitext(file_name)[0]
+    if remove_prefix is None:
+        base_name = os.path.splitext(file_name)[0]
+    else:
+        if file_name.startswith(remove_prefix):
+            base_name = file_name[len(remove_prefix):]
 
     if ext is None:
         ext = os.path.splitext(file_name)[1]

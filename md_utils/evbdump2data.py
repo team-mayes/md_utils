@@ -6,24 +6,20 @@ Creates lammps data files from lammps dump files, given a template lammps data f
 from __future__ import print_function, absolute_import
 
 import os
-
-from future.utils import PY2
-from collections import defaultdict
 import logging
 import re
 import sys
 import argparse
 import numpy as np
-
-from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, pbc_dist, \
-    warning, process_cfg, find_dump_section_state
-
-if PY2:
+from collections import defaultdict
+from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, pbc_dist,
+                                warning, process_cfg, find_dump_section_state)
+try:
     # noinspection PyCompatibility
-    from ConfigParser import *
-else:
+    from ConfigParser import ConfigParser
+except ImportError:
     # noinspection PyCompatibility
-    from configparser import *
+    from configparser import ConfigParser
 
 
 __author__ = 'hmayes'
@@ -81,7 +77,8 @@ LAST_ION1 = 'last_ion1'
 # Defaults
 DEF_CFG_FILE = 'evbd2d.ini'
 # Set notation
-DEF_CFG_VALS = {DUMPS_FILE: 'dump_list.txt',
+DEF_DUMP_LIST_FILE = 'dump_list.txt'
+DEF_CFG_VALS = {DUMPS_FILE: DEF_DUMP_LIST_FILE,
                 DUMP_FILE: None,
                 PROT_H_IGNORE: [],
                 OUT_BASE_DIR: None,
@@ -291,7 +288,6 @@ def process_data_tpl(cfg):
         f_out = create_out_fname('reproduced_tpl', base_dir=cfg[OUT_BASE_DIR], ext='.data')
         list_to_file(tpl_data[HEAD_CONTENT] + tpl_data[ATOMS_CONTENT][:] + tpl_data[TAIL_CONTENT],
                      f_out)
-        print('Wrote file: {}'.format(f_out))
 
     return tpl_data
 
@@ -503,7 +499,6 @@ def process_dump_file(cfg, data_tpl_content, dump_file):
                                                         "timestep {}".format(dump_file, timestep)
                     list_to_file(data_tpl_content[HEAD_CONTENT] + dump_atom_data + data_tpl_content[TAIL_CONTENT],
                                  d_out)
-                    print('Wrote file: {}'.format(d_out))
                 counter += 1
     if counter == 1:
         print("Completed reading dumpfile {}".format(dump_file))
@@ -527,14 +522,14 @@ def process_dump_files(cfg, data_tpl_content):
                 else:
                     dump_file_list.append(dump_file)
     else:
-        warning("Did not find file: '{}'".format(cfg[DUMPS_FILE]))
+        if cfg[DUMPS_FILE] != DEF_DUMP_LIST_FILE:
+            warning("Did not find file: '{}'".format(cfg[DUMPS_FILE]))
     if len(dump_file_list) == 0:
         raise InvalidDataError("Found no files to process. In the configuration file, specify one file "
                                "with the keyword '{}' or a list of "
                                "files with the keyword '{}'".format(DUMP_FILE, DUMPS_FILE))
-    else:
-        for dump_file in dump_file_list:
-            process_dump_file(cfg, data_tpl_content, dump_file)
+    for dump_file in dump_file_list:
+        process_dump_file(cfg, data_tpl_content, dump_file)
 
 
 def main(argv=None):
