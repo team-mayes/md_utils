@@ -37,6 +37,8 @@ QMMM_PDB_IN = os.path.join(SUB_DATA_DIR, 'glue_revised.pdb')
 QMMM_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new.pdb')
 QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id.dat')
 GOOD_QMMM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id_good.dat')
+VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms.dat')
+GOOD_VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms_good.dat')
 
 # For catching errors
 ATOM_DICT_REPEAT_INI = os.path.join(SUB_DATA_DIR, 'pdb_edit_repeat_key.ini')
@@ -119,9 +121,11 @@ class TestPDBEditMain(unittest.TestCase):
             main(["-c", QMMM_OUT_INI])
             self.assertFalse(diff_lines(QMMM_PDB_OUT, QMMM_PDB_IN))
             self.assertFalse(diff_lines(QMMM_OUT, GOOD_QMMM_OUT))
+            self.assertFalse(diff_lines(VMD_ATOMS_OUT, GOOD_VMD_ATOMS_OUT))
         finally:
             silent_remove(QMMM_PDB_OUT)
             silent_remove(QMMM_OUT)
+            silent_remove(VMD_ATOMS_OUT)
             # pass
 
 

@@ -8,7 +8,7 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'psf_edit')
-ATOM_DICT_FILE = os.path.join(SUB_DATA_DIR, 'atom_reorder.csv')
+
 DEF_INI = os.path.join(SUB_DATA_DIR, 'psf_edit.ini')
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new.psf')
 GOOD_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised.psf')
@@ -22,6 +22,7 @@ GOOD_VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms_good.dat')
 # To catch problems...
 MOL_RENUM_REORDER_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_renum_reord.ini')
 MISSING_MOL_DICT_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_wrong_mol_dict.ini')
+MISSING_ATOM_TYPE_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_bad_atom_type.ini')
 
 
 class TestPDBEdit(unittest.TestCase):
@@ -46,6 +47,10 @@ class TestPDBEdit(unittest.TestCase):
 
 
 class TestPDBEditFailWell(unittest.TestCase):
+    def testNoArgs(self):
+        with capture_stderr(main, []) as output:
+            self.assertTrue("Could not read file" in output)
+
     def testRenumReorderMol(self):
         # main(["-c", MOL_RENUM_REORDER_INI])
         with capture_stderr(main, ["-c", MOL_RENUM_REORDER_INI]) as output:
@@ -55,3 +60,7 @@ class TestPDBEditFailWell(unittest.TestCase):
         # main(["-c", MISSING_MOL_DICT_INI])
         with capture_stderr(main, ["-c", MISSING_MOL_DICT_INI]) as output:
             self.assertTrue("No such file or directory" in output)
+
+    def testMissingAtomType(self):
+        with capture_stderr(main, ["-c", MISSING_ATOM_TYPE_INI]) as output:
+            self.assertTrue("Did not find atom type 'XYZ' in the element dictionary" in output)

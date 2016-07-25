@@ -11,7 +11,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict, \
-    print_qm_kind, create_element_dict, print_qm_links
+    print_qm_kind, create_element_dict, print_qm_links, list_to_csv
 
 try:
     # noinspection PyCompatibility
@@ -211,6 +211,7 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
     qmmm_elem_id_dict = {}
     ca_res_atom_id_dict = {}
     cb_res_atom_id_dict = {}
+    atoms_for_vmd = []
 
     with open(pdb_loc) as f:
         wat_count = 0
@@ -307,6 +308,7 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
                             qmmm_elem_id_dict[element].append(atom_id)
                         else:
                             qmmm_elem_id_dict[element] = [atom_id]
+                        atoms_for_vmd.append(atom_id - 1)
 
                 if cfg[ADD_ELEMENTS] and atom_count <= cfg[LAST_ADD_ELEM]:
                     if atom_type in element_dict:
@@ -365,6 +367,8 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
             print_qm_kind(qmmm_elem_id_dict[elem], elem, f_name, mode=print_mode)
             print_mode = 'a'
         print_qm_links(ca_res_atom_id_dict, cb_res_atom_id_dict, f_name, mode=print_mode)
+        f_name = create_out_fname('vmd_protein_atoms.dat', base_dir=cfg[OUT_BASE_DIR])
+        list_to_csv([atoms_for_vmd], f_name, delimiter=' ')
 
 
 def main(argv=None):
