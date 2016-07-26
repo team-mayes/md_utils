@@ -59,10 +59,10 @@ HIST_PNG3 = os.path.join(SUB_DATA_DIR, "msm_sum_output_more(0,-1)_max_rls.png")
 
 # Test data #
 
-GOOD_OUT = "       Min values:        10.000000        14.995000        10.988000\n" \
-           "       Max values:        11.891000        15.605000        18.314000\n" \
-           "       Avg values:        11.092250        15.241000        16.348750\n" \
-           "          Std dev:         0.798138         0.299536         3.576376"
+GOOD_OUT = "         Min values:        10.000000        14.995000        10.988000\n" \
+           "         Max values:        11.891000        15.605000        18.314000\n" \
+           "         Avg values:        11.092250        15.241000        16.348750\n" \
+           "            Std dev:         0.798138         0.299536         3.576376"
 
 
 class TestPerCol(unittest.TestCase):
@@ -149,8 +149,8 @@ class TestPerCol(unittest.TestCase):
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
         finally:
-            silent_remove(CSV_OUT)
-            # pass
+            # silent_remove(CSV_OUT)
+            pass
 
     def testCsvHeader(self):
         """

@@ -697,7 +697,7 @@ def save_fig(name, base_dir=""):
     plt.savefig(base_dir + name, bbox_inches='tight')
 
 
-def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False):
+def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=False):
     """
     If an dictionary file is given, read it and return the dict[old]=new.
     Checks that all keys are unique.
@@ -707,12 +707,17 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False):
     @param ints: boolean to indicate if the values are to be read as integers
     @param one_to_one: flag to check for one-to-one mapping in the dict
     @param pdb_dict: flag to format as required for the PDB output
+    @param str_float: indicates dictionary is a string followed by a float
     @return: new_dict
     """
     new_dict = {}
     if pdb_dict:
         ints = False
         one_to_one = False
+    elif str_float:
+        ints = False
+        one_to_one = False
+        pdb_dict = False
     # If d_file is None, return the empty dictionary, as no dictionary file was specified
     if d_file is not None:
         with open(d_file) as csv_file:
@@ -738,6 +743,8 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False):
                         new_dict[atom_type] = '{:>2s}'.format(element_type)
                     elif ints:
                         new_dict[int(row[0])] = int(row[1])
+                    elif str_float:
+                        new_dict[row[0]] = float(row[1])
                     else:
                         new_dict[row[0]] = row[1]
                     key_count += 1
@@ -803,6 +810,23 @@ def print_qm_kind(int_list, element_name, fname, mode='w'):
         m_file.write('    &QM_KIND {}\n'.format(element_name))
         m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
         m_file.write('    &END QM_KIND\n')
+    if mode == 'w':
+        print("Wrote file: {}".format(fname))
+
+
+def print_mm_kind(atom_type, radius, fname, mode='w'):
+    """
+    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
+
+    @param atom_type: (str) MM atom type
+    @param radius: radius to list for covalent radius (smoothing point charge)
+    @param fname: The location of the file to write.
+    @param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(fname, mode) as m_file:
+        m_file.write('    &MM_KIND {}\n'.format(atom_type))
+        m_file.write('        RADIUS {}\n'.format(radius))
+        m_file.write('    &END MM_KIND\n')
     if mode == 'w':
         print("Wrote file: {}".format(fname))
 

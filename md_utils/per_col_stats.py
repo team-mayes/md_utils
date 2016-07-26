@@ -13,13 +13,13 @@ import matplotlib
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import sys
+import os
+import argparse
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from md_utils.md_common import (InvalidDataError, warning,
                                 np_float_array_from_file, create_out_fname, list_to_csv)
-import sys
-import os
-import argparse
 
 __author__ = 'hmayes'
 
@@ -114,11 +114,11 @@ def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_h
     for index, row in enumerate(to_print):
         # formatting for header
         if index == 0 and header:
-            print("{:>18s} {}".format(row[0],
+            print("{:>20s} {}".format(row[0],
                                       ' '.join(['{:>16s}'.format(x.strip()) for x in row[1:]])))
         # formatting for vals
         else:
-            print("{:>18s} {}".format(row[0], ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
+            print("{:>20s} {}".format(row[0], ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv', base_dir=out_dir)
     list_to_csv(to_print, f_name)

@@ -10,7 +10,7 @@ import re
 import sys
 import argparse
 from md_utils.md_common import InvalidDataError, read_csv_dict, warning, create_out_fname, process_cfg, list_to_file, \
-    create_element_dict, print_qm_kind, print_qm_links, list_to_csv
+    create_element_dict, print_qm_kind, print_qm_links, list_to_csv, print_mm_kind
 
 try:
     # noinspection PyCompatibility
@@ -43,11 +43,17 @@ MOL_RENUM_FILE = 'mol_renum_old_new_file'
 RENUM_MOL = 'mol_renum_flag'
 PSF_FORMAT = 'psf_print_format'
 ELEMENT_DICT_FILE = 'atom_type_element_dict_file'
+RADII_DICT_FILE = 'atom_type_radius_dict_file'
 RESID_QMMM = 'resids_qmmm_ca_cb_link'
+SKIP_ATOM_TYPES = 'exclude_atom_types_from_QM'
 
 # Defaults
 DEF_CFG_FILE = 'psf_edit.ini'
 DEF_ELEM_DICT_FILE = os.path.join(os.path.dirname(__file__), 'cfg', 'charmm36_atoms_elements.txt')
+DEF_RADII_DICT_FILE = os.path.join(os.path.dirname(__file__), 'cfg', 'charmm36_atoms_radii.txt')
+# These are back-bone atoms that will be in the MM side after cutting between C_alpha and C_beta
+DEF_SKIP_ATOM_TYPES = ['C', 'O', 'NT', 'HNT', 'CAT', 'HT1', 'HT2', 'HT3', 'HA', 'CAY',
+                       'HY1', 'HY2', 'HY3', 'CY', 'OY', 'N', 'HN', ]
 # Set notation
 DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 MOL_RENUM_FILE: None,
@@ -57,6 +63,8 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PSF_FORMAT: '{:8d} {:5s}{:<5d}{:5s}{:5s}{:5s}{:10.6f}{:14.4f}{:>12s}',
                 RESID_QMMM: [],
                 ELEMENT_DICT_FILE: None,
+                RADII_DICT_FILE: None,
+                SKIP_ATOM_TYPES: DEF_SKIP_ATOM_TYPES,
                 }
 REQ_KEYS = {PSF_FILE: str,
             }
@@ -69,11 +77,10 @@ HEAD_CONTENT = 'head_content'
 ATOMS_CONTENT = 'atoms_content'
 TAIL_CONTENT = 'tail_content'
 
+
 # Atom types; used for making QMMM input
 C_ALPHA = 'CA'
 C_BETA = 'CB'
-SKIP_ATOM_TYPES = ['C', 'O', 'NT', 'HNT', 'CAT', 'HT1', 'HT2', 'HT3', 'HA', 'CAY',
-                   'HY1', 'HY2', 'HY3', 'CY', 'OY', 'N', 'HN', ]
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -90,8 +97,11 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
-    if (len(main_proc[RESID_QMMM]) > 0) and main_proc[ELEMENT_DICT_FILE] is None:
-        main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
+    if len(main_proc[RESID_QMMM]) > 0:
+        if main_proc[ELEMENT_DICT_FILE] is None:
+            main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
+        if main_proc[RADII_DICT_FILE] is None:
+            main_proc[RADII_DICT_FILE] = DEF_RADII_DICT_FILE
     if main_proc[RENUM_MOL] and main_proc[MOL_RENUM_FILE] is not None:
         raise InvalidDataError("This program does not currently support both '{}' and '{}'"
                                "".format(RENUM_MOL, MOL_RENUM_FILE))
@@ -128,7 +138,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
+def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
 
     with open(cfg[PSF_FILE]) as f:
         psf_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
@@ -138,10 +148,15 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
         section = SEC_HEAD
 
         # for printing qmmm info
+        if len(cfg[RESID_QMMM]) > 0:
+            qmmm_output = True
+        else:
+            qmmm_output = False
         qmmm_elem_id_dict = {}
         ca_res_atom_id_dict = {}
         cb_res_atom_id_dict = {}
         atoms_for_vmd = []
+        types_for_mm_kind = set()
         qmmm_charge = 0
 
         # for RENUM_MOL
@@ -192,7 +207,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                 atom_struct = [atom_num, segid, resid, resname, atom_type, charmm_type, charge, atom_wt, zero]
                 psf_data[ATOMS_CONTENT].append(atom_struct)
 
-                if resid in cfg[RESID_QMMM] and atom_type not in SKIP_ATOM_TYPES:
+                if resid in cfg[RESID_QMMM] and atom_type not in cfg[SKIP_ATOM_TYPES]:
                     if atom_type == C_ALPHA:
                         ca_res_atom_id_dict[resid] = atom_num
                     else:
@@ -212,6 +227,9 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
                             qmmm_elem_id_dict[element] = [atom_num]
                         qmmm_charge += charge
                         atoms_for_vmd.append(atom_num - 1)
+
+                if qmmm_output:
+                    types_for_mm_kind.add(atom_type)
 
                 if len(psf_data[ATOMS_CONTENT]) == num_atoms:
                     section = SEC_TAIL
@@ -233,14 +251,31 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict):
         list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT],
                      f_name, list_format=cfg[PSF_FORMAT])
 
-    if len(cfg[RESID_QMMM]) > 0:
+    if qmmm_output:
         print("Total charge from QMMM atoms: {}".format(qmmm_charge))
+        # create CP2K input listing amino atom ids
         f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
         print_mode = "w"
         for elem in qmmm_elem_id_dict:
             print_qm_kind(qmmm_elem_id_dict[elem], elem, f_name, mode=print_mode)
             print_mode = 'a'
         print_qm_links(ca_res_atom_id_dict, cb_res_atom_id_dict, f_name, mode=print_mode)
+        # create CP2K input listing MM atom type radii
+        f_name = create_out_fname('mm_kinds.dat', base_dir=cfg[OUT_BASE_DIR])
+        print_mode = "w"
+
+        for atom_type in types_for_mm_kind:
+            try:
+                print_mm_kind(atom_type, radii_dict[atom_type], f_name, mode=print_mode)
+                print_mode = 'a'
+            except KeyError:
+                warning("Did not find atom type '{}' in the atom_type to radius dictionary: {}\n"
+                        "    '{}' printed without this type; user may mannually add its radius specification.\n"
+                        "    To print this file with all MM types, use the keyword '{}' in the configuration file \n"
+                        "    to identify a file with atom_type,radius (one per line, comma-separated) with all "
+                        "MM types in the psf".format(atom_type, cfg[RADII_DICT_FILE], 'mm_kinds.dat', RADII_DICT_FILE))
+
+        # create VMD input listing amino atom indexes (base-zero counting)
         f_name = create_out_fname('vmd_protein_atoms.dat', base_dir=cfg[OUT_BASE_DIR])
         list_to_csv([atoms_for_vmd], f_name, delimiter=' ')
 
@@ -258,7 +293,8 @@ def main(argv=None):
         atom_num_dict = read_csv_dict(cfg[ATOM_REORDER_FILE])
         mol_num_dict = read_csv_dict(cfg[MOL_RENUM_FILE], one_to_one=False)
         element_dict = create_element_dict(cfg[ELEMENT_DICT_FILE], pdb_dict=False)
-        process_psf(cfg, atom_num_dict, mol_num_dict, element_dict)
+        radii_dict = create_element_dict(cfg[RADII_DICT_FILE], pdb_dict=False)
+        process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
