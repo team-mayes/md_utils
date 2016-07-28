@@ -23,11 +23,16 @@ GOOD_VMD_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms_good.dat')
 MM_KIND_OUT = os.path.join(SUB_DATA_DIR, 'mm_kinds.dat')
 GOOD_MM_KIND_OUT = os.path.join(SUB_DATA_DIR, 'mm_kinds_good.dat')
 
+QM_OUT_INI = os.path.join(SUB_DATA_DIR, 'psf_make_qmmm_no_exclude.ini')
+GOOD_QM_OUT = os.path.join(SUB_DATA_DIR, 'amino_id_all_good.dat')
+GOOD_VMD_QM_ATOMS_OUT = os.path.join(SUB_DATA_DIR, 'vmd_protein_atoms_qm_good.dat')
+
 # To catch problems...
 MOL_RENUM_REORDER_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_renum_conflict.ini')
 MISSING_MOL_DICT_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_wrong_mol_dict.ini')
 MISSING_ATOM_TYPE_INI = os.path.join(SUB_DATA_DIR, 'psf_edit_bad_atom_type.ini')
 MISSING_RADIUS_INI = os.path.join(SUB_DATA_DIR, 'psf_qmmm_missing_radius.ini')
+STRING_RESID_INI = os.path.join(SUB_DATA_DIR, 'psf_make_qm_string_resid.ini')
 
 
 class TestPSFEdit(unittest.TestCase):
@@ -48,9 +53,9 @@ class TestPSFEdit(unittest.TestCase):
 
     def testPrintQMMM(self):
         try:
-            main(["-c", QMMM_OUT_INI])
+            # main(["-c", QMMM_OUT_INI])
             with capture_stdout(main, ["-c", QMMM_OUT_INI]) as output:
-                self.assertTrue("Total charge from QMMM atoms: -1.0" in output)
+                self.assertTrue("Total charge from QM atoms: -1.0" in output)
             self.assertFalse(diff_lines(QMMM_OUT, GOOD_QMMM_OUT))
             self.assertFalse(diff_lines(MM_KIND_OUT, GOOD_MM_KIND_OUT))
             self.assertFalse(diff_lines(VMD_ATOMS_OUT, GOOD_VMD_ATOMS_OUT))
@@ -59,6 +64,18 @@ class TestPSFEdit(unittest.TestCase):
             silent_remove(MM_KIND_OUT)
             silent_remove(VMD_ATOMS_OUT)
             # pass
+
+    def testPrintQMMMNoExclude(self):
+        try:
+            main(["-c", QM_OUT_INI])
+            self.assertFalse(diff_lines(MM_KIND_OUT, GOOD_MM_KIND_OUT))
+            self.assertFalse(diff_lines(QMMM_OUT, GOOD_QM_OUT))
+            self.assertFalse(diff_lines(VMD_ATOMS_OUT, GOOD_VMD_QM_ATOMS_OUT))
+        finally:
+            silent_remove(MM_KIND_OUT)
+            silent_remove(QMMM_OUT)
+            silent_remove(VMD_ATOMS_OUT)
+            pass
 
     def testMissingRadius(self):
         # Tests both providing a dictionary and not having an available radius (still prints everything, just missing
@@ -92,3 +109,8 @@ class TestPSFEditFailWell(unittest.TestCase):
     def testMissingAtomType(self):
         with capture_stderr(main, ["-c", MISSING_ATOM_TYPE_INI]) as output:
             self.assertTrue("Did not find atom type 'XYZ' in the element dictionary" in output)
+
+    def testStringResid(self):
+        # main(["-c", STRING_RESID_INI])
+        with capture_stderr(main, ["-c", STRING_RESID_INI]) as output:
+            self.assertTrue("expected only integers" in output)

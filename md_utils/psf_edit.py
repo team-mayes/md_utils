@@ -45,7 +45,9 @@ PSF_FORMAT = 'psf_print_format'
 ELEMENT_DICT_FILE = 'atom_type_element_dict_file'
 RADII_DICT_FILE = 'atom_type_radius_dict_file'
 RESID_QMMM = 'resids_qmmm_ca_cb_link'
-SKIP_ATOM_TYPES = 'exclude_atom_types_from_QM'
+RESID_QM = 'resid_all_qm'
+SKIP_ATOM_TYPES = 'exclude_atom_types_from_qm'
+PRINT_FOR_CP2K = 'print_for_cp2k_flag'
 
 # Defaults
 DEF_CFG_FILE = 'psf_edit.ini'
@@ -62,9 +64,11 @@ DEF_CFG_VALS = {ATOM_REORDER_FILE: None,
                 PSF_NEW_FILE: None,
                 PSF_FORMAT: '{:8d} {:5s}{:<5d}{:5s}{:5s}{:5s}{:10.6f}{:14.4f}{:>12s}',
                 RESID_QMMM: [],
+                RESID_QM: [],
                 ELEMENT_DICT_FILE: None,
                 RADII_DICT_FILE: None,
                 SKIP_ATOM_TYPES: DEF_SKIP_ATOM_TYPES,
+                PRINT_FOR_CP2K: False,
                 }
 REQ_KEYS = {PSF_FILE: str,
             }
@@ -96,8 +100,19 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     good_files = config.read(f_loc)
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
-    if len(main_proc[RESID_QMMM]) > 0:
+
+    # since not all string lists and not all int lists, import as string and selectively make ints
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False)
+    for key in [RESID_QMMM, RESID_QM]:
+        for index, entry in enumerate(main_proc[key]):
+            try:
+                main_proc[key][index] = int(entry)
+            except:
+                raise InvalidDataError("Encountered '{}' when expected only integers in list for keyword '{}'"
+                                       "".format(entry, key))
+
+    if (len(main_proc[RESID_QMMM]) + len(main_proc[RESID_QM])) > 0:
+        main_proc[PRINT_FOR_CP2K] = True
         if main_proc[ELEMENT_DICT_FILE] is None:
             main_proc[ELEMENT_DICT_FILE] = DEF_ELEM_DICT_FILE
         if main_proc[RADII_DICT_FILE] is None:
@@ -148,10 +163,6 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
         section = SEC_HEAD
 
         # for printing qmmm info
-        if len(cfg[RESID_QMMM]) > 0:
-            qmmm_output = True
-        else:
-            qmmm_output = False
         qmmm_elem_id_dict = {}
         ca_res_atom_id_dict = {}
         cb_res_atom_id_dict = {}
@@ -207,11 +218,15 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
                 atom_struct = [atom_num, segid, resid, resname, atom_type, charmm_type, charge, atom_wt, zero]
                 psf_data[ATOMS_CONTENT].append(atom_struct)
 
-                if resid in cfg[RESID_QMMM] and atom_type not in cfg[SKIP_ATOM_TYPES]:
-                    if atom_type == C_ALPHA:
+                if resid in cfg[RESID_QM] or resid in cfg[RESID_QMMM] and atom_type not in cfg[SKIP_ATOM_TYPES]:
+                    if resid in cfg[RESID_QMMM]:
+                        if atom_type == C_ALPHA:
+                            ca_res_atom_id_dict[resid] = atom_num
+
+                    if resid in cfg[RESID_QMMM] and atom_type == C_ALPHA:
                         ca_res_atom_id_dict[resid] = atom_num
                     else:
-                        if atom_type == C_BETA:
+                        if resid in cfg[RESID_QMMM] and atom_type == C_BETA:
                             cb_res_atom_id_dict[resid] = atom_num
                         if atom_type in element_dict:
                             element = element_dict[atom_type]
@@ -228,7 +243,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
                         qmmm_charge += charge
                         atoms_for_vmd.append(atom_num - 1)
 
-                if qmmm_output:
+                if cfg[PRINT_FOR_CP2K]:
                     types_for_mm_kind.add(atom_type)
 
                 if len(psf_data[ATOMS_CONTENT]) == num_atoms:
@@ -251,8 +266,8 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
         list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT],
                      f_name, list_format=cfg[PSF_FORMAT])
 
-    if qmmm_output:
-        print("Total charge from QMMM atoms: {}".format(qmmm_charge))
+    if cfg[PRINT_FOR_CP2K]:
+        print("Total charge from QM atoms: {:.2f}".format(qmmm_charge))
         # create CP2K input listing amino atom ids
         f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
         print_mode = "w"
@@ -270,7 +285,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
                 print_mode = 'a'
             except KeyError:
                 warning("Did not find atom type '{}' in the atom_type to radius dictionary: {}\n"
-                        "    '{}' printed without this type; user may mannually add its radius specification.\n"
+                        "    '{}' printed without this type; user may manually add its radius specification.\n"
                         "    To print this file with all MM types, use the keyword '{}' in the configuration file \n"
                         "    to identify a file with atom_type,radius (one per line, comma-separated) with all "
                         "MM types in the psf".format(atom_type, cfg[RADII_DICT_FILE], 'mm_kinds.dat', RADII_DICT_FILE))
