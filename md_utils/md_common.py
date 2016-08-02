@@ -11,7 +11,6 @@ import collections
 import csv
 import difflib
 import glob
-import logging
 from datetime import datetime
 import re
 import shutil
@@ -31,10 +30,6 @@ import matplotlib
 matplotlib.use('Agg')
 # noinspection PyPep8
 import matplotlib.pyplot as plt
-
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('test_md_utils')
 
 # Constants #
 
@@ -397,18 +392,20 @@ def find_backup_filenames(orig):
     return found
 
 
-def silent_remove(filename):
+def silent_remove(filename, disable=False):
     """
     Removes the target file name, catching and ignoring errors that indicate that the
     file does not exist.
 
     @param filename: The file to remove.
+    @param disable: boolean to flag if want to disable removal
     """
-    try:
-        os.remove(filename)
-    except OSError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    if not disable:
+        try:
+            os.remove(filename)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
 
 def allow_write(f_loc, overwrite=False):
@@ -574,17 +571,13 @@ def convert_dict_line(all_conv, data_conv, line):
             try:
                 s_dict[s_key] = data_conv[s_key](s_val)
             except ValueError as e:
-                logger.debug("Could not convert value "
-                             "'%s' from column '%s': '%s'.  Leaving as str",
-                             s_val, s_key, e)
+                warning("Could not convert value '{}' from column '{}': '{}'.  Leaving as str".format(s_val, s_key, e))
                 s_dict[s_key] = s_val
         elif all_conv:
             try:
                 s_dict[s_key] = all_conv(s_val)
             except ValueError as e:
-                logger.debug("Could not convert value "
-                             "'%s' from column '%s': '%s'.  Leaving as str",
-                             s_val, s_key, e)
+                warning("Could not convert value '{}' from column '{}': '{}'.  Leaving as str".format(s_val, s_key, e))
                 s_dict[s_key] = s_val
         else:
             s_dict[s_key] = s_val

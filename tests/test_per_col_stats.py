@@ -3,8 +3,15 @@ import os
 
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 from md_utils.per_col_stats import DEF_ARRAY_FILE, main
+import logging
+
 
 __author__ = 'hmayes'
+
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 # Directories #
 
@@ -65,54 +72,21 @@ GOOD_OUT = "         Min values:        10.000000        14.995000        10.988
            "            Std dev:         0.798138         0.299536         3.576376"
 
 
-class TestPerCol(unittest.TestCase):
+class TestPerColFailWell(unittest.TestCase):
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("Problems reading file" in output)
 
-    def testDefInp(self):
-        main(["-f", DEF_INPUT])
-        try:
-            with capture_stdout(main, ["-f", DEF_INPUT]) as output:
-                self.assertTrue(GOOD_OUT in output)
-                self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
-        finally:
-            silent_remove(CSV_OUT)
-            # pass
-
     def testArrayInp(self):
-        # main(["-f", VEC_INPUT])
         with capture_stderr(main, ["-f", VEC_INPUT]) as output:
             self.assertTrue("File contains a vector" in output)
 
-    def testBadInput(self):
-        # Test what happens when cannot convert a value to float
-        try:
-            with capture_stderr(main, ["-f", BAD_INPUT]) as output:
-                self.assertTrue("could not be converted to a float" in output)
-                self.assertFalse(diff_lines(BAD_INPUT_OUT, GOOD_BAD_INPUT_OUT))
-        finally:
-            silent_remove(BAD_INPUT_OUT)
-            # pass
-
     def testIncDimen(self):
         # Test what happens when the lines do not all have the same number of dimensions
-        main(["-f", BAD_INPUT2])
         with capture_stderr(main, ["-f", BAD_INPUT2]) as output:
             self.assertTrue("Problems reading data" in output)
             self.assertTrue("3 values " in output)
             self.assertTrue("2 values" in output)
-
-    def testDefInpWithBuffer(self):
-        main(["-f", DEF_INPUT, "-b", "6"])
-        try:
-            with capture_stdout(main, ["-f", DEF_INPUT, "-b", "6"]) as output:
-                self.assertTrue('Max plus 6.0 buffer:'
-                                '        17.891000        21.605000        24.314000' in output)
-                self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_BUFFER_OUT))
-        finally:
-            silent_remove(CSV_OUT)
-            # pass
 
     def testDefInpWithBadBuffer(self):
         bad_buffer = 'xyz'
@@ -121,75 +95,96 @@ class TestPerCol(unittest.TestCase):
                             'a float.'.format(bad_buffer) in output)
 
     def testNoSuchOption(self):
-        # main(["-@", DEF_INPUT])
         with capture_stderr(main, ["-@", DEF_INPUT]) as output:
             self.assertTrue("unrecognized argument" in output)
             self.assertTrue(DEF_INPUT in output)
+
+
+class TestPerCol(unittest.TestCase):
+    def testDefInp(self):
+        try:
+            with capture_stdout(main, ["-f", DEF_INPUT]) as output:
+                self.assertTrue(GOOD_OUT in output)
+                self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
+        finally:
+            silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
+
+    def testBadInput(self):
+        # Test what happens when cannot convert a value to float
+        try:
+            with capture_stderr(main, ["-f", BAD_INPUT]) as output:
+                self.assertTrue("could not be converted to a float" in output)
+                self.assertFalse(diff_lines(BAD_INPUT_OUT, GOOD_BAD_INPUT_OUT))
+        finally:
+            silent_remove(BAD_INPUT_OUT, disable=DISABLE_REMOVE)
+
+    def testDefInpWithBuffer(self):
+        try:
+            with capture_stdout(main, ["-f", DEF_INPUT, "-b", "6"]) as output:
+                self.assertTrue('Max plus 6.0 buffer:'
+                                '        17.891000        21.605000        24.314000' in output)
+                self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_BUFFER_OUT))
+        finally:
+            silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
 
     def testHeader(self):
         """
         This input file has a header that starts with a '#' so is ignored by np
         """
-        main(["-f", HEADER_INPUT])
+        if logger.isEnabledFor(logging.DEBUG):
+            main(["-f", HEADER_INPUT])
         try:
             with capture_stdout(main, ["-f", HEADER_INPUT]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_HEADER_OUT, GOOD_CSV_OUT))
         finally:
-            silent_remove(CSV_HEADER_OUT)
-            # pass
+            silent_remove(CSV_HEADER_OUT, disable=DISABLE_REMOVE)
 
     def testCsv(self):
         """
         This input file has a header that starts with a '#' so is ignored by np.loadtxt
         """
-        main(["-f", CSV_INPUT, "-d", ","])
+        if logger.isEnabledFor(logging.DEBUG):
+            main(["-f", CSV_INPUT, "-d", ","])
         try:
             with capture_stdout(main, ["-f", CSV_INPUT, "-d", ","]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_OUT))
         finally:
-            # silent_remove(CSV_OUT)
-            pass
+            silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
 
     def testCsvHeader(self):
         """
         This input file has a header that starts with a '#' so is ignored by np.loadtxt
         """
-        # main(["-f", CSV_HEADER_INPUT, "-n", "-d", ","])
         try:
             with capture_stdout(main, ["-f", CSV_HEADER_INPUT, "-n", "-d", ","]) as output:
                 self.assertTrue(GOOD_OUT in output)
                 self.assertFalse(diff_lines(CSV_HEADER_OUT, GOOD_CSV_HEADER_OUT))
         finally:
-            silent_remove(CSV_HEADER_OUT)
-            # pass
+            silent_remove(CSV_HEADER_OUT, disable=DISABLE_REMOVE)
 
     def testMixedInput(self):
         """
         This input file has tuples and lists that cannot be handled by np.loadtxt
         """
-        # main(["-f", MIXED_INPUT, "-n", "-d", ","])
         try:
             with capture_stderr(main, ["-f", MIXED_INPUT, "-n", "-d", ","]) as output:
                 self.assertTrue("could not be converted to a float" in output)
                 self.assertFalse(diff_lines(MIXED_OUT, GOOD_MIXED_OUT))
         finally:
-            silent_remove(MIXED_OUT)
-            # pass
+            silent_remove(MIXED_OUT, disable=DISABLE_REMOVE)
 
     def testAllNanInput(self):
         """
         This input file has only tuples and lists
         """
-        # main(["-f", ALL_NAN_INPUT, "-n", "-d", ","])
         try:
             with capture_stderr(main, ["-f", ALL_NAN_INPUT, "-n", "-d", ","]) as output:
                 self.assertTrue("could not be converted to a float" in output)
                 self.assertFalse(diff_lines(ALL_NAN_OUT, GOOD_ALL_NAN_OUT))
         finally:
-            silent_remove(ALL_NAN_OUT)
-            # pass
+            silent_remove(ALL_NAN_OUT, logger.isEnabledFor(logging.DEBUG))
 
     def testHist(self):
         try:
@@ -199,9 +194,9 @@ class TestPerCol(unittest.TestCase):
             self.assertFalse(diff_lines(HIST_OUT, GOOD_HIST_OUT))
             self.assertFalse(diff_lines(HIST_COUNT, GOOD_HIST_COUNT))
         finally:
-            [silent_remove(o_file) for o_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3,
-                                                  HIST_OUT, HIST_COUNT,
-                                                  ]]
+            [silent_remove(o_file,
+                           disable=DISABLE_REMOVE) for o_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3,
+                                                                  HIST_OUT, HIST_COUNT, ]]
 
     # def testNonFloat(self):
     #     try:

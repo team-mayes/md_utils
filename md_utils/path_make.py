@@ -14,7 +14,6 @@ import logging
 import sys
 import datetime
 import os
-
 import numpy as np
 import matplotlib.pyplot as plt
 from md_utils.md_common import move_existing_file, save_fig
@@ -186,6 +185,7 @@ def main(argv=None):
 
     line_idx, min_coord, max_coord, coords = process_infile(args.infile, args.bin_coordinate)
 
+    # noinspection PyTypeChecker
     make_graphs(coords)
 
     bins, bin_idx = bin_data(line_idx, min_coord, max_coord, args.bin_size)

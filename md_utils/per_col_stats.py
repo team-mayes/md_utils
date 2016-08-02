@@ -97,28 +97,32 @@ def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_h
 
     max_vector = dim_vectors.max(axis=0)
     min_vector = dim_vectors.min(axis=0)
+
     # noinspection PyTypeChecker
     to_print += [['Min values:'] + min_vector.tolist(),
                  ['Max values:'] + max_vector.tolist(),
                  ['Avg values:'] + dim_vectors.mean(axis=0).tolist(),
                  ['Std dev:'] + dim_vectors.std(axis=0, ddof=1).tolist(),
-                 ['2.5% percentile:'] + np.percentile(dim_vectors, 2.5, axis=0).tolist(),
-                 ['50.0% percentile:'] + np.percentile(dim_vectors, 50, axis=0).tolist(),
-                 ['97.5% percentile:'] + np.percentile(dim_vectors, 97.5, axis=0).tolist(),
+                 ['5% percentile:'] + np.percentile(dim_vectors, 4.55, axis=0).tolist(),
+                 ['32% percentile:'] + np.percentile(dim_vectors, 31.73, axis=0).tolist(),
+                 ['50% percentile:'] + np.percentile(dim_vectors, 50, axis=0).tolist(),
+                 ['68% percentile:'] + np.percentile(dim_vectors, 68.27, axis=0).tolist(),
+                 ['95% percentile:'] + np.percentile(dim_vectors, 95.45, axis=0).tolist(),
                  ]
     if len_buffer is not None:
         to_print.append(['Max plus {} buffer:'.format(len_buffer)] + (max_vector + len_buffer).tolist())
 
     # Printing to standard out: do not print quotes around strings because using csv writer
-    print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
-    for index, row in enumerate(to_print):
-        # formatting for header
-        if index == 0 and header:
-            print("{:>20s} {}".format(row[0],
-                                      ' '.join(['{:>16s}'.format(x.strip()) for x in row[1:]])))
-        # formatting for vals
-        else:
-            print("{:>20s} {}".format(row[0], ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
+    # print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
+    if len(dim_vectors[0]) < 12:
+        for index, row in enumerate(to_print):
+            # formatting for header
+            if index == 0 and header:
+                print("{:>20s} {}".format(row[0],
+                                          ' '.join(['{:>16s}'.format(x.strip()) for x in row[1:]])))
+            # formatting for vals
+            else:
+                print("{:>20s} {}".format(row[0], ' '.join(['{:16.6f}'.format(x) for x in row[1:]])))
 
     f_name = create_out_fname(data_file, prefix='stats_', ext='.csv', base_dir=out_dir)
     list_to_csv(to_print, f_name)
