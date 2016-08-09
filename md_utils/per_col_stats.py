@@ -8,6 +8,7 @@ alternately: returns maximum x, y, and z coordinates, plus the values after a bu
 from __future__ import print_function
 
 import copy
+import csv
 from operator import itemgetter
 import matplotlib
 import seaborn as sns
@@ -19,7 +20,7 @@ import argparse
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_csv)
+                                np_float_array_from_file, create_out_fname, list_to_csv, read_csv)
 
 __author__ = 'hmayes'
 
@@ -35,6 +36,7 @@ INVALID_DATA = 3
 # Defaults
 DEF_ARRAY_FILE = 'qm_box_sizes.txt'
 DEF_DELIMITER = ' '
+TOL = 0.0001
 
 
 def parse_cmdline(argv):
@@ -60,15 +62,21 @@ def parse_cmdline(argv):
     parser.add_argument("-d", "--delimiter", help="Delimiter. Default is '{}'".format(DEF_DELIMITER),
                         default=DEF_DELIMITER)
 
+    parser.add_argument("-m", "--min_max_file", help="CSV file with column names (first line), "
+                                                     "initial values (second line), min values "
+                                                     "(third line), and max values (fourth line), used to further "
+                                                     "analyze the data file.",
+                        default=None)
+
     parser.add_argument("-n", "--names", help="File contains column names (header) (default is false). "
                                               "Note: lines beginning with '#' are ignored.",
                         action='store_true')
 
-    parser.add_argument("-s", "--histogram", help="Create histograms of the non-numerical data (default is false).",
-                        action='store_true')
-
     parser.add_argument("-o", "--out_dir", help="Output folder. Default is the directory of the file to be processed.",
                         default=None)
+
+    parser.add_argument("-s", "--histogram", help="Create histograms of the non-numerical data (default is false).",
+                        action='store_true')
 
     try:
         args = parser.parse_args(argv)
@@ -80,7 +88,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_hist=False):
+def process_file(data_file, out_dir, len_buffer, delimiter, min_max_dict, header=False, make_hist=False):
     try:
         dim_vectors, header_row, hist_data = np_float_array_from_file(data_file, delimiter=delimiter,
                                                                       header=header, gather_hist=make_hist)
@@ -97,20 +105,62 @@ def process_file(data_file, out_dir, len_buffer, delimiter, header=False, make_h
 
     max_vector = dim_vectors.max(axis=0)
     min_vector = dim_vectors.min(axis=0)
+    avg_vector = dim_vectors.mean(axis=0)
+    med_vector = np.percentile(dim_vectors, 50, axis=0)
 
     # noinspection PyTypeChecker
     to_print += [['Min values:'] + min_vector.tolist(),
                  ['Max values:'] + max_vector.tolist(),
-                 ['Avg values:'] + dim_vectors.mean(axis=0).tolist(),
+                 ['Avg values:'] + avg_vector.tolist(),
                  ['Std dev:'] + dim_vectors.std(axis=0, ddof=1).tolist(),
                  ['5% percentile:'] + np.percentile(dim_vectors, 4.55, axis=0).tolist(),
                  ['32% percentile:'] + np.percentile(dim_vectors, 31.73, axis=0).tolist(),
-                 ['50% percentile:'] + np.percentile(dim_vectors, 50, axis=0).tolist(),
+                 ['50% percentile:'] + med_vector.tolist(),
                  ['68% percentile:'] + np.percentile(dim_vectors, 68.27, axis=0).tolist(),
                  ['95% percentile:'] + np.percentile(dim_vectors, 95.45, axis=0).tolist(),
                  ]
     if len_buffer is not None:
         to_print.append(['Max plus {} buffer:'.format(len_buffer)] + (max_vector + len_buffer).tolist())
+
+    if min_max_dict is not None:
+        nan_list = [np.nan] * len(header_row)
+        avg_ini_diff = ['Avg % Diff:'] + nan_list
+        med_ini_diff = ['Med % Diff:'] + nan_list
+        med_is_min = ['Median is Min:'] + nan_list
+        med_is_max = ['Median is Max:'] + nan_list
+        for col_num, header in enumerate(to_print[0]):
+            if header in min_max_dict[0]:
+                ini_val = min_max_dict[0][header]
+                low_val = min_max_dict[1][header]
+                upp_val = min_max_dict[2][header]
+                avg_val = avg_vector[col_num - 1]
+                med_val = med_vector[col_num - 1]
+                min_val = min_vector[col_num - 1]
+                max_val = max_vector[col_num - 1]
+                min_tol = max(TOL * max(abs(min_val), abs(low_val)), TOL)
+                med_tol = max(TOL * abs(med_val), TOL)
+                max_tol = max(TOL * max(abs(max_val), abs(upp_val)), TOL)
+                if (low_val - min_val) > min_tol:
+                    warning("Minimum value found for header '{}' ({}) is less than lower bound ({})"
+                            "".format(header, min_val, low_val))
+                if (max_val - upp_val) > max_tol:
+                    warning("Maximum value found for header '{}' ({}) is greater than upper bound ({})"
+                            "".format(header, max_val, upp_val))
+                avg_ini_diff[col_num] = (avg_val - ini_val) / ini_val * 100
+                med_ini_diff[col_num] = (med_val - ini_val) / ini_val * 100
+                if abs(med_val - low_val) > med_tol:
+                    med_is_min[col_num] = 0
+                else:
+                    med_is_min[col_num] = 1
+                if abs(med_val - upp_val) > med_tol:
+                    med_is_max[col_num] = 0
+                else:
+                    med_is_max[col_num] = 1
+            # else:
+            #     for min_max_list in [avg_ini_diff, med_ini_diff, med_is_min, med_is_max]:
+            #         min_max_list.append(np.nan)
+        for min_max_list in [avg_ini_diff, med_ini_diff, med_is_min, med_is_max]:
+            to_print.append(min_max_list)
 
     # Printing to standard out: do not print quotes around strings because using csv writer
     # print("Number of dimensions ({}) based on first line of file: {}".format(len(dim_vectors[0]), data_file))
@@ -218,7 +268,12 @@ def main(argv=None):
                 raise InvalidDataError("Input for buffer ({}) could not be converted to a float.".format(args.buffer))
         if args.out_dir is None:
             args.out_dir = os.path.dirname(args.file)
-        process_file(args.file, args.out_dir, len_buffer, args.delimiter, header=args.names, make_hist=args.histogram)
+        if args.min_max_file is None:
+            min_max_dict = None
+        else:
+            min_max_dict = read_csv(args.min_max_file, quote_style=csv.QUOTE_NONNUMERIC)
+        process_file(args.file, args.out_dir, len_buffer, args.delimiter, min_max_dict,
+                     header=args.names, make_hist=args.histogram)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

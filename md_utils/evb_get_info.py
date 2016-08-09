@@ -17,15 +17,18 @@ just get highest prot ci^2, highest wat ci^2
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 from operator import itemgetter
 import re
 import sys
 import argparse
-
 import numpy as np
 from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, write_csv, single_quote
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -123,7 +126,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(f_loc)
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))

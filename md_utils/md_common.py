@@ -43,8 +43,8 @@ PLANCK_CONST = 9.53707E-14
 R = 0.001985877534
 
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
-# found to be too stringent; multiplied by 1000
-TOL = 0.000000000001
+# found to be too stringent
+TOL = 0.00000000001
 
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
@@ -584,7 +584,7 @@ def convert_dict_line(all_conv, data_conv, line):
     return s_dict
 
 
-def read_csv(src_file, data_conv=None, all_conv=None):
+def read_csv(src_file, data_conv=None, all_conv=None, quote_style=csv.QUOTE_MINIMAL):
     """
     Reads the given CSV (comma-separated with a first-line header row) and returns a list of
     dicts where each dict contains a row's data keyed by the header row.
@@ -594,6 +594,7 @@ def read_csv(src_file, data_conv=None, all_conv=None):
         that throw a TypeError from an attempted conversion are left as strings in the result.
     @param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
         takes precedence.
+    @param quote_style: how to read the dictionary
     @return: A list of dicts containing the file's data.
     """
     result = []
@@ -603,7 +604,7 @@ def read_csv(src_file, data_conv=None, all_conv=None):
         #     for line in csv_reader:
         #         result.append(convert_dict_line(all_conv, data_conv, line))
         # except ValueError:
-        csv_reader = csv.DictReader(csv_file)
+        csv_reader = csv.DictReader(csv_file, quoting=quote_style)
         for line in csv_reader:
             result.append(convert_dict_line(all_conv, data_conv, line))
     return result

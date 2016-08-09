@@ -64,6 +64,11 @@ HIST_PNG2 = os.path.join(SUB_DATA_DIR, "msm_sum_output_more(1,0)_max_path.png")
 # noinspection PyUnresolvedReferences
 HIST_PNG3 = os.path.join(SUB_DATA_DIR, "msm_sum_output_more(0,-1)_max_rls.png")
 
+MIN_MAX_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output_test_min_max.csv")
+MIN_MAX_FILE = os.path.join(SUB_DATA_DIR, "msm_ini_vals.csv")
+MIN_MAX_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_test_min_max.csv")
+GOOD_MIN_MAX_OUT = os.path.join(SUB_DATA_DIR, "stats_msm_sum_output_test_min_max_good.csv")
+
 # Test data #
 
 GOOD_OUT = "         Min values:        10.000000        14.995000        10.988000\n" \
@@ -198,8 +203,9 @@ class TestPerCol(unittest.TestCase):
                            disable=DISABLE_REMOVE) for o_file in [HIST_PNG1, HIST_PNG2, HIST_PNG3,
                                                                   HIST_OUT, HIST_COUNT, ]]
 
-    # def testNonFloat(self):
-    #     try:
-    #         main(["-f", NON_FLOAT_INPUT, "-n", "-d", ",", "-s"])
-    #     finally:
-    #         pass
+    def testMinMax(self):
+        try:
+            main(["-f", MIN_MAX_INPUT, "-n", "-d", ",", "-m", MIN_MAX_FILE])
+            self.assertFalse(diff_lines(MIN_MAX_OUT, GOOD_MIN_MAX_OUT))
+        finally:
+            silent_remove(MIN_MAX_OUT,  disable=DISABLE_REMOVE)
