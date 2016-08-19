@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 DEF_SKEL_LOC = os.path.join(os.path.dirname(__file__), 'skel')
 
+
 # Logic #
 
 def copy_skel(src, dest):
@@ -54,8 +55,8 @@ def main(argv=None):
     """
     Runs the main program.
 
-    :param argv: The command line arguments.
-    :return: The return code for the program's termination.
+    @param argv: The command line arguments.
+    @return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
     if ret != 0:

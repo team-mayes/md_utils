@@ -12,7 +12,7 @@ import argparse
 import os
 import sys
 from md_utils.md_common import (find_files_by_dir, write_csv,
-                                calc_kbt, create_out_fname, allow_write, GOOD_RET, INPUT_ERROR)
+                                calc_kbt, create_out_fname, allow_write, GOOD_RET, INPUT_ERROR, warning)
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
 __author__ = 'mayes'
@@ -146,11 +146,15 @@ def parse_cmdline(argv):
                         action='store_true')
     parser.add_argument("temp", help="The temperature in Kelvin for the simulation", type=float)
 
+    args = None
     try:
         args = parser.parse_args(argv)
-    except SystemExit:
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
         parser.print_help()
-        return [], INPUT_ERROR
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -162,7 +166,7 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     kbt = calc_kbt(args.temp)
@@ -172,7 +176,7 @@ def main(argv=None):
         write_csv(proc_data, create_out_fname(args.src_file, prefix=OUT_PFX), RAD_KEY_SEQ)
     else:
         found_files = find_files_by_dir(args.base_dir, args.pattern)
-        logger.debug("Found '%d' dirs with files to process", len(found_files))
+        logger.debug("Found '{}' dirs with files to process".format(len(found_files)))
         # noinspection PyCompatibility
         for f_dir, files in found_files.iteritems():
             if not files:

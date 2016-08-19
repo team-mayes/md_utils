@@ -7,8 +7,10 @@ from md_utils import data2pdb
 from md_utils.data2pdb import main
 from md_utils.md_common import diff_lines, silent_remove, capture_stdout, capture_stderr
 
-logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -81,29 +83,39 @@ class TestData2PDBNoOut(unittest.TestCase):
 
     def testCutoffData(self):
         # An incomplete data file (as if stopped during copying)
-        # main(["-c", CUTOFF_DATA_INI])
         with capture_stderr(main, ["-c", CUTOFF_DATA_INI]) as output:
             self.assertTrue("atoms, but found" in output)
 
     def testNotIni(self):
         # gracefully fail if give the wrong file to the -c option
-        # main(["-c", NOT_INI])
-        with capture_stderr(main, ["-c", NOT_INI]) as output:
+        test_input = ["-c", NOT_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("WARNING:  File contains no section headers" in output)
 
     def testNoDictFound(self):
-        # main(["-c", NO_DICT_INI])
         with capture_stderr(main, ["-c", NO_DICT_INI]) as output:
             self.assertTrue("The program will continue without checking atom types" in output)
+
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
 
 
 class TestData2PDB(unittest.TestCase):
     # These test/demonstrate different options
-
     def testDefIni(self):
-        main(["-c", DEF_INI])
+        test_input = ["-c", DEF_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
         try:
-            main(["-c", DEF_INI])
+            main(test_input)
             self.assertFalse(diff_lines(PDB_OUT, GOOD_PDB_OUT))
         finally:
             silent_remove(PDB_TPL_OUT)

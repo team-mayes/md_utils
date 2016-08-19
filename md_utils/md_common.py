@@ -23,13 +23,8 @@ import os
 from shutil import copy2, Error, copystat
 import six
 import sys
-# noinspection PyCompatibility
-from cStringIO import StringIO
 from contextlib import contextmanager
-import matplotlib
-matplotlib.use('Agg')
-# noinspection PyPep8
-import matplotlib.pyplot as plt
+
 
 # Constants #
 
@@ -112,7 +107,9 @@ def warning(*objs):
 # From http://schinckel.net/2013/04/15/capture-and-test-sys.stdout-sys.stderr-in-unittest.testcase/
 @contextmanager
 def capture_stdout(command, *args, **kwargs):
-    out, sys.stdout = sys.stdout, StringIO()
+    # pycharm doesn't know six very well, so ignore the false warning
+    # noinspection PyCallingNonCallable
+    out, sys.stdout = sys.stdout, six.StringIO()
     command(*args, **kwargs)
     sys.stdout.seek(0)
     yield sys.stdout.read()
@@ -121,7 +118,9 @@ def capture_stdout(command, *args, **kwargs):
 
 @contextmanager
 def capture_stderr(command, *args, **kwargs):
-    err, sys.stderr = sys.stderr, StringIO()
+    # pycharm doesn't know six very well, so ignore the false warning
+    # noinspection PyCallingNonCallable
+    err, sys.stderr = sys.stderr, six.StringIO()
     command(*args, **kwargs)
     sys.stderr.seek(0)
     yield sys.stderr.read()
@@ -687,9 +686,6 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w'):
 
 # Other input/output files
 
-def save_fig(name, base_dir=""):
-    plt.savefig(base_dir + name, bbox_inches='tight')
-
 
 def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=False):
     """
@@ -1022,8 +1018,11 @@ def diff_lines(floc1, floc2, delimiter=","):
                 output_plus += line[2:]+'\n'
 
     try:
-        diff_plus_lines = list(csv.reader(StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
-        diff_neg_lines = list(csv.reader(StringIO(output_neg), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
+        # pycharm doesn't know six very well
+        # noinspection PyCallingNonCallable
+        diff_plus_lines = list(csv.reader(six.StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
+        # noinspection PyCallingNonCallable
+        diff_neg_lines = list(csv.reader(six.StringIO(output_neg), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
     except ValueError:
         diff_plus_lines = output_plus.split('\n')
         diff_neg_lines = output_neg.split('\n')

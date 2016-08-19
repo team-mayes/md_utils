@@ -25,8 +25,8 @@ __author__ = 'hmayes'
 
 # Logging
 logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 # Error Codes
 # The good status code
@@ -153,14 +153,12 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
-        parser.print_help()
-        return args, INPUT_ERROR
-    except (InvalidDataError, MissingSectionHeaderError) as e:
+    except (KeyError, InvalidDataError, MissingSectionHeaderError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
         warning(e)
         parser.print_help()
-        return args, INVALID_DATA
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -386,7 +384,7 @@ def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     cfg = args.config

@@ -8,10 +8,12 @@ Block averages input data for WHAM, used to test data convergence.
 
 from __future__ import print_function, division
 import logging
-
+import argparse
+import os
+import sys
 import six
-
-from md_utils.md_common import find_files_by_dir, chunk, allow_write, str_to_file, GOOD_RET, warning, INVALID_DATA
+from md_utils.md_common import find_files_by_dir, chunk, allow_write, str_to_file, GOOD_RET, warning, INVALID_DATA, \
+    INPUT_ERROR
 from md_utils.wham import (read_meta, read_meta_rmsd, write_rmsd,
                            DIR_KEY, LINES_KEY, STEP_SUBMIT_FNAME,
                            fill_submit_wham, DEF_BASE_SUBMIT_TPL,
@@ -20,10 +22,6 @@ from md_utils.wham_split import read_tpl
 
 __author__ = 'cmayes'
 
-
-import argparse
-import os
-import sys
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
@@ -139,10 +137,11 @@ def block_average(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_d
     the average over the given number of cycles, and writes each computed RMSD
     and meta file for each cycle.
 
-    :param meta_file: The initial meta file.
-    :param steps: The number of averaging steps to perform.
-    :param overwrite: Whether to overwrite existing files.
-    :param base_dir: The base directory to write to (defaults to the meta file's dir)
+    @param meta_file: The initial meta file.
+    @param tpl_dir:
+    @param steps: The number of averaging steps to perform.
+    @param overwrite: Whether to overwrite existing files.
+    @param base_dir: The base directory to write to (defaults to the meta file's dir)
     """
     meta = read_meta(meta_file)
     rmsd = read_meta_rmsd(meta)
@@ -188,7 +187,16 @@ def parse_cmdline(argv=None):
                         type=int, default=DEF_STEPS_NUM)
     parser.add_argument('-o', "--overwrite", help='Overwrite existing locations',
                         action='store_true')
-    args = parser.parse_args(argv)
+
+    args = None
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -201,7 +209,7 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     try:

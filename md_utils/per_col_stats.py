@@ -17,19 +17,14 @@ import numpy as np
 import sys
 import os
 import argparse
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from md_utils.md_common import (InvalidDataError, warning,
-                                np_float_array_from_file, create_out_fname, list_to_csv, read_csv)
+                                np_float_array_from_file, create_out_fname, list_to_csv, read_csv, GOOD_RET,
+                                INPUT_ERROR, IO_ERROR, INVALID_DATA)
 
 __author__ = 'hmayes'
-
-# Error Codes
-# The good status code
-GOOD_RET = 0
-INPUT_ERROR = 1
-IO_ERROR = 2
-INVALID_DATA = 3
 
 # Constants #
 
@@ -78,12 +73,15 @@ def parse_cmdline(argv):
     parser.add_argument("-s", "--histogram", help="Create histograms of the non-numerical data (default is false).",
                         action='store_true')
 
+    args = None
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
         warning(e)
         parser.print_help()
-        return [], INPUT_ERROR
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -156,9 +154,9 @@ def process_file(data_file, out_dir, len_buffer, delimiter, min_max_dict, header
                     med_is_max[col_num] = 0
                 else:
                     med_is_max[col_num] = 1
-            # else:
-            #     for min_max_list in [avg_ini_diff, med_ini_diff, med_is_min, med_is_max]:
-            #         min_max_list.append(np.nan)
+                    # else:
+                    #     for min_max_list in [avg_ini_diff, med_ini_diff, med_is_min, med_is_max]:
+                    #         min_max_list.append(np.nan)
         for min_max_list in [avg_ini_diff, med_ini_diff, med_is_min, med_is_max]:
             to_print.append(min_max_list)
 
@@ -255,7 +253,7 @@ def create_hists(data_file, header_row, hist_data, out_dir):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     len_buffer = None

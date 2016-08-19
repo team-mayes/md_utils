@@ -1,10 +1,15 @@
 import unittest
 import os
-
+import logging
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 from md_utils.filter_col_data import DEF_ARRAY_FILE, DEF_CFG_FILE, main
 
 __author__ = 'hmayes'
+
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 # Directories #
 
@@ -33,18 +38,23 @@ GOOD_NON_FLOAT_OUT = os.path.join(SUB_DATA_DIR, "filtered_sum_2016-04-05_dru_san
 
 class TestPerColFailWell(unittest.TestCase):
     def testNoArgs(self):
-        # main([])
         with capture_stderr(main, []) as output:
             self.assertTrue("Could not read file {}".format(DEF_CFG_FILE) in output)
 
-    def testHelpOption(self):
-        # main(["-h"])
-        with capture_stderr(main, []) as output:
-            self.assertTrue("Could not read file {}".format(DEF_CFG_FILE) in output)
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
 
     def testInvalidKey(self):
-        # main(["-f", DEF_INPUT, "-c", INVALID_KEY_INI])
-        with capture_stderr(main, ["-f", DEF_INPUT, "-c", INVALID_KEY_INI]) as output:
+        test_input = ["-f", DEF_INPUT, "-c", INVALID_KEY_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Unexpected key" in output)
 
     def testInvalidHeader(self):
@@ -63,9 +73,11 @@ class TestPerCol(unittest.TestCase):
 
     def testNoMinNonFloat(self):
         # Tests both handling when no min section is specified and non-floats in the file to be analyzed
-        # main(["-f", DEF_INPUT, "-c", NO_MIN_INI])
+        test_input = ["-f", NON_FLOAT_INPUT, "-c", NO_MIN_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
         try:
-            with capture_stderr(main, ["-f", NON_FLOAT_INPUT, "-c", NO_MIN_INI]) as output:
+            with capture_stderr(main, test_input) as output:
                 self.assertTrue("WARNING:  No 'min_vals' section. Program will continue." in output)
             self.assertFalse(diff_lines(NON_FLOAT_OUT, GOOD_NON_FLOAT_OUT))
         finally:

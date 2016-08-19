@@ -6,7 +6,6 @@ mode, printed to a log file.
 
 from __future__ import print_function
 from collections import defaultdict
-import logging
 import sys
 import argparse
 import six
@@ -14,11 +13,6 @@ import six
 from md_utils.md_common import InvalidDataError, warning, read_csv_to_dict, write_csv
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('align_col')
-logging.basicConfig(filename='align_col.log', filemode='w', level=logging.DEBUG)
 
 
 # Error Codes
@@ -70,10 +64,12 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    # except KeyError as e:
-    #     warning("Input data missing:", e)
-    #     parser.print_help()
-    #     return args, INPUT_ERROR
+    except (KeyError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -129,7 +125,7 @@ def process_files(comp_f_list, col_name, f_out):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     try:

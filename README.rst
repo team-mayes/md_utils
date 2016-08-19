@@ -28,23 +28,26 @@ Scripts added to the package aim have at least 90% test coverage.
 Installation
 -------
 
-1. Make sure python is installed. Python 2.7 is recommended. The package is meant to be python 3 compatible, 
-   but expentensively tested only on Python 2.7. There are many ways to install it. For example, see http://conda.pydata.org/miniconda.html
+1. Make sure python is installed. Python 2.7 is recommended. The package is meant to be python 3 compatible,
+   but primarily tested with Python 2.7. There are many ways to install python.
+   For example, see http://conda.pydata.org/miniconda.html
+
 2. From the base folder where you would like the set of files (a new folder will be created, by default called md_utils):
    ::
       git clone https://github.com/team-mayes/md_utils.git
+
 3. From the git repository folder
 
    a. see https://pip.pypa.io/en/stable/installing/ to install if you don't have pip installed
    b. run:
       ::
-         pip install md_utils --user 
+         pip install md_utils --user
    c. alternately (the * below will change based on current version; this is created in the first step):
       ::
          python setup.py sdist
-         pip install dist/md_utils-*.tar.gz --user  
-4. To allow the scripts to be found anywhere on your computer using your terminal screen, 
-   making sure the following path is in your .bashrc or .bash_profile path, and remember to source that file 
+         pip install dist/md_utils-*.tar.gz --user
+4. To allow the scripts to be found anywhere on your computer using your terminal screen,
+   making sure the following path is in your .bashrc or .bash_profile path, and remember to source that file
    after an update:
    ::
       $HOME/.local/bin
@@ -55,27 +58,27 @@ Upgrade
 From the location of your cloned git repository, make sure you have the latest files, then use pip to update:
 ::
    git pull
-   pip install --upgrade  md_utils --user 
+   pip install --upgrade  md_utils --user
 
 Example
 -------
 
-1. Update a configuration file like one found in the folder 
+1. Update a configuration file like one found in the folder
    https://github.com/team-mayes/md_utils/tree/master/tests/test_data/data_edit
    (FYI, config files end with "ini" and there are a variety here, meant
    to work or fail, to test functionality).
-2. To see if the installation worked, try running with the help option. All scripts in 
+2. To see if the installation worked, try running with the help option. All scripts in
    this package have such an option, which will briefly tell you about the code::
        data_edit -h
 
 3. To only have the program print interactions "owned" by atom numbers 1
-   and 2 in a data file called "my_file.data", make a file called (for example) 
+   and 2 in a data file called "my_file.data", make a file called (for example)
    "print_owned_atoms.ini", with
    the following text::
        [main]
        data_file = my_file.data
        print_interactions_owned_by_atoms = 1,2
-   
+
    This assumes that my_file.data is in the same file as the
    configuration file. You can have as many atom numbers as you wish;
    just separate them by commas.
@@ -142,8 +145,8 @@ For processing LAMMPS output:
 -------
 
 data_edit
-  offers a range of options to: 
-  
+  offers a range of options to:
+
   * produce a new, edited data file (such as renumbering interactions types)
 
       see example scripts in tests/test_data/data_edit: data_reorder.ini, data_retype.ini, data_sort.ini
@@ -152,7 +155,7 @@ data_edit
 
       see example scripts in tests/test_data/data_edit: data_print_impt_atoms.ini, data_print_own_atoms.ini
 
-  * compare two data files and output only "meaningful" differences (ignore formatting differences, 
+  * compare two data files and output only "meaningful" differences (ignore formatting differences,
     order of bonds, angles, dihedrals, atom XYZ coords, notes...)
 
       see example script tests/test_data/data_edit/data_compare.ini
@@ -198,10 +201,10 @@ psf_edit
   Currenty only has limited functionality:
   * Can be used to renumber residues/molecules starting from 1 using "mol_renum_flag = True" (no reordering of atoms)
   * can map old molecule numbers to new ones by specifying a mapping dictionary with "mol_renum_old_new_file" (no reordering of atoms)
-  * Mapping of old atom numbers to new ones is not fully implemented. 
+  * Mapping of old atom numbers to new ones is not fully implemented.
   * there is no option to reorder the psf
   * the current most useful part of psf_edit is to help prepare files for CP2K, by specifying residue IDs that will be included in a qm region, i.e. "resids_qmmm_ca_cb_link = 1,5"
-    * note: to do so, it uses a default dictionary that can map between CHARMM atom types and elements, and between CHARMM atom types and MM_KIND radii (radii for water and hydronium from http://pubs.acs.org/doi/abs/10.1021/ct6001169; all other radii from http://xlink.rsc.org/?DOI=b801115j). If a mapping is needed that is not in the default dictionaries, the program will print a warning and exit. Users may supply their own dictionaries with the "atom_type_element_dict_file" and "atom_type_radius_dict_file" 
+    * note: to do so, it uses a default dictionary that can map between CHARMM atom types and elements, and between CHARMM atom types and MM_KIND radii (radii for water and hydronium from http://pubs.acs.org/doi/abs/10.1021/ct6001169; all other radii from http://xlink.rsc.org/?DOI=b801115j). If a mapping is needed that is not in the default dictionaries, the program will print a warning and exit. Users may supply their own dictionaries with the "atom_type_element_dict_file" and "atom_type_radius_dict_file"
     * it assumes that all residues will be broken between the CA and CB atoms (if they exist), with all backbone atoms ooutside the QM region (types [CA, C, O, NT, HNT, CAT, HT1, HT2, HT3, HA, CAY, HY1, HY2, HY3, CY, OY, N, HN]); a different exclude list can be specified with 'exclude_atom_types_from_QM'
     * it will output an "amino_id.dat" file that lists the atom ids (numbering from 1) for each element in the QM region from the non-excluded residue/molecule atoms. It will also print a link section noting the break between teh CA and CB atoms, and capping with H
     * it will output an "mm_kinds.dat" file that notes the radius for each atom type found in the psf (see above to specify the dictionary to use)

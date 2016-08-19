@@ -5,12 +5,17 @@ Tests align_on_col
 """
 import os
 import unittest
-
-from md_utils import align_on_col
+import logging
+from md_utils.align_on_col import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 
 __author__ = 'hmayes'
+
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 TEST_DIR = os.path.dirname(__file__)
 MAIN_DIR = os.path.dirname(TEST_DIR)
@@ -33,13 +38,13 @@ GOOD_MULTI_OUT = os.path.join(SUB_DATA_DIR, 'combined_data_multi_good.csv')
 
 class TestAlignColNoOutput(unittest.TestCase):
     def testNoArgs(self):
-        with capture_stdout(align_on_col.main, []) as output:
+        with capture_stdout(main, []) as output:
             self.assertTrue("optional arguments" in output)
-        with capture_stderr(align_on_col.main, []) as output:
+        with capture_stderr(main, []) as output:
             self.assertTrue("Problems reading file" in output)
 
     def testNoFile(self):
-        with capture_stderr(align_on_col.main, ["-f", NO_FILE_CMP_LIST]) as output:
+        with capture_stderr(main, ["-f", NO_FILE_CMP_LIST]) as output:
             self.assertTrue("No such file or directory" in output)
 
 
@@ -47,33 +52,42 @@ class TestAlignCol(unittest.TestCase):
 
     def testDefIni(self):
         try:
-            align_on_col.main(["-f", DEF_CMP_LIST])
+            main(["-f", DEF_CMP_LIST])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
         finally:
-            # silent_remove(DEF_OUT)
-            pass
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testMultiIni(self):
         try:
-            align_on_col.main(["-f", MULTI_CMP_LIST])
+            main(["-f", MULTI_CMP_LIST])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_MULTI_OUT))
         finally:
-            silent_remove(DEF_OUT)
-            # pass
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testNoOverlap(self):
-        with capture_stderr(align_on_col.main, ["-f", NO_OVER_CMP_LIST]) as output:
+        with capture_stderr(main, ["-f", NO_OVER_CMP_LIST]) as output:
             self.assertTrue("Problems reading data" in output)
-        silent_remove(DEF_OUT)
+        silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testDupCol(self):
-        # align_on_col.main(["-f", DUP_COL_CMP_LIST])
-        with capture_stderr(align_on_col.main, ["-f", DUP_COL_CMP_LIST]) as output:
+        test_input = ["-f", DUP_COL_CMP_LIST]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
             self.assertTrue("Non-unique column" in output)
-        silent_remove(DEF_OUT)
+        silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testNoTimestep(self):
-        with capture_stderr(align_on_col.main, ["-f", NO_COL_CMP_LIST]) as output:
+        with capture_stderr(main, ["-f", NO_COL_CMP_LIST]) as output:
             self.assertTrue("Could not find value" in output)
-        silent_remove(DEF_OUT)
+        silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
+
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
