@@ -157,15 +157,12 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
-        parser.print_help()
-        return args, INPUT_ERROR
-    except InvalidDataError as e:
+    except (KeyError, InvalidDataError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
         warning(e)
         parser.print_help()
         return args, INPUT_ERROR
-
     return args, GOOD_RET
 
 
@@ -220,7 +217,7 @@ def process_evb_file(evb_file, cfg):
                     continue
             if section == SEC_TIMESTEP:
                 split_line = line.split()
-                timestep = split_line[1]
+                timestep = int(split_line[1])
                 result = {TIMESTEP: timestep}
                 # Reset variables
                 # Start with an entry so the atom-id = index
@@ -436,7 +433,7 @@ def process_evb_files(cfg):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     # Read template and dump files

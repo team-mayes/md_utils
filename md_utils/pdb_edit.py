@@ -171,11 +171,13 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-    except (IOError, InvalidDataError) as e:
+    except (IOError) as e:
         warning(e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
+    except (KeyError, InvalidDataError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
@@ -374,7 +376,7 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     cfg = args.config

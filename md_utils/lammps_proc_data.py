@@ -322,14 +322,12 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
+    except (InvalidDataError, KeyError, ConfigParser.NoSectionError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
         parser.print_help()
         return args, INPUT_ERROR
-    except InvalidDataError as e:
-        warning("Invalid Data:", e)
-        parser.print_help()
-        return args, INVALID_DATA
 
     if len(args.config[PROT_O_IDS]) != 2:
         warning('Expected to find exactly two atom indices listed for the key {}. Check '
@@ -763,7 +761,7 @@ def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
 
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     # Read template and dump files

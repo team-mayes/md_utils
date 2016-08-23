@@ -219,17 +219,12 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    # except KeyError as e:
-    #     warning("Input data missing:", e)
-    #     parser.print_help()
-    #     return args, INPUT_ERROR
-    except InvalidDataError as e:
+    except (InvalidDataError, KeyError, ConfigParser.MissingSectionHeaderError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
         warning(e)
-        return args, INVALID_DATA
-    except ConfigParser.MissingSectionHeaderError as e:
-        warning(e)
+        parser.print_help()
         return args, INPUT_ERROR
-
     return args, GOOD_RET
 
 
@@ -691,7 +686,7 @@ def comp_files(cfg, atom_id_dict, type_dicts):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     # Read template and data files

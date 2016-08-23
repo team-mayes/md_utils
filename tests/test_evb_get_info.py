@@ -6,10 +6,14 @@ Also, test diff_lines
 """
 import os
 import unittest
-
 from md_utils.evb_get_info import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
+import logging
 
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -70,35 +74,49 @@ GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv
 
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
     def testNoIni(self):
-        with capture_stdout(main, []) as output:
+        test_input = []
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("usage:" in output)
-        with capture_stderr(main, []) as output:
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Problems reading file: Could not read file" in output)
 
     def testMissingInfo(self):
-        with capture_stderr(main, ["-c", INCOMP_INI]) as output:
-            self.assertTrue("Input data missing" in output)
-        with capture_stdout(main, ["-c", INCOMP_INI]) as output:
+        test_input = ["-c", INCOMP_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing config val for key prot_res_mol_id" in output)
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testBadPath(self):
-        main(["-c", BAD_PATH_INI])
-        with capture_stderr(main, ["-c", BAD_PATH_INI]) as output:
+        test_input = ["-c", BAD_PATH_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Found no evb file names to read" in output)
 
     def testBadKeyword(self):
-        # main(["-c", BAD_KEY_INI])
         with capture_stderr(main, ["-c", BAD_KEY_INI]) as output:
             self.assertTrue("Unexpected key" in output)
 
     def testBadEVB(self):
-        # main(["-c", BAD_EVB_INI])
         with capture_stderr(main, ["-c", BAD_EVB_INI]) as output:
             self.assertTrue("Problems reading data" in output)
 
     def testNoSuchEVB(self):
-        # main(["-c", NO_SUCH_EVB_INI])
         with capture_stderr(main, ["-c", NO_SUCH_EVB_INI]) as output:
             self.assertTrue("No such file or directory" in output)
 
@@ -113,7 +131,6 @@ class TestEVBGetInfo(unittest.TestCase):
         finally:
             silent_remove(DEF_CI_OUT1)
             silent_remove(DEF_CI_OUT2)
-            # pass
 
     def testSubsetCiInfo(self):
         with capture_stderr(main, ["-c", CI_SUBSET_INI]) as output:
@@ -134,7 +151,6 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_LIST_OUT, GOOD_LIST_OUT))
         finally:
             silent_remove(DEF_LIST_OUT)
-            # pass
 
     def testOneStateEachFileCiInfo(self):
         """
@@ -149,7 +165,6 @@ class TestEVBGetInfo(unittest.TestCase):
         finally:
             silent_remove(DEF_ONE_STATE_OUT)
             silent_remove(DEF_ONE_STATE_OUT2)
-            # pass
 
     def testKeyProps(self):
         try:
@@ -157,7 +172,6 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(KEY_PROPS_OUT, GOOD_KEY_PROPS_OUT))
         finally:
             silent_remove(KEY_PROPS_OUT)
-            # pass
 
     def testWaterMol(self):
         try:
@@ -165,9 +179,8 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(WATER_MOL_OUT1, GOOD_WATER_MOL_OUT1))
             self.assertFalse(diff_lines(WATER_MOL_OUT2, GOOD_WATER_MOL_OUT2))
         finally:
-            silent_remove(WATER_MOL_OUT1)
-            silent_remove(WATER_MOL_OUT2)
-            # pass
+            silent_remove(WATER_MOL_OUT1, disable=DISABLE_REMOVE)
+            silent_remove(WATER_MOL_OUT2, disable=DISABLE_REMOVE)
 
     def testWaterMolCombine(self):
         # Should skip the timestep with only 1 state
@@ -176,4 +189,3 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
         finally:
             silent_remove(WATER_MOL_COMB_OUT)
-            # pass

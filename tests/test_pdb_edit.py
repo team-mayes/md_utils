@@ -1,8 +1,13 @@
 import unittest
 import os
-
 from md_utils.pdb_edit import main
 from md_utils.md_common import diff_lines, capture_stderr, silent_remove, capture_stdout
+import logging
+
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -131,6 +136,15 @@ class TestPDBEditMain(unittest.TestCase):
 
 class TestPDBEditCatchImperfectInput(unittest.TestCase):
     # Testing for elegant failure and hopefully helpful error messages
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
     def testNoIni(self):
         # main(["-c", "ghost.ini"])
         with capture_stderr(main, ["-c", "ghost.ini"]) as output:

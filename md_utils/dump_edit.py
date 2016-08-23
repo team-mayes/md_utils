@@ -4,14 +4,13 @@ Make a new dump file with a specified max number of timesteps and reorders atoms
 """
 
 from __future__ import print_function
-import logging
 import os
 import sys
 import argparse
 import numpy as np
 
-from md_utils.md_common import InvalidDataError, create_out_fname, warning, \
-    process_cfg, find_dump_section_state, read_csv_dict, silent_remove
+from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
+                                find_dump_section_state, read_csv_dict)
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -20,12 +19,6 @@ except ImportError:
     from configparser import ConfigParser
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('dump_edit')
-logging.basicConfig(filename='dump_edit.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes
@@ -135,6 +128,12 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning("Input data missing:", e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
     return args, GOOD_RET
 
@@ -152,6 +151,8 @@ def print_to_dump_file(head_content, atoms_struct, fname, mode='a'):
             w_file.write(line + '\n')
         for line in atoms_struct:
             w_file.write(' '.join(map(str, line)) + '\n')
+        if mode == 'w':
+            print("Wrote file: {}".format(fname))
 
 
 def process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dict):
@@ -165,7 +166,7 @@ def process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dic
     timestep = None
     with open(dump_file) as d:
         d_out = create_out_fname(dump_file, suffix='_reorder', base_dir=cfg[OUT_BASE_DIR])
-        silent_remove(d_out)
+        write_mode = 'w'
         for line in d:
             line = line.strip()
 
@@ -199,7 +200,9 @@ def process_dump_file(cfg, dump_file, atom_num_dict, atom_type_dict, mol_num_dic
                         atom_data = sorted(atom_data, key=lambda atom: atom[0])
                     steps_count += 1
                     if steps_count % cfg[OUT_FREQ] == 0:
-                        print_to_dump_file(head_content, atom_data, d_out)
+                        print_to_dump_file(head_content, atom_data, d_out, mode=write_mode)
+                        if write_mode == 'w':
+                            write_mode = 'a'
                     if steps_count == step_stop:
                         print("Reached the maximum number of steps ({})".format(cfg[MAX_STEPS]))
                         counter = 1
@@ -266,7 +269,7 @@ def process_dump_files(cfg, atom_num_dict, atom_type_dict, mol_num_dict):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     # Read template and dump files

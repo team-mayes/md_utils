@@ -7,11 +7,15 @@ Tests for wham_rad.
 import unittest
 import math
 import os
-
 from md_utils.md_common import BOLTZ_CONST, capture_stderr, capture_stdout, silent_remove, diff_lines
 from md_utils.wham_rad import calc_corr, calc_rad, to_zero_point, main, OUT_PFX
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
+import logging
 
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'mayes'
 
@@ -27,6 +31,8 @@ ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 
 SHORT_WHAM_FNAME = "PMF_test.txt"
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, SHORT_WHAM_FNAME)
+
+GLU_WHAM = os.path.join(SUB_DATA_DIR, "glu_20c_wham.out")
 
 # noinspection PyUnresolvedReferences
 ORIG_WHAM_OUT = os.path.join(DATA_DIR, OUT_PFX + ORIG_WHAM_FNAME)
@@ -89,27 +95,36 @@ class TestZeroPoint(unittest.TestCase):
         zpe_check(self, zpe)
 
 
-class TestMain(unittest.TestCase):
-
+class TestMainForMessages(unittest.TestCase):
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("too few arguments" in output)
         with capture_stdout(main, []) as output:
             self.assertTrue("Creates a radial correction value" in output)
 
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
+
+class TestMainForResults(unittest.TestCase):
     def testSpecOverwrite(self):
         try:
             main([str(EXP_TEMP), "-o"])
             self.assertFalse(diff_lines(ORIG_WHAM_OUT, GOOD_ORIG_WHAM_OUT))
             self.assertFalse(diff_lines(SHORT_WHAM_OUT, GOOD_SHORT_WHAM_OUT))
         finally:
-            silent_remove(ORIG_WHAM_OUT)
-            silent_remove(SHORT_WHAM_OUT)
-            # pass
+            silent_remove(ORIG_WHAM_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SHORT_WHAM_OUT, disable=DISABLE_REMOVE)
 
     def testSpecFile(self):
         try:
             main([str(EXP_TEMP), "-f", SHORT_WHAM_PATH])
             self.assertFalse(diff_lines(SHORT_WHAM_OUT, GOOD_SHORT_WHAM_OUT))
         finally:
-            silent_remove(SHORT_WHAM_OUT)
+            silent_remove(SHORT_WHAM_OUT, disable=DISABLE_REMOVE)

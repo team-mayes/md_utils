@@ -1,14 +1,13 @@
 import json
-import logging
 import unittest
 import os
-
 from md_utils import data2pdb
 from md_utils.data2pdb import main
 from md_utils.md_common import diff_lines, silent_remove, capture_stdout, capture_stderr
+import logging
 
-logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -61,9 +60,8 @@ class TestData2PDBNoOut(unittest.TestCase):
             self.assertTrue("Unexpected key" in output)
 
     def testMissReqKeyIni(self):
-        main(["-c", MISS_INI])
         with capture_stderr(main, ["-c", MISS_INI]) as output:
-            self.assertTrue("WARNING:  Input data missing: 'Missing config val for key pdb_tpl_file'" in output)
+            self.assertTrue("Missing config val for key pdb_tpl_file" in output)
 
     def testNoFiles(self):
         with capture_stderr(main, ["-c", NO_FILES_INI]) as output:

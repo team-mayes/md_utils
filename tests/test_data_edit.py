@@ -1,8 +1,13 @@
 import unittest
 import os
-
 from md_utils.data_edit import main
 from md_utils.md_common import diff_lines, silent_remove, capture_stderr, capture_stdout
+import logging
+
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -80,7 +85,16 @@ SELECT_FROM_LAMMPS = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_selected.txt')
 SELECT_FROM_LAMMPS_GOOD = os.path.join(SUB_DATA_DIR, '0.875_0_deprot_selected_good.txt')
 
 
-class TestDataEdit(unittest.TestCase):
+class TestDataEditFailWell(unittest.TestCase):
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             self.assertTrue("Could not read file" in output)
@@ -95,26 +109,6 @@ class TestDataEdit(unittest.TestCase):
     def testNoIni(self):
         main(["-c", "ghost.ini"])
 
-    def testDefIni(self):
-        try:
-            main(["-c", DEF_INI])
-            self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
-        finally:
-            silent_remove(DEF_OUT)
-            # pass
-
-    # def testSerca(self):
-    #     """
-    #     Tests on another set of data, and a bad file location
-    #     However, takes almost a minute to run, so commented out
-    #     """
-    #     with capture_stderr(main, ["-c", SERCA_INI]) as output:
-    #         self.assertTrue("No such file or directory" in output)
-    #         self.assertFalse(diff_lines(SERCA_0_OUT, SERCA_0_GOOD_OUT))
-    #         self.assertFalse(diff_lines(SERCA_1_OUT, SERCA_1_GOOD_OUT))
-    #         silent_remove(SERCA_0_OUT)
-    #         silent_remove(SERCA_1_OUT)
-
     def testBadFileList(self):
         with capture_stderr(main, ["-c", BAD_LIST_INI]) as output:
             self.assertTrue("Did not find a list of data files at the path" in output)
@@ -124,13 +118,21 @@ class TestDataEdit(unittest.TestCase):
             self.assertTrue("Expected exactly two comma-separated values" in output)
         silent_remove(DEF_OUT)
 
+
+class TestDataEdit(unittest.TestCase):
+    def testDefIni(self):
+        try:
+            main(["-c", DEF_INI])
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
+        finally:
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
+
     def testGlupIni(self):
         try:
             main(["-c", GLUP_INI])
             self.assertFalse(diff_lines(GLUP_OUT, GLUP_GOOD_OUT))
         finally:
-            silent_remove(GLUP_OUT)
-            # pass
+            silent_remove(GLUP_OUT, disable=DISABLE_REMOVE)
 
     def testImptAtomsBadInput(self):
         with capture_stderr(main, ["-c", IMP_ATOMS_BAD_INI]) as output:
@@ -142,8 +144,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUE_SELECT_OUT, GLUE_SELECT_OUT_GOOD))
             self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OUT_GOOD))
         finally:
-            [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
-            # pass
+            [silent_remove(o_file, disable=DISABLE_REMOVE) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
 
     def testOwnAtoms(self):
         try:
@@ -151,8 +152,7 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(GLUE_SELECT_OUT, GLUE_SELECT_OWN_OUT_GOOD))
             self.assertFalse(diff_lines(GLUP_SELECT_OUT, GLUP_SELECT_OWN_OUT_GOOD))
         finally:
-            [silent_remove(o_file) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
-            # pass
+            [silent_remove(o_file, disable=DISABLE_REMOVE) for o_file in [GLUE_SELECT_OUT, GLUP_SELECT_OUT]]
 
     def testKeyTypo(self):
         with capture_stderr(main, ["-c", IMP_ATOMS_TYPO_INI]) as output:
@@ -166,32 +166,22 @@ class TestDataEdit(unittest.TestCase):
         try:
             main(["-c", RETYPE_INI])
             self.assertFalse(diff_lines(GLUP_RETYPE_OUT, GLUP_RETYPE_OUT_GOOD))
-            # for debugging:
-            # with open(GLUP_RETYPE_OUT) as f:
-            #     with open(GLUP_RETYPE_OUT_GOOD) as g:
-            #         for d_line, g_line in zip(f, g):
-            #             if d_line.strip() != g_line.strip():
-            #                 print(d_line.strip())
-            #                 print(g_line.strip())
         finally:
-            silent_remove(GLUP_RETYPE_OUT)
-            # pass
+            silent_remove(GLUP_RETYPE_OUT, disable=DISABLE_REMOVE)
 
     def testSort(self):
         try:
             main(["-c", SORT_INI])
             self.assertFalse(diff_lines(GLUP_SORT_OUT, GLUP_SORT_OUT_GOOD))
         finally:
-            silent_remove(GLUP_SORT_OUT)
-            # pass
+            silent_remove(GLUP_SORT_OUT, disable=DISABLE_REMOVE)
 
     def testCompare(self):
         try:
             main(["-c", COMPARE_INI])
             self.assertFalse(diff_lines(COMP1_OUT, COMP1_OUT_GOOD))
         finally:
-            silent_remove(COMP1_OUT)
-            # pass
+            silent_remove(COMP1_OUT, disable=DISABLE_REMOVE)
 
     def testCompDih(self):
         # Test it is okay with sections in the 2nd but not first file
@@ -200,10 +190,8 @@ class TestDataEdit(unittest.TestCase):
         try:
             print(COMP_OUT, COMP_DIH_OUT_GOOD)
             self.assertFalse(diff_lines(COMP_OUT, COMP_DIH_OUT_GOOD))
-
         finally:
-            silent_remove(COMP_OUT)
-            # pass
+            silent_remove(COMP_OUT, disable=DISABLE_REMOVE)
 
     def testCompDihAlt(self):
         # Test it is okay with sections in the 1st but not 2nd file
@@ -212,15 +200,14 @@ class TestDataEdit(unittest.TestCase):
         try:
             self.assertFalse(diff_lines(COMP_DIH_ALT_OUT, COMP_DIH_ALT_OUT_GOOD))
         finally:
-            silent_remove(COMP_DIH_ALT_OUT)
+            silent_remove(COMP_DIH_ALT_OUT, disable=DISABLE_REMOVE)
 
     def testDataFromLammps(self):
         try:
             main(["-c", COMP_FROM_LAMMPS_INI])
             self.assertFalse(diff_lines(COMP_FROM_LAMMPS, COMP_FROM_LAMMPS_GOOD))
         finally:
-            silent_remove(COMP_FROM_LAMMPS)
-            # pass
+            silent_remove(COMP_FROM_LAMMPS, disable=DISABLE_REMOVE)
 
     def testSortFromLammps(self):
         try:
@@ -228,6 +215,5 @@ class TestDataEdit(unittest.TestCase):
             self.assertFalse(diff_lines(SORT_FROM_LAMMPS, SORT_FROM_LAMMPS_GOOD))
             self.assertFalse(diff_lines(SELECT_FROM_LAMMPS, SELECT_FROM_LAMMPS_GOOD))
         finally:
-            silent_remove(SORT_FROM_LAMMPS)
-            silent_remove(SELECT_FROM_LAMMPS)
-            # pass
+            silent_remove(SORT_FROM_LAMMPS, disable=DISABLE_REMOVE)
+            silent_remove(SELECT_FROM_LAMMPS, disable=DISABLE_REMOVE)

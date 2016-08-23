@@ -1,9 +1,13 @@
 import unittest
 import os
-
 from md_utils.dump_edit import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -37,22 +41,32 @@ GOOD_OUT_FILE = os.path.join(SUB_DATA_DIR, '0.625_20c_reord_renum_retype_good.du
 
 
 class TestDumpEditFailWell(unittest.TestCase):
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
 
     def testMissingDictFile(self):
         with capture_stderr(main, ["-c", MISSING_DICT_INI]) as output:
             self.assertTrue("Problems reading file" in output)
 
     def testMissingDumpFile(self):
-        # main(["-c", MISSING_DUMP_INI])
         with capture_stderr(main, ["-c", MISSING_DUMP_INI]) as output:
             self.assertTrue("No such file or directory" in output)
 
 
 class TestDumpEdit(unittest.TestCase):
     def testNoArgs(self):
-        with capture_stderr(main, []) as output:
+        test_input = []
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Could not read file" in output)
-        with capture_stdout(main, []) as output:
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testReproduceDump(self):
@@ -93,12 +107,6 @@ class TestDumpEdit(unittest.TestCase):
     def testRetypeAtom(self):
         try:
             main(["-c", RETYPE_INI])
-            # for debugging:
-            # with open(DEF_OUT) as f:
-            #     with open(GOOD_OUT_FILE) as g:
-            #         for d_line, g_line in zip(f, g):
-            #             if d_line != g_line:
-            #                 print(d_line, g_line)
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT_FILE))
         finally:
             silent_remove(DEF_OUT)
