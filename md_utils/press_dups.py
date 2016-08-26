@@ -6,14 +6,12 @@ Compresses a CSV to combine rows that have duplicate values for the specified co
 column values will be averaged as floats.
 """
 import argparse
-import logging
 import sys
 from collections import defaultdict
 from functools import reduce
 import numpy as np
 from md_utils.md_common import warning, GOOD_RET, read_csv, create_out_fname, write_csv, read_csv_header, INPUT_ERROR
 
-logger = logging.getLogger(__name__)
 
 # Defaults #
 

@@ -3,13 +3,11 @@
 """
 Common WHAM logic.
 """
-import logging
 import os
+from md_utils.md_common import warning
 
 __author__ = 'cmayes'
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('wham')
 
 # Defaults #
 
@@ -79,9 +77,9 @@ def read_rmsd(fname):
                 row_val = r_line.split()[1]
                 rmsd_values.append(float(row_val))
             except IndexError:
-                logger.warn("RMSD Line '%s' did not have two fields", r_line)
+                warning("RMSD Line '{}' did not have two fields".format(r_line))
             except TypeError:
-                logger.warn("RMSD Value '%s' is not a float", row_val)
+                warning("RMSD Value '{}' is not a float".format(row_val))
     return rmsd_values
 
 

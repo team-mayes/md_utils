@@ -112,7 +112,7 @@ def pair_avg(vals):
         if len(pair) == 2:
             results.append(sum(pair) / 2)
         else:
-            logger.debug("'%s' is not a pair", pair)
+            warning("'{}' is not a pair".format(pair))
 
     return results
 
@@ -155,7 +155,7 @@ def block_average(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_d
         rmsd = rmsd_avg(rmsd, pair_avg)
         first_vals = six.next(six.itervalues(rmsd))
         if not first_vals:
-            logger.info("No more values at step %d; stopping", step)
+            logger.info("No more values at step {}; stopping".format(step))
             break
         os.makedirs(rmsd_base_dir)
         write_avg_rmsd(rmsd_base_dir, rmsd, overwrite)

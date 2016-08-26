@@ -52,20 +52,18 @@ def process_infile(infile, coord):
     max_coord = None
     min_coord = None
     line_idx = defaultdict(list)
-    with open(infile) as xyzfile:
-        for xyzline in xyzfile:
-            xyz = xyzline.split()
+    with open(infile) as xyz_file:
+        for xyz_line in xyz_file:
+            xyz = xyz_line.split()
             if len(xyz) != 3:
-                logger.warning("Skipping '%d'-element input line '%s'",
-                            len(xyz), xyzline)
+                logger.warning("Skipping '{}'-element input line '{}'".format(len(xyz), xyz_line))
                 continue
 
             try:
                 # Explicitly convert to list as Python 3 returns an iterable
                 float_xyz = list(map(float, xyz))
-            except ValueError as e:
-                logger.warning("Skipping non-float input line '%s'",
-                            xyzline)
+            except ValueError:
+                logger.warning("Skipping non-float input line '{}'".format(xyz_line))
                 continue
 
             line_coord_val = float_xyz[coord_pos]
@@ -106,29 +104,28 @@ def bin_data(xyz_idx, min_val, max_val, step):
     for i, bin_num in enumerate(bins):
         bin_coords = bin_idx[bin_num]
         if len(bin_coords) < 2:
-            logger.debug("Removing %d-point bin '%.4f'",
-                         len(bin_coords), bin_num)
+            logger.debug("Removing {}-point bin '{:.4f}'".format(len(bin_coords), bin_num))
             short_bins.append(i)
             del bin_idx[bin_num]
     bins = np.delete(bins, short_bins)
     return bins, bin_idx
 
 
-def write_results(bins, bin_data, src_file):
+def write_results(bins, binned_data, src_file):
     base_fname = os.path.splitext(src_file)[0]
     xyz_file = base_fname + '.xyz'
     move_existing_file(xyz_file)
     log_file = base_fname + '.log'
     move_existing_file(log_file)
     with open(xyz_file, 'w') as xyz:
-        xyz.write(str(len(bin_data)) + '\n')
+        xyz.write(str(len(binned_data)) + '\n')
         xyz.write("{} {}\n".format(src_file, datetime.datetime.today()))
         with open(log_file, 'w') as bin_log:
             csv_log = csv.writer(bin_log)
-            csv_log.writerow(["bin", "count","ax","dx","ay","dy","az","dz"])
+            csv_log.writerow(["bin", "count", "ax", "dx", "ay", "dy", "az", "dz"])
             for cur_bin in bins:
-                if cur_bin in bin_data:
-                    bin_coords = bin_data[cur_bin]
+                if cur_bin in binned_data:
+                    bin_coords = binned_data[cur_bin]
                     bin_mean = list(map(np.mean, zip(*bin_coords)))
                     bin_stdev = list(map(np.std, zip(*bin_coords)))
                     xyz.write("B   {: .4f}   {: .4f}   {: .4f}\n".format(

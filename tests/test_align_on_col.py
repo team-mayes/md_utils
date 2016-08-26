@@ -47,6 +47,15 @@ class TestAlignColNoOutput(unittest.TestCase):
         with capture_stderr(main, ["-f", NO_FILE_CMP_LIST]) as output:
             self.assertTrue("No such file or directory" in output)
 
+    def testHelp(self):
+        test_input = ['-h']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertFalse(output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
 
 class TestAlignCol(unittest.TestCase):
 
@@ -82,12 +91,3 @@ class TestAlignCol(unittest.TestCase):
         with capture_stderr(main, ["-f", NO_COL_CMP_LIST]) as output:
             self.assertTrue("Could not find value" in output)
         silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-
-    def testHelp(self):
-        test_input = ['-h']
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertFalse(output)
-        with capture_stdout(main, test_input) as output:
-            self.assertTrue("optional arguments" in output)

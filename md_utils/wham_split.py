@@ -122,8 +122,7 @@ def rmsd_split(meta_file, steps, tpl_dir=DEF_TPL_DIR, overwrite=False, base_dir=
             data_len = len(data)
             chunk_num = step + 1
             chunk_size = math.floor(data_len / chunk_num)
-            logger.debug(STEP_DBG_MSG, step, data_len, rmsd_fname, chunk_num,
-                         chunk_size)
+            logger.debug(STEP_DBG_MSG, step, data_len, rmsd_fname, chunk_num, chunk_size)
 
             rmsd_chunks = [ch for ch in chunk(data, chunk_size, list)]
             for step_part in range(1, chunk_num + 1):

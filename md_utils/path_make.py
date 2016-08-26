@@ -108,8 +108,7 @@ def bin_data(xyz_idx, min_val, max_val, step):
     for i, bin_num in enumerate(bins):
         bin_coords = bin_idx[bin_num]
         if len(bin_coords) < 2:
-            logger.debug("Removing %d-point bin '%.4f'",
-                         len(bin_coords), bin_num)
+            logger.debug("Removing {}-point bin '{.4f}'".format(len(bin_coords), bin_num))
             short_bins.append(i)
             del bin_idx[bin_num]
     bins = np.delete(bins, short_bins)

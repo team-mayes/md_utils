@@ -5,7 +5,6 @@ Edit a pdb file to provide missing data
 """
 
 from __future__ import print_function
-import logging
 import os
 import sys
 import argparse
@@ -23,10 +22,6 @@ except ImportError:
 
 __author__ = 'hmayes'
 
-# Logging
-logger = logging.getLogger('pdb_edit')
-logging.basicConfig(filename='pdb_edit.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 # Error Codes
 # The good status code
@@ -171,7 +166,7 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-    except (IOError) as e:
+    except IOError as e:
         warning(e)
         parser.print_help()
         return args, IO_ERROR

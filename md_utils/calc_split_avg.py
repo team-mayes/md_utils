@@ -21,7 +21,8 @@ __author__ = 'cmayes'
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('calc_split_avg')
 
 # Defaults #
@@ -142,7 +143,7 @@ def main(argv=None):
         return ret
 
     found_files = find_files_by_dir(args.base_dir, args.pattern)
-    logger.debug("Found '%d' dirs with files to process", len(found_files))
+    logger.debug("Found '{}' dirs with files to process".format(len(found_files)))
     for f_dir, files in found_files.items():
         bin_pfx = bin_by_pattern(files)
         for pfx, bin_f in bin_pfx.items():

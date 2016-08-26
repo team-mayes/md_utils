@@ -7,7 +7,6 @@ from __future__ import print_function
 # noinspection PyCompatibility
 import ConfigParser
 from collections import defaultdict
-import logging
 import re
 import csv
 import sys
@@ -16,12 +15,6 @@ import argparse
 from md_utils.md_common import InvalidDataError, warning, process_cfg
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes

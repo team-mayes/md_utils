@@ -26,8 +26,8 @@ __author__ = 'hmayes'
 
 # Logging
 logger = logging.getLogger('evbd2d')
-logging.basicConfig(filename='evbd2d.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(filename='evbd2d.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 # Error Codes
 # The good status code
@@ -312,7 +312,7 @@ def deprotonate(cfg, protonatable_res, excess_proton, dump_h3o_mol, water_mol_di
             min_dist_id = mol_id
             min_dist = dist
     logger.debug('Deprotonated residue: the molecule ID of the closest water '
-                 '(to become a hydronium) is %s.', min_dist_id)
+                 '(to become a hydronium) is {}.'.format(min_dist_id))
     # Now that have the closest water, add its atoms to the hydronium list
     for atom in water_mol_dict[min_dist_id]:
         dump_h3o_mol.append(atom)

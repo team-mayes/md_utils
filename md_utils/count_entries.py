@@ -4,19 +4,12 @@ Adds a string to the beginning and end of a file.
 """
 
 from __future__ import print_function
-import logging
 import sys
 import argparse
 
 from md_utils.md_common import InvalidDataError, create_out_fname, warning
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('max_dimen')
-logging.basicConfig(filename='max_dimen.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes

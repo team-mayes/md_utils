@@ -5,7 +5,6 @@ Get selected info from the data file
 
 from __future__ import print_function
 import ConfigParser
-import logging
 import re
 import sys
 import argparse
@@ -13,13 +12,6 @@ import argparse
 from md_utils.md_common import InvalidDataError, warning, process_cfg
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('psf_get_info')
-logging.basicConfig(filename='psf_get_info.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
-
 
 
 # Error Codes

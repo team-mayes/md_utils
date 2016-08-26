@@ -1,11 +1,11 @@
 # coding=utf-8
 
 """
-Tests for lammps_proc_data.py.
+Tests for lammps_proc.py.
 """
 import os
 import unittest
-from md_utils.lammps_proc_data import main, WAT_H_TYPE, WAT_O_TYPE, PROT_O_IDS, H3O_O_TYPE, H3O_H_TYPE
+from md_utils.lammps_proc import main, WAT_H_TYPE, WAT_O_TYPE, PROT_O_IDS, H3O_O_TYPE, H3O_H_TYPE
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
@@ -34,7 +34,7 @@ HYD_AND_H_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_hyd_and_h.ini')
 
 OH_DIST_INI = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 # noinspection PyUnresolvedReferences
-DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_proc_data.csv')
+DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_sum.csv')
 GOOD_OH_DIST_OUT = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
 OH_DIST_INI2 = os.path.join(SUB_DATA_DIR, 'lammps_proc_glu.ini')
@@ -73,12 +73,12 @@ DEF_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, 'glue_dump_long_gofrs.csv')
 
 HIJ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 # noinspection PyUnresolvedReferences
-HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data.csv')
+HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_sum.csv')
 GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
 HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
 # noinspection PyUnresolvedReferences
-HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data.csv')
+HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
 GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \

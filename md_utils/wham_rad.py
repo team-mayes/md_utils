@@ -19,7 +19,8 @@ __author__ = 'mayes'
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('wham_rad')
 
 # Constants #
@@ -110,7 +111,7 @@ def to_zero_point(corr_res):
                 max_coord = row_coord_val
                 set_cor_freng = row_corr_val
         except Exception as e:
-            logger.debug("Error finding zero point: '%s'", e)
+            logger.debug("Error finding zero point: {}".format(e))
             continue
     for z_row in corr_res:
         z_row[CORR_KEY] -= set_cor_freng
@@ -180,7 +181,7 @@ def main(argv=None):
         # noinspection PyCompatibility
         for f_dir, files in found_files.iteritems():
             if not files:
-                logger.warn("No files found for dir '%s'", f_dir)
+                logger.warn("No files found for dir '{}'".format(f_dir))
                 continue
             for pmf_path in ([os.path.join(f_dir, tgt) for tgt in files]):
                 proc_data = to_zero_point(calc_rad(pmf_path, kbt))

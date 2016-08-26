@@ -19,7 +19,8 @@ __author__ = 'hmayes'
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('colvar_to_wham')
 
 # Keys #
@@ -62,7 +63,7 @@ def calc_for_wham(src_file):
     :return: The radial distance of the file as a list of dicts.
     """
     res_lines = []
-    logger.debug("Found '%s' file to process", src_file)
+    logger.debug("Found file to process: {}".format(src_file))
     with open(src_file) as colvar:
         for w_line in colvar:
             w_res = {}
@@ -76,7 +77,7 @@ def calc_for_wham(src_file):
                 w_res[DZ_KEY] = float(sw_line[3])
                 w_res[R_KEY] = calc_r(w_res[DX_KEY], w_res[DY_KEY], w_res[DZ_KEY])
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, w_line)
+                logger.debug("Error '{}' for line '{}'".format(e, w_line))
             res_lines.append(w_res)
     return res_lines
 

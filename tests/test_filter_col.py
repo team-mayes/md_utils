@@ -2,7 +2,7 @@ import unittest
 import os
 import logging
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
-from md_utils.filter_col_data import DEF_ARRAY_FILE, DEF_CFG_FILE, main
+from md_utils.filter_col import DEF_ARRAY_FILE, DEF_CFG_FILE, main
 
 __author__ = 'hmayes'
 

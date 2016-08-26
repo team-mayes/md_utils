@@ -6,7 +6,6 @@ Converts plumed cv output to evb cv output style
 
 from __future__ import print_function
 import ConfigParser
-import logging
 import os
 import sys
 import argparse
@@ -14,11 +13,6 @@ import argparse
 from md_utils.md_common import list_to_file, InvalidDataError, warning, create_out_fname, process_cfg
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('proc_cv')
-logging.basicConfig(filename='proc_cv.log', filemode='w', level=logging.DEBUG)
 
 
 # Error Codes

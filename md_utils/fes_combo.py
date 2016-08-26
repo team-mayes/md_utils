@@ -9,19 +9,17 @@ timestep values take precedence.
 
 from __future__ import print_function
 import logging
-
+import argparse
+import os
+import sys
 from md_utils.md_common import find_files_by_dir, GOOD_RET, INPUT_ERROR, warning
 
 __author__ = 'cmayes'
 
 
-import argparse
-import os
-import sys
-
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('fes_combo')
 logger.setLevel(logging.INFO)
 # Defaults #
@@ -51,7 +49,7 @@ def combine(tgt_files):
 
     combo_dict = {}
     for key, cur_dict in sorted(mapped_files.items()):
-        logger.debug("Processing timestep '%s'", key)
+        logger.debug("Processing timestep '{}'".format(key))
         combo_dict.update(cur_dict)
     return combo_dict
 
@@ -74,7 +72,7 @@ def map_fes(tgt_file):
                 if first_key is None:
                     first_key = tstep
             except Exception as e:
-                logger.debug("Error '%s' for line '%s'", e, t_line)
+                logger.debug("Error '{}' for line '{}'".format(e, t_line))
     return first_key, f_map
 
 
@@ -171,7 +169,7 @@ def main(argv=None):
         return ret
     found_files = find_files_by_dir(args.base_dir, args.pattern)
     print("Found {} dirs with files to combine".format(len(found_files)))
-    for f_dir, files in found_files.iteritems():
+    for f_dir, files in found_files.items():
         if not files:
             logger.warn("No files with pattern '{}' found for dir '{}'".format(args.pattern, f_dir))
             continue

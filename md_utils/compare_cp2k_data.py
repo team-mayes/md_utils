@@ -4,7 +4,6 @@ Get selected info from the file
 """
 
 from __future__ import print_function
-import logging
 import re
 import sys
 import argparse
@@ -17,12 +16,6 @@ except ImportError:
     from configparser import ConfigParser
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('cp2k_get_info')
-logging.basicConfig(filename='cp2k_get_info.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes

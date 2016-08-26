@@ -7,14 +7,9 @@ of the "skel" subdirectory are copied into the target directory.
 This currently includes a tpl directory.
 """
 import argparse
-import logging
 import sys
-
 import os
-
 from md_utils import md_common
-
-logger = logging.getLogger(__name__)
 
 DEF_SKEL_LOC = os.path.join(os.path.dirname(__file__), 'skel')
 

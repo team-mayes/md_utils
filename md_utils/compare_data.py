@@ -5,7 +5,6 @@ Creates pdb data files from lammps data files, given a template pdb file.
 
 from __future__ import print_function
 from collections import defaultdict
-import logging
 import re
 import sys
 import argparse
@@ -18,12 +17,6 @@ except ImportError:
     from configparser import ConfigParser
 
 __author__ = 'hmayes'
-
-
-# Logging
-logger = logging.getLogger('data2pdb')
-logging.basicConfig(filename='data2pdb.log', filemode='w', level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
 
 
 # Error Codes

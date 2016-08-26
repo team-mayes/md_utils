@@ -45,7 +45,8 @@ __author__ = 'mayes'
 
 # Logging #
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('calc_pka')
 
 # Error Codes
@@ -128,11 +129,12 @@ def calc_pka(file_data, kbt, coord_ts=None):
 
         if coord_ts is None:
             if cur_corr > file_data[i - 1][CORR_KEY] and cur_corr > file_data[i + 1][CORR_KEY]:
-                logger.info("Found local max '%f' at coordinate '%f'", cur_corr, cur_coord)
+                logger.info("Found local max '{:8.3f}' at coordinate '{:8.3f}'".format(cur_corr, cur_coord))
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
         else:
             if cur_coord >= coord_ts:
-                logger.info("Integrating to input TS coordinate '%f' with value '%f'", cur_coord, cur_corr)
+                logger.info("Integrating to input TS coordinate '{:8.3f}' with value '{:8.3f}'".format(cur_coord,
+                                                                                                       cur_corr))
                 return -math.log10(inv_C_0 / sum_for_pka), cur_corr, cur_coord
 
 
@@ -188,7 +190,7 @@ def main(argv=None):
 
     kbt = calc_kbt(args.temp)
     if args.coord_ts is not None:
-        logger.info("Read TS coordinate value: '%f'", args.coord_ts)
+        logger.info("Read TS coordinate value: '{:8.3f}'".format(args.coord_ts))
 
     try:
         if args.src_file is not None:
@@ -202,7 +204,7 @@ def main(argv=None):
             write_result(result, args.src_file, args.overwrite)
         else:
             found_files = find_files_by_dir(args.base_dir, args.pattern)
-            logger.debug("Found '%d' dirs with files to process", len(found_files))
+            logger.debug("Found '{}' dirs with files to process".format(len(found_files)))
             if len(found_files) == 0:
                 raise IOError("No files found in specified directory '{}'".format(args.base_dir))
             for f_dir, files in found_files.items():
