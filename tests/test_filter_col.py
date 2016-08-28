@@ -14,7 +14,7 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 # Directories #
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-SUB_DATA_DIR = os.path.join(DATA_DIR, 'filter_col_data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'filter_col')
 
 # Input files #
 
@@ -23,7 +23,7 @@ NON_FLOAT_INPUT = os.path.join(SUB_DATA_DIR, 'sum_2016-04-05_dru_san_ph4.5_short
 DEF_INI = os.path.join(SUB_DATA_DIR, DEF_CFG_FILE)
 INVALID_KEY_INI = os.path.join(SUB_DATA_DIR, "invalid_key.ini")
 INVALID_HEADER_INI = os.path.join(SUB_DATA_DIR, "no_such_header.ini")
-NO_MIN_INI = os.path.join(SUB_DATA_DIR, "filter_col_data_no_min.ini")
+NO_MIN_INI = os.path.join(SUB_DATA_DIR, "filter_col_no_min.ini")
 
 # Output files #
 

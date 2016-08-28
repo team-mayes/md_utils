@@ -34,7 +34,7 @@ MAX_SEC = 'max_vals'
 MIN_SEC = 'min_vals'
 
 # Defaults
-DEF_CFG_FILE = 'filter_col_data.ini'
+DEF_CFG_FILE = 'filter_col.ini'
 DEF_ARRAY_FILE = 'column_data.csv'
 DEF_DELIMITER = ','
 FILTER_HEADERS = 'filter_col_names'
