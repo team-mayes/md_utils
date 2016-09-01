@@ -5,12 +5,16 @@ Converts plumed cv output to evb cv output style
 """
 
 from __future__ import print_function
-import ConfigParser
 import os
 import sys
 import argparse
-
 from md_utils.md_common import list_to_file, InvalidDataError, warning, create_out_fname, process_cfg
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -47,7 +51,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
@@ -115,7 +119,7 @@ def process_cv_file(cv_file, time_col, cv_col, row_index, time_conv):
                     data_to_print.append([timestep, cv])
                 except ValueError as e:
                     warning("Excepted a number for the time_column ({}) and cv column({}). Found {} and {}."
-                            "".format(time_col, cv_col, data[time_col]), data[cv_col], e)
+                            "".format(time_col, cv_col, data[time_col], data[cv_col]), e)
                     return INVALID_DATA
     d_out = create_out_fname(cv_file, suffix='_converted', ext='.txt')
     list_to_file(data_to_print, d_out)
@@ -144,26 +148,6 @@ def process_files(cfg):
             else:
                 warning("In file list {}, file {} was not found.".format(cfg.file_list, line))
 
-    #         files = [x.strip() for x in file_line.split(',')]
-    #         print(files)
-    #         time_dict = {}
-    #         print_lines = []
-    #         with open(files[0]) as d:
-    #             for line in d:
-    #                 split_line = [x.strip() for x in line.split(',')]
-    #                 time_dict[split_line[0]] = split_line[1:]
-    #         with open(files[1]) as e:
-    #             for line in e:
-    #                 split_line = [x.strip() for x in line.split(',')]
-    #                 if split_line[0] in time_dict:
-    #                     print_lines.append(','.join([split_line[0]] + time_dict[split_line[0]] + split_line[1:]))
-    #                 else:
-    #                     logger.debug("Timestep {} found in second file, but not first. Will discard second file "
-    #                                  "line {}.".format(split_line[0], line.strip()))
-    #
-    #         d_out = create_out_suf_fname(files[0], suffix='_plus', ext='.csv')
-    #         list_to_file(print_lines, d_out)
-    #         print('Wrote file: {}'.format(d_out))
     return
 
 

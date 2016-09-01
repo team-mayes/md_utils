@@ -9,14 +9,17 @@ from __future__ import print_function
 import argparse
 import sys
 import numpy as np
-# noinspection PyCompatibility
-import ConfigParser
-
 from md_utils.md_common import (InvalidDataError, warning,
                                 create_out_fname, process_cfg, read_csv_to_list,
                                 list_to_csv)
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, NoSectionError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, NoSectionError
 
-__author__ = 'hmayes'
+__author__ = 'hbmayes'
 
 
 # Error Codes
@@ -32,6 +35,7 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 MAX_SEC = 'max_vals'
 MIN_SEC = 'min_vals'
+HIST_SEC = 'histogram_bins'
 
 # Defaults
 DEF_CFG_FILE = 'filter_col.ini'
@@ -62,12 +66,38 @@ def check_vals(config, sec_name):
             #         raise InvalidDataError("Columns name '{}' appeared more than once in the '{}' section of the "
             #                                "configuration file.".format(col_name, sec_name))
             limit_vals[col_name] = float(limit_val)
-    except ConfigParser.NoSectionError:
+    except NoSectionError:
         warning("No '{}' section. Program will continue.".format(sec_name))
     except ValueError as e:
         raise InvalidDataError("For key '{}', could not convert value '{}' to a float.".format(limit_val, col_name), e)
     return limit_vals
 
+
+def get_bins(config, HIST_SEC):
+    """
+    Reads the histogram section of the given config file,
+    returning a dict containing the original string key paired with a float representing the max or min value.
+    If there is no specified section, an empty dict is returned.  Invalid values result in DataExceptions.
+    :param config: The parsed config file that contains a max and/or min section.
+    :param sec_name: the name of the section with string/float pairs to digest
+    :return: A dict mapping the original column key to the float limit value.
+    """
+    limit_vals = {}
+    limit_val = np.nan
+    col_name = None
+    try:
+        for col_name, limit_val in config.items(HIST_SEC):
+            # if col_name in limit_vals:
+            #     if limit_vals[col_name] != limit_val:
+            #         raise InvalidDataError("Columns name '{}' appeared more than once in the '{}' section of the "
+            #                                "configuration file.".format(col_name, sec_name))
+            limit_vals[col_name] = float(limit_val)
+    except ValueError as e:
+        raise InvalidDataError("For key '{}', could not convert value '{}' to a float.".format(limit_val, col_name), e)
+    except NoSectionError:
+        # it is okay if there is no such section
+        pass
+    return limit_vals
 
 def read_cfg(floc, cfg_proc=process_cfg):
     """
@@ -78,13 +108,14 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False)
     for section in [MAX_SEC, MIN_SEC]:
         main_proc[section] = check_vals(config, section)
+    main_proc[HIST_SEC] = get_bins(config, HIST_SEC)
     return main_proc
 
 

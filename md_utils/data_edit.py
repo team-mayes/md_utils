@@ -4,15 +4,18 @@ Reorders a lammps data file
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 from operator import itemgetter
 import os
 import re
 import sys
 import argparse
-
 from md_utils.md_common import (list_to_file, InvalidDataError, create_out_fname, warning, process_cfg, read_csv_dict)
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, MissingSectionHeaderError
 
 __author__ = 'hmayes'
 
@@ -185,7 +188,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
@@ -219,7 +222,7 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except (InvalidDataError, KeyError, ConfigParser.MissingSectionHeaderError, SystemExit) as e:
+    except (InvalidDataError, KeyError, MissingSectionHeaderError, SystemExit) as e:
         if e.message == 0:
             return args, GOOD_RET
         warning(e)

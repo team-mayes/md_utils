@@ -8,14 +8,18 @@ List of pdb files to convert
 """
 
 from __future__ import print_function
-import ConfigParser
 import logging
 import re
 import csv
 import sys
 import argparse
-
 from md_utils.md_common import list_to_file, InvalidDataError, create_out_fname, process_cfg, warning
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -88,7 +92,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))

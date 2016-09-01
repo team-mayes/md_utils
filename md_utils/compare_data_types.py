@@ -5,14 +5,18 @@ Creates pdb data files from lammps data files, given a template pdb file.
 
 from __future__ import print_function
 # noinspection PyCompatibility
-import ConfigParser
 from collections import defaultdict
 import re
 import csv
 import sys
 import argparse
-
 from md_utils.md_common import InvalidDataError, warning, process_cfg
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -99,7 +103,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))

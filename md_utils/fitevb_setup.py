@@ -5,14 +5,17 @@ values after a buffer distance is added
 """
 
 from __future__ import print_function
-import ConfigParser
 import os
-
 import numpy as np
 from md_utils.md_common import InvalidDataError, warning, create_out_fname, write_csv
 import sys
 import argparse
-
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -72,7 +75,7 @@ def read_cfg(floc):
     :param floc: The location of the file to read.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))

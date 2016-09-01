@@ -4,12 +4,16 @@ Get selected info from the data file
 """
 
 from __future__ import print_function
-import ConfigParser
 import re
 import sys
 import argparse
-
 from md_utils.md_common import InvalidDataError, warning, process_cfg
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
 __author__ = 'hmayes'
 
@@ -36,10 +40,8 @@ RESID_LIST = 'resid_list'
 # Defaults
 DEF_CFG_FILE = 'psf_get_info.ini'
 # Set notation
-DEF_CFG_VALS = {
-}
-REQ_KEYS = {PSF_FILE: str, RESID_LIST: [],
-}
+DEF_CFG_VALS = {}
+REQ_KEYS = {PSF_FILE: str, RESID_LIST: [], }
 
 # Sections
 SEC_HEAD = 'head_section'
@@ -69,7 +71,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
@@ -111,14 +113,14 @@ def parse_cmdline(argv):
 
 def print_qm_kind(int_list, element_name):
     print('    &QM_KIND {}'.format(element_name))
-    print('        MM_INDEX {}'.format(' '.join(map(str,int_list))))
+    print('        MM_INDEX {}'.format(' '.join(map(str, int_list))))
     print('    &END QM_KIND')
     return
 
 
-def print_qm_links(resid, dict):
+def print_qm_links(resid_dict):
     print('    &LINK \n       MM_INDEX  {}\n       QM_INDEX  {}\n       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
-          '    &END LINK '.format(dict['CA'],dict['CB']))
+          '    &END LINK '.format(resid_dict['CA'], resid_dict['CB']))
     return
 
 
@@ -133,7 +135,7 @@ def process_data_tpl(cfg):
     for resid in keep_resids:
         resid_dict_dicts[resid] = {}
 
-    backbone_types = ['N', 'HN', 'CA', 'HA', 'C', 'O', ]
+    # backbone_types = ['N', 'HN', 'CA', 'HA', 'C', 'O', ]
     # The "res_types" are the kinds I know to look for. I use to to check that I look for all the appropriate types.
     res_types = ['HSD', 'TYR', 'SER', 'TRP', 'MET', 'GLU', 'VAL', 'THR']
     tyr_types = ['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1', 'CE1', 'HE1', 'CZ', 'OH', 'HH', 'CD2', 'HD2', 'CE2', 'HE2', ]
@@ -145,7 +147,7 @@ def process_data_tpl(cfg):
     glu_types = ['CB', 'OE1', 'CG', 'HG1', 'CD', 'OE2', 'HG2', 'HB1', 'HB2']
     val_types = ['HG22', 'HG11', 'CB', 'HG21', 'CG1', 'HG12', 'HG13', 'HB', 'HG23', 'CG2']
     thr_types = ['HG22', 'CB', 'OG1', 'HG1', 'HG21', 'HB', 'HG23', 'CG2']
-    keep_types = set(tyr_types + ser_types + trp_types + hsd_types + met_types +  glu_types + val_types + thr_types)
+    keep_types = set(tyr_types + ser_types + trp_types + hsd_types + met_types + glu_types + val_types + thr_types)
     h_types = ['HH2', 'HE1', 'HE2', 'HE3', 'HG21', 'HB2', 'HG2', 'HG12', 'HG1', 'HG11', 'HH', 'HG13', 'HZ3', 'HZ2',
                'HB', 'HD1', 'HG22', 'HB1', 'HG23', 'HD2']
     o_types = ['OG', 'OE2', 'OE1', 'OG1', 'OH']
@@ -200,7 +202,7 @@ def process_data_tpl(cfg):
                 resid = int(split_line[2])
                 resname = split_line[3]
                 atom_type = split_line[4]
-                charmm_type =  split_line[5]
+                charmm_type = split_line[5]
                 charge = float(split_line[6])
                 atom_wt = float(split_line[7])
 
@@ -211,8 +213,8 @@ def process_data_tpl(cfg):
                         if resname not in res_types:
                             raise InvalidDataError('Note that the code does not know to look for atom types of the '
                                                    'residue {}. Update program and rerun.'.format(resname))
-                            ### This code is useful to find types for a residue type.
-                            ## TODO: update for all residue types
+                            # This code is useful to find types for a residue type.
+                            # TODO: update for all residue types
                             # if resname == 'THR':
                             #     print(atom_struct)
                             #     if atom_type not in backbone_types:
@@ -220,7 +222,7 @@ def process_data_tpl(cfg):
                         if atom_type == 'CA' or atom_type == 'CB':
                             resid_dict_dicts[resid][atom_type] = atom_num
                         if atom_type in keep_types:
-                            vmd_atom_ids.append(atom_num -1)
+                            vmd_atom_ids.append(atom_num - 1)
                             if atom_type in h_types:
                                 h_ids.append(atom_num)
                             elif atom_type in o_types:
@@ -243,19 +245,21 @@ def process_data_tpl(cfg):
     # if logger.isEnabledFor(logging.DEBUG):
     #     list_to_file(psf_data[HEAD_CONTENT] + psf_data[ATOMS_CONTENT] + psf_data[TAIL_CONTENT], 'reproduced.data')
 
-    print_qm_kind(h_ids,'H')
-    print_qm_kind(o_ids,'O')
-    print_qm_kind(c_ids,'C')
-    print_qm_kind(n_ids,'N')
-    print_qm_kind(s_ids,'S')
+    print_qm_kind(h_ids, 'H')
+    print_qm_kind(o_ids, 'O')
+    print_qm_kind(c_ids, 'C')
+    print_qm_kind(n_ids, 'N')
+    print_qm_kind(s_ids, 'S')
 
-    print('index {}'.format(' '.join(map(str,vmd_atom_ids))))
+    print('index {}'.format(' '.join(map(str, vmd_atom_ids))))
 
     for key in keep_resids:
-        print_qm_links(key,resid_dict_dicts[key])
+        print_qm_links(resid_dict_dicts[key])
 
     print(to_print)
-    return psf_data
+    # return psf_data
+    return
+
 
 def main(argv=None):
     # Read input
@@ -267,7 +271,7 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        psf_data_content = process_data_tpl(cfg)
+        process_data_tpl(cfg)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

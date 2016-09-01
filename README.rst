@@ -1,4 +1,4 @@
-= ===========
+============
 MD Utilities
 ============
 
@@ -107,9 +107,11 @@ fes_combo
   column's value is sequential.  Files with higher starting index numbers
   are favored.
 
-filter_col_data
+filter_col
   Produces a file in which only rows are reproduced that pass filtering criteria set in the configuration file. The
-  config file allows specifying max and/or min values for any column heading
+  config file allows specifying max and/or min values for any column heading. Additionally, a "bin" section
+  allows the user to specify a column name on which to bin data. The user should provide a list of integers:
+  initial_bin_value, final_bin_value, num_bins, and (optionally) a max number of rows per bin.
 
 path_bin
   Creates a summary VMD XYZ file (and separate log file) that averages a

@@ -7,14 +7,18 @@ This script assumes we care about one protonatable residue in a simulation with 
 """
 
 from __future__ import print_function
-# noinspection PyCompatibility
-import ConfigParser
 import os
 import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
                                 find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg)
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, NoSectionError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, NoSectionError
 
 __author__ = 'hmayes'
 
@@ -283,7 +287,7 @@ def read_cfg(floc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
@@ -314,7 +318,7 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except (InvalidDataError, KeyError, ConfigParser.NoSectionError, SystemExit) as e:
+    except (InvalidDataError, KeyError, NoSectionError, SystemExit) as e:
         if e.message == 0:
             return args, GOOD_RET
         warning(e)
