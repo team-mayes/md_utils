@@ -26,7 +26,7 @@ Scripts added to the package aim have at least 90% test coverage.
 
 
 Installation
--------
+------------
 
 1. Make sure python is installed. Python 2.7 is recommended. The package is meant to be python 3 compatible,
    but primarily tested with Python 2.7. There are many ways to install python.
@@ -96,7 +96,7 @@ Scripts
 -------
 
 For combining/processing output:
--------
+--------------------------------
 
 align_on_col
   For combining data from multiple files based on a common timestep. All other data will be ignored or, if in logging
@@ -109,7 +109,8 @@ fes_combo
 
 filter_col
   Produces a file in which only rows are reproduced that pass filtering criteria set in the configuration file. The
-  config file allows specifying max and/or min values for any column heading. Additionally, a "bin" section
+  config file allows specifying max and/or min values for any column heading (with a "max_vals" and/or "max_vals"
+  section in the config file). Additionally, a "bin" section
   allows the user to specify a column name on which to bin data. The user should provide a list of integers:
   initial_bin_value, final_bin_value, num_bins, and (optionally) a max number of rows per bin.
 
@@ -127,7 +128,7 @@ press_dups
 
 
 For PMF calculations:
--------
+---------------------
 
 md_init
   Initializes a location for running md utilities. Specifically, it makes template files for creating wham input.
@@ -144,7 +145,7 @@ calc_pka
 
 
 For processing LAMMPS output:
--------
+-----------------------------
 
 data_edit
   offers a range of options to:
@@ -193,28 +194,28 @@ pdb_edit
       * by default, it loads a dictionary I made based on charmm atom types (charmm_atom_type,element; one per line). The user can specify a different dictionary file with "atom_type_element_dict_file"
   * if the user specifies a 'first_wat_atom' and 'last_wat_atom', the program will check that the atoms are printed in the order OH2, H1, H2
       * when using this option, if the first protein atom is not 1 (numbering begins at 1, like in a PDB, not 0, like VMD index), use the option "last_prot_atom = " to indicate the first protein atom num
-      * this options requires inputing the last protein atom id (add "last_prot_atom = X" to the configuration file, where X is the integer (decimal) atom number)
+      * this options requires inputting the last protein atom id (add "last_prot_atom = X" to the configuration file, where X is the integer (decimal) atom number)
   * by default, the output pdb name of a pdb file called 'struct.pdb' will be 'struct_new.pdb'. You can specify a new name with the keyword 'new_pdb_name'
   * by default, the output directory will be the same as that for the input pdb. This can be changed with the 'output_directory' keyword
   * the program will renumber atoms starting from 1 (using hex for atom numbers greater than 99999), using a dictionary to change order if a csv dictionary of "old,new" indexes is specified with 'atom_reorder_old_new_file'
   * the program will renumber molecules starting from 1 if 'mol_renum_flag = True' is included in the configuration file. Molecules may also be renumbered with by specifying a csv dictionary of "old,new" indexes with 'mol_renum_old_new_file'
 
 psf_edit
-  Currenty only has limited functionality:
+  Currently only has limited functionality:
   * Can be used to renumber residues/molecules starting from 1 using "mol_renum_flag = True" (no reordering of atoms)
   * can map old molecule numbers to new ones by specifying a mapping dictionary with "mol_renum_old_new_file" (no reordering of atoms)
   * Mapping of old atom numbers to new ones is not fully implemented.
   * there is no option to reorder the psf
   * the current most useful part of psf_edit is to help prepare files for CP2K, by specifying residue IDs that will be included in a qm region, i.e. "resids_qmmm_ca_cb_link = 1,5"
     * note: to do so, it uses a default dictionary that can map between CHARMM atom types and elements, and between CHARMM atom types and MM_KIND radii (radii for water and hydronium from http://pubs.acs.org/doi/abs/10.1021/ct6001169; all other radii from http://xlink.rsc.org/?DOI=b801115j). If a mapping is needed that is not in the default dictionaries, the program will print a warning and exit. Users may supply their own dictionaries with the "atom_type_element_dict_file" and "atom_type_radius_dict_file"
-    * it assumes that all residues will be broken between the CA and CB atoms (if they exist), with all backbone atoms ooutside the QM region (types [CA, C, O, NT, HNT, CAT, HT1, HT2, HT3, HA, CAY, HY1, HY2, HY3, CY, OY, N, HN]); a different exclude list can be specified with 'exclude_atom_types_from_QM'
+    * it assumes that all residues will be broken between the CA and CB atoms (if they exist), with all backbone atoms outside the QM region (types [CA, C, O, NT, HNT, CAT, HT1, HT2, HT3, HA, CAY, HY1, HY2, HY3, CY, OY, N, HN]); a different exclude list can be specified with 'exclude_atom_types_from_QM'
     * it will output an "amino_id.dat" file that lists the atom ids (numbering from 1) for each element in the QM region from the non-excluded residue/molecule atoms. It will also print a link section noting the break between teh CA and CB atoms, and capping with H
     * it will output an "mm_kinds.dat" file that notes the radius for each atom type found in the psf (see above to specify the dictionary to use)
     * it will print a "vmd_protein_atoms.dat" file that lists the indices (atom_num - 1) of each atom in the QM region (useful for a VMD script that is part of converting RAPTOR output to VMD input)
 
 
 For RAPTOR or EVBFit/RMDFit:
--------
+----------------------------
 
 convert_cp2k_forces
   cp2k force output files

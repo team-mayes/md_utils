@@ -52,7 +52,7 @@ setup(
                                       'path_bin = md_utils.path_bin:main',
                                       'pdb_edit = md_utils.pdb_edit:main',
                                       'psf_edit = md_utils.psf_edit:main',
-                                      'col_stats = md_utils.col_stats:main',
+                                      'per_col_stats = md_utils.per_col_stats:main',
                                       'press_dups = md_utils.press_dups:main',
                                       'proc_plumed_cv = md_utils.proc_plumed_cv:main',
                                       'wham_block = md_utils.wham_block:main',

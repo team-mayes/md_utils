@@ -40,6 +40,8 @@ R = 0.001985877534
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 # found to be too stringent
 TOL = 0.00000000001
+# similarly, use this to round away the insignificant digits!
+SIG_DECIMALS = 12
 
 # Sections for reading files
 SEC_TIMESTEP = 'timestep'
@@ -285,6 +287,15 @@ def str_to_file(str_val, fname, mode='w'):
     """
     with open(fname, mode) as f:
         f.write(str_val)
+
+
+def round_to_print(val):
+    """
+    To remove floating point digits that are imprecise due to machine precision
+    @param val: a float
+    @return: a float without insignificant digits
+    """
+    return round(val, SIG_DECIMALS)
 
 
 def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
