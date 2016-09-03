@@ -2,7 +2,7 @@ import unittest
 import os
 
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
-from md_utils.per_col_stats import DEF_ARRAY_FILE, main
+from md_utils.col_stats import DEF_ARRAY_FILE, main
 import logging
 
 
@@ -209,3 +209,6 @@ class TestPerCol(unittest.TestCase):
             self.assertFalse(diff_lines(MIN_MAX_OUT, GOOD_MIN_MAX_OUT))
         finally:
             silent_remove(MIN_MAX_OUT,  disable=DISABLE_REMOVE)
+
+    # def testTemp(self):
+    #     main(["-f", '/Users/Heather/no_backup/comb.csv', "-n", "-d", ","])
