@@ -32,6 +32,7 @@ MIXED_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output.csv")
 ALL_NAN_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output_no_floats.csv")
 HIST_INPUT = os.path.join(SUB_DATA_DIR, "msm_sum_output_more.csv")
 # NON_FLOAT_INPUT = os.path.join(SUB_DATA_DIR, "sum_2016-04-05_dru_san_ph4.5_ph4.5_300extInt_short.csv")
+TEST_INPUT = os.path.join(SUB_DATA_DIR, "comb.csv")
 
 # Output files #
 
@@ -209,6 +210,3 @@ class TestPerCol(unittest.TestCase):
             self.assertFalse(diff_lines(MIN_MAX_OUT, GOOD_MIN_MAX_OUT))
         finally:
             silent_remove(MIN_MAX_OUT,  disable=DISABLE_REMOVE)
-
-    # def testTemp(self):
-    #     main(["-f", '/Users/Heather/no_backup/comb.csv', "-n", "-d", ","])

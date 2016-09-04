@@ -36,6 +36,7 @@ BIN_NONFLOAT_INI = os.path.join(SUB_DATA_DIR, "filter_col_bin_not_float.ini")
 BIN_NONINT_INI = os.path.join(SUB_DATA_DIR, "filter_col_bin_not_int.ini")
 BIN_TOO_FEW_INI = os.path.join(SUB_DATA_DIR, "filter_col_bin_too_few.ini")
 BIN_TOO_MANY_INI = os.path.join(SUB_DATA_DIR, "filter_col_bin_too_many.ini")
+TYPO_INI = os.path.join(SUB_DATA_DIR, "filter_col_typo.ini")
 
 # Output files #
 
@@ -73,6 +74,25 @@ class TestFilterColFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Problems reading file" in output)
+
+    def testTypoIni(self):
+        # If a section name is encountered and not expected, flag it
+        test_input = ["-f", DEF_INPUT, "-c", TYPO_INI]
+        try:
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("Found section 'min', which will be ignored" in output)
+                self.assertTrue("No filtering will be applied" in output)
+            self.assertFalse(diff_lines(CSV_OUT, DEF_INPUT))
+        finally:
+            silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
+
+    def testWrongFileToFilter(self):
+        # If put a configuration file as the file to read, fail well
+        test_input = ["-f", DEF_INI, "-c", DEF_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("could not convert string" in output)
 
     def testInvalidKey(self):
         test_input = ["-f", DEF_INPUT, "-c", INVALID_KEY_INI]
@@ -128,14 +148,14 @@ class TestFilterColFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Expected a comma-separated list of length 3 or 4 for section "
-                            "'bin' key 'cv'. Read: 0.5,0.7" in output)
+                            "'bin_settings' key 'cv'. Read: 0.5,0.7" in output)
 
     def testBinTooMany(self):
         test_input = ["-f", DEF_INPUT, "-c", BIN_TOO_MANY_INI]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Expected a comma-separated list of length 3 or 4 for section 'bin' key 'cv'. "
+            self.assertTrue("Expected a comma-separated list of length 3 or 4 for section 'bin_settings' key 'cv'. "
                             "Read: 0.5,0.7,2,6,10" in output)
 
 

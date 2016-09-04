@@ -12,12 +12,6 @@ import numpy as np
 from md_utils.md_common import (InvalidDataError, warning,
                                 create_out_fname, process_cfg, read_csv_to_list,
                                 list_to_csv, round_to_print)
-
-MOD = 'modulo'
-
-QUOT = 'quotient'
-
-BINS = 'bin_array'
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, NoSectionError, ParsingError
@@ -41,7 +35,9 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 MAX_SEC = 'max_vals'
 MIN_SEC = 'min_vals'
-BIN_SEC = 'bin'
+BIN_SEC = 'bin_settings'
+SUB_SECTIONS = [MAX_SEC, MIN_SEC, BIN_SEC]
+SECTIONS = [MAIN_SEC] + SUB_SECTIONS
 
 # Defaults
 DEF_CFG_FILE = 'filter_col.ini'
@@ -51,6 +47,10 @@ FILTER_HEADERS = 'filter_col_names'
 
 DEF_CFG_VALS = {}
 REQ_KEYS = {}
+
+BINS = 'bin_array'
+MOD = 'modulo'
+QUOT = 'quotient'
 
 
 def check_vals(config, sec_name):
@@ -156,6 +156,20 @@ def read_cfg(floc, cfg_proc=process_cfg):
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False)
+    # Check that there is a least one subsection, or this script won't do anything. Check that all sections given
+    # are expected or alert user that a given section is ignored (thus catches types, etc.)
+    no_work_to_do = True
+    for section in config.sections():
+        if section in SECTIONS:
+            if section in SUB_SECTIONS:
+                if len(config.items(section)) > 0:
+                    no_work_to_do = False
+        else:
+            warning("Found section '{}', which will be ignored. Expected section names are: {}"
+                    .format(section, ", ".join(SECTIONS)))
+    if no_work_to_do:
+        warning("No filtering will be applied as no criteria were found for the expected subsections ({})."
+                "".format(", ".join(SUB_SECTIONS)))
     for section in [MAX_SEC, MIN_SEC]:
         main_proc[section] = check_vals(config, section)
     main_proc[BIN_SEC] = get_bin_data(config, BIN_SEC)
@@ -330,7 +344,7 @@ def main(argv=None):
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
-    except InvalidDataError as e:
+    except (ValueError, InvalidDataError) as e:
         warning("Problems reading data:", e)
         return INVALID_DATA
 

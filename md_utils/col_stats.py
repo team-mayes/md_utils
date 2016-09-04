@@ -16,9 +16,10 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import warnings
 import argparse
 
-matplotlib.use('Agg')
+matplotlib.use('Agg', warn=False)
 import matplotlib.pyplot as plt
 from md_utils.md_common import (InvalidDataError, warning,
                                 np_float_array_from_file, create_out_fname, list_to_csv, read_csv, GOOD_RET,
@@ -210,7 +211,9 @@ def create_hist_plot(hist_dict, header, out_dir, data_file):
     # other options: xlim=(0, 24)
     ax.set(xlabel="Count", ylabel="")
     ax.set_title(header)
-    plt.tight_layout()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        plt.tight_layout()
 
     f_name = create_out_fname(data_file, suffix=header, base_dir=out_dir, ext=".png")
     plt.savefig(f_name, dpi=300)
