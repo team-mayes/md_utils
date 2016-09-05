@@ -2,11 +2,13 @@ import logging
 import unittest
 import os
 
-from md_utils import data2data
+from md_utils.data2data import main
 from md_utils.md_common import diff_lines, silent_remove, capture_stderr, capture_stdout
 
-logger = logging.getLogger('data2data')
-logging.basicConfig(filename='data2data.log', filemode='w', level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
@@ -55,14 +57,14 @@ GLU_DEPROT_DATA = os.path.join(SUB_DATA_DIR, 'glu_deprot.data')
 
 class TestData2Data(unittest.TestCase):
     def testNoDefault(self):
-        with capture_stderr(data2data.main, []) as output:
+        with capture_stderr(main, []) as output:
             self.assertTrue("Could not read file" in output)
-        with capture_stdout(data2data.main, []) as output:
+        with capture_stdout(main, []) as output:
             self.assertTrue("optional arguments" in output)
 
     def testSerca(self):
         try:
-            data2data.main(["-c", SERCA_INI])
+            main(["-c", SERCA_INI])
             self.assertFalse(diff_lines(SERCA_OUT, SERCA_GOOD_OUT))
         finally:
             silent_remove(SERCA_OUT)
@@ -72,7 +74,7 @@ class TestData2Data(unittest.TestCase):
         Tests that can handle an emtpy line in the data file and make a data number dictionary
         """
         try:
-            data2data.main(["-c", REORD_GLU_INI])
+            main(["-c", REORD_GLU_INI])
             self.assertFalse(diff_lines(GLU_DEPROT_ATOM_NUM_DICT, GLU_DEPROT_ATOM_NUM_DICT_GOOD))
             # for debugging:
             # with open(GLU_DEPROT_OUT) as f:
@@ -86,16 +88,17 @@ class TestData2Data(unittest.TestCase):
             silent_remove(GLU_DEPROT_ATOM_NUM_DICT)
 
     def testMissingDataFile(self):
-        with capture_stderr(data2data.main, ["-c", MISSING_DATA_INI]) as output:
+        with capture_stderr(main, ["-c", MISSING_DATA_INI]) as output:
             self.assertTrue("No such file or directory" in output)
 
     def testMissingConfigKey(self):
-        with capture_stderr(data2data.main, ["-c", MISSING_KEY_INI]) as output:
-            self.assertTrue("Input data missing: 'Missing config val for key data_tpl_file'" in output)
+        test_input = ["-c", MISSING_KEY_INI]
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing config val for key 'data_tpl_file'" in output)
 
     def testAtomNumTypeDict(self):
         try:
-            data2data.main(["-c", GLUE_GLUP_INI])
+            main(["-c", GLUE_GLUP_INI])
             self.assertFalse(diff_lines(GLUP_GLUE_ATOM_NUM_DICT, GLUP_GLUE_ATOM_NUM_DICT_GOOD))
             self.assertFalse(diff_lines(GLUP_GLUE_ATOM_TYPE_DICT, GLUP_GLUE_ATOM_TYPE_DICT_GOOD))
             self.assertFalse(diff_lines(GLUP_AS_GLUE, GLUP_AS_GLUE_GOOD))
@@ -105,23 +108,19 @@ class TestData2Data(unittest.TestCase):
             silent_remove(GLUP_AS_GLUE)
 
     def testGlupMismatch(self):
-        with capture_stderr(data2data.main, ["-c", GLUP_MISMATCH_INI]) as output:
+        with capture_stderr(main, ["-c", GLUP_MISMATCH_INI]) as output:
             self.assertTrue("Problems reading data" in output)
 
     def testGlupDictMismatch(self):
-        with capture_stderr(data2data.main, ["-c", GLUP_MISMATCH_DICT_INI]) as output:
+        with capture_stderr(main, ["-c", GLUP_MISMATCH_DICT_INI]) as output:
             self.assertTrue("Problems reading data" in output)
             self.assertTrue("Previously matched" in output)
 
     def testGluSercaMismatch(self):
-        with capture_stderr(data2data.main, ["-c", GLUE_SERCA_INI]) as output:
+        with capture_stderr(main, ["-c", GLUE_SERCA_INI]) as output:
             self.assertTrue("atoms in the template file (1429) does not equal the number of atoms (214084)" in output)
 
     def testGluSercaDictMismatch(self):
-        with capture_stderr(data2data.main, ["-c", GLUE_SERCA_DICT_INI]) as output:
+        with capture_stderr(main, ["-c", GLUE_SERCA_DICT_INI]) as output:
             self.assertTrue("Number of atoms (214084) in the file" in output)
             self.assertTrue("atoms (1429) in the template file" in output)
-        # try:
-        #     data2data.main(["-c", ])
-        # finally:
-        #     pass

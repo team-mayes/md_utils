@@ -61,7 +61,7 @@ class TestData2PDBNoOut(unittest.TestCase):
 
     def testMissReqKeyIni(self):
         with capture_stderr(main, ["-c", MISS_INI]) as output:
-            self.assertTrue("Missing config val for key pdb_tpl_file" in output)
+            self.assertTrue("Missing config val for key 'pdb_tpl_file'" in output)
 
     def testNoFiles(self):
         with capture_stderr(main, ["-c", NO_FILES_INI]) as output:

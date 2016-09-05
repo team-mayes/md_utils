@@ -609,11 +609,6 @@ def read_csv(src_file, data_conv=None, all_conv=None, quote_style=csv.QUOTE_MINI
     """
     result = []
     with open(src_file) as csv_file:
-        # try:
-        #     csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_NONNUMERIC)
-        #     for line in csv_reader:
-        #         result.append(convert_dict_line(all_conv, data_conv, line))
-        # except ValueError:
         csv_reader = csv.DictReader(csv_file, quoting=quote_style)
         for line in csv_reader:
             result.append(convert_dict_line(all_conv, data_conv, line))
@@ -680,17 +675,17 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
         print("Wrote file: {}".format(out_fname))
 
 
-def list_to_csv(data, out_fname, delimiter=',', mode='w'):
+def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC):
     """
     Writes the given data to the given file location.
-
     @param data: The data to write (list of lists).
     @param out_fname: The name of the file to write to.
     @param delimiter: string
     @param mode: default mode is to overwrite file
+    @param quote_style: csv quoting style
     """
     with open(out_fname, mode) as csv_file:
-        writer = csv.writer(csv_file, delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC)
+        writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
         writer.writerows(data)
     print("Wrote file: {}".format(out_fname))
 
@@ -951,7 +946,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
         for key, type_func in req_keys.items():
             proc_cfg[key] = type_func(raw_cfg[key])
     except KeyError as e:
-        raise KeyError('Missing config val for key {}'.format(key, e))
+        raise KeyError("Missing config val for key '{}'".format(key, e))
     except Exception as e:
         raise InvalidDataError('Problem with config vals on key {}: {}'.format(key, e))
 
@@ -1085,6 +1080,26 @@ def unique_list(a_list):
             m_map[item] = 1
             o_set.append(item)
     return o_set
+
+
+def conv_str_to_func(func_name):
+    """
+    Convert a name of a function into a function, if possible
+    @param func_name: string to be converted (if possible)
+    @return: either the function or error
+    """
+    name_func_dict = {"None": None,
+                      "str": str,
+                      "int": int,
+                      "float": float,
+                      "bool": bool,
+                      }
+    if func_name is None:
+        return func_name
+    elif func_name in name_func_dict:
+        return name_func_dict[func_name]
+    else:
+        raise InvalidDataError("Invalid type entry '{}'. Valid options are ")
 
 
 # Processing LAMMPS files #

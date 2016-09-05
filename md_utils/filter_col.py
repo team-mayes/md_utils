@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from md_utils.md_common import (InvalidDataError, warning,
                                 create_out_fname, process_cfg, read_csv_to_list,
-                                list_to_csv, round_to_print)
+                                list_to_csv, round_to_print, IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, NoSectionError, ParsingError
@@ -21,13 +21,6 @@ except ImportError:
 
 __author__ = 'hbmayes'
 
-
-# Error Codes
-# The good status code
-GOOD_RET = 0
-INPUT_ERROR = 1
-IO_ERROR = 2
-INVALID_DATA = 3
 
 # Constants #
 
@@ -225,7 +218,7 @@ def process_file(data_file,  mcfg, delimiter=','):
     list_vectors, headers = read_csv_to_list(data_file, delimiter=delimiter, header=True)
 
     col_index_dict = {}
-    for section in [MAX_SEC, MIN_SEC, BIN_SEC]:
+    for section in SUB_SECTIONS:
         col_index_dict[section] = {}
         for key, val in mcfg[section].items():
             if key in headers:
