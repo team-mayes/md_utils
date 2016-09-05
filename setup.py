@@ -37,6 +37,7 @@ setup(
                                       'calc_pka = md_utils.calc_pka:main',
                                       'calc_split_avg = md_utils.calc_split_avg:main',
                                       'col_stats = md_utils.col_stats:main',
+                                      'comb_col = md_utils.comb_col:main',
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data2pdb = md_utils.data2pdb:main',
                                       'data_edit = md_utils.data_edit:main',
