@@ -3,6 +3,12 @@
 History
 -------
 
+0.9.2 (2016-09-07)
+------------------
+
+* Added functions to help select configurations based on a criteria (such as CV value) by adding a "bin_settings" option to filter_col
+* added a "comb_col" script to combine two column values with optional "prefix", "suffix", and "middle"
+
 0.9.1 (2016-07-20)
 ------------------
 
