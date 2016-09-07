@@ -1,12 +1,12 @@
 # coding=utf-8
 
 """
-Tests for add_head_tail.py.
+Tests for add_to_each_line.py.
 """
 import os
 import unittest
 
-from md_utils.add_head_tail import main
+from md_utils.add_to_each_line import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
 

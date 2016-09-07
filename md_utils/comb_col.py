@@ -152,7 +152,6 @@ def process_file(file_to_process, cfg):
         if header not in raw_col_data[0]:
             raise InvalidDataError("Specified column header '{}' was not found in file: {}"
                                    "".format(header, file_to_process))
-        print(cfg[COL1], cfg[COL2])
     for row in raw_col_data:
         to_print.append(["".join(map(str, [cfg[PREFIX], row[cfg[COL1]], cfg[MIDDLE], row[cfg[COL2]], cfg[SUFFIX]]))])
 

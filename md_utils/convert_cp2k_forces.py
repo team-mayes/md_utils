@@ -151,6 +151,7 @@ def process_cp2k_force_file(f_file, out_dir):
                     # kind = int(split_line[1])
                     # element = split_line[2]
                     xyz = np.asarray(map(float, split_line[3:])) * au_to_N
+                    # noinspection PyTypeChecker
                     to_print.append([atom_num] + xyz.tolist())
                 except (ValueError, InvalidDataError) as e:
                     warning("{}\n"
@@ -167,6 +168,7 @@ def process_cp2k_force_file(f_file, out_dir):
 def read_file_list(file_list, out_dir):
     """
     @param file_list: the list of files to be read
+    @param out_dir: user-specified output directory
     """
     summary_header = ['num_atoms', 'sum_x', 'sum_y', 'sum_z', 'total']
     summary_array = None
@@ -198,6 +200,7 @@ def read_file_list(file_list, out_dir):
         list_to_file(summary_array, f_out)
         with open(f_out, 'w') as logfile:
             logfile.write(','.join(summary_header) + "\n")
+            # noinspection PyTypeChecker
             for line in summary_array:
                 logfile.write(','.join(['%d' % line[0]] + ['%f' % F for F in line[1:]]) + "\n")
         print('Finished reading all cp2k force files. Printed each atomic force sum to: {}'.format(f_out))

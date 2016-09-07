@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-Tests for add_head_tail.py.
+Tests for add_to_each_line.py.
 """
 import unittest
 import itertools
