@@ -28,20 +28,9 @@ INCOMP_F_LIST = os.path.join(CP2K_DATA_DIR, 'cp2k_force_list_incomp.txt')
 # noinspection PyUnresolvedReferences
 BAD_F_LIST = os.path.join(CP2K_DATA_DIR, 'cp2k_force_list_bad.txt')
 NOT_GLU_ATOM_NUM = '142'
-NOT_ATOM_NUM = 'ghost'
+GHOST_STRING = 'ghost'
 
 # Input and output files for validating output #
-
-F_LIST = os.path.join(CP2K_DATA_DIR, 'cp2k_force_list_good.txt')
-# noinspection PyUnresolvedReferences
-DEF_F_LIST_SUM = os.path.join(CP2K_DATA_DIR, 'force_sums_cp2k_force_list_good.csv')
-GOOD_F_LIST_SUM = os.path.join(CP2K_DATA_DIR, 'force_sums_cp2k_force_list_good_good.csv')
-# noinspection PyUnresolvedReferences
-DEF_OUT1 = os.path.join(CP2K_DATA_DIR, 'REF_15_2_502000')
-# noinspection PyUnresolvedReferences
-DEF_OUT2 = os.path.join(CP2K_DATA_DIR, 'REF_20_1_508000')
-GOOD_OUT1 = os.path.join(CP2K_DATA_DIR, 'REF_15_2_502000_good')
-GOOD_OUT2 = os.path.join(CP2K_DATA_DIR, 'REF_20_1_508000_good')
 
 GLU_FILE = os.path.join(CP2K_DATA_DIR, '0.750_20c_100ps_reorder_555260.dat')
 GLU_ATOM_NUM = '1429'
@@ -73,14 +62,14 @@ class TestConvertCP2KFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testUnregArg(self):
-        test_input = ['-@@@', "-l", F_LIST]
+        test_input = ['-@@@', "-l", GLU_LIST]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("unrecognized arguments" in output)
 
     def testNonIntAtomNum(self):
-        test_input = ["-n", "ghost", "-l", F_LIST]
+        test_input = ["-n", "ghost", "-l", GLU_LIST]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -108,13 +97,13 @@ class TestConvertCP2KFailWell(unittest.TestCase):
             silent_remove(GLU_OUT1)
 
     def testBadDir(self):
-        with capture_stderr(main, ["-d", 'ghost', "-l", F_LIST]) as output:
+        with capture_stderr(main, ["-d", 'ghost', "-l", GLU_LIST]) as output:
             self.assertTrue("Cannot find specified output directory" in output)
 
     def testNoSuchOption(self):
-        with capture_stderr(main, ["-@", F_LIST]) as output:
+        with capture_stderr(main, ["-@", GLU_LIST]) as output:
             self.assertTrue("unrecognized argument" in output)
-            self.assertTrue(F_LIST in output)
+            self.assertTrue(GLU_LIST in output)
 
     def testBadForceFile(self):
         test_input = ["-l", BAD_F_LIST]
@@ -135,6 +124,13 @@ class TestConvertCP2KFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue(NOT_GLU_ATOM_NUM in output)
             self.assertTrue(GLU_ATOM_NUM in output)
+
+    def testNoSuchFile(self):
+        test_input = ["-f", GHOST_STRING]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing specified file" in output)
 
 
 class TestConvertCP2K(unittest.TestCase):

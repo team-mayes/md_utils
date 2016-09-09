@@ -3,8 +3,8 @@
 History
 -------
 
-0.9.2 (2016-09-07)
-------------------
+0.10.0 (2016-09-07)
+-------------------
 
 * Added functions to help select configurations based on a criteria (such as CV value) by adding a "bin_settings" option to filter_col
 * added a "comb_col" script to combine two column values with optional "prefix", "suffix", and "middle"
@@ -33,9 +33,9 @@ differ only by more a specified tolerance (~1e-5) are now ignored.
 * Now correctly sorts differences between data files, ignoring comments, unimportant ordering...
 
 0.8.0
-------------------
+-----
 
-* Added capabilty to data_edit: now will show differences between data files, ignoring comments, unimportant ordering...
+* Added capability to data_edit: now will show differences between data files, ignoring comments, unimportant ordering...
 
 
 0.7.3 (2016-04-20)

@@ -196,7 +196,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                         qm_sum = line
                         ready_to_read = True
                     elif line == qm_sum:
-                        print("unexpected!!")
+                        raise InvalidDataError("Did not expect to read QM summary twice infile: {}".format(f_file))
                     else:
                         # should be at the third and last sum section
                         qmmm_sum = line

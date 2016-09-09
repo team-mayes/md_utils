@@ -287,6 +287,7 @@ def file_rows_to_list(c_file):
         row_list = [row.strip() for row in f.readlines()]
         return filter(None, row_list)
 
+
 def str_to_file(str_val, fname, mode='w'):
     """
     Writes the string to the given file.
@@ -1134,6 +1135,7 @@ def longest_common_substring(s1, s2):
     @param s2: string 2
     @return: string: the longest common string!
     """
+    # noinspection PyUnusedLocal
     m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
     longest, x_longest = 0, 0
     for x in range(1, 1 + len(s1)):
