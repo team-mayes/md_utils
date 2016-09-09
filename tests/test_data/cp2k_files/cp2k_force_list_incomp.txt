@@ -1,5 +1,5 @@
- tests/test_data/cp2k_files/15_2_502000.dat
+ tests/test_data/cp2k_files/0.750_20c_100ps_reorder_555260.dat
 
-tests/test_data/cp2k_files/8_3_520000_incomp.dat
+tests/test_data/cp2k_files/1.000_20c_incomp.dat
 12.dat
 

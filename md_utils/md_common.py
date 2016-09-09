@@ -277,6 +277,16 @@ def file_to_str(fname):
         return f.read()
 
 
+def file_rows_to_list(c_file):
+    """
+    Given the name of a file, returns a list of its rows, after filtering out empty rows
+    @param c_file: file location
+    @return: list of non-empty rows
+    """
+    with open(c_file) as f:
+        row_list = [row.strip() for row in f.readlines()]
+        return filter(None, row_list)
+
 def str_to_file(str_val, fname, mode='w'):
     """
     Writes the string to the given file.

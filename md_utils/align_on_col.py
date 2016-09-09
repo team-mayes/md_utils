@@ -12,7 +12,7 @@ import os
 import six
 import sys
 from md_utils.md_common import (InvalidDataError, warning, read_csv_to_dict, write_csv, create_out_fname,
-                                longest_common_substring)
+                                longest_common_substring, file_rows_to_list)
 
 __author__ = 'hmayes'
 
@@ -35,17 +35,6 @@ DEF_OUT_FILE = 'comb.csv'
 RUN_NAME = 'run'
 
 
-def read_cmp_file(c_file):
-    """
-    Given the name of a file, returns a list of its rows, after filtering out empty rows
-    @param c_file: file location
-    @return: list of non-empty rows
-    """
-    with open(c_file) as f:
-        row_list = [row.strip() for row in f.readlines()]
-        return filter(None, row_list)
-
-
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
@@ -65,7 +54,7 @@ def parse_cmdline(argv):
                                                           "combined by aligning on the col_name. "
                                                           "The default file name is {}, located in the "
                                                           "directory where the program as run.".format(DEF_CMP_FILE),
-                        default=DEF_CMP_FILE, type=read_cmp_file)
+                        default=DEF_CMP_FILE, type=file_rows_to_list)
     parser.add_argument("-l", "--output_location", help="The location (directory) for output files. The default is the "
                                                         "directory from which the program was called.",
                         default=None)
