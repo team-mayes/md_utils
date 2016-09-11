@@ -44,6 +44,13 @@ GOOD_GLU_OUT1 = os.path.join(CP2K_DATA_DIR, 'REF_0.750_20c_100ps_reorder_555260_
 GLU_OUT2 = os.path.join(CP2K_DATA_DIR, 'REF_1.000_20c_100ps_reorder_485050')
 GOOD_GLU_OUT2 = os.path.join(CP2K_DATA_DIR, 'REF_1.000_20c_100ps_reorder_485050_good')
 
+GLU_FILE_2QM = os.path.join(CP2K_DATA_DIR, '1.250_20c_100ps_reorder_526120.dat')
+GLU_2QM_OUT = os.path.join(CP2K_DATA_DIR, 'REF_1.250_20c_100ps_reorder_526120')
+GOOD_GLU_2QM_OUT = os.path.join(CP2K_DATA_DIR, 'REF_1.250_20c_100ps_reorder_526120_good')
+
+GLU_FILE_MM_AFTER_QM = os.path.join(CP2K_DATA_DIR, '1.250_20c_526120_mm_after_qm.dat')
+GLU_2MM_AFTER_QM_OUT = os.path.join(CP2K_DATA_DIR, 'REF_1.250_20c_526120_mm_after_qm')
+
 
 class TestConvertCP2KFailWell(unittest.TestCase):
     def testNoArgs(self):
@@ -74,6 +81,13 @@ class TestConvertCP2KFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Could not convert specified num_atoms ('ghost') to an integer." in output)
+
+    def testMissingFile(self):
+        test_input = ["-f", GHOST_STRING]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing specified file" in output)
 
     def testMissingFileList(self):
         test_input = ["-l", " "]
@@ -125,13 +139,6 @@ class TestConvertCP2KFailWell(unittest.TestCase):
             self.assertTrue(NOT_GLU_ATOM_NUM in output)
             self.assertTrue(GLU_ATOM_NUM in output)
 
-    def testNoSuchFile(self):
-        test_input = ["-f", GHOST_STRING]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Missing specified file" in output)
-
 
 class TestConvertCP2K(unittest.TestCase):
     def testGoodAtomNumFile(self):
@@ -160,3 +167,25 @@ class TestConvertCP2K(unittest.TestCase):
             silent_remove(GLU_SUM, disable=DISABLE_REMOVE)
             silent_remove(GLU_OUT1, disable=DISABLE_REMOVE)
             silent_remove(GLU_OUT2, disable=DISABLE_REMOVE)
+
+    def testQMTwice(self):
+        test_input = ["-f", GLU_FILE_2QM, "-n", GLU_ATOM_NUM]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        try:
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("1429      0.065     -0.677     -0.401      0.789" in output)
+            self.assertFalse(diff_lines(GLU_2QM_OUT, GOOD_GLU_2QM_OUT))
+        finally:
+            silent_remove(GLU_2QM_OUT, disable=DISABLE_REMOVE)
+
+    def testMMAfterQM(self):
+        test_input = ["-f", GLU_FILE_MM_AFTER_QM, "-n", GLU_ATOM_NUM]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        try:
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("1429      0.065     -0.677     -0.401      0.789" in output)
+            self.assertFalse(diff_lines(GLU_2MM_AFTER_QM_OUT, GOOD_GLU_2QM_OUT))
+        finally:
+            silent_remove(GLU_2MM_AFTER_QM_OUT, disable=DISABLE_REMOVE)

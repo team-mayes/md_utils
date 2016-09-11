@@ -1,7 +1,7 @@
 Status
 ------
 
-Last checked: all tests pass, 82% of files, 92% of lines
+Last checked: all tests pass. Within md_utils, 73% of files, 89% of lines
 
 Wish List
 ---------

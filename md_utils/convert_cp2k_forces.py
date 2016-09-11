@@ -85,7 +85,7 @@ def parse_cmdline(argv):
             return args, GOOD_RET
         warning(e)
         parser.print_help()
-        return [], INPUT_ERROR
+        return args, INPUT_ERROR
 
     if args.file is None:
         args.file_name = args.file_list
@@ -169,7 +169,6 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
     md_sum = None
     qm_sum = None
     qmmm_sum = None
-    qmmm_last_atom = None
     ready_to_read = False
 
     keep_lines = False
@@ -188,8 +187,11 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                     check_atom_num(req_atom_num, last_line, f_file)
                 elif line == md_sum:
                     warning("Line matching the read MM summary encountered.")
-                    if qm_sum is not None:
-                        warning("QM section previous read; will be overwritten if found.")
+                    if keep_lines:
+                        # this means that saved converted MM (not QMMM) forces. Reset.
+                        to_print = []
+                        ready_to_read = False
+                        keep_lines = False
                         qm_sum = None
                 else:
                     if qm_sum is None:
@@ -198,9 +200,9 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                     elif line == qm_sum:
                         raise InvalidDataError("Did not expect to read QM summary twice infile: {}".format(f_file))
                     else:
-                        # should be at the third and last sum section
+                        # ideally, the third and last sum section; either way, exit now
                         qmmm_sum = line
-                        qmmm_last_atom = last_line
+                        break
 
             elif forces_pat.match(line):
                 if ready_to_read:
@@ -230,7 +232,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                 "Continuing to the next line in the file list.".format(f_file, sum_pat_num))
         return None
     try:
-        check_atom_num(req_atom_num, qmmm_last_atom, f_file)
+        check_atom_num(req_atom_num, last_line, f_file)
         split_line = qmmm_sum.split()
         sums = np.asarray(map(float, split_line[4:])) * au_to_N
         if len(sums) != 4:

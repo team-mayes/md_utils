@@ -6,10 +6,11 @@ values after a buffer distance is added
 
 from __future__ import print_function
 import os
-import numpy as np
-from md_utils.md_common import InvalidDataError, warning, create_out_fname, write_csv
 import sys
 import argparse
+import numpy as np
+from md_utils.md_common import (InvalidDataError, warning, create_out_fname, write_csv, IO_ERROR, INPUT_ERROR,
+                                GOOD_RET, INVALID_DATA)
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -19,13 +20,6 @@ except ImportError:
 
 __author__ = 'hmayes'
 
-
-# Error Codes
-# The good status code
-GOOD_RET = 0
-INPUT_ERROR = 1
-IO_ERROR = 2
-INVALID_DATA = 3
 
 # Constants #
 TOL = 0.0000001
@@ -119,6 +113,12 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
     if not os.path.isfile(args.file):
         if args.file == DEF_BEST_FILE:
@@ -161,7 +161,8 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     is not to be fit in the current step.
     @param initial_vals: parameter values from last fitting iteration
     @param cfg: configuration values, whether the Vii parameter is to be fit
-    @return:
+    @param fit_vii_flag: boolean which will specify which of two output options to use
+    @return: nothing; will have written a new fit_evb input file when done
     """
     # dict to collect data to print
     inp_vals = {}
@@ -340,7 +341,7 @@ def make_summary(output_file, summary_file, cfg):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
     raw_cfg = args.config
 
