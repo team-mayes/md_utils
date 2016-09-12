@@ -12,7 +12,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
-                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg)
+                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff)
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, NoSectionError
@@ -66,7 +66,8 @@ GOFR_RAW_HIST = 'raw_histogram_for_gofr'
 # with output from every frame types
 CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
-CALC_HIJ_AMINO_FORM = 'calc_hij_amino_form_flag'
+CALC_HIJ_DA_GAUSS_FORM = 'calc_hij_da_gauss_flag'
+CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 COMBINE_OUTPUT = 'combine_output_flag'
 
@@ -81,7 +82,7 @@ CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'    # 14 17 ?? ??
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
-PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_AMINO_FORM, CALC_HIJ_WATER_FORM]
+PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
@@ -99,7 +100,8 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 PER_FRAME_OUTPUT: False,
                 CALC_OH_DIST: False,
                 # CALC_ALL_OH_DIST: False,
-                CALC_HIJ_AMINO_FORM: False,
+                CALC_HIJ_DA_GAUSS_FORM: False,
+                CALC_HIJ_ARQ_FORM: False,
                 CALC_HIJ_WATER_FORM: False,
                 GOFR_OUTPUT: False,
                 CALC_HO_GOFR: False,
@@ -164,9 +166,11 @@ OH_DIFF = 'oh_diff'
 R_OH = 'r_oh_dist'
 R_OO = 'r_oo_dist'
 Q_DOT = 'q_dotted'
+Q_DOT_ARQ = 'q_arq_dotted'
 HIJ_AMINO = 'hij_amino'
 HIJ_ASP = 'hij_asp_params'
 HIJ_GLU = 'hij_glu_params'
+HIJ_ARQ = 'hij_glu_arq'
 HIJ_WATER = 'hij_water_params'
 HIJ_A1 = 'hij_water_termA1'
 HIJ_A2 = 'hij_water_termA2'
@@ -175,6 +179,7 @@ HIJ_A3 = 'hij_water_termA3'
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
+HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
 
 # EVB Params
@@ -196,6 +201,7 @@ c_asp = 0.931593
 
 Vii_asp = -150.505417
 
+# for da_gauss
 c1_asp = -25.099920
 c2_asp = 2.799262
 c3_asp = 1.299994
@@ -208,6 +214,7 @@ bp_glu = 1.084593
 C_glu = 0.987714
 c_glu = 1.146188
 
+# for da_gauss
 c1_glu = -25.013330
 c2_glu = 3.018957
 c3_glu = 1.280649
@@ -226,6 +233,21 @@ a_water = 7.4062624
 r_0_OO = 1.8
 V_ij_water = -21.064268  # kcal/mol
 
+# glu params for arq (Maupin et al. 2006, http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 4-8)
+V0_ii_arq = -106.72
+V_ij_arq = -26.43
+r0_sc_arq = 1.03
+lambda_arq = -0.076
+R0_DA_arq = 2.57
+C_arq = 0.8911
+alpha_arq = 1.83
+a_DA_arq = 2.86
+beta_arq = -0.058
+b_DA_arq = 2.27
+eps_arq = 1.77
+c_DA_arq = 2.59
+gamma_arq = 6.43
+
 
 # EVB Formulas
 
@@ -240,11 +262,12 @@ def hij_amino(r, c1, c2, c3):
 def calc_q(r_o, r_op, r_h, box):
     """
     Calculates the 3-body term, keeping the pbc in mind
-    @param r_o: x,y,z position of one oxygen donor/acceptor
-    @param r_op: x,y,z position of the other oxygen donor/acceptor
+    Per Wu et al. 2008 (http://pubs.acs.org/doi/abs/10.1021/jp076658h), eq. in text just below eq. 12
+    @param r_o: x,y,z position of one oxygen donor/acceptor (water or hydronium)
+    @param r_op: x,y,z position of the other oxygen donor/acceptor (glu)
     @param r_h: x,y,z position of the reactive H
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
-    @return: the dot-product of the vector q
+    @return: the dot-product of the vector q (note: it really is the dot, not norm; it is written as q^2)
     """
     # pbc_vector_avg
     q_vec = np.subtract(pbc_vector_avg(r_o, r_op, box), r_h)
@@ -253,11 +276,42 @@ def calc_q(r_o, r_op, r_h, box):
     return np.dot(q_vec, q_vec)
 
 
-def hij_water(r_oo, q_dot):
+def calc_q_arq(r_oo, r_do, r_h, box):
+    """
+    Calculates the 3-body term, keeping the pbc in mind, per Maupin et al. 2006,
+    http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 7-8
+    @param r_oo: distance (accounting for pbc) between the donor and acceptor oxygen atoms
+    @param r_do: x,y,z position of the donor oxygen (always using the glu oxygen, for now)
+    @param r_h: x,y,z position of the reactive H
+    @param box: the dimensions of the periodic box (assumed 90 degree angles)
+    @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
+    """
+    r_sc = r0_sc_arq - lambda_arq * (r_oo - R0_DA_arq)
+    r_dh = pbc_vector_diff(r_h, r_do, box)
+    q_vec = np.subtract(r_dh, r_sc * r_dh / 2.0)
+    return np.dot(q_vec, q_vec)
+
+
+def calc_hij_wat(r_oo, q_dot):
     term_a1 = np.exp(-gamma * q_dot)
     term_a2 = 1 + P * np.exp(-k_water * (r_oo - D_OO_water) ** 2)
     term_a3 = 0.5 * (1 - np.tanh(beta * (r_oo - R_0_OO))) + Pp * np.exp(-a_water * (r_oo - r_0_OO))
     return V_ij_water * 1.1 * term_a1 * term_a2 * term_a3, term_a1, term_a2, term_a3
+
+
+def calc_hij_arq(r_da, q_dot_arq):
+    """
+    Calculates h_ij per Maupin et al. 2006,
+    http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 4-6
+    @param r_da: o_ostar_dist
+    @param q_dot_arq: the square of the three-body term
+    @return: the off-diagonal term
+    """
+    term_a1 = np.exp(-gamma_arq * q_dot_arq)
+    term_a2 = (C_arq * np.exp(-alpha_arq * (r_da - a_DA_arq) ** 2) +
+               (1 - C_arq) * np.exp(-beta_arq * np.square(r_da - b_DA_arq)))
+    term_a3 = 1 + np.tanh(eps_arq * (r_da - c_DA_arq))
+    return V_ij_arq * term_a1 * term_a2 * term_a3
 
 
 def switch_func(rc, rs, r_array):
@@ -442,7 +496,6 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     type1 = []
     type2 = []
     calc_results = {}
-    oh_dist_dict = {}
     for atom in dump_atom_data:
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
@@ -489,26 +542,31 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                "Check input data.".format(WAT_H_TYPE, cfg[WAT_H_TYPE]))
 
     # Now start looking for data to report
-    if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_AMINO_FORM] or cfg[CALC_HIJ_WATER_FORM]:
+    if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
         closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
                                                                             hydronium, box, cfg)
-        if cfg[CALC_HIJ_WATER_FORM]:
+        if cfg[CALC_OH_DIST]:
+            if excess_proton is None:
+                calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
+            else:
+                calc_results.update(oh_dist_dict)
+        if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
             closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
                                                                        cfg[H3O_O_TYPE])
-            q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
-            hij_wat, term_a1, term_a2, term_a3 = hij_water(o_ostar_dist, q_dot)
-            calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
-                                 HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
-    if cfg[CALC_OH_DIST]:
-        if excess_proton is None:
-            calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
-        else:
-            calc_results.update(oh_dist_dict)
-    if cfg[CALC_HIJ_AMINO_FORM]:
-        r_oh = oh_dist_dict[OH_MIN]
-        hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
-        hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
-        calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
+            if cfg[CALC_HIJ_WATER_FORM]:
+                q_dot = calc_q(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
+                hij_wat, term_a1, term_a2, term_a3 = calc_hij_wat(o_ostar_dist, q_dot)
+                calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
+                                     HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
+            if cfg[CALC_HIJ_ARQ_FORM]:
+                q_dot_arq = calc_q_arq(o_ostar_dist, o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
+                hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
+                calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
+        if cfg[CALC_HIJ_DA_GAUSS_FORM]:
+            r_oh = oh_dist_dict[OH_MIN]
+            hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
+            hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
+            calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
 
     # For calcs requiring H* (proton on protonated residue) skip timesteps when there is no H* (residue deprotonated)
     if cfg[GOFR_OUTPUT]:
@@ -632,8 +690,10 @@ def setup_per_frame_output(cfg):
     out_fieldnames = [TIMESTEP]
     if cfg[CALC_OH_DIST]:
         out_fieldnames.extend(OH_FIELDNAMES)
-    if cfg[CALC_HIJ_AMINO_FORM]:
+    if cfg[CALC_HIJ_DA_GAUSS_FORM]:
         out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
+    if cfg[CALC_HIJ_ARQ_FORM]:
+        out_fieldnames.extend(HIJ_ARQ_FIELDNAMES)
     if cfg[CALC_HIJ_WATER_FORM]:
         out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
     return out_fieldnames

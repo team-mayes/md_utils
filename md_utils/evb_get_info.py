@@ -22,7 +22,9 @@ import re
 import sys
 import argparse
 import numpy as np
-from md_utils.md_common import InvalidDataError, warning, create_out_fname, process_cfg, write_csv, single_quote
+from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv, single_quote,
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -31,14 +33,6 @@ except ImportError:
     from configparser import ConfigParser
 
 __author__ = 'hmayes'
-
-# Error Codes
-# The good status code
-GOOD_RET = 0
-INPUT_ERROR = 1
-IO_ERROR = 2
-INVALID_DATA = 3
-
 
 # Constants #
 
@@ -421,7 +415,6 @@ def process_evb_files(cfg):
                                          base_dir=cfg[OUT_BASE_DIR])
                 write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_CEC]:
-
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
                 write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_KEY_PROPS]:

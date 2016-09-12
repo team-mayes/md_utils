@@ -37,9 +37,6 @@ OH_DIST_INI = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_sum.csv')
 GOOD_OH_DIST_OUT = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
-OH_DIST_INI2 = os.path.join(SUB_DATA_DIR, 'lammps_proc_glu.ini')
-
-
 MISS_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_missing_dump.ini')
 BAD_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_bad_dump.ini')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
@@ -81,6 +78,8 @@ HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
 HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
 GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
 
+HIJ_ARQ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq.ini')
+
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
                     'Continuing program.\nCompleted reading'
@@ -104,15 +103,17 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testInvalidData(self):
-        with capture_stderr(main, ["-c", INVALID_INI]) as output:
+        test_input = ["-c", INVALID_INI]
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Problem with config vals on key h3o_o_type: invalid literal for int" in output)
-        with capture_stdout(main, ["-c", INVALID_INI]) as output:
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testNoAction(self):
-        with capture_stderr(main, ["-c", NO_ACTION_INI_PATH]) as output:
+        test_input = ["-c", NO_ACTION_INI_PATH]
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("No calculations have been requested" in output)
-        with capture_stdout(main, ["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testMissDump(self):
@@ -187,14 +188,6 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
-    def testOHDist2(self):
-        try:
-            main(["-c", OH_DIST_INI2])
-            # self.assertFalse(diff_lines(DEF_OUT, GOOD_OH_DIST_OUT))
-        finally:
-            # silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-            pass
-
     def testMaxTimestepsCalcHIJ(self):
         try:
             with capture_stdout(main, ["-c", HIJ_INI]) as output:
@@ -211,6 +204,18 @@ class TestLammpsProcData(unittest.TestCase):
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("did not have the full list of atom numbers" in output)
             self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
+        finally:
+            silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArq(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_ARQ_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+        #     with capture_stderr(main, test_input) as output:
+        #         self.assertTrue("did not have the full list of atom numbers" in output)
+        #     self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
         finally:
             silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
 

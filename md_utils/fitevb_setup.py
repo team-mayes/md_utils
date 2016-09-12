@@ -27,9 +27,11 @@ TOL = 0.0000001
 # Config File Sections
 SECTIONS = 'sections'
 MAIN_SEC = 'main'
+PT_SEC = 'PT_Coupling'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
+SEC_NAMES = 'section_names'
 PARAM_SECS = [DA_GAUSS_SEC, VII_SEC, REP1_SEC]
 
 # Config keys
@@ -133,19 +135,20 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_output_file(data_file):
+def process_output_file(data_file, cfg):
     """
     Reads in an initial set of parameters values from a space-separated list, as provided by 'fit.best' output from
     fitEVB. The order is important; thus read through the sections and parameters from the (ordered) lists (specified
     in the constants
     @param data_file: contains a space-separated list of parameters values in the order that corresponds to the lists
     of sections and parameters in constants.
+    @param cfg: the configuration for this run
     @return: initial values to use in fitting, with both the high and low values set to that initial value
     """
     raw_vals = np.loadtxt(data_file, dtype=np.float64)
     vals = {}
     index = 0
-    for section in PARAM_SECS:
+    for section in cfg[MAIN_SEC][SEC_NAMES]:
         for param in FIT_PARAMS[section]:
             vals[param] = {}
             vals[param][LOW] = raw_vals[index]
@@ -167,29 +170,34 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     # dict to collect data to print
     inp_vals = {}
 
-    for section in PARAM_SECS:
-        for param in cfg[section][SEC_PARAMS]:
-            inp_vals[param] = cfg[section][param]
-            if section == VII_SEC:
-                if not fit_vii_flag:
-                    for prop in initial_vals[param]:
-                        inp_vals[param][prop] = initial_vals[param][prop]
-            else:
-                # all other parameters set to initial values
-                if fit_vii_flag:
-                    for prop in initial_vals[param]:
-                        inp_vals[param][prop] = initial_vals[param][prop]
+    for section in cfg[MAIN_SEC][SEC_NAMES]:
+        print('hello section', section)
+        print("which has: ", cfg[section])
+        for param in cfg[section]:
+            print("hello param", param)
+            if param != GROUP_NAMES:
+                inp_vals[param] = cfg[section][param]
+                if section == VII_SEC:
+                    if not fit_vii_flag:
+                        for prop in initial_vals[param]:
+                            inp_vals[param][prop] = initial_vals[param][prop]
+                else:
+                    # all other parameters set to initial values
+                    if fit_vii_flag:
+                        for prop in initial_vals[param]:
+                            if prop != GROUP_NAMES:
+                                inp_vals[param][prop] = initial_vals[param][prop]
 
     with open(cfg[MAIN_SEC][INP_FILE], 'w') as inp_file:
         for section in PARAM_SECS:
             inp_file.write('FIT  {} {}\n'.format(section, cfg[section][GROUP_NAMES]))
             for param in FIT_PARAMS[section]:
                 inp_file.write(PRINT_FORMAT % (inp_vals[param][LOW], inp_vals[param][HIGH], inp_vals[param][DESCRIP]))
+    print("Wrote file: ", cfg[MAIN_SEC][INP_FILE])
 
 
 def process_raw_cfg(raw_cfg):
-    cfgs = {}
-    param_sections = []
+    cfgs = {MAIN_SEC: {}}
     # Process raw values
     for section in raw_cfg:
         section_dict = {}
@@ -197,52 +205,44 @@ def process_raw_cfg(raw_cfg):
             for entry in raw_cfg[section]:
                 section_dict[entry[0]] = entry[1]
         else:
-            param_sections.append(section)
-            section_dict[SEC_PARAMS] = []
             for entry in raw_cfg[section]:
                 if entry[0] == GROUP_NAMES:
-                    section_dict[entry[0]] = entry[1]
+                    section_dict[GROUP_NAMES] = entry[1]
                 else:
-                    section_dict[SEC_PARAMS].append(entry[0])
                     vals = [x.strip() for x in entry[1].split(',')]
                     if len(vals) == 2:
                         vals.append(DEF_DESCRIP)
                     try:
                         section_dict[entry[0]] = {LOW: float(vals[0]), HIGH: float(vals[1]), DESCRIP: vals[2]}
                     except ValueError:
-                        warning("In configuration file section {}, expected comma-separated numerical lower range "
-                                "value, upper-range value, and (optional) description (i.e. '-10,10,d_OO') for key {}. "
-                                "Found {}. Please check input.".format(section, entry[0], entry[1]))
+                        raise InvalidDataError("Check input. In configuration file section '{}', expected "
+                                               "comma-separated numerical lower range value, upper-range value, and "
+                                               "(optional) description (i.e. '-10,10,d_OO') for key '{}'. "
+                                               "Found: {}".format(section, entry[0], entry[1]))
         cfgs[section] = section_dict
 
-    # Check for defaults
+    # Check for defaults and keep list of sections found
+    param_sections_found = []
     for section in cfgs:
         if section == MAIN_SEC:
             for cfg in MAIN_SEC_DEF_CFG_VALS:
                 if cfg not in cfgs[section]:
                     cfgs[section][cfg] = MAIN_SEC_DEF_CFG_VALS[cfg]
         else:
+            print("yo section", section)
             if section in PARAM_SECS:
                 for cfg in PARAM_SEC_DEF_CFG_VALS:
                     if cfg not in cfgs[section]:
                         cfgs[section][cfg] = PARAM_SEC_DEF_CFG_VALS[cfg]
+                param_sections_found.append(section)
             else:
-                warning("This program currently expects only the sections {} and an optional section {}. Read section "
-                        "{}, which will be ignored.".format(PARAM_SECS, MAIN_SEC, section))
-
-    # Add main section with defaults if this optional section is missing; make sure required sections and parameters
-    # have been read.
+                warning("This program currently expects only the sections {} and an optional section '{}'. "
+                        "Read section '{}', which will be ignored.".format(PARAM_SECS, MAIN_SEC, section))
+    # Add main section with defaults if the optional main section is missing
     if MAIN_SEC not in cfgs:
         cfgs[MAIN_SEC] = MAIN_SEC_DEF_CFG_VALS
-    for section in PARAM_SECS:
-        if section in cfgs:
-            for param in FIT_PARAMS[section]:
-                if param not in cfgs[section]:
-                    raise InvalidDataError('The configuration file is missing parameter {} in section {}. '
-                                           'Check input.'.format(param, section))
-        else:
-            raise InvalidDataError('The configuration file is missing section {}. Check input.'.format(section))
-
+    # add found parameter sections
+    cfgs[MAIN_SEC][SEC_NAMES] = param_sections_found
     return cfgs
 
 
@@ -250,7 +250,7 @@ def get_param_info(cfg):
     headers = []
     low = []
     high = []
-    for section in PARAM_SECS:
+    for section in cfg[MAIN_SEC][SEC_NAMES]:
         for param in FIT_PARAMS[section]:
             low.append(cfg[section][param][LOW])
             high.append(cfg[section][param][HIGH])
@@ -347,7 +347,7 @@ def main(argv=None):
 
     try:
         cfg = process_raw_cfg(raw_cfg)
-        initial_vals = process_output_file(args.file)
+        initial_vals = process_output_file(args.file, cfg)
         if args.summary_file is not False:
             make_summary(args.file, args.summary_file, cfg)
         make_inp(initial_vals, cfg, args.vii_fit)
