@@ -189,31 +189,32 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     @param fit_vii_flag: boolean which will specify which of two output options to use
     @return: nothing; will have written a new fit_evb input file when done
     """
-    # dict to collect data to print
+    # dict to collect data to print; copy config values and (if specified) overwrite with values from fitEVB output
     inp_vals = {}
 
     for section in cfg:
         if section in PARAM_SECS:
-            for param in FIT_PARAMS[section]:
-                inp_vals[param] = cfg[section][param]
-                if len(initial_vals) > 0:
-                    if section == VII_SEC:
-                        if not fit_vii_flag:
+            inp_vals[section] = cfg[section].copy()
+            if len(initial_vals) > 0:
+                if section == VII_SEC:
+                    if not fit_vii_flag:
+                        for param in FIT_PARAMS[section]:
                             for prop in initial_vals[param]:
-                                inp_vals[param][prop] = initial_vals[param][prop]
-                    else:
-                        # all other parameters set to initial values
-                        if fit_vii_flag:
+                                inp_vals[section][param][prop] = initial_vals[param][prop]
+                else:
+                    # if fit_vii_flag, all other parameters set to initial values
+                    if fit_vii_flag:
+                        for param in FIT_PARAMS[section]:
                             for prop in initial_vals[param]:
-                                inp_vals[param][prop] = initial_vals[param][prop]
+                                inp_vals[section][param][prop] = initial_vals[param][prop]
 
     with open(cfg[MAIN_SEC][INP_FILE], 'w') as inp_file:
         for section in PARAM_SECS:
             if section in cfg:
                 inp_file.write('FIT  {} {}\n'.format(section, cfg[section][GROUP_NAMES]))
                 for param in FIT_PARAMS[section]:
-                    inp_file.write(PRINT_FORMAT.format(inp_vals[param][LOW], inp_vals[param][HIGH],
-                                                       inp_vals[param][DESCRIP]))
+                    inp_file.write(PRINT_FORMAT.format(inp_vals[section][param][LOW], inp_vals[section][param][HIGH],
+                                                       inp_vals[section][param][DESCRIP]))
     print("Wrote file: ", cfg[MAIN_SEC][INP_FILE])
 
 
@@ -271,9 +272,10 @@ def process_raw_cfg(raw_cfg):
                                            "".format(param, section, MAIN_SEC_DEF_CFG_VALS.keys()))
             if cfgs[section][OUT_BASE_DIR] is None:
                 cfgs[section][OUT_BASE_DIR] = ""
+
             cfgs[section][INP_FILE] = os.path.abspath(os.path.join(cfgs[section][OUT_BASE_DIR],
                                                                    cfgs[section][INP_FILE]))
-            if not os.path.exists(cfgs[section][INP_FILE]):
+            if not os.path.exists(os.path.dirname(cfgs[section][INP_FILE])):
                 raise IOError("Invalid directory provided in configuration section '{}' "
                               "parameter '{}': {}".format(section, OUT_BASE_DIR, cfgs[section][OUT_BASE_DIR]))
         else:

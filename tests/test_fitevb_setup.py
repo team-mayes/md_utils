@@ -12,8 +12,8 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 
 __author__ = 'hmayes'
 
-logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -121,13 +121,23 @@ class TestFitEVBSetupFailWell(unittest.TestCase):
             self.assertTrue("(15) does not equal the total number of values (17)" in output)
 
 
-class TestFitEVBSetupQuitUnexpectedly(unittest.TestCase):
+class TestFitEVBSetupFailWellQuitUnexpectedly(unittest.TestCase):
     def testGhostDir(self):
         test_input = ["-c", BAD_DIR_INI, "-f", FITEVB_OUT]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Invalid directory" in output)
+
+
+class TestFitEVBSetupQuitUnexpectedly(unittest.TestCase):
+    def testNoOffDiagFit(self):
+        test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_NO_OFF_DIAG_OUT))
+        finally:
+            silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
 
 
 class TestFitEVBSetup(unittest.TestCase):
@@ -144,14 +154,6 @@ class TestFitEVBSetup(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_OUT, GOOD_VII_FIT_OUT))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-
-    def testNoOffDiagFit(self):
-        test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_NO_OFF_DIAG_OUT))
-        finally:
-            silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
 
     def testARQFit(self):
         # In the EVB param file, this is option "PT" with "2-asymmetric" (confusing, huh?)
