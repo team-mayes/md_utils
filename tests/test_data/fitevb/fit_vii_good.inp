@@ -1,10 +1,10 @@
-FIT  DA_Gaussian GLU-P_H2O H3O_GLU-E
+FIT  DA_Gaussian GLU-P_H2O H3O_GLU-D
   -30.748483    -30.748483  : c1
     4.002856      4.002856  : c2
     1.524643      1.524643  : c3
 FIT  VII GLU-P
   -30.000000     10.000000  : Vii
-FIT  REP1 GLU-E
+FIT  REP1 GLU-D
     0.078483      0.078483  : B
     0.514482      0.514482  : b
     0.664532      0.664532  : b'

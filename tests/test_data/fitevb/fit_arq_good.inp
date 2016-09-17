@@ -1,4 +1,4 @@
-FIT  ARQ GLU-P_H2O H3O_GLU-E
+FIT  ARQ GLU-P_H2O H3O_GLU-D
     0.010000      3.000000  : r0_sc
     0.010000      2.000000  : lambda
     1.000000      3.500000  : R0_DA
@@ -13,7 +13,7 @@ FIT  ARQ GLU-P_H2O H3O_GLU-E
   -65.000000    -25.000000  : Vij_const
 FIT  VII GLU-P
   -30.000000     10.000000  : Vii
-FIT  REP1 GLU-E
+FIT  REP1 GLU-D
     0.001000      0.100000  : B
     0.100000      2.000000  : b
     0.001000      2.000000  : b'

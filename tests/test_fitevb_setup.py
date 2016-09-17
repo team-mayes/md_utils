@@ -6,6 +6,9 @@ Tests for fitevb_setup.py.
 import os
 import unittest
 import logging
+
+import shutil
+
 from md_utils.fitevb_setup import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
@@ -23,8 +26,18 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'fitevb')
 
 FITEVB_OUT = os.path.join(SUB_DATA_DIR, 'fit.best')
+FITEVB_OUT_RESID = os.path.join(SUB_DATA_DIR, 'fit_with_resid.best')
 FITEVB_OUT_TOO_FEW = os.path.join(SUB_DATA_DIR, 'fit_too_few.best')
 FITEVB_OUT_TOO_MANY = os.path.join(SUB_DATA_DIR, 'fit_too_many.best')
+
+ALL_BEST = os.path.join(SUB_DATA_DIR, 'all_best.dat')
+ORIG_ALL_BEST = os.path.join(SUB_DATA_DIR, 'orig_all_best.dat')
+GOOD_ALL_BEST = os.path.join(SUB_DATA_DIR, 'all_best_good.dat')
+ALL_BEST_CSV = os.path.join(MAIN_DIR, 'all_best.csv')
+GOOD_ALL_BEST_CSV = os.path.join(SUB_DATA_DIR, 'all_best_good.csv')
+ALL_BEST_DIFF = os.path.join(MAIN_DIR, 'all_best_perc_diff.csv')
+GOOD_ALL_BEST_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff_good.csv')
+
 
 DA_GAUSS_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup.ini')
 MISS_SEC_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_section.ini')
@@ -41,6 +54,7 @@ SUB_DIR_DEF_OUT = os.path.join(SUB_DATA_DIR, 'fit.inp')
 MISS_KEY_INFO_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_keyinfo.ini')
 WRONG_SECTION_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_wrong_section.ini')
 BAD_DIR_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_bad_dir.ini')
+MISS_GROUP_NAME = os.path.join(SUB_DATA_DIR, 'fitevb_setup_miss_req_param.ini')
 
 NO_OFF_DIAG_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_no_offdiag.ini')
 NO_OFF_DIAG_FITEVB_OUT = os.path.join(SUB_DATA_DIR, 'fit_no_off.best')
@@ -77,6 +91,13 @@ class TestFitEVBSetupFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("expected only the following parameters" in output)
+
+    def testMissReqParams(self):
+        test_input = ["-c", MISS_GROUP_NAME, "-f", FITEVB_OUT]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("In configuration file section 'REP1', missing parameter 'group_names'" in output)
 
     def testMissingParam(self):
         test_input = ["-c", MISS_PARAM_INI, "-f", FITEVB_OUT, ]
@@ -120,24 +141,38 @@ class TestFitEVBSetupFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("(15) does not equal the total number of values (17)" in output)
 
-
-class TestFitEVBSetupFailWellQuitUnexpectedly(unittest.TestCase):
-    def testGhostDir(self):
-        test_input = ["-c", BAD_DIR_INI, "-f", FITEVB_OUT]
+    def testMissingBest(self):
+        test_input = ["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-r"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Invalid directory" in output)
+            self.assertTrue("(16) does not equal the total number of values (15)" in output)
 
-
-class TestFitEVBSetupQuitUnexpectedly(unittest.TestCase):
-    def testNoOffDiagFit(self):
-        test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT]
-        try:
+    def testSumWOBest(self):
+        test_input = ["-c", DA_GAUSS_INI, "-s", ORIG_ALL_BEST]
+        if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
-            self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_NO_OFF_DIAG_OUT))
-        finally:
-            silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("specified, which is required with a specified" in output)
+
+
+# class TestFitEVBSetupFailWellQuitUnexpectedly(unittest.TestCase):
+#     def testGhostDir(self):
+#         test_input = ["-c", BAD_DIR_INI, "-f", FITEVB_OUT]
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Invalid directory" in output)
+#
+#
+# class TestFitEVBSetupQuitUnexpectedly(unittest.TestCase):
+#     def testNoOffDiagFit(self):
+#         test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT]
+#         try:
+#             main(test_input)
+#             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_NO_OFF_DIAG_OUT))
+#         finally:
+#             silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
 
 
 class TestFitEVBSetup(unittest.TestCase):
@@ -148,9 +183,17 @@ class TestFitEVBSetup(unittest.TestCase):
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
+    def testWithBest(self):
+        test_input = ["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-r"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
+        finally:
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
+
     def testViiFit(self):
         try:
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-v", "True"])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-v"])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_VII_FIT_OUT))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
@@ -172,3 +215,17 @@ class TestFitEVBSetup(unittest.TestCase):
             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_ARQ2_OUT))
         finally:
             silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
+
+    def testCollectBest(self):
+        try:
+            shutil.copyfile(ORIG_ALL_BEST, ALL_BEST)
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-s", ALL_BEST])
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
+            self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST))
+            self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_CSV))
+            self.assertFalse(diff_lines(ALL_BEST_DIFF, GOOD_ALL_BEST_DIFF))
+        finally:
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST_CSV, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST_DIFF, disable=DISABLE_REMOVE)
