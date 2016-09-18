@@ -402,6 +402,8 @@ def make_summary(cfg):
                         if abs(val-high[index]) < TOL:
                             warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {})."
                                     "".format(val, high[index], headers[index], index))
+                    else:
+                        percent_diff[headers[index]] = np.nan
                 percent_diffs.append(percent_diff)
             last_row = row
         if len(percent_diffs) > 0:
