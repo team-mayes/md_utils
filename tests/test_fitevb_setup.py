@@ -50,6 +50,7 @@ GOOD_ALL_BEST_RESID = os.path.join(SUB_DATA_DIR, 'all_best_resid_good.dat')
 GOOD_ALL_BEST_RESID_CSV = os.path.join(SUB_DATA_DIR, 'all_best_w_resid_good.csv')
 GOOD_ALL_BEST_RESID_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_w_resid_perc_diff_good.csv')
 
+ALL_BEST_STR = 'all_best.dat'
 GOOD_ALL_BEST_NEW = os.path.join(SUB_DATA_DIR, 'all_best_new_good.dat')
 
 DA_GAUSS_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup.ini')
@@ -274,10 +275,10 @@ class TestFitEVBSetup(unittest.TestCase):
     def testCollectBestWResidNoInitialBest(self):
         try:
             # Ensure that this is not already a summary file
-            silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST, "-r"])
+            silent_remove(ALL_BEST_STR, disable=DISABLE_REMOVE)
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST_STR, "-r"])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_INP_OUT1))
-            self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST_NEW))
+            self.assertFalse(diff_lines(ALL_BEST_STR, GOOD_ALL_BEST_NEW))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-            silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST_STR, disable=DISABLE_REMOVE)
