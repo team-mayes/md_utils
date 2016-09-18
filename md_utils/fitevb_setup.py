@@ -338,7 +338,14 @@ def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
         if os.path.exists(summary_file_name):
             cfgs[MAIN_SEC][SUMMARY_FILE] = summary_file_name
         else:
-            raise IOError("Invalid '{}' provided".format(summary_file_name))
+            # can create a new file, but make sure directory exists
+            if os.path.exists(os.path.dirname(summary_file_name)):
+                warning("Will create a new summary file, as specified '{}' not found: {}"
+                        "".format(SUMMARY_FILE, summary_file_name))
+                cfgs[MAIN_SEC][SUMMARY_FILE] = summary_file_name
+            else:
+                raise IOError("Invalid '{}' provided. Neither file nor directory found for "
+                              "specified file: {}".format(SUMMARY_FILE, summary_file_name))
 
     return cfgs
 

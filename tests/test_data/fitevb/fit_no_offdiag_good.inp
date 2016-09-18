@@ -1,6 +1,6 @@
 FIT  VII GLU-P
   -22.833394    -22.833394  : Vii
-FIT  REP1 NOT_SPECIFIED
+FIT  REP1 GLU-D
     0.001000      0.100000  : B
     0.100000      2.000000  : b
     0.001000      2.000000  : b'
