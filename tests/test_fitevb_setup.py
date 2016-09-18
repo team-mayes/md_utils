@@ -38,6 +38,10 @@ GOOD_ALL_BEST_CSV = os.path.join(SUB_DATA_DIR, 'all_best_good.csv')
 ALL_BEST_DIFF = os.path.join(MAIN_DIR, 'all_best_perc_diff.csv')
 GOOD_ALL_BEST_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff_good.csv')
 
+ORIG_ALL_BEST_RESID = os.path.join(SUB_DATA_DIR, 'orig_all_best_w_resid.dat')
+GOOD_ALL_BEST_RESID = os.path.join(SUB_DATA_DIR, 'all_best_resid_good.dat')
+GOOD_ALL_BEST_RESID_CSV = os.path.join(SUB_DATA_DIR, 'all_best_w_resid_good.csv')
+GOOD_ALL_BEST_RESID_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_w_resid_perc_diff_good.csv')
 
 DA_GAUSS_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup.ini')
 MISS_SEC_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_missing_section.ini')
@@ -224,6 +228,20 @@ class TestFitEVBSetup(unittest.TestCase):
             self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST))
             self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_CSV))
             self.assertFalse(diff_lines(ALL_BEST_DIFF, GOOD_ALL_BEST_DIFF))
+        finally:
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST_CSV, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST_DIFF, disable=DISABLE_REMOVE)
+
+    def testCollectBestWResid(self):
+        try:
+            shutil.copyfile(ORIG_ALL_BEST_RESID, ALL_BEST)
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-s", ALL_BEST, "-r"])
+            self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
+            self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST_RESID))
+            self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_RESID_CSV))
+            self.assertFalse(diff_lines(ALL_BEST_DIFF, GOOD_ALL_BEST_RESID_DIFF))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
             silent_remove(ALL_BEST, disable=DISABLE_REMOVE)

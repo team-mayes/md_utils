@@ -13,6 +13,7 @@ import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, write_csv, IO_ERROR, INPUT_ERROR,
                                 GOOD_RET, INVALID_DATA)
 
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -57,6 +58,8 @@ OUT_BASE_DIR = 'output_directory'
 PARAM_NUM = 'param_num'
 BEST_FILE = 'best_param_file'
 SUMMARY_FILE = 'summary_file'
+RESID_IN_BEST = 'resid_printed_in_best'
+RESIDUAL = 'residual'
 
 LOW = 'low'
 HIGH = 'high'
@@ -70,6 +73,7 @@ MAIN_SEC_DEF_CFG_VALS = {INP_FILE: 'fit.inp',
                          PARAM_NUM: 0,
                          SUMMARY_FILE: None,
                          SECTIONS: None,
+                         RESID_IN_BEST: False,
                          }
 PARAM_SEC_REQ_CFG_VALS = {GROUP_NAMES: str,
                           }
@@ -289,9 +293,11 @@ def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
     if MAIN_SEC not in cfgs:
         cfgs[MAIN_SEC] = MAIN_SEC_DEF_CFG_VALS
     if resid_in_best:
-            cfgs[MAIN_SEC][PARAM_NUM] = 1
+        cfgs[MAIN_SEC][PARAM_NUM] = 1
+        cfgs[MAIN_SEC][RESID_IN_BEST] = True
     else:
         cfgs[MAIN_SEC][PARAM_NUM] = 0
+        cfgs[MAIN_SEC][RESID_IN_BEST] = False
     # Ensure all required info is present for specified sections.
     for section in cfgs:
         if section == MAIN_SEC:
@@ -351,6 +357,10 @@ def get_param_info(cfg):
             low.append(cfg[section][param][LOW])
             high.append(cfg[section][param][HIGH])
             headers.append(cfg[section][param][DESCRIP])
+    if cfg[MAIN_SEC][RESID_IN_BEST]:
+        low.append(0)
+        high.append(np.inf)
+        headers.append(RESIDUAL)
     return np.array(low), np.array(high), headers
 
 
@@ -401,8 +411,10 @@ def make_summary(cfg):
                 if abs(val) > abs(max_percent_diff):
                     max_percent_diff = val
                     max_diff_param = param
-            print("Maximum (absolute value) percent different from last read line is {} % for parameter '{}'."
+            print("Maximum (absolute value) percent difference from last read line is {} % for parameter '{}'."
                   "".format(max_percent_diff, max_diff_param))
+            if cfg[MAIN_SEC][RESID_IN_BEST]:
+                print("Percent change in residual: {} %".format(percent_diffs[-1][RESIDUAL]))
 
         # format for gnuplot and np.loadtxt
         f_out = create_out_fname(summary_file, suffix='_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
