@@ -32,10 +32,18 @@ SECTIONS = 'sections'
 MAIN_SEC = 'main'
 ARQ_SEC = 'ARQ'
 ARQ2_SEC = 'ARQ2'
+ARQ5_SEC = 'ARQ5'
+ARQ6_SEC = 'ARQ6'
+ARQ7_SEC = 'ARQ7'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
 PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC]
+
+ARQ_PARAMS = ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
+              'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const']
+ARQ2_PARAMS = ['gamma', 'p', 'k', 'd_oo', 'beta',
+               'cap_r0_oo', 'p_prime', 'alpha', 'r0_oo', 'vij_const']
 
 # Config keys
 GROUP_NAMES = 'group_names'
@@ -43,10 +51,11 @@ GROUP_NAMES = 'group_names'
 # uppercase letters, they will not match input values! Thus, all these parameter names use exclusively lowercase
 # letters, using the prefix "cap" to specify capitalized parameter names (from the corresponding paper). For example,
 # to disambiguate the parameters 'B' and 'b', I use "cap_b" and "b"
-FIT_PARAMS = {ARQ_SEC: ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
-                        'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const'],
-              ARQ2_SEC: ['gamma', 'p', 'k', 'd_oo', 'beta',
-                         'cap_r0_oo', 'p_prime', 'alpha', 'r0_oo', 'vij_const'],
+FIT_PARAMS = {ARQ_SEC: ARQ_PARAMS,
+              ARQ2_SEC: ARQ2_PARAMS,
+              ARQ5_SEC: ARQ_PARAMS,
+              ARQ6_SEC: ARQ2_PARAMS,
+              ARQ7_SEC: ARQ2_PARAMS,
               DA_GAUSS_SEC: ['c1', 'c2', 'c3'],
               VII_SEC: ['vii'],
               REP1_SEC: ['cap_b', 'b', 'b_prime', 'd_oo', 'cap_c', 'c', 'd_oh', 'cutoff_oo_low', 'cutoff_oo_high',
