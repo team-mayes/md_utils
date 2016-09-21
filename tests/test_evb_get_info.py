@@ -161,7 +161,7 @@ class TestEVBGetInfo(unittest.TestCase):
         try:
             main(["-c", CI_ONE_STATE_EACH_FILE_INI])
             self.assertFalse(diff_lines(DEF_ONE_STATE_OUT, GOOD_ONE_STATE_OUT))
-            # self.assertFalse(diff_lines(DEF_ONE_STATE_OUT2, GOOD_ONE_STATE_OUT2))
+            self.assertFalse(diff_lines(DEF_ONE_STATE_OUT2, GOOD_ONE_STATE_OUT2))
         finally:
             silent_remove(DEF_ONE_STATE_OUT, disable=DISABLE_REMOVE)
             silent_remove(DEF_ONE_STATE_OUT2, disable=DISABLE_REMOVE)

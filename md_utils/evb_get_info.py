@@ -91,15 +91,15 @@ MOL_B = 'mol_B'
 MAX_PROT_CI_SQ = 'max_prot_ci2'
 MAX_HYD_CI_SQ = 'max_hyd_ci2'
 NEXT_MAX_HYD_CI_SQ = 'next_max_hyd_ci2'
-MAX_PROT_CI_E = 'max_prot_energy'
-MAX_HYD_CI_E = 'max_hyd_energy'
+MAX_PROT_E = 'max_prot_energy'
+MAX_HYD_E = 'max_hyd_energy'
 NEXT_MAX_HYD_E = 'next_max_hyd_energy'
 MAX_HYD_MOL = 'max_hyd_mol'
 NEXT_MAX_HYD_MOL = 'next_max_hyd_mol'
 MAX_PROT_STATE_NUM = 'max_prot_state_num'
 MAX_HYD_STATE_NUM = 'max_state_num'
 MAX_PROT_STATE_COUL = 'max_prot_state_coul'
-MAX_HYD_STATE_COUL = 'max_state_coul'
+MAX_HYD_STATE_COUL = 'max_hyd_state_coul'
 MAX_CI_SQ_DIFF = 'max_ci_sq_diff'
 COUL_DIFF = 'coul_diff'
 MAX_PROT_CLOSE_WAT = 'max_prot_close_water_mol'
@@ -113,7 +113,7 @@ STATES_SHELL3 = 'evb_states_shell_3'
 PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_MOL]
 CI_FIELDNAMES = [TIMESTEP,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
-                 MAX_PROT_CI_E, MAX_HYD_CI_E, NEXT_MAX_HYD_E,
+                 MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
                  MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
 KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3,
@@ -288,7 +288,6 @@ def process_evb_file(evb_file, cfg):
                         max_max_prot_mol_a = state_list[state][MOL_A]
                 for state in hyd_state_list:
                     water_molid = state_list[state][MOL_B]
-                    # if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
                     if eigen_sq[state] > max_hyd_ci_sq:
                         if max_hyd_ci_sq > next_max_hyd_ci_sq:
                             next_max_hyd_ci_sq = copy.copy(max_hyd_ci_sq)
@@ -308,9 +307,6 @@ def process_evb_file(evb_file, cfg):
                                     hyd_state_mol_dict[water_molid] = eigen_sq[state]
                             else:
                                 hyd_state_mol_dict[water_molid] = eigen_sq[state]
-
-                # todo: remove me!!
-                next_max_hyd_ci_sq = 0.0
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                NEXT_MAX_HYD_CI_SQ: next_max_hyd_ci_sq, MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq,
                                MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol})
@@ -331,19 +327,32 @@ def process_evb_file(evb_file, cfg):
                 section = None
                 if max_prot_state is None:
                     prot_coul = np.nan
+                    prot_e = np.nan
                 # sometimes, there is only one state, so the diagonal array is a vector
                 elif one_state:
                     prot_coul = diag_array[3] + diag_array[8]
+                    prot_e = diag_array[1]
                 else:
                     prot_coul = diag_array[max_prot_state][3] + diag_array[max_prot_state][8]
+                    prot_e = diag_array[max_prot_state][1]
                 if max_hyd_state is None:
                     hyd_coul = np.nan
+                    max_hyd_e = np.nan
                 elif one_state:
                     hyd_coul = diag_array[3] + diag_array[3]
+                    max_hyd_e = diag_array[1]
                 else:
                     hyd_coul = diag_array[max_hyd_state][3] + diag_array[max_hyd_state][8]
+                    max_hyd_e = diag_array[max_hyd_state][1]
+                if next_max_hyd_state is None:
+                    next_max_hyd_e = np.nan
+                elif one_state:
+                    next_max_hyd_e = diag_array[1]
+                else:
+                    next_max_hyd_e = diag_array[next_max_hyd_state][1]
                 result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul,
-                               COUL_DIFF: hyd_coul - prot_coul})
+                               COUL_DIFF: hyd_coul - prot_coul,
+                               MAX_PROT_E: prot_e, MAX_HYD_E: max_hyd_e, NEXT_MAX_HYD_E: next_max_hyd_e})
                 if cfg[SKIP_ONE_STATE] and states_per_shell[0] == 1:
                     continue
                 data_to_print.append(result)
