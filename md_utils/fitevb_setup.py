@@ -11,7 +11,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, write_csv, IO_ERROR, INPUT_ERROR,
-                                GOOD_RET, INVALID_DATA)
+                                GOOD_RET, INVALID_DATA, dequote)
 
 
 try:
@@ -38,7 +38,7 @@ ARQ7_SEC = 'ARQ7'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
-PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC]
+PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC, ]
 
 ARQ_PARAMS = ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
               'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const']
@@ -67,6 +67,7 @@ OUT_BASE_DIR = 'output_directory'
 PARAM_NUM = 'param_num'
 BEST_FILE = 'best_param_file'
 SUMMARY_FILE = 'summary_file'
+SUM_HEAD_SUFFIX = 'summary_heading_suffix'
 RESID_IN_BEST = 'resid_printed_in_best'
 RESIDUAL = 'residual'
 
@@ -83,6 +84,7 @@ MAIN_SEC_DEF_CFG_VALS = {INP_FILE: 'fit.inp',
                          SUMMARY_FILE: None,
                          SECTIONS: None,
                          RESID_IN_BEST: False,
+                         SUM_HEAD_SUFFIX: '',
                          }
 PARAM_SEC_REQ_CFG_VALS = {GROUP_NAMES: str,
                           }
@@ -315,6 +317,8 @@ def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
                     raise InvalidDataError("The configuration file contains parameter '{}' in section '{}'; expected "
                                            "only the following parameters for this section: {}"
                                            "".format(param, section, MAIN_SEC_DEF_CFG_VALS.keys()))
+            if len(cfgs[MAIN_SEC][SUM_HEAD_SUFFIX]) > 1:
+                cfgs[MAIN_SEC][param] = dequote(cfgs[MAIN_SEC][param])
             if cfgs[section][OUT_BASE_DIR] is None:
                 cfgs[section][OUT_BASE_DIR] = ""
 
@@ -373,11 +377,11 @@ def get_param_info(cfg):
         for param in FIT_PARAMS[section]:
             low.append(cfg[section][param][LOW])
             high.append(cfg[section][param][HIGH])
-            headers.append(cfg[section][param][DESCRIP])
+            headers.append(cfg[section][param][DESCRIP] + cfg[MAIN_SEC][SUM_HEAD_SUFFIX])
     if cfg[MAIN_SEC][RESID_IN_BEST]:
         low.append(0)
         high.append(np.inf)
-        headers.append(RESIDUAL)
+        headers.append(RESIDUAL + cfg[MAIN_SEC][SUM_HEAD_SUFFIX])
     return np.array(low), np.array(high), headers
 
 
@@ -433,7 +437,8 @@ def make_summary(cfg):
             print("Maximum (absolute value) percent difference from last read line is {} % for parameter '{}'."
                   "".format(max_percent_diff, max_diff_param))
             if cfg[MAIN_SEC][RESID_IN_BEST]:
-                print("Percent change in residual: {} %".format(percent_diffs[-1][RESIDUAL]))
+                print("Percent change in residual: {} %"
+                      "".format(percent_diffs[-1][RESIDUAL + cfg[MAIN_SEC][SUM_HEAD_SUFFIX]]))
 
         # format for gnuplot and np.loadtxt
         f_out = create_out_fname(summary_file, suffix='_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])

@@ -81,6 +81,16 @@ GOOD_ARQ2_OUT = os.path.join(SUB_DATA_DIR, 'fit_arq2_good.inp')
 
 GHOST_STR = 'ghost'
 
+ARQ7_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_arq7.ini')
+ORIG_ALL_BEST_ARQ2 = os.path.join(SUB_DATA_DIR, 'orig_all_best_arq2.dat')
+FITEVB_ARQ2_BEST = os.path.join(SUB_DATA_DIR, 'fit_arq2.best')
+GOOD_INP_ARQ7_OUT = os.path.join(SUB_DATA_DIR, 'fit_arq7_good.inp')
+GOOD_ALL_BEST_ARQ7 = os.path.join(SUB_DATA_DIR, 'all_best_arq7.dat')
+GOOD_ALL_BEST_ARQ7_CSV = os.path.join(SUB_DATA_DIR, 'all_best_arq7.csv')
+SUB_DATA_ALL_BEST_CSV = os.path.join(SUB_DATA_DIR, 'all_best.csv')
+SUB_ALL_BEST_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff.csv')
+GOOD_ARQ7_PERC_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff_arq7_good.csv')
+
 
 class TestFitEVBSetupFailWell(unittest.TestCase):
     def testHelp(self):
@@ -282,3 +292,17 @@ class TestFitEVBSetup(unittest.TestCase):
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
             silent_remove(ALL_BEST_STR, disable=DISABLE_REMOVE)
+
+    def testAddSummarySuffix(self):
+        try:
+            shutil.copyfile(ORIG_ALL_BEST_ARQ2, ALL_BEST)
+            main(["-c", ARQ7_INI, "-f", FITEVB_ARQ2_BEST, "-s", ALL_BEST, "-r"])
+            self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_INP_ARQ7_OUT))
+            self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST_ARQ7))
+            self.assertFalse(diff_lines(SUB_DATA_ALL_BEST_CSV, GOOD_ALL_BEST_ARQ7_CSV))
+            self.assertFalse(diff_lines(SUB_ALL_BEST_DIFF, GOOD_ARQ7_PERC_DIFF))
+        finally:
+            silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)
+            silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
+            silent_remove(SUB_DATA_ALL_BEST_CSV, disable=DISABLE_REMOVE)
+            silent_remove(SUB_ALL_BEST_DIFF, disable=DISABLE_REMOVE)
