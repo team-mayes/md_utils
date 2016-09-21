@@ -77,6 +77,7 @@ REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
 # For evb file processing
 SEC_TIMESTEP = 'timestep'
+SEC_ENE_TOTAL = 'ene_total'
 SEC_COMPLEX = 'complex_section'
 SEC_STATES = 'states_section'
 SEC_EIGEN = 'eigen_vector_section'
@@ -110,8 +111,9 @@ STATES_TOT = 'evb_states_total'
 STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
+ENE_TOTAL = 'ene_total'
 PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_MOL]
-CI_FIELDNAMES = [TIMESTEP,
+CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
                  MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
                  MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
@@ -171,6 +173,7 @@ def parse_cmdline(argv):
 
 def find_section_state(line):
     time_pat = re.compile(r"^TIMESTEP.*")
+    ene_total_pat = re.compile(r"^ENE_TOTAL.*")
     complex_pat = re.compile(r"^COMPLEX 1:.*")
     state_pat = re.compile(r"^STATES.*")
     eigen_pat = re.compile(r"^EIGEN_VECTOR.*")
@@ -179,6 +182,8 @@ def find_section_state(line):
     end_pat = re.compile(r"END_OF_COMPLEX 1.*")
     if time_pat.match(line):
         return SEC_TIMESTEP
+    if ene_total_pat.match(line):
+        return SEC_ENE_TOTAL
     elif complex_pat.match(line):
         return SEC_COMPLEX
     elif state_pat.match(line):
@@ -240,6 +245,11 @@ def process_evb_file(evb_file, cfg):
                 max_prot_state = None
                 max_hyd_state = None
                 next_max_hyd_state = None
+                section = None
+            elif section == SEC_ENE_TOTAL:
+                split_line = line.split()
+                ene_total = float(split_line[1])
+                result[ENE_TOTAL] = ene_total
                 section = None
             elif section == SEC_COMPLEX:
                 split_line = line.split()

@@ -7,6 +7,7 @@ This script assumes we care about one protonatable residue in a simulation with 
 """
 
 from __future__ import print_function
+import copy
 import os
 import sys
 import argparse
@@ -65,6 +66,7 @@ GOFR_RAW_HIST = 'raw_histogram_for_gofr'
 
 # with output from every frame types
 CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
+CALC_HYD_WAT = 'calc_hyd_water_dist_hij_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
 CALC_HIJ_DA_GAUSS_FORM = 'calc_hij_da_gauss_flag'
 CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
@@ -82,7 +84,7 @@ CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'    # 14 17 ?? ??
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
-PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM]
+PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM, CALC_HYD_WAT]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
@@ -103,6 +105,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 CALC_HIJ_DA_GAUSS_FORM: False,
                 CALC_HIJ_ARQ_FORM: False,
                 CALC_HIJ_WATER_FORM: False,
+                CALC_HYD_WAT: False,
                 GOFR_OUTPUT: False,
                 CALC_HO_GOFR: False,
                 CALC_OO_GOFR: False,
@@ -175,12 +178,17 @@ HIJ_WATER = 'hij_water_params'
 HIJ_A1 = 'hij_water_termA1'
 HIJ_A2 = 'hij_water_termA2'
 HIJ_A3 = 'hij_water_termA3'
+R_OO_HYD_WAT = 'R_OO_hyd_wat'
+R_OH_HYD = 'R_OH_hyd'
+R_OH_WAT_HYD = 'R_OH_hyd_wat'
+HIJ_WAT = 'HIJ_OO_hyd_wat'
 # OSTARH_MIN = 'o_star_h_min'
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
+HYD_WAT_FIELDNAMES = [R_OO_HYD_WAT, R_OH_HYD, R_OH_WAT_HYD, HIJ_WAT]
 
 # EVB Params
 # asp/glu common parameters
@@ -457,33 +465,77 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
                                    }
 
 
-def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, h30_atom_type):
+def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, h3o_oxy_atom_type):
     """
     Calculate the minimum distance between a water oxygen and the protonatable oxygen atom closest to the excess proton
-    @param water_oxys:
+    @param water_oxys: list of atom dicts
     @param o_star: the protonatable oxygen atom closest to the excess proton
     @param hydronium: the list of atoms in the hydronium, if there is a hydronium
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
-    @param h30_atom_type: (int) lammps type for h30 oxygen atom
+    @param h3o_oxy_atom_type: (int) lammps type for h30 oxygen atom
     @return: the water oxygen (or hydronium oxygen) closest to the o_star, and the distance between them
     """
     # initialize smallest distance to the maximum distance in a periodic box
     min_dist = np.linalg.norm(np.divide(box, 2))
     closest_o = None
+    o_star_coord = np.asarray(o_star[XYZ_COORDS])
     if not hydronium:
         # initialize minimum distance to maximum distance allowed in the PBC
         for wat_o in water_oxys:
-            dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), np.asarray(o_star[XYZ_COORDS]), box)
+            dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), o_star_coord, box)
             if dist < min_dist:
                 min_dist = dist
                 closest_o = wat_o
     else:
         for atom in hydronium:
-            if atom[ATOM_TYPE] == h30_atom_type:
-                min_dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(o_star[XYZ_COORDS]), box)
+            if atom[ATOM_TYPE] == h3o_oxy_atom_type:
+                min_dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), o_star_coord, box)
                 closest_o = atom
 
     return closest_o, min_dist
+
+
+def find_closest_wat_o_to_hyd_o(water_oxys, hydronium, box, h3o_oxy_atom_type):
+    """
+    Calculate the minimum distance between a water oxygen a hydronium oxygen
+    @param water_oxys: list of atom dicts
+    @param hydronium: the list of atoms in the hydronium, if there is a hydronium
+    @param box: the dimensions of the periodic box (assumed 90 degree angles)
+    @param h3o_oxy_atom_type: (int) lammps type for h30 oxygen atom
+    @return: the water oxygen closest to the hydronium oxygen and the distance between them; the hydronium oxygen;
+       the hydronium hydrogen closes to the water oxygen and the distance between it and the hydronium oxygen
+    """
+    min_oo_dist = np.linalg.norm(np.divide(box, 2))
+    min_oh_dist = copy.copy(min_oo_dist)
+    wat_o_hstar_dist = copy.copy(min_oo_dist)
+    close_wat_o_to_hyd = None
+    hyd_o = None
+    hyd_h = []
+    close_hyd_h_to_wat = None
+    for atom in hydronium:
+        if atom[ATOM_TYPE] == h3o_oxy_atom_type:
+            hyd_o = atom
+        else:
+            hyd_h.append(atom)
+    hyd_o_coords = np.asarray(hyd_o[XYZ_COORDS])
+    for wat_o in water_oxys:
+        dist = pbc_dist(np.asarray(wat_o[XYZ_COORDS]), hyd_o_coords, box)
+        if dist < min_oo_dist:
+            min_oo_dist = dist
+            close_wat_o_to_hyd = wat_o
+    close_wat_o_coords = np.asarray(close_wat_o_to_hyd[XYZ_COORDS])
+    for h_atom in hyd_h:
+        # noinspection PyTypeChecker
+        h_atom_coords = np.asarray(h_atom[XYZ_COORDS])
+        dist = pbc_dist(h_atom_coords, close_wat_o_coords, box)
+        if dist < wat_o_hstar_dist:
+            wat_o_hstar_dist = dist
+            min_oh_dist = pbc_dist(h_atom_coords, hyd_o_coords, box)
+            close_hyd_h_to_wat = h_atom
+
+    hyd_wat_dict = {R_OO_HYD_WAT: min_oo_dist, R_OH_HYD: min_oh_dist,
+                    R_OH_WAT_HYD: wat_o_hstar_dist}
+    return hyd_wat_dict, hyd_o, close_hyd_h_to_wat, close_wat_o_to_hyd
 
 
 def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
@@ -562,11 +614,23 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 q_dot_arq = calc_q_arq(o_ostar_dist, o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
                 calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
+
         if cfg[CALC_HIJ_DA_GAUSS_FORM]:
             r_oh = oh_dist_dict[OH_MIN]
             hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
             hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
             calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
+    if cfg[CALC_HYD_WAT]:
+        if len(hydronium) == 0:
+            calc_results.update({R_OO_HYD_WAT: np.nan, R_OH_HYD: np.nan, R_OH_WAT_HYD: np.nan, HIJ_WAT: np.nan})
+        else:
+            hyd_wat_dict, hyd_o, hyd_h, wat_o = find_closest_wat_o_to_hyd_o(water_oxys, hydronium, box,
+                                                                                  cfg[H3O_O_TYPE])
+            # noinspection PyTypeChecker
+            q_dot = calc_q(wat_o[XYZ_COORDS], hyd_o[XYZ_COORDS], hyd_h[XYZ_COORDS], box)
+            hij_hyd_wat, term_a1, term_a2, term_a3 = calc_hij_wat(hyd_wat_dict[R_OO_HYD_WAT], q_dot)
+            calc_results[HIJ_WAT] = hij_hyd_wat
+            calc_results.update(hyd_wat_dict)
 
     # For calcs requiring H* (proton on protonated residue) skip timesteps when there is no H* (residue deprotonated)
     if cfg[GOFR_OUTPUT]:
@@ -696,6 +760,8 @@ def setup_per_frame_output(cfg):
         out_fieldnames.extend(HIJ_ARQ_FIELDNAMES)
     if cfg[CALC_HIJ_WATER_FORM]:
         out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
+    if cfg[CALC_HYD_WAT]:
+        out_fieldnames.extend(HYD_WAT_FIELDNAMES)
     return out_fieldnames
 
 

@@ -73,6 +73,9 @@ HIJ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_sum.csv')
 GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
+WAT_HYD_INI = os.path.join(SUB_DATA_DIR, 'calc_wat_hyd.ini')
+GOOD_WAT_HYD_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_wat_hyd_good.csv')
+
 HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
 # noinspection PyUnresolvedReferences
 HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
@@ -196,6 +199,13 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(HIJ_OUT, disable=DISABLE_REMOVE)
 
+    def testMaxTimestepsCalcWatHyd(self):
+        try:
+            main(["-c", WAT_HYD_INI])
+            self.assertFalse(diff_lines(HIJ_OUT, GOOD_WAT_HYD_OUT))
+        finally:
+            silent_remove(HIJ_OUT, disable=DISABLE_REMOVE)
+
     def testHIJAlt(self):
         try:
             test_input = ["-c", HIJ_ALT_INI]
@@ -213,9 +223,9 @@ class TestLammpsProcData(unittest.TestCase):
             test_input = ["-c", HIJ_ARQ_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
-        #     with capture_stderr(main, test_input) as output:
-        #         self.assertTrue("did not have the full list of atom numbers" in output)
-        #     self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("did not have the full list of atom numbers" in output)
+            self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
         finally:
             silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
 
