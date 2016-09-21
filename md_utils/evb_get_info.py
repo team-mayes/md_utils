@@ -18,6 +18,7 @@ just get highest prot ci^2, highest wat ci^2
 
 from __future__ import print_function
 from operator import itemgetter
+import copy
 import re
 import sys
 import argparse
@@ -35,6 +36,7 @@ except ImportError:
 __author__ = 'hmayes'
 
 # Constants #
+NUM_DECIMALS = 12
 
 # Config File Sections
 MAIN_SEC = 'main'
@@ -88,7 +90,12 @@ MOL_A = 'mol_A'
 MOL_B = 'mol_B'
 MAX_PROT_CI_SQ = 'max_prot_ci2'
 MAX_HYD_CI_SQ = 'max_hyd_ci2'
+NEXT_MAX_HYD_CI_SQ = 'next_max_hyd_ci2'
+MAX_PROT_CI_E = 'max_prot_energy'
+MAX_HYD_CI_E = 'max_hyd_energy'
+NEXT_MAX_HYD_E = 'next_max_hyd_energy'
 MAX_HYD_MOL = 'max_hyd_mol'
+NEXT_MAX_HYD_MOL = 'next_max_hyd_mol'
 MAX_PROT_STATE_NUM = 'max_prot_state_num'
 MAX_HYD_STATE_NUM = 'max_state_num'
 MAX_PROT_STATE_COUL = 'max_prot_state_coul'
@@ -103,9 +110,11 @@ STATES_TOT = 'evb_states_total'
 STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
-PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, ]
-CI_FIELDNAMES = [TIMESTEP, MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, MAX_CI_SQ_DIFF,
-                 COUL_DIFF]
+PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_MOL]
+CI_FIELDNAMES = [TIMESTEP,
+                 MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
+                 MAX_PROT_CI_E, MAX_HYD_CI_E, NEXT_MAX_HYD_E,
+                 MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
 KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3,
                         MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
@@ -198,8 +207,12 @@ def process_evb_file(evb_file, cfg):
         one_state = False
         max_max_prot_mol_a = None
         max_hyd_wat_mol = None
+        next_max_hyd_wat_mol = None
         timestep = None
         states_per_shell = [np.nan]
+        # not really needed here, but guarantees that these exist even if there is no timestep found
+        max_hyd_ci_sq = 0.0
+        next_max_hyd_ci_sq = 0.0
         for line in d:
             line = line.strip()
             if section is None:
@@ -223,8 +236,10 @@ def process_evb_file(evb_file, cfg):
                 hyd_state_mol_dict = {}
                 max_prot_ci_sq = 0.0
                 max_hyd_ci_sq = 0.0
+                next_max_hyd_ci_sq = 0.0
                 max_prot_state = None
                 max_hyd_state = None
+                next_max_hyd_state = None
                 section = None
             elif section == SEC_COMPLEX:
                 split_line = line.split()
@@ -270,26 +285,35 @@ def process_evb_file(evb_file, cfg):
                     if eigen_sq[state] > max_prot_ci_sq:
                         max_prot_ci_sq = eigen_sq[state]
                         max_prot_state = state
-                        # TODO: see if I need to add logic here for an np.nan if only 1 state
-                        # don't need to (and can't) match a neighboring water if only 1 state found
-                        # if not one_state:
                         max_max_prot_mol_a = state_list[state][MOL_A]
                 for state in hyd_state_list:
                     water_molid = state_list[state][MOL_B]
-                    if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
-                        if eigen_sq[state] > max_hyd_ci_sq:
-                            max_hyd_ci_sq = eigen_sq[state]
-                            max_hyd_state = state
-                            max_hyd_wat_mol = water_molid
-                        if cfg[PRINT_WAT_MOL]:
+                    # if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
+                    if eigen_sq[state] > max_hyd_ci_sq:
+                        if max_hyd_ci_sq > next_max_hyd_ci_sq:
+                            next_max_hyd_ci_sq = copy.copy(max_hyd_ci_sq)
+                            next_max_hyd_state = copy.copy(max_hyd_state)
+                            next_max_hyd_wat_mol = copy.copy(max_hyd_wat_mol)
+                        max_hyd_ci_sq = eigen_sq[state]
+                        max_hyd_state = state
+                        max_hyd_wat_mol = water_molid
+                    elif eigen_sq[state] > next_max_hyd_ci_sq:
+                        next_max_hyd_ci_sq = eigen_sq[state]
+                        next_max_hyd_state = state
+                        next_max_hyd_wat_mol = water_molid
+                    if cfg[PRINT_WAT_MOL]:
+                        if state_list[state][MOL_A] == cfg[PROT_RES_MOL_ID] or water_molid == max_max_prot_mol_a:
                             if water_molid in hyd_state_mol_dict:
                                 if eigen_sq[state] > hyd_state_mol_dict[water_molid]:
                                     hyd_state_mol_dict[water_molid] = eigen_sq[state]
                             else:
                                 hyd_state_mol_dict[water_molid] = eigen_sq[state]
 
+                # todo: remove me!!
+                next_max_hyd_ci_sq = 0.0
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
-                               MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq, MAX_HYD_MOL: max_hyd_wat_mol})
+                               NEXT_MAX_HYD_CI_SQ: next_max_hyd_ci_sq, MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq,
+                               MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol})
                 if cfg[PRINT_WAT_MOL]:
                     if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
                         prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: np.nan,
