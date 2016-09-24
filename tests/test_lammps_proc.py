@@ -76,12 +76,10 @@ GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 WAT_HYD_INI = os.path.join(SUB_DATA_DIR, 'calc_wat_hyd.ini')
 GOOD_WAT_HYD_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_wat_hyd_good.csv')
 
-HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
-# noinspection PyUnresolvedReferences
-HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
-GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
-
 HIJ_ARQ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq.ini')
+# noinspection PyUnresolvedReferences
+HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
+GOOD_HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -206,17 +204,6 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(HIJ_OUT, disable=DISABLE_REMOVE)
 
-    def testHIJAlt(self):
-        try:
-            test_input = ["-c", HIJ_ALT_INI]
-            if logger.isEnabledFor(logging.DEBUG):
-                main(test_input)
-            with capture_stderr(main, test_input) as output:
-                self.assertTrue("did not have the full list of atom numbers" in output)
-            self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
-        finally:
-            silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
-
     def testHIJArq(self):
         # Test calculating the Maupin form
         try:
@@ -225,9 +212,9 @@ class TestLammpsProcData(unittest.TestCase):
                 main(test_input)
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("did not have the full list of atom numbers" in output)
-            self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
+            self.assertFalse(diff_lines(HIJ_ARQ_OUT, GOOD_HIJ_ARQ_OUT))
         finally:
-            silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(HIJ_ARQ_OUT, disable=DISABLE_REMOVE)
 
     def testIncompDump(self):
         try:

@@ -8,6 +8,7 @@ import copy
 import re
 import sys
 import argparse
+import numpy as np
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -38,6 +39,11 @@ ATOM_TYPE_DICT_FILE = 'atom_type_dict_filename'
 MAKE_ATOM_TYPE_DICT = 'make_atom_type_dict_flag'
 ATOM_NUM_DICT_FILE = 'atom_num_dict_filename'
 MAKE_ATOM_NUM_DICT = 'make_atom_num_dict_flag'
+ADJUST_ATOM = 'adjust_atom'
+XYZ1 = 'xyz1'
+XYZ2 = 'xyz2'
+XYZ_STEPS = 'xyz_steps'
+XYZ_STEPS_EXTEND = 'xyz_steps_extend'
 
 # data file info
 ATOMS_PAT = re.compile(r"^Atoms.*")
@@ -51,6 +57,11 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 MAKE_ATOM_NUM_DICT: False,
                 ATOM_NUM_DICT_FILE: None,
                 MAKE_ATOM_TYPE_DICT: False,
+                ADJUST_ATOM: None,
+                XYZ1: [],
+                XYZ2: [],
+                XYZ_STEPS: 0,
+                XYZ_STEPS_EXTEND: 0,
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
             }
@@ -82,7 +93,29 @@ def read_cfg(floc, cfg_proc=process_cfg):
     good_files = config.read(floc)
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
-    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+    main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False)
+
+    if main_proc[ADJUST_ATOM] is not None:
+        try:
+            main_proc[ADJUST_ATOM] = int(main_proc[ADJUST_ATOM])
+            if main_proc[ADJUST_ATOM] < 1:
+                raise ValueError
+        except ValueError:
+            raise InvalidDataError("The value for the '{}' keyword must be a positive integer (read '{}') "
+                                   "as it specifies the 1-based atom index number that will have its xyz "
+                                   "coordinates adjusted.".format(ADJUST_ATOM, main_proc[ADJUST_ATOM]))
+        if main_proc[XYZ_STEPS] <= 0:
+            raise InvalidDataError("When using the '{}' keyword, use the '{}' keyword to specify a positive number of "
+                                   "steps to be taken between coordinates provided for '{}' and '{}'."
+                                   "".format(ADJUST_ATOM, XYZ_STEPS, XYZ1, XYZ2))
+        for key in [XYZ1, XYZ2]:
+            if len(main_proc[key]) == 3:
+                main_proc[key] = np.asarray([float(x) for x in main_proc[key]])
+            else:
+                raise InvalidDataError("Use the '{}' keyword to provide a comma-separated list of three floats "
+                                       "to be used as XYZ coordinates \nfor the atom to be adjusted "
+                                       "(read '{}').".format(key, main_proc[key]))
+
     return main_proc
 
 
@@ -115,8 +148,10 @@ def parse_cmdline(argv):
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
-    except KeyError as e:
-        warning("Input data missing:", e)
+    except (InvalidDataError, KeyError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
         parser.print_help()
         return args, INPUT_ERROR
 
@@ -153,8 +188,7 @@ def process_data_tpl(cfg):
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
-                # Make space for xyz coords
-                xyz_coords = [0.0, 0.0, 0.0]
+                xyz_coords = map(float, split_line[4:7])
                 # Read in CHARMM type info,
                 end = split_line[7:]
                 # end = ' '.join(split_line[7:])
@@ -244,6 +278,8 @@ def make_atom_dict(cfg, data_tpl_content, old_new_atom_num_dict, old_new_atom_ty
     By matching lines in the template and data file, make a dictionary of atom types (old,new)
     @param cfg: configuration for run
     @param data_tpl_content: info from the data template
+    @param old_new_atom_num_dict: dict for changing atom number
+    @param old_new_atom_type_dict: dict for changing atom type
     @return: dictionary of atom types (old,new) (also saved if file name given)
     """
     with open(cfg[DATA_FILES]) as f:
@@ -345,7 +381,6 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
     f_name = create_out_fname(data_file, suffix='_new', ext='.data')
     list_to_file(data_tpl_content[HEAD_CONTENT] + new_data_section + data_tpl_content[TAIL_CONTENT],
                  f_name)
-    print('Completed writing {}'.format(f_name))
 
 
 def process_data_files(cfg, data_tpl_content, atom_type_dict):
@@ -359,10 +394,36 @@ def process_data_files(cfg, data_tpl_content, atom_type_dict):
                 process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_section)
 
 
+def adjust_atom_xyz(cfg, data_tpl_content):
+    """
+    If this options is selected, adjust the xyz coordinates as specified
+    @param cfg: configuration for the run
+    @param data_tpl_content: processed data from the template
+    @return: will print new data files or raise InvalidDataError
+    """
+    if cfg[ADJUST_ATOM] > data_tpl_content[NUM_ATOMS]:
+        raise InvalidDataError("Keyword '{}' specified atom index {} to have its XYZ coordinates adjusted, "
+                               "but found only "
+                               "{} atoms in the data template file: {}".format(ADJUST_ATOM, cfg[ADJUST_ATOM],
+                                                                               data_tpl_content[NUM_ATOMS],
+                                                                               cfg[DATA_TPL_FILE]))
+    diff_vector = np.asarray((np.subtract(cfg[XYZ2], cfg[XYZ1])))
+    inc_vector = np.divide(diff_vector, cfg[XYZ_STEPS])
+    head_content = data_tpl_content[HEAD_CONTENT]
+    atoms_content = data_tpl_content[ATOMS_CONTENT]
+    tail_content = data_tpl_content[TAIL_CONTENT]
+    # since python is zero-based, must subtract 1
+    adjust_atom_num = cfg[ADJUST_ATOM] - 1
+    for multiplier in range(-cfg[XYZ_STEPS_EXTEND], cfg[XYZ_STEPS] + cfg[XYZ_STEPS_EXTEND]):
+        f_name = create_out_fname(cfg[DATA_TPL_FILE], suffix='_' + str(multiplier), ext='.data')
+        atoms_content[adjust_atom_num][4:7] = np.round(multiplier * inc_vector + cfg[XYZ1], 6)
+        list_to_file(head_content + atoms_content + tail_content, f_name)
+
+
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
 
     # Read template and data files
@@ -381,8 +442,10 @@ def main(argv=None):
         # Will return empty dicts if no file
         if not cfg[MAKE_ATOM_TYPE_DICT]:
             old_new_atom_type_dict = read_csv_dict(cfg[ATOM_TYPE_DICT_FILE])
-
-        process_data_files(cfg, data_tpl_content, old_new_atom_type_dict)
+        if cfg[ADJUST_ATOM] is None:
+            process_data_files(cfg, data_tpl_content, old_new_atom_type_dict)
+        else:
+            adjust_atom_xyz(cfg, data_tpl_content)
 
     except IOError as e:
         warning("Problems reading file:", e)

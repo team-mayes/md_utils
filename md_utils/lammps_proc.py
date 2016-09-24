@@ -284,19 +284,21 @@ def calc_q(r_o, r_op, r_h, box):
     return np.dot(q_vec, q_vec)
 
 
-def calc_q_arq(r_oo, r_do, r_h, box):
+def calc_q_arq(r_ao, r_do, r_h, box):
     """
     Calculates the 3-body term, keeping the pbc in mind, per Maupin et al. 2006,
     http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 7-8
-    @param r_oo: distance (accounting for pbc) between the donor and acceptor oxygen atoms
+    @param r_ao: x,y,z position of the acceptor oxygen (closest water O)
     @param r_do: x,y,z position of the donor oxygen (always using the glu oxygen, for now)
     @param r_h: x,y,z position of the reactive H
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
     @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
     """
-    r_sc = r0_sc_arq - lambda_arq * (r_oo - R0_DA_arq)
-    r_dh = pbc_vector_diff(r_h, r_do, box)
-    q_vec = np.subtract(r_dh, r_sc * r_dh / 2.0)
+    da_dist = pbc_dist(r_do, r_ao, box)
+    r_sc = r0_sc_arq - lambda_arq * (da_dist - R0_DA_arq)
+    r_dh = pbc_vector_diff(r_do, r_h, box)
+    r_da = pbc_vector_diff(r_do, r_ao, box)
+    q_vec = np.subtract(r_dh, r_sc * r_da / 2.0)
     return np.dot(q_vec, q_vec)
 
 
@@ -611,7 +613,8 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
                                      HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
             if cfg[CALC_HIJ_ARQ_FORM]:
-                q_dot_arq = calc_q_arq(o_ostar_dist, o_star[XYZ_COORDS], closest_excess_h[XYZ_COORDS], box)
+                q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
+                                       closest_excess_h[XYZ_COORDS], box)
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
                 calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
 
