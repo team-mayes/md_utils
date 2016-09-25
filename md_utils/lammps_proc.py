@@ -14,6 +14,7 @@ import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
                                 find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff)
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, NoSectionError
@@ -71,6 +72,7 @@ CALC_HYD_WAT = 'calc_hyd_water_dist_hij_flag'
 CALC_HIJ_DA_GAUSS_FORM = 'calc_hij_da_gauss_flag'
 CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
+WATER_TERMS_PRINT = 'print_water_terms'
 COMBINE_OUTPUT = 'combine_output_flag'
 
 # TODO: talk to Chris about listing many angles, dihedrals
@@ -84,7 +86,8 @@ CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'    # 14 17 ?? ??
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
-PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM, CALC_HYD_WAT]
+PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM,
+                          WATER_TERMS_PRINT, CALC_HYD_WAT]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
@@ -105,6 +108,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 CALC_HIJ_DA_GAUSS_FORM: False,
                 CALC_HIJ_ARQ_FORM: False,
                 CALC_HIJ_WATER_FORM: False,
+                WATER_TERMS_PRINT: False,
                 CALC_HYD_WAT: False,
                 GOFR_OUTPUT: False,
                 CALC_HO_GOFR: False,
@@ -187,8 +191,10 @@ OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
-HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER, HIJ_A1, HIJ_A2, HIJ_A3]
+HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
+EXTRA_WATER_FIELDNAMES = [HIJ_A1, HIJ_A2, HIJ_A3]
 HYD_WAT_FIELDNAMES = [R_OO_HYD_WAT, R_OH_HYD, R_OH_WAT_HYD, HIJ_WAT]
+FILE_NAME = 'filename'
 
 # EVB Params
 # asp/glu common parameters
@@ -628,7 +634,7 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
             calc_results.update({R_OO_HYD_WAT: np.nan, R_OH_HYD: np.nan, R_OH_WAT_HYD: np.nan, HIJ_WAT: np.nan})
         else:
             hyd_wat_dict, hyd_o, hyd_h, wat_o = find_closest_wat_o_to_hyd_o(water_oxys, hydronium, box,
-                                                                                  cfg[H3O_O_TYPE])
+                                                                            cfg[H3O_O_TYPE])
             # noinspection PyTypeChecker
             q_dot = calc_q(wat_o[XYZ_COORDS], hyd_o[XYZ_COORDS], hyd_h[XYZ_COORDS], box)
             hij_hyd_wat, term_a1, term_a2, term_a3 = calc_hij_wat(hyd_wat_dict[R_OO_HYD_WAT], q_dot)
@@ -711,7 +717,8 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                         write_mode = 'a'
                     if cfg[GOFR_OUTPUT]:
                         print_gofr(cfg, gofr_data)
-                result = {TIMESTEP: timestep}
+                result = {FILE_NAME: os.path.basename(dump_file),
+                          TIMESTEP: timestep}
             elif section == SEC_NUM_ATOMS:
                 num_atoms = int(line)
                 section = None
@@ -754,7 +761,10 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
 
 
 def setup_per_frame_output(cfg):
-    out_fieldnames = [TIMESTEP]
+    out_fieldnames = []
+    if cfg[COMBINE_OUTPUT]:
+        out_fieldnames.append(FILE_NAME)
+    out_fieldnames.append(TIMESTEP)
     if cfg[CALC_OH_DIST]:
         out_fieldnames.extend(OH_FIELDNAMES)
     if cfg[CALC_HIJ_DA_GAUSS_FORM]:
@@ -763,6 +773,8 @@ def setup_per_frame_output(cfg):
         out_fieldnames.extend(HIJ_ARQ_FIELDNAMES)
     if cfg[CALC_HIJ_WATER_FORM]:
         out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
+    if cfg[WATER_TERMS_PRINT]:
+        out_fieldnames.extend(EXTRA_WATER_FIELDNAMES)
     if cfg[CALC_HYD_WAT]:
         out_fieldnames.extend(HYD_WAT_FIELDNAMES)
     return out_fieldnames
