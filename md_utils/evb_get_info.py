@@ -17,6 +17,8 @@ just get highest prot ci^2, highest wat ci^2
 """
 
 from __future__ import print_function
+
+import os
 from operator import itemgetter
 import copy
 import re
@@ -86,6 +88,7 @@ SEC_DIAG = 'diagonal_energy_section'
 SEC_END = 'end_of_timestep'
 
 # For evb processing and output
+FILE_NAME = 'filename'
 TIMESTEP = 'timestep'
 MOL_A = 'mol_A'
 MOL_B = 'mol_B'
@@ -202,6 +205,7 @@ def find_section_state(line):
 
 def process_evb_file(evb_file, cfg):
     with open(evb_file) as d:
+        base_file_name = os.path.basename(evb_file)
         section = None
         # cec_array = np.zeros(3)
         states_array = None
@@ -230,7 +234,8 @@ def process_evb_file(evb_file, cfg):
             if section == SEC_TIMESTEP:
                 split_line = line.split()
                 timestep = int(split_line[1])
-                result = {TIMESTEP: timestep}
+                result = {FILE_NAME: base_file_name,
+                          TIMESTEP: timestep}
                 # Reset variables
                 # Start with an entry so the atom-id = index
                 num_states = 0
@@ -322,10 +327,10 @@ def process_evb_file(evb_file, cfg):
                                MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol})
                 if cfg[PRINT_WAT_MOL]:
                     if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
-                        prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: np.nan,
+                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep, MOL_B: np.nan,
                                                   MAX_HYD_CI_SQ: np.nan})
                     for mol in hyd_state_mol_dict:
-                        prot_wat_to_print.append({TIMESTEP: timestep, MOL_B: mol,
+                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep, MOL_B: mol,
                                                   MAX_HYD_CI_SQ: hyd_state_mol_dict[mol]})
                 section = None
             elif section == SEC_CEC:
@@ -448,22 +453,25 @@ def process_evb_files(cfg):
             if cfg[PRINT_CI_SQ]:
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                write_csv(data_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_CI_SUBSET]:
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
-                write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_WAT_MOL]:
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_wat_mols', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
-                write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                write_csv(wat_mol_data_to_print, f_out, [FILE_NAME] + PROT_WAT_FIELDNAMES,
+                          extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_CEC]:
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                write_csv(data_to_print, f_out, [FILE_NAME] + CEC_COORD_FIELDNAMES,
+                          extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_KEY_PROPS]:
                 f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore", mode=print_mode)
+                write_csv(data_to_print, f_out, [FILE_NAME] + KEY_PROPS_FIELDNAMES,
+                          extrasaction="ignore", mode=print_mode)
 
 
 def main(argv=None):
