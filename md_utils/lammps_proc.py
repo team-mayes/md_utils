@@ -44,6 +44,8 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
 PROT_O_IDS = 'prot_carboxyl_oxy_atom_nums'
+# Todo: allow calculating center of mass
+PROT_C_ID = 'prot_carboxyl_carb_atom_num'
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
 H3O_O_TYPE = 'h3o_o_type'
@@ -101,6 +103,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 DUMP_FILE: None,
                 PROT_H_IGNORE: [],
                 PROT_O_IDS: [],
+                PROT_C_ID: 0,
                 OUT_BASE_DIR: None,
                 PER_FRAME_OUTPUT: False,
                 CALC_OH_DIST: False,
@@ -170,6 +173,7 @@ TIMESTEP = 'timestep'
 OH_MIN = 'oh_min'
 OH_MAX = 'oh_max'
 OH_DIFF = 'oh_diff'
+COM_H_DIST = 'com_h_dist'
 R_OH = 'r_oh_dist'
 R_OO = 'r_oo_dist'
 Q_DOT = 'q_dotted'
@@ -441,7 +445,7 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
     return dist
 
 
-def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
+def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carboxyl_carbon):
     # initialize minimum distance to maximum distance possible in the periodic box (assume 90 degree corners)
     min_dist = np.full(len(carboxyl_oxys), np.linalg.norm(np.divide(box, 2)))
     closest_h = {}
@@ -461,15 +465,25 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg):
     min_min = min_dist[index_min]
     o_star = carboxyl_oxys[index_min]
     excess_proton = closest_h[index_min]
+    excess_proton_coord = excess_proton[XYZ_COORDS]
     # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
     # proton
     for index, oxy in enumerate(carboxyl_oxys):
         if index != index_min:
-            alt_dist = pbc_dist(np.asarray(excess_proton[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
+            alt_dist = pbc_dist(np.asarray(excess_proton_coord), np.asarray(oxy[XYZ_COORDS]), box)
     alt_min = np.amin(alt_dist)
+    if carboxyl_carbon is not None:
+        # TODO: account for the case when carboxyl group is broken over the PBC
+        com_xyz = 0.27291153 * np.asarray(carboxyl_carbon[XYZ_COORDS])
+        for oxy in carboxyl_oxys:
+            com_xyz += 0.363544235 * np.asarray(oxy[XYZ_COORDS])
+        com_h_dist = pbc_dist(com_xyz, excess_proton_coord, box)
+    else:
+        com_h_dist = np.nan
     return excess_proton, o_star, {OH_MIN: min_min,
                                    OH_MAX: alt_min,
                                    OH_DIFF: alt_min - min_min,
+                                   COM_H_DIST: com_h_dist,
                                    }
 
 
@@ -548,6 +562,7 @@ def find_closest_wat_o_to_hyd_o(water_oxys, hydronium, box, h3o_oxy_atom_type):
 
 def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     carboxyl_oxys = []
+    carboxyl_carb = None
     water_oxys = []
     # dictionary so can index by mol_num
     water_hs = []
@@ -560,6 +575,8 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
                 carboxyl_oxys.append(atom)
+            elif atom[ATOM_NUM] == cfg[PROT_C_ID]:
+                carboxyl_carb = atom
             elif (atom[ATOM_TYPE] == cfg[PROT_H_TYPE]) and (atom[ATOM_NUM] not in cfg[PROT_H_IGNORE]):
                 excess_proton = atom
         elif atom[ATOM_TYPE] == cfg[WAT_O_TYPE]:
@@ -604,12 +621,10 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     # Now start looking for data to report
     if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
         closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
-                                                                            hydronium, box, cfg)
+                                                                            hydronium, box, cfg,
+                                                                            carboxyl_carb)
         if cfg[CALC_OH_DIST]:
-            if excess_proton is None:
-                calc_results.update({OH_MIN: 'nan', OH_MAX: 'nan', OH_DIFF: 'nan'})
-            else:
-                calc_results.update(oh_dist_dict)
+            calc_results.update(oh_dist_dict)
         if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
             closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
                                                                        cfg[H3O_O_TYPE])
@@ -767,6 +782,8 @@ def setup_per_frame_output(cfg):
     out_fieldnames.append(TIMESTEP)
     if cfg[CALC_OH_DIST]:
         out_fieldnames.extend(OH_FIELDNAMES)
+        if cfg[PROT_C_ID] > 0:
+            out_fieldnames.append(COM_H_DIST)
     if cfg[CALC_HIJ_DA_GAUSS_FORM]:
         out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
     if cfg[CALC_HIJ_ARQ_FORM]:
