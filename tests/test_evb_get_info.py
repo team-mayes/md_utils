@@ -30,10 +30,10 @@ BAD_PATH_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_path_path.ini')
 
 CI_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info.ini')
 # noinspection PyUnresolvedReferences
-DEF_CI_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_ci_sq.csv')
+DEF_CI_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_evb_info.csv')
 GOOD_CI_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_ci_sq_good.csv')
 # noinspection PyUnresolvedReferences
-DEF_CI_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_ci_sq.csv')
+DEF_CI_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_evb_info.csv')
 GOOD_CI_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_ci_sq_good.csv')
 BAD_CI_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_ci_sq_bad.csv')
 
@@ -45,13 +45,13 @@ GOOD_CI_SUBSET_OUT = os.path.join(SUB_DATA_DIR, '1.500_20c_short_ci_sq_ts_good.c
 CI_ONE_STATE_INI = os.path.join(SUB_DATA_DIR, 'serca_evb_get_info.ini')
 CI_ONE_STATE_EACH_FILE_INI = os.path.join(SUB_DATA_DIR, 'serca_evb_get_info_per_file.ini')
 # noinspection PyUnresolvedReferences
-DEF_ONE_STATE_OUT = os.path.join(SUB_DATA_DIR, '0_3_ci_sq.csv')
+DEF_ONE_STATE_OUT = os.path.join(SUB_DATA_DIR, '0_3_evb_info.csv')
 GOOD_ONE_STATE_OUT = os.path.join(SUB_DATA_DIR, '0_3_ci_sq_good.csv')
 # noinspection PyUnresolvedReferences
-DEF_ONE_STATE_OUT2 = os.path.join(SUB_DATA_DIR, '31_3_ci_sq.csv')
+DEF_ONE_STATE_OUT2 = os.path.join(SUB_DATA_DIR, '31_3_evb_info.csv')
 GOOD_ONE_STATE_OUT2 = os.path.join(SUB_DATA_DIR, '31_3_ci_sq_good.csv')
 # noinspection PyUnresolvedReferences
-DEF_LIST_OUT = os.path.join(SUB_DATA_DIR, 'serca_evb_list_ci_sq.csv')
+DEF_LIST_OUT = os.path.join(SUB_DATA_DIR, 'serca_evb_list_evb_info.csv')
 GOOD_LIST_OUT = os.path.join(SUB_DATA_DIR, 'serca_evb_list_ci_sq_good.csv')
 
 BAD_KEY_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_key.ini')
@@ -69,7 +69,7 @@ WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols.csv')
 GOOD_WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols_good.csv')
 
 WATER_MOL_COMB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol_combine.ini')
-WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols.csv')
+WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info.csv')
 GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv')
 
 
@@ -176,11 +176,11 @@ class TestEVBGetInfo(unittest.TestCase):
     def testWaterMol(self):
         try:
             main(["-c", WATER_MOL_INI])
-            self.assertFalse(diff_lines(WATER_MOL_OUT1, GOOD_WATER_MOL_OUT1))
-            self.assertFalse(diff_lines(WATER_MOL_OUT2, GOOD_WATER_MOL_OUT2))
+            self.assertFalse(diff_lines(DEF_CI_OUT1, GOOD_WATER_MOL_OUT1))
+            self.assertFalse(diff_lines(DEF_CI_OUT2, GOOD_WATER_MOL_OUT2))
         finally:
-            silent_remove(WATER_MOL_OUT1, disable=DISABLE_REMOVE)
-            silent_remove(WATER_MOL_OUT2, disable=DISABLE_REMOVE)
+            silent_remove(DEF_CI_OUT1, disable=DISABLE_REMOVE)
+            silent_remove(DEF_CI_OUT2, disable=DISABLE_REMOVE)
 
     def testWaterMolCombine(self):
         # Should skip the timestep with only 1 state

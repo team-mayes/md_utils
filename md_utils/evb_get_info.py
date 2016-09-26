@@ -19,13 +19,14 @@ just get highest prot ci^2, highest wat ci^2
 from __future__ import print_function
 
 import os
+from collections import OrderedDict
 from operator import itemgetter
 import copy
 import re
 import sys
 import argparse
 import numpy as np
-from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv, single_quote,
+from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
 
 try:
@@ -60,7 +61,7 @@ PRINT_KEY_PROPS = 'print_key_props_flag'
 SKIP_ONE_STATE = 'skip_one_state_flag'
 
 # Defaults
-DEF_CFG_FILE = 'evb_chk_get_info.ini'
+DEF_CFG_FILE = 'evb_get_info.ini'
 # Set notation
 DEF_CFG_VALS = {EVB_FILES: 'evb_list.txt',
                 EVB_FILE: None,
@@ -115,14 +116,19 @@ STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
 ENE_TOTAL = 'ene_total'
-PROT_WAT_FIELDNAMES = [TIMESTEP, MOL_B, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_MOL]
 CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
                  MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
                  MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
-CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
 KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3,
                         MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
+CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
+PROT_WAT_FIELDNAMES = [TIMESTEP, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_CI_SQ, NEXT_MAX_HYD_MOL]
+
+OPT_FIELD_NAME_DICT = OrderedDict([(PRINT_CI_SQ, CI_FIELDNAMES),
+                                   (PRINT_KEY_PROPS, KEY_PROPS_FIELDNAMES),
+                                   (PRINT_CEC, CEC_COORD_FIELDNAMES),
+                                   (PRINT_WAT_MOL, PROT_WAT_FIELDNAMES)])
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -214,9 +220,9 @@ def process_evb_file(evb_file, cfg):
         prot_wat_to_print = []
         state_count = 0
         one_state = False
-        max_max_prot_mol_a = None
-        max_hyd_wat_mol = None
-        next_max_hyd_wat_mol = None
+        max_max_prot_mol_a = np.nan
+        max_hyd_wat_mol = np.nan
+        next_max_hyd_wat_mol = np.nan
         timestep = None
         states_per_shell = [np.nan]
         # not really needed here, but guarantees that these exist even if there is no timestep found
@@ -324,7 +330,8 @@ def process_evb_file(evb_file, cfg):
                                 hyd_state_mol_dict[water_molid] = eigen_sq[state]
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                NEXT_MAX_HYD_CI_SQ: next_max_hyd_ci_sq, MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq,
-                               MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol})
+                               MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol,
+                               })
                 if cfg[PRINT_WAT_MOL]:
                     if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
                         prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep, MOL_B: np.nan,
@@ -378,9 +385,10 @@ def process_evb_file(evb_file, cfg):
     return data_to_print, subset_to_print, prot_wat_to_print
 
 
-def process_evb_files(cfg):
+def process_evb_files(cfg, selected_fieldnames):
     """
     Want to grab the timestep and highest prot ci^2, highest wat ci^2, and print them
+    @param selected_fieldnames: list of field names for output based on user-selected options
     @param cfg: configuration data read from ini file
     @return: @raise InvalidDataError:
     """
@@ -406,72 +414,58 @@ def process_evb_files(cfg):
 
     for evb_file in evb_file_list:
         data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
-        no_print = []
         if cfg[PRINT_PER_FILE] is True:
-            if cfg[PRINT_KEY_PROPS]:
-                if len(data_to_print) > 0:
-                    f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
-                                             base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, KEY_PROPS_FIELDNAMES, extrasaction="ignore")
-                else:
-                    no_print.append(PRINT_KEY_PROPS)
+            if len(data_to_print) > 0:
+                f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
+                                         base_dir=cfg[OUT_BASE_DIR])
+                write_csv(data_to_print, f_out, selected_fieldnames, extrasaction="ignore")
             if cfg[PRINT_CI_SUBSET]:
                 if len(subset_to_print) > 0:
                     f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv',
                                              base_dir=cfg[OUT_BASE_DIR])
                     write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
                 else:
-                    no_print.append(PRINT_CI_SUBSET)
-            if cfg[PRINT_CI_SQ]:
-                if len(data_to_print) > 0:
-                    f_out = create_out_fname(evb_file, suffix='_ci_sq', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
-                else:
-                    no_print.append(PRINT_CI_SQ)
-            if cfg[PRINT_CEC]:
-                if len(data_to_print) > 0:
-                    f_out = create_out_fname(evb_file, suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(data_to_print, f_out, CEC_COORD_FIELDNAMES, extrasaction="ignore")
-                else:
-                    no_print.append(PRINT_CEC)
-            if cfg[PRINT_WAT_MOL]:
-                if len(wat_mol_data_to_print) > 0:
-                    f_out = create_out_fname(evb_file, suffix='_wat_mols', ext='.csv',
-                                             base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(wat_mol_data_to_print, f_out, PROT_WAT_FIELDNAMES, extrasaction="ignore")
-                else:
-                    no_print.append(PRINT_WAT_MOL)
-        if len(no_print) > 0:
-            warning("{} set to true, but found no data from: {} \n"
-                    "No output will be printed for this file.".format(",".join(map(single_quote, no_print)), evb_file))
+                    warning("'{}' set to true, but found no data from: {} \n"
+                            "No output will be printed for this file."
+                            "".format(PRINT_CI_SUBSET, evb_file))
         if cfg[PRINT_PER_LIST]:
             if first_file_flag:
                 print_mode = 'w'
                 first_file_flag = False
             else:
                 print_mode = 'a'
-            if cfg[PRINT_CI_SQ]:
-                f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq', ext='.csv',
-                                         base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
             if cfg[PRINT_CI_SUBSET]:
-                f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
-                                         base_dir=cfg[OUT_BASE_DIR])
-                write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES, extrasaction="ignore", mode=print_mode)
-            if cfg[PRINT_WAT_MOL]:
-                f_out = create_out_fname(cfg[EVB_FILES], suffix='_wat_mols', ext='.csv',
-                                         base_dir=cfg[OUT_BASE_DIR])
-                write_csv(wat_mol_data_to_print, f_out, [FILE_NAME] + PROT_WAT_FIELDNAMES,
-                          extrasaction="ignore", mode=print_mode)
-            if cfg[PRINT_CEC]:
-                f_out = create_out_fname(cfg[EVB_FILES], suffix='_cec', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, [FILE_NAME] + CEC_COORD_FIELDNAMES,
-                          extrasaction="ignore", mode=print_mode)
-            if cfg[PRINT_KEY_PROPS]:
-                f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
-                                         base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, [FILE_NAME] + KEY_PROPS_FIELDNAMES,
-                          extrasaction="ignore", mode=print_mode)
+                if len(subset_to_print) > 0:
+                    f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
+                                             base_dir=cfg[OUT_BASE_DIR])
+                    write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES,
+                              extrasaction="ignore", mode=print_mode)
+                else:
+                    warning("'{}' set to true, but found no data meeting criteria."
+                            "".format(PRINT_CI_SUBSET))
+            f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
+                                     base_dir=cfg[OUT_BASE_DIR])
+            write_csv(data_to_print, f_out, [FILE_NAME] + selected_fieldnames,
+                      extrasaction="ignore", mode=print_mode)
+
+
+def gather_out_field_names(cfg):
+    """
+    Based on user options, determine which field names to use in printing output
+    @param cfg: configuration for run
+    @return: list of field names to be printed for selected options
+    """
+    selected_field_names = []
+    for option_name, fieldnames in OPT_FIELD_NAME_DICT.items():
+        if cfg[option_name]:
+            for f_name in fieldnames:
+                if f_name not in selected_field_names:
+                    selected_field_names.append(f_name)
+    if len(selected_field_names) > 0:
+        return selected_field_names
+    else:
+        raise InvalidDataError('None of the following options were selected, so no data will be collected: {}'
+                               ''.format(OPT_FIELD_NAME_DICT.keys()))
 
 
 def main(argv=None):
@@ -483,7 +477,8 @@ def main(argv=None):
     # Read template and dump files
     cfg = args.config
     try:
-        process_evb_files(cfg)
+        out_field_names = gather_out_field_names(cfg)
+        process_evb_files(cfg, out_field_names)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
