@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Constants #
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
 LAMMPS_PROC_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 FES_DIR = os.path.join(DATA_DIR, 'fes_out')
 CALC_PKA_DIR = 'calc_pka'
@@ -52,11 +53,11 @@ GHOST = 'ghost'
 
 # Output files #
 
-GOOD_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good.csv')
-ALMOST_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good_small_diff.csv')
-NOT_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_diff_val.csv')
-MISS_COL_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_miss_val.csv')
-MISS_LINE_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_missing_line.csv')
+DIFF_LINES_BASE_FILE = os.path.join(SUB_DATA_DIR, 'diff_lines_base_file.csv')
+DIFF_LINES_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_prec_diff.csv')
+DIFF_LINES_ONE_VAL_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_val_diff.csv')
+DIFF_LINES_MISS_VAL = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_val.csv')
+MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
 
 IMPROP_SEC = os.path.join(LAMMPS_PROC_DIR, 'glue_improp.data')
 IMPROP_SEC_ALT = os.path.join(LAMMPS_PROC_DIR, 'glue_improp_diff_ord.data')
@@ -290,25 +291,24 @@ class TestFormatData(unittest.TestCase):
 
 class TestDiffLines(unittest.TestCase):
     def testSameFile(self):
-        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_BASE_FILE))
 
     def testMachinePrecDiff(self):
-        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, ALMOST_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_PREC_DIFF))
 
     def testMachinePrecDiff2(self):
-        self.assertFalse(diff_lines(ALMOST_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_PREC_DIFF, DIFF_LINES_BASE_FILE))
 
     def testDiff(self):
-        diffs = diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        diffs = diff_lines(DIFF_LINES_ONE_VAL_DIFF, DIFF_LINES_BASE_FILE)
         self.assertEquals(len(diffs), 2)
-        self.assertTrue("1.2132" in diffs[0])
 
     def testDiffColNum(self):
-        diff_list_line = diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        diff_list_line = diff_lines(DIFF_LINES_MISS_VAL, DIFF_LINES_BASE_FILE)
         self.assertEquals(len(diff_list_line), 2)
 
     def testMissLine(self):
-        diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
+        diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, MISS_LINES_MISS_LINE)
         self.assertEquals(len(diff_line_list), 1)
         self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])
 
