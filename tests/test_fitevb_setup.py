@@ -76,6 +76,7 @@ GOOD_NO_OFF_DIAG_OUT = os.path.join(SUB_DATA_DIR, 'fit_no_offdiag_good.inp')
 
 FIT_HIJ = "-hij"
 FIT_REP1 = "-rep1"
+FIT_REP_EXPON2 = "-re2"
 FIT_VII = "-vii"
 
 ARQ_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_arq.ini')
@@ -94,6 +95,9 @@ GOOD_ALL_BEST_ARQ7_CSV = os.path.join(SUB_DATA_DIR, 'all_best_arq7.csv')
 SUB_DATA_ALL_BEST_CSV = os.path.join(SUB_DATA_DIR, 'all_best.csv')
 SUB_ALL_BEST_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff.csv')
 GOOD_ARQ7_PERC_DIFF = os.path.join(SUB_DATA_DIR, 'all_best_perc_diff_arq7_good.csv')
+
+ARQ_REP_EXPON2_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_arq_re2.ini')
+GOOD_ARQ_REP_EXPON2_OUT = os.path.join(SUB_DATA_DIR, 'fit_arq_re2_good.inp')
 
 
 class TestFitEVBSetupFailWell(unittest.TestCase):
@@ -310,3 +314,11 @@ class TestFitEVBSetup(unittest.TestCase):
             silent_remove(ALL_BEST, disable=DISABLE_REMOVE)
             silent_remove(SUB_DATA_ALL_BEST_CSV, disable=DISABLE_REMOVE)
             silent_remove(SUB_ALL_BEST_DIFF, disable=DISABLE_REMOVE)
+
+    def testRepExpon2(self):
+        try:
+            test_input = ["-c", ARQ_REP_EXPON2_INI, FIT_REP_EXPON2]
+            main(test_input)
+            self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_ARQ_REP_EXPON2_OUT))
+        finally:
+            silent_remove(SUB_DIR_DEF_OUT, disable=DISABLE_REMOVE)

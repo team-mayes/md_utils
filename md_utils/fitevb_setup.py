@@ -37,16 +37,17 @@ ARQ7_SEC = 'ARQ7'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
-REP_EXPON2_SEC = 'FIT_REP_EXPON2'
+REP_EXPON2_SEC = 'REP_EXPON2'
 HIJ_FIT = 'hij_fit'
 HIJ_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC]
-PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC, ]
+PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC, REP_EXPON2_SEC,
+              ARQ5_SEC, ARQ6_SEC, ARQ7_SEC, ]
 
 ARQ_PARAMS = ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
               'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const']
 ARQ2_PARAMS = ['gamma', 'p', 'k', 'd_oo', 'beta',
                'cap_r0_oo', 'p_prime', 'alpha', 'r0_oo', 'vij_const']
-REP_EXPON_PARAMS = ['a', 'b', 'R0']
+REP_EXPON_PARAMS = ['a', 'b', 'r0']
 FIT_OPT = 'fit_option'
 
 # Config keys
