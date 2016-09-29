@@ -13,7 +13,6 @@ import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, write_csv, IO_ERROR, INPUT_ERROR,
                                 GOOD_RET, INVALID_DATA, dequote)
 
-
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -38,12 +37,17 @@ ARQ7_SEC = 'ARQ7'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
+REP_EXPON2_SEC = 'FIT_REP_EXPON2'
+HIJ_FIT = 'hij_fit'
+HIJ_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC]
 PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC, ]
 
 ARQ_PARAMS = ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
               'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const']
 ARQ2_PARAMS = ['gamma', 'p', 'k', 'd_oo', 'beta',
                'cap_r0_oo', 'p_prime', 'alpha', 'r0_oo', 'vij_const']
+REP_EXPON_PARAMS = ['a', 'b', 'R0']
+FIT_OPT = 'fit_option'
 
 # Config keys
 GROUP_NAMES = 'group_names'
@@ -59,7 +63,8 @@ FIT_PARAMS = {ARQ_SEC: ARQ_PARAMS,
               DA_GAUSS_SEC: ['c1', 'c2', 'c3'],
               VII_SEC: ['vii'],
               REP1_SEC: ['cap_b', 'b', 'b_prime', 'd_oo', 'cap_c', 'c', 'd_oh', 'cutoff_oo_low', 'cutoff_oo_high',
-                         'cutoff_ho_low', 'cutoff_ho_high']
+                         'cutoff_ho_low', 'cutoff_ho_high'],
+              REP_EXPON2_SEC: REP_EXPON_PARAMS,
               }
 SEC_PARAMS = 'parameters'
 INP_FILE = 'new_input_file_name'
@@ -154,9 +159,20 @@ def parse_cmdline(argv):
     parser.add_argument("-s", "--summary_file", help="If a summary file name is specified, the program will append "
                                                      "results to a summary file and specify parameter value changes.",
                         default=None)
-    parser.add_argument("-v", "--vii_fit", help="Flag to specify fitting the VII term. The default "
-                                                "is false.",
+    parser.add_argument("-hij", "--hij_fit", help="Flag to specify fitting the off-diagonal (h_ij) term. "
+                                                  "The default is false (use previous fit, if available).",
                         action='store_true')
+    parser.add_argument("-re2", "--rep_exp2_fit", help="Flag to specify fitting the REP_EXPON2 term. "
+                                                       "The default is false (use previous fit, if available).",
+                        action='store_true')
+
+    parser.add_argument("-rep1", "--rep1_fit", help="Flag to specify fitting the REP1 term. "
+                                                    "The default is false (use previous fit, if available).",
+                        action='store_true')
+    parser.add_argument("-vii", "--vii_fit", help="Flag to specify using fitting the VII term. "
+                                                  "The default is false (use previous fit, if available).",
+                        action='store_true')
+
     args = None
     try:
         args = parser.parse_args(argv)
@@ -214,14 +230,13 @@ def process_output_file(cfg):
     return vals
 
 
-def make_inp(initial_vals, cfg, fit_vii_flag):
+def make_inp(initial_vals, cfg):
     """
     cfg has the sections, default ranges for each parameter, and parameter descriptions
     Use that to seed the inp_vals (used for printing) and overwrite with initial values if a parameter
     is not to be fit in the current step.
     @param initial_vals: parameter values from last fitting iteration
     @param cfg: configuration values, whether the Vii parameter is to be fit
-    @param fit_vii_flag: boolean which will specify which of two output options to use
     @return: nothing; will have written a new fit_evb input file when done
     """
     # dict to collect data to print; copy config values and (if specified) overwrite with values from fitEVB output
@@ -230,14 +245,13 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     for section in cfg[MAIN_SEC][SECTIONS]:
         inp_vals[section] = cfg[section].copy()
         if len(initial_vals) > 0:
-            if section == VII_SEC:
-                if not fit_vii_flag:
+            if section in HIJ_SECS:
+                if not cfg[FIT_OPT][HIJ_FIT]:
                     for param in FIT_PARAMS[section]:
                         for prop in initial_vals[section][param]:
                             inp_vals[section][param][prop] = initial_vals[section][param][prop]
             else:
-                # if fit_vii_flag, all other parameters set to initial values
-                if fit_vii_flag:
+                if not cfg[FIT_OPT][section]:
                     for param in FIT_PARAMS[section]:
                         for prop in initial_vals[section][param]:
                             inp_vals[section][param][prop] = initial_vals[section][param][prop]
@@ -251,17 +265,24 @@ def make_inp(initial_vals, cfg, fit_vii_flag):
     print("Wrote file: {}".format(cfg[MAIN_SEC][INP_FILE]))
 
 
-def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
+def process_raw_cfg(raw_cfg, args):
     """
     Add default information and perform error checking
     @param raw_cfg: configuration read by config parser
-    @param resid_in_best: boolean to specify if an additional output (resid) is in the fit.best
-    @param last_best_file: None or file location
-    @param summary_file_name: None or file location
+    @param args: command-line arguments
     @return: processed, error-checked config
     """
-    cfgs = {}
-    # Process raw values
+    # boolean to specify if an additional output (resid) is in the fit.best
+    resid_in_best = args.resid
+    # None or file location
+    last_best_file = args.file
+    # None or file location
+    summary_file_name = args.summary_file
+
+    cfgs = {FIT_OPT: {HIJ_FIT: args.hij_fit, VII_SEC: args.vii_fit, REP1_SEC: args.rep1_fit,
+                      REP_EXPON2_SEC: args.rep_exp2_fit}}
+
+    # Process raw cfg values
     for section in raw_cfg:
         section_dict = {}
         if section == MAIN_SEC:
@@ -298,8 +319,9 @@ def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
                         raise InvalidDataError("In configuration file section '{}', missing parameter '{}'."
                                                "".format(section, param))
             else:
-                raise InvalidDataError("Found section '{}' in the configuration file. This program expects only the "
-                                       "following sections: {}".format(section, [MAIN_SEC] + PARAM_SECS))
+                if section != FIT_OPT:
+                    raise InvalidDataError("Found section '{}' in the configuration file. This program expects only "
+                                           "sections: {}".format(section, [MAIN_SEC, FIT_OPT] + PARAM_SECS))
     # Add main section with defaults if the optional main section is missing
     if MAIN_SEC not in cfgs:
         cfgs[MAIN_SEC] = MAIN_SEC_DEF_CFG_VALS
@@ -327,7 +349,7 @@ def process_raw_cfg(raw_cfg, resid_in_best, last_best_file, summary_file_name):
             if not os.path.exists(os.path.dirname(cfgs[section][INP_FILE])):
                 raise IOError("Invalid directory provided in configuration section '{}' "
                               "parameter '{}': {}".format(section, OUT_BASE_DIR, cfgs[section][OUT_BASE_DIR]))
-        else:
+        elif section != FIT_OPT:
             for param in FIT_PARAMS[section]:
                 cfgs[MAIN_SEC][PARAM_NUM] += 1
                 if param not in cfgs[section]:
@@ -469,11 +491,11 @@ def main(argv=None):
     raw_cfg = args.config
 
     try:
-        cfg = process_raw_cfg(raw_cfg, args.resid, args.file, args.summary_file)
+        cfg = process_raw_cfg(raw_cfg, args)
         initial_vals = process_output_file(cfg)
         if args.summary_file is not None:
             make_summary(cfg)
-        make_inp(initial_vals, cfg, args.vii_fit)
+        make_inp(initial_vals, cfg)
     except IOError as e:
         warning("IOError:", e)
         return IO_ERROR

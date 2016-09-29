@@ -74,6 +74,10 @@ NO_OFF_DIAG_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_no_offdiag.ini')
 NO_OFF_DIAG_FITEVB_OUT = os.path.join(SUB_DATA_DIR, 'fit_no_off.best')
 GOOD_NO_OFF_DIAG_OUT = os.path.join(SUB_DATA_DIR, 'fit_no_offdiag_good.inp')
 
+FIT_HIJ = "-hij"
+FIT_REP1 = "-rep1"
+FIT_VII = "-vii"
+
 ARQ_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_arq.ini')
 GOOD_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'fit_arq_good.inp')
 ARQ2_INI = os.path.join(SUB_DATA_DIR, 'fitevb_setup_arq2.ini')
@@ -142,7 +146,7 @@ class TestFitEVBSetupFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("program expects only the following sections" in output)
+            self.assertTrue("program expects only sections" in output)
 
     def testGhostFile(self):
         test_input = ["-c", DA_GAUSS_INI, "-f", GHOST_STR]
@@ -191,7 +195,7 @@ class TestFitEVBSetupFailWellQuitUnexpectedly(unittest.TestCase):
 
 class TestFitEVBSetupQuitUnexpectedly(unittest.TestCase):
     def testNoOffDiagFit(self):
-        test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT]
+        test_input = ["-c", NO_OFF_DIAG_INI, "-f", NO_OFF_DIAG_FITEVB_OUT, FIT_REP1]
         try:
             main(test_input)
             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_NO_OFF_DIAG_OUT))
@@ -208,7 +212,7 @@ class TestFitEVBSetup(unittest.TestCase):
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testWithBest(self):
-        test_input = ["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-r"]
+        test_input = ["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-r", FIT_REP1, FIT_HIJ]
         try:
             main(test_input)
             self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
@@ -217,14 +221,14 @@ class TestFitEVBSetup(unittest.TestCase):
 
     def testViiFit(self):
         try:
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-v"])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, FIT_VII])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_VII_FIT_OUT))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testARQFit(self):
         # In the EVB param file, this is option "PT" with "2-asymmetric" (confusing, huh?)
-        test_input = ["-c", ARQ_INI]
+        test_input = ["-c", ARQ_INI, FIT_HIJ, FIT_REP1]
         try:
             main(test_input)
             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_ARQ_OUT))
@@ -233,7 +237,7 @@ class TestFitEVBSetup(unittest.TestCase):
 
     def testARQ2Fit(self):
         # In the EVB param file, this is option "PT" with "1-asymmetric" (confusing, huh?)
-        test_input = ["-c", ARQ2_INI]
+        test_input = ["-c", ARQ2_INI, FIT_HIJ, FIT_REP1]
         try:
             main(test_input)
             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_ARQ2_OUT))
@@ -243,7 +247,7 @@ class TestFitEVBSetup(unittest.TestCase):
     def testCollectBest(self):
         try:
             shutil.copyfile(ORIG_ALL_BEST, ALL_BEST)
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-s", ALL_BEST])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT, "-s", ALL_BEST, FIT_HIJ, FIT_REP1])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
             self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST))
             self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_CSV))
@@ -257,7 +261,7 @@ class TestFitEVBSetup(unittest.TestCase):
     def testCollectBestWResid(self):
         try:
             shutil.copyfile(ORIG_ALL_BEST_RESID, ALL_BEST)
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-s", ALL_BEST, "-r"])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT_RESID, "-s", ALL_BEST, "-r", FIT_HIJ, FIT_REP1])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_NO_VII_FIT_OUT))
             self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST_RESID))
             self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_RESID_CSV))
@@ -271,7 +275,7 @@ class TestFitEVBSetup(unittest.TestCase):
     def testCollectBestWResid1(self):
         try:
             shutil.copyfile(ORIG_ALL_BEST1, ALL_BEST)
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST, "-r"])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST, "-r", FIT_HIJ, FIT_REP1])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_INP_OUT1))
             self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST1))
             self.assertFalse(diff_lines(ALL_BEST_CSV, GOOD_ALL_BEST_CSV1))
@@ -286,7 +290,7 @@ class TestFitEVBSetup(unittest.TestCase):
         try:
             # Ensure that this is not already a summary file
             silent_remove(ALL_BEST_STR, disable=DISABLE_REMOVE)
-            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST_STR, "-r"])
+            main(["-c", DA_GAUSS_INI, "-f", FITEVB_OUT1, "-s", ALL_BEST_STR, "-r", FIT_HIJ, FIT_REP1])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_INP_OUT1))
             self.assertFalse(diff_lines(ALL_BEST_STR, GOOD_ALL_BEST_NEW))
         finally:
@@ -296,7 +300,7 @@ class TestFitEVBSetup(unittest.TestCase):
     def testAddSummarySuffix(self):
         try:
             shutil.copyfile(ORIG_ALL_BEST_ARQ2, ALL_BEST)
-            main(["-c", ARQ7_INI, "-f", FITEVB_ARQ2_BEST, "-s", ALL_BEST, "-r"])
+            main(["-c", ARQ7_INI, "-f", FITEVB_ARQ2_BEST, "-s", ALL_BEST, "-r", FIT_REP1, FIT_HIJ])
             self.assertFalse(diff_lines(SUB_DIR_DEF_OUT, GOOD_INP_ARQ7_OUT))
             self.assertFalse(diff_lines(ALL_BEST, GOOD_ALL_BEST_ARQ7))
             self.assertFalse(diff_lines(SUB_DATA_ALL_BEST_CSV, GOOD_ALL_BEST_ARQ7_CSV))
