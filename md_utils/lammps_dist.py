@@ -48,7 +48,8 @@ def atom_distances(rst, atom_pairs):
                 row2 = atoms[pair[1]]
                 pair_dist[pair] = xyz_distance(row1[-3:], row2[-3:])
             except KeyError as e:
-                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
+                warning(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
+                return
         results[tstep] = pair_dist
     return results
 
@@ -70,6 +71,10 @@ def write_results(out_fname, dist_data, atom_pairs, write_mode='w'):
                 o_writer.writerow(dist_row)
             except KeyError as e:
                 raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format("_".join(map(str, pair)), tstep, e))
+    if write_mode == 'w':
+        print("Wrote file: {}".format(out_fname))
+    elif write_mode == 'a':
+        print("  Appended: {}".format(out_fname))
 
 
 def parse_pairs(pair_files):
@@ -116,6 +121,9 @@ def parse_cmdline(argv=None):
         args = parser.parse_args(argv)
         if not args.pair_files:
             args.pair_files.append(DEF_PAIRS_FILE)
+            if not os.path.isfile(DEF_PAIRS_FILE):
+                raise InvalidDataError("No pair file specified and did not find the default "
+                                       "pair file: {}".format(DEF_PAIRS_FILE))
         if (args.file is None) and (args.list_file is None):
             raise InvalidDataError("Specify either a file or list of files to process.")
     except (KeyError, InvalidDataError, SystemExit) as e:
@@ -158,6 +166,9 @@ def main(argv=None):
             write_mode = 'a'
     except IOError as e:
         warning("Problems reading file: {}".format(e))
+        return IO_ERROR
+    except InvalidDataError as e:
+        warning("Invalid Data Error: {}".format(e))
         return IO_ERROR
 
     return GOOD_RET  # success
