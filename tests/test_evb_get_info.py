@@ -72,6 +72,9 @@ WATER_MOL_COMB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol_combine.ini')
 WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info.csv')
 GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv')
 
+REL_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene.ini')
+GOOD_REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_evb_info.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -189,3 +192,12 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
         finally:
             silent_remove(WATER_MOL_COMB_OUT, disable=DISABLE_REMOVE)
+
+    def testRelEnergy(self):
+        # TODO continue adding functionality and then test!
+        # Should skip the timestep with only 1 state
+        try:
+            main(["-c", REL_ENE_INI])
+            # self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
+        finally:
+            silent_remove(GOOD_REL_ENE_OUT, disable=DISABLE_REMOVE)

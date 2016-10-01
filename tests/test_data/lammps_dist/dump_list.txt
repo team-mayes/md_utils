@@ -1,0 +1,3 @@
+tests/test_data/lammps_dist/gluprot7_8test.dump
+tests/test_data/lammps_dist/gluprot7_20test.dump
+tests/test_data/lammps_dist/gluprot7_31test.dump

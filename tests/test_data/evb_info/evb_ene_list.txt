@@ -1,0 +1,3 @@
+tests/test_data/evb_info/1.500_20c_really2.00.evb
+tests/test_data/evb_info/1.500_20c_short.evb
+tests/test_data/evb_info/2.000_20c_short.evb
