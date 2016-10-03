@@ -29,6 +29,8 @@ import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
 
+REL_E_GROUP = 'rel_e_group'
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -43,6 +45,7 @@ NUM_DECIMALS = 12
 
 # Config File Sections
 MAIN_SEC = 'main'
+REL_E_SEC = 'rel_e'
 
 # Config keys
 EVB_FILES = 'evb_list_file'
@@ -116,6 +119,13 @@ STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
 ENE_TOTAL = 'ene_total'
+REL_ENE = 'rel_ene_total'
+REL_PROT_E = 'rel_max_prot_ene'
+REL_HYD_E = 'rel_max_hyd_e'
+REL_NEXT_HYD_E = 'rel_next_max_hyd_e'
+REL_E_PAT = "rel_e_pat"
+REF_ENE = 'ref_ene'
+MIN_DIAB_ENE = 'min_diab_ene'
 CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
                  MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
@@ -145,6 +155,21 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+    rel_e_proc = {}
+    if REL_E_SEC in config.sections():
+        for entry in config.items(REL_E_SEC):
+            section_prefix = entry[0]
+            vals = entry[1].split(',')
+            # when the ini file is read, upper case becomes lower, so I'll ignore case in pattern matching
+            base_e_match_pat = re.compile(r"^" + section_prefix + ".*", re.I)
+            base_e_file_name = vals[0]
+            base_e_timestep = int(vals[1])
+            rel_e_proc[section_prefix] = {REL_E_PAT: base_e_match_pat,
+                                          FILE_NAME: base_e_file_name,
+                                          TIMESTEP: base_e_timestep,
+                                          REF_ENE: np.nan,
+                                          MIN_DIAB_ENE: np.inf, }
+    main_proc[REL_E_SEC] = rel_e_proc
     return main_proc
 
 
@@ -224,7 +249,12 @@ def process_evb_file(evb_file, cfg):
         max_hyd_wat_mol = np.nan
         next_max_hyd_wat_mol = np.nan
         timestep = None
-        states_per_shell = [np.nan]
+        # group for determining relative energies
+        rel_e_group = None
+        for group, rel_e_dict in cfg[REL_E_SEC].items():
+            if rel_e_dict[REL_E_PAT].match(base_file_name):
+                rel_e_group = group
+                break
         # not really needed here, but guarantees that these exist even if there is no timestep found
         max_hyd_ci_sq = 0.0
         next_max_hyd_ci_sq = 0.0
@@ -241,7 +271,8 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 timestep = int(split_line[1])
                 result = {FILE_NAME: base_file_name,
-                          TIMESTEP: timestep}
+                          TIMESTEP: timestep,
+                          REL_E_GROUP: rel_e_group}
                 # Reset variables
                 # Start with an entry so the atom-id = index
                 num_states = 0
@@ -261,10 +292,18 @@ def process_evb_file(evb_file, cfg):
                 split_line = line.split()
                 ene_total = float(split_line[1])
                 result[ENE_TOTAL] = ene_total
+                if rel_e_group is not None:
+                    if (base_file_name == cfg[REL_E_SEC][rel_e_group][FILE_NAME]) and \
+                           (timestep == cfg[REL_E_SEC][rel_e_group][TIMESTEP]):
+                        cfg[REL_E_SEC][rel_e_group][REF_ENE] = ene_total
                 section = None
             elif section == SEC_COMPLEX:
                 split_line = line.split()
                 num_states = int(split_line[2])
+                # skip a little work here
+                if cfg[SKIP_ONE_STATE] and num_states == 1:
+                    section = None
+                    continue
                 states_per_shell = np.array(itemgetter(2, 5, 7, 9, 11)(split_line), dtype=int)
                 result.update({STATES_TOT: states_per_shell[0], STATES_SHELL1: states_per_shell[2],
                                STATES_SHELL2: states_per_shell[3], STATES_SHELL3: states_per_shell[4]})
@@ -334,10 +373,11 @@ def process_evb_file(evb_file, cfg):
                                })
                 if cfg[PRINT_WAT_MOL]:
                     if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
-                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep, MOL_B: np.nan,
-                                                  MAX_HYD_CI_SQ: np.nan})
+                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep,
+                                                  REL_E_GROUP: rel_e_group, MOL_B: np.nan, MAX_HYD_CI_SQ: np.nan})
                     for mol in hyd_state_mol_dict:
-                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep, MOL_B: mol,
+                        prot_wat_to_print.append({FILE_NAME: base_file_name, TIMESTEP: timestep,
+                                                  REL_E_GROUP: rel_e_group, MOL_B: mol,
                                                   MAX_HYD_CI_SQ: hyd_state_mol_dict[mol]})
                 section = None
             elif section == SEC_CEC:
@@ -347,6 +387,8 @@ def process_evb_file(evb_file, cfg):
                 section = None
             elif section == SEC_END:
                 section = None
+                if cfg[SKIP_ONE_STATE] and num_states == 1:
+                    continue
                 if max_prot_state is None:
                     prot_coul = np.nan
                     prot_e = np.nan
@@ -375,8 +417,10 @@ def process_evb_file(evb_file, cfg):
                 result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul,
                                COUL_DIFF: hyd_coul - prot_coul,
                                MAX_PROT_E: prot_e, MAX_HYD_E: max_hyd_e, NEXT_MAX_HYD_E: next_max_hyd_e})
-                if cfg[SKIP_ONE_STATE] and states_per_shell[0] == 1:
-                    continue
+                if rel_e_group is not None:
+                    for diab_ene in prot_e, max_hyd_e, next_max_hyd_e:
+                        if diab_ene < cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE]:
+                            cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE] = diab_ene
                 data_to_print.append(result)
                 if cfg[PRINT_CI_SUBSET]:
                     if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
@@ -394,6 +438,7 @@ def process_evb_files(cfg, selected_fieldnames):
     """
     first_file_flag = True
     evb_file_list = []
+    all_data = []
 
     if cfg[EVB_FILE] is not None:
         evb_file_list.append(cfg[EVB_FILE])
@@ -414,6 +459,7 @@ def process_evb_files(cfg, selected_fieldnames):
 
     for evb_file in evb_file_list:
         data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
+        all_data += data_to_print
         if cfg[PRINT_PER_FILE] is True:
             if len(data_to_print) > 0:
                 f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
@@ -447,6 +493,7 @@ def process_evb_files(cfg, selected_fieldnames):
                                      base_dir=cfg[OUT_BASE_DIR])
             write_csv(data_to_print, f_out, [FILE_NAME] + selected_fieldnames,
                       extrasaction="ignore", mode=print_mode)
+    return all_data
 
 
 def gather_out_field_names(cfg):
@@ -468,6 +515,42 @@ def gather_out_field_names(cfg):
                                ''.format(OPT_FIELD_NAME_DICT.keys()))
 
 
+def find_rel_e(extracted_data, cfg, out_field_names):
+    """
+    calculate relative energies from the gathered data
+    @param extracted_data: gathered data (based on flags)
+    @param cfg: configuration for file
+    @param out_field_names: field names chosen based on user-defined options
+    @return: prints out a new outfile unless an error is raised
+    """
+    out_field_names = [FILE_NAME, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E,
+                       REL_E_GROUP] + out_field_names
+
+    for data_dict in extracted_data:
+
+        # for group, rel_e_dict in cfg[REL_E_SEC].items():
+        #     if rel_e_dict[REL_E_PAT].match(data_dict[FILE_NAME]):
+        #         data_dict[REL_E_GROUP] = group
+        #         break
+        this_group = data_dict[REL_E_GROUP]
+        ref_ene = cfg[REL_E_SEC][this_group][REF_ENE]
+        ref_diab_e = cfg[REL_E_SEC][this_group][MIN_DIAB_ENE]
+        if np.isnan(ref_ene):
+            for key in [REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E]:
+                data_dict[key] = np.nan
+        else:
+            data_dict[REL_ENE] = data_dict[ENE_TOTAL] - ref_ene
+            data_dict[REL_PROT_E] = data_dict[MAX_PROT_E] - ref_diab_e
+            data_dict[REL_HYD_E] = data_dict[MAX_HYD_E] - ref_diab_e
+            data_dict[REL_NEXT_HYD_E] = data_dict[NEXT_MAX_HYD_E] - ref_diab_e
+
+        print(this_group, cfg[REL_E_SEC][this_group][REF_ENE], data_dict[REL_ENE])
+
+    f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
+                             base_dir=cfg[OUT_BASE_DIR])
+    write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore")
+
+
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
@@ -478,7 +561,9 @@ def main(argv=None):
     cfg = args.config
     try:
         out_field_names = gather_out_field_names(cfg)
-        process_evb_files(cfg, out_field_names)
+        extracted_data = process_evb_files(cfg, out_field_names)
+        if len(cfg[REL_E_SEC]) > 0:
+            find_rel_e(extracted_data, cfg, out_field_names)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

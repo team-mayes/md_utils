@@ -73,7 +73,8 @@ WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info.csv')
 GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv')
 
 REL_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene.ini')
-GOOD_REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_evb_info.csv')
+REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_evb_info.csv')
+GOOD_REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_rel_e_good.csv')
 
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
@@ -194,10 +195,9 @@ class TestEVBGetInfo(unittest.TestCase):
             silent_remove(WATER_MOL_COMB_OUT, disable=DISABLE_REMOVE)
 
     def testRelEnergy(self):
-        # TODO continue adding functionality and then test!
-        # Should skip the timestep with only 1 state
+        # calculates relative energy
         try:
             main(["-c", REL_ENE_INI])
-            # self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
+            self.assertFalse(diff_lines(REL_ENE_OUT, GOOD_REL_ENE_OUT))
         finally:
-            silent_remove(GOOD_REL_ENE_OUT, disable=DISABLE_REMOVE)
+            silent_remove(REL_ENE_OUT, disable=DISABLE_REMOVE)

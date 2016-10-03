@@ -106,9 +106,13 @@ class TestMainFailWell(unittest.TestCase):
 
     def testNoSuchAtomNum(self):
         # this dump list has 1429 atoms; the pairs asks for atoms 4179,54892 and 4180,54892
+        # make sure do not create an empty file; start by removing it and then test if there after
+        #   running test
+        md_common.silent_remove(DUMP_OUT)
         test_input = ["-l", DUMP_LIST, "-p", PAIRS_PATH]
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Could not find" in output)
+        self.assertFalse(os.path.isfile(DUMP_OUT))
 
     def testNoSuchFile(self):
         test_input = ["-f", "ghost", "-p", PAIRS_PATH]

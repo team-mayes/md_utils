@@ -161,9 +161,10 @@ def main(argv=None):
         write_mode = 'w'
         for l_file in file_list:
             dists.update(atom_distances(l_file, pairs))
-            write_results(create_out_fname(base_file_name, prefix='pairs_', ext='.csv'),
-                          dists, pairs, write_mode=write_mode)
-            write_mode = 'a'
+            if len(dists) > 0:
+                write_results(create_out_fname(base_file_name, prefix='pairs_', ext='.csv'),
+                              dists, pairs, write_mode=write_mode)
+                write_mode = 'a'
     except IOError as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR
