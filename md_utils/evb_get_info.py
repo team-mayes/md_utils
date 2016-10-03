@@ -27,7 +27,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv,
-                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, file_rows_to_list)
 
 REL_E_GROUP = 'rel_e_group'
 
@@ -48,7 +48,7 @@ MAIN_SEC = 'main'
 REL_E_SEC = 'rel_e'
 
 # Config keys
-EVB_FILES = 'evb_list_file'
+EVB_LIST_FILE = 'evb_list_file'
 EVB_FILE = 'evb_file'
 PROT_RES_MOL_ID = 'prot_res_mol_id'
 # IN_BASE_DIR = 'input_directory'
@@ -65,8 +65,9 @@ SKIP_ONE_STATE = 'skip_one_state_flag'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
+DEF_EVB_LIST_FILE = 'evb_list.txt'
 # Set notation
-DEF_CFG_VALS = {EVB_FILES: 'evb_list.txt',
+DEF_CFG_VALS = {EVB_LIST_FILE: DEF_EVB_LIST_FILE,
                 EVB_FILE: None,
                 OUT_BASE_DIR: None,
                 PRINT_CI_SQ: True,
@@ -437,25 +438,25 @@ def process_evb_files(cfg, selected_fieldnames):
     @return: @raise InvalidDataError:
     """
     first_file_flag = True
-    evb_file_list = []
     all_data = []
 
     if cfg[EVB_FILE] is not None:
-        evb_file_list.append(cfg[EVB_FILE])
+        evb_file_list = [cfg[EVB_FILE]]
+    else:
+        evb_file_list = []
 
-    # Separate try-catch block here because want it to continue rather than exit; exit below if there are no files to
-    # process
+    # Separate try-catch block here because want it to continue rather than exit;
+    #    exit below if there are no files to  process
     try:
-        with open(cfg[EVB_FILES]) as f:
-            for evb_file in f:
-                evb_file_list.append(evb_file.strip())
+        evb_file_list += file_rows_to_list(cfg[EVB_LIST_FILE])
     except IOError as e:
-        warning("Problems reading file:", e)
+        if cfg[EVB_LIST_FILE] != DEF_EVB_LIST_FILE:
+            raise IOError(e)
 
     if len(evb_file_list) == 0:
         raise InvalidDataError("Found no evb file names to read. Specify one file with the keyword '{}' or \n"
                                "a file containing a list of evb files with the keyword '{}'.".format(EVB_FILE,
-                                                                                                     EVB_FILES))
+                                                                                                     EVB_LIST_FILE))
 
     for evb_file in evb_file_list:
         data_to_print, subset_to_print, wat_mol_data_to_print = process_evb_file(evb_file, cfg)
@@ -482,14 +483,14 @@ def process_evb_files(cfg, selected_fieldnames):
                 print_mode = 'a'
             if cfg[PRINT_CI_SUBSET]:
                 if len(subset_to_print) > 0:
-                    f_out = create_out_fname(cfg[EVB_FILES], suffix='_ci_sq_ts', ext='.csv',
+                    f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_ci_sq_ts', ext='.csv',
                                              base_dir=cfg[OUT_BASE_DIR])
                     write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES,
                               extrasaction="ignore", mode=print_mode)
                 else:
                     warning("'{}' set to true, but found no data meeting criteria."
                             "".format(PRINT_CI_SUBSET))
-            f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
+            f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_evb_info', ext='.csv',
                                      base_dir=cfg[OUT_BASE_DIR])
             write_csv(data_to_print, f_out, [FILE_NAME] + selected_fieldnames,
                       extrasaction="ignore", mode=print_mode)
@@ -533,9 +534,10 @@ def find_rel_e(extracted_data, cfg, out_field_names):
         #         data_dict[REL_E_GROUP] = group
         #         break
         this_group = data_dict[REL_E_GROUP]
-        ref_ene = cfg[REL_E_SEC][this_group][REF_ENE]
-        ref_diab_e = cfg[REL_E_SEC][this_group][MIN_DIAB_ENE]
-        if np.isnan(ref_ene):
+        if this_group:
+            ref_ene = cfg[REL_E_SEC][this_group][REF_ENE]
+            ref_diab_e = cfg[REL_E_SEC][this_group][MIN_DIAB_ENE]
+        if this_group is None or np.isnan(ref_ene):
             for key in [REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E]:
                 data_dict[key] = np.nan
         else:
@@ -544,9 +546,7 @@ def find_rel_e(extracted_data, cfg, out_field_names):
             data_dict[REL_HYD_E] = data_dict[MAX_HYD_E] - ref_diab_e
             data_dict[REL_NEXT_HYD_E] = data_dict[NEXT_MAX_HYD_E] - ref_diab_e
 
-        print(this_group, cfg[REL_E_SEC][this_group][REF_ENE], data_dict[REL_ENE])
-
-    f_out = create_out_fname(cfg[EVB_FILES], suffix='_evb_info', ext='.csv',
+    f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_evb_info', ext='.csv',
                              base_dir=cfg[OUT_BASE_DIR])
     write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore")
 

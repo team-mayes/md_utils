@@ -26,7 +26,8 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'evb_info')
 # Input files paired with output #
 
 INCOMP_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_missing_data.ini')
-BAD_PATH_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_path_path.ini')
+BAD_PATH_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_bad_path.ini')
+NO_PATH_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_no_path.ini')
 
 CI_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info.ini')
 # noinspection PyUnresolvedReferences
@@ -75,6 +76,9 @@ GOOD_WATER_MOL_COMB_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_wat_mols_good.csv
 REL_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene.ini')
 REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_evb_info.csv')
 GOOD_REL_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list_rel_e_good.csv')
+REL_ENE_INI2 = os.path.join(SUB_DATA_DIR, 'evb_rel_ene2.ini')
+REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info.csv')
+GOOD_REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info_good.csv')
 
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
@@ -110,7 +114,14 @@ class TestEVBGetInfoNoOutput(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no evb file names to read" in output)
+            self.assertTrue("No such file or directory:" in output)
+
+    def testNoPath(self):
+        test_input = ["-c", NO_PATH_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Found no evb file names" in output)
 
     def testBadKeyword(self):
         with capture_stderr(main, ["-c", BAD_KEY_INI]) as output:
@@ -201,3 +212,11 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(REL_ENE_OUT, GOOD_REL_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT, disable=DISABLE_REMOVE)
+
+    def testRelEnergyMissingInfo(self):
+        # Check that prints "nan" instead of printing a stack trace (uncaught error)
+        try:
+            main(["-c", REL_ENE_INI2])
+            self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_REL_ENE_OUT2))
+        finally:
+            silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)

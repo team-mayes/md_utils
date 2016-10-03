@@ -1,0 +1,2 @@
+tests/test_data/evb_info/gluprot8_-6test.evb
+
