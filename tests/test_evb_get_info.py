@@ -83,6 +83,7 @@ GOOD_REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info_good.csv'
 DECOMP_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_decomp_ene.ini')
 GOOD_DECOMP_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info.csv')
 
+
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
         test_input = ['-h']

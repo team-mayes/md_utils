@@ -29,8 +29,6 @@ import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, file_rows_to_list)
 
-REL_E_GROUP = 'rel_e_group'
-
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -122,10 +120,11 @@ STATES_TOT = 'evb_states_total'
 STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
+PROT_STATE_FOUND = 'prot_state_found'
+NUM_WATERS = 'num_waters'
 ENE_ENVIRON = 'ene_environ'
 ENE_COMPLEX = 'ene_complex'
 ENE_TOTAL = 'ene_total'
-REL_ENE = 'rel_ene_total'
 E_VDW = 'vdw'
 E_COUL = 'coul'
 E_BOND = 'bond'
@@ -133,6 +132,8 @@ E_ANGL = 'angle'
 E_DIHED = 'dihedral'
 E_IMPRO = 'improper'
 E_LONG = 'kspace'
+REL_E_GROUP = 'rel_e_group'
+REL_ENE = 'rel_ene_total'
 REL_PROT_E = 'rel_max_prot_ene'
 REL_HYD_E = 'rel_max_hyd_e'
 REL_NEXT_HYD_E = 'rel_next_max_hyd_e'
@@ -143,7 +144,7 @@ CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
                  MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
                  MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
-KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3,
+KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3, PROT_STATE_FOUND, NUM_WATERS,
                         MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
 PROT_WAT_FIELDNAMES = [TIMESTEP, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_CI_SQ, NEXT_MAX_HYD_MOL]
@@ -272,6 +273,7 @@ def process_evb_file(evb_file, cfg):
         max_max_prot_mol_a = np.nan
         max_hyd_wat_mol = np.nan
         next_max_hyd_wat_mol = np.nan
+        prot_state_found = 0
         timestep = None
         # group for determining relative energies
         rel_e_group = None
@@ -304,6 +306,8 @@ def process_evb_file(evb_file, cfg):
                 state_list = []
                 prot_state_list = []
                 hyd_state_list = []
+                prot_state_found = 0
+                hyd_mols = set()
                 hyd_state_mol_dict = {}
                 max_prot_ci_sq = 0.0
                 max_hyd_ci_sq = 0.0
@@ -358,8 +362,10 @@ def process_evb_file(evb_file, cfg):
                 mol_b = int(split_line[4])
                 if mol_b == cfg[PROT_RES_MOL_ID]:
                     prot_state_list.append(state_count)
+                    prot_state_found = 1
                 else:
                     hyd_state_list.append(state_count)
+                    hyd_mols.add(mol_b)
                 state_list.append({MOL_A: int(split_line[3]), MOL_B: mol_b})
                 state_count += 1
                 if state_count == num_states:
@@ -411,6 +417,7 @@ def process_evb_file(evb_file, cfg):
                 result.update({MAX_PROT_CI_SQ: max_prot_ci_sq, MAX_HYD_CI_SQ: max_hyd_ci_sq,
                                NEXT_MAX_HYD_CI_SQ: next_max_hyd_ci_sq, MAX_CI_SQ_DIFF: max_prot_ci_sq - max_hyd_ci_sq,
                                MAX_HYD_MOL: max_hyd_wat_mol, NEXT_MAX_HYD_MOL: next_max_hyd_wat_mol,
+                               PROT_STATE_FOUND: prot_state_found, NUM_WATERS: len(hyd_mols),
                                })
                 if cfg[PRINT_WAT_MOL]:
                     if len(hyd_state_mol_dict) == 0 and cfg[SKIP_ONE_STATE] is False:
@@ -564,8 +571,8 @@ def find_rel_e(extracted_data, cfg, out_field_names):
     @param out_field_names: field names chosen based on user-defined options
     @return: prints out a new outfile unless an error is raised
     """
-    out_field_names = [FILE_NAME, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E,
-                       REL_E_GROUP] + out_field_names
+    out_field_names = [FILE_NAME, TIMESTEP, REL_E_GROUP, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E,
+                       ] + out_field_names[1:]
 
     for data_dict in extracted_data:
 
