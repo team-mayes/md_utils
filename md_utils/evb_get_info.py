@@ -62,6 +62,7 @@ PRINT_PER_FILE = 'print_output_each_file'
 PRINT_PER_LIST = 'print_output_file_list'
 PRINT_KEY_PROPS = 'print_key_props_flag'
 SKIP_ONE_STATE = 'skip_one_state_flag'
+PRINT_DECOMP_ENE_PROPS = 'print_decomposed_energy_flag'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -78,6 +79,7 @@ DEF_CFG_VALS = {EVB_LIST_FILE: DEF_EVB_LIST_FILE,
                 PRINT_PER_FILE: True,
                 PRINT_PER_LIST: False,
                 PRINT_KEY_PROPS: False,
+                PRINT_DECOMP_ENE_PROPS: False,
                 SKIP_ONE_STATE: True,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
@@ -85,6 +87,7 @@ REQ_KEYS = {PROT_RES_MOL_ID: int, }
 # For evb file processing
 SEC_TIMESTEP = 'timestep'
 SEC_ENE_TOTAL = 'ene_total'
+SEC_ENVIRON = 'decomp_ene_environ'
 SEC_COMPLEX = 'complex_section'
 SEC_STATES = 'states_section'
 SEC_EIGEN = 'eigen_vector_section'
@@ -119,8 +122,17 @@ STATES_TOT = 'evb_states_total'
 STATES_SHELL1 = 'evb_states_shell_1'
 STATES_SHELL2 = 'evb_states_shell_2'
 STATES_SHELL3 = 'evb_states_shell_3'
+ENE_ENVIRON = 'ene_environ'
+ENE_COMPLEX = 'ene_complex'
 ENE_TOTAL = 'ene_total'
 REL_ENE = 'rel_ene_total'
+E_VDW = 'vdw'
+E_COUL = 'coul'
+E_BOND = 'bond'
+E_ANGL = 'angle'
+E_DIHED = 'dihedral'
+E_IMPRO = 'improper'
+E_LONG = 'kspace'
 REL_PROT_E = 'rel_max_prot_ene'
 REL_HYD_E = 'rel_max_hyd_e'
 REL_NEXT_HYD_E = 'rel_next_max_hyd_e'
@@ -135,11 +147,13 @@ KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STAT
                         MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
 PROT_WAT_FIELDNAMES = [TIMESTEP, MAX_HYD_CI_SQ, MAX_HYD_MOL, NEXT_MAX_HYD_CI_SQ, NEXT_MAX_HYD_MOL]
-
+ENE_FIELDNAMES = [TIMESTEP, ENE_ENVIRON, ENE_COMPLEX, ENE_TOTAL,
+                  E_VDW, E_COUL, E_BOND, E_ANGL, E_DIHED, E_IMPRO, E_LONG, ]
 OPT_FIELD_NAME_DICT = OrderedDict([(PRINT_CI_SQ, CI_FIELDNAMES),
                                    (PRINT_KEY_PROPS, KEY_PROPS_FIELDNAMES),
                                    (PRINT_CEC, CEC_COORD_FIELDNAMES),
-                                   (PRINT_WAT_MOL, PROT_WAT_FIELDNAMES)])
+                                   (PRINT_WAT_MOL, PROT_WAT_FIELDNAMES),
+                                   (PRINT_DECOMP_ENE_PROPS, ENE_FIELDNAMES)])
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -208,7 +222,10 @@ def parse_cmdline(argv):
 
 def find_section_state(line):
     time_pat = re.compile(r"^TIMESTEP.*")
+    ene_environ_pat = re.compile(r"^ENE_ENVIRONMENT.*")
+    ene_complex_pat = re.compile(r"^ENE_COMPLEX.*")
     ene_total_pat = re.compile(r"^ENE_TOTAL.*")
+    environ_pat = re.compile(r"^ENVIRONMENT \[.*")
     complex_pat = re.compile(r"^COMPLEX 1:.*")
     state_pat = re.compile(r"^STATES.*")
     eigen_pat = re.compile(r"^EIGEN_VECTOR.*")
@@ -217,8 +234,14 @@ def find_section_state(line):
     end_pat = re.compile(r"END_OF_COMPLEX 1.*")
     if time_pat.match(line):
         return SEC_TIMESTEP
+    if ene_environ_pat.match(line):
+        return ENE_ENVIRON
+    if ene_complex_pat.match(line):
+        return ENE_COMPLEX
     if ene_total_pat.match(line):
         return SEC_ENE_TOTAL
+    if environ_pat.match(line):
+        return SEC_ENVIRON
     elif complex_pat.match(line):
         return SEC_COMPLEX
     elif state_pat.match(line):
@@ -266,7 +289,7 @@ def process_evb_file(evb_file, cfg):
                 # If no state found, advance to next line.
                 # Also advance to next line if the first line of a state does not contain data needed
                 #   otherwise, go to next if block to get data from that line
-                if section in [None, SEC_STATES, SEC_EIGEN, SEC_CEC, SEC_DIAG]:
+                if section in [None, SEC_STATES, SEC_EIGEN, SEC_CEC, SEC_DIAG, SEC_ENVIRON]:
                     continue
             if section == SEC_TIMESTEP:
                 split_line = line.split()
@@ -297,6 +320,23 @@ def process_evb_file(evb_file, cfg):
                     if (base_file_name == cfg[REL_E_SEC][rel_e_group][FILE_NAME]) and \
                            (timestep == cfg[REL_E_SEC][rel_e_group][TIMESTEP]):
                         cfg[REL_E_SEC][rel_e_group][REF_ENE] = ene_total
+                section = None
+            elif section in [ENE_ENVIRON, ENE_COMPLEX]:
+                split_line = line.split()
+                ene_total = float(split_line[1])
+                result[section] = ene_total
+                section = None
+                # ENE_ENVIRONMENT       -4285.220127
+                # ENE_COMPLEX            -419.665471
+                # ENE_TOTAL             -4704.885598
+                # DECOMPOSED_ENV_ENERGY
+                # ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
+                # 1065.562540 16028.021808   343.956615   351.599426    10.778182     0.891708 -22086.030407
+            elif section == SEC_ENVIRON:
+                split_line = map(float, line.split())
+                result.update({E_VDW: split_line[0], E_COUL: split_line[1], E_BOND: split_line[2],
+                               E_ANGL: split_line[3], E_DIHED: split_line[4], E_IMPRO: split_line[5],
+                               E_LONG: split_line[6]})
                 section = None
             elif section == SEC_COMPLEX:
                 split_line = line.split()
