@@ -8,10 +8,9 @@ import logging
 import unittest
 import os
 
-from md_utils import md_common
 from md_utils.lammps import find_atom_data
 from md_utils.lammps_dist import atom_distances, main
-from md_utils.md_common import InvalidDataError, diff_lines, capture_stderr, capture_stdout
+from md_utils.md_common import InvalidDataError, diff_lines, capture_stderr, capture_stdout, silent_remove
 
 __author__ = 'mayes'
 
@@ -35,6 +34,7 @@ GOOD_DUMP_OUT = os.path.join(LAM_DATA_DIR, 'pairs_dump_list_good.csv')
 DUMP_CUTOFF_PATH = os.path.join(LAM_DATA_DIR, '1.50_small_cutoff.dump')
 DUMP_CUTOFF_OUT = os.path.join(LAM_DATA_DIR, 'pairs_1.50_small_cutoff.csv')
 GOOD_DUMP_CUTOFF_OUT = os.path.join(LAM_DATA_DIR, 'std_pairs_1.50_small_cutoff.csv')
+GHOST_DUMP_LIST = os.path.join(LAM_DATA_DIR, 'ghost_dump_list.txt')
 
 # Data #
 
@@ -108,7 +108,7 @@ class TestMainFailWell(unittest.TestCase):
         # this dump list has 1429 atoms; the pairs asks for atoms 4179,54892 and 4180,54892
         # make sure do not create an empty file; start by removing it and then test if there after
         #   running test
-        md_common.silent_remove(DUMP_OUT)
+        silent_remove(DUMP_OUT)
         test_input = ["-l", DUMP_LIST, "-p", PAIRS_PATH]
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Could not find" in output)
@@ -135,6 +135,20 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("No pair file specified and did not find" in output)
 
+    def testNoSuchFileInList(self):
+        test_input = ["-l", GHOST_DUMP_LIST, "-p", PAIRS_PATH]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("No such file or directory" in output)
+
+    # def testBadDumpFile(self):
+    #     test_input = ["-f", GHOST_DUMP_LIST, "-p", PAIRS_PATH]
+    #     # if logger.isEnabledFor(logging.DEBUG):
+    #     main(test_input)
+        # with capture_stderr(main, test_input) as output:
+        #     self.assertTrue("No such file or directory" in output)
+
 
 class TestMain(unittest.TestCase):
     def testDefault(self):
@@ -142,14 +156,14 @@ class TestMain(unittest.TestCase):
             main(["-f", DUMP_PATH, "-p", PAIRS_PATH])
             self.assertFalse(diff_lines(STD_DIST_PATH, DIST_PATH))
         finally:
-            md_common.silent_remove(DIST_PATH)
+            silent_remove(DIST_PATH)
 
     def testDumpList(self):
         try:
             main(["-l", DUMP_LIST, "-p", PAIRS_PATH2])
             self.assertFalse(diff_lines(DUMP_OUT, GOOD_DUMP_OUT))
         finally:
-            md_common.silent_remove(DUMP_OUT)
+            silent_remove(DUMP_OUT)
 
     def testFileCutoff(self):
         test_input = ["-f", DUMP_CUTOFF_PATH, "-p", PAIRS_PATH]
@@ -157,4 +171,4 @@ class TestMain(unittest.TestCase):
             main(test_input)
             self.assertFalse(diff_lines(DUMP_CUTOFF_OUT, GOOD_DUMP_CUTOFF_OUT))
         finally:
-            md_common.silent_remove(DUMP_CUTOFF_OUT)
+            silent_remove(DUMP_CUTOFF_OUT)

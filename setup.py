@@ -51,6 +51,7 @@ setup(
                                       'fes_combo = md_utils.fes_combo:main',
                                       'fitevb_setup = md_utils.fitevb_setup:main',
                                       'lammps_dist = md_utils.lammps_dist:main',
+                                      'lammps_log_proc = md_utils.lammps_log_proc:main',
                                       'lammps_proc = md_utils.lammps_proc:main',
                                       'md_init = md_utils.md_init:main',
                                       'path_bin = md_utils.path_bin:main',

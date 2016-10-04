@@ -453,6 +453,15 @@ def move_existing_file(f_loc):
         shutil.move(f_loc, create_backup_filename(f_loc))
 
 
+def get_fname_root(src_file):
+    """
+
+    @param src_file:
+    @return: the file root name (no directory, no extension)
+    """
+    return os.path.splitext(os.path.basename(src_file))[0]
+
+
 def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 

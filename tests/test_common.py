@@ -9,7 +9,7 @@ import tempfile
 import unittest
 import os
 import numpy as np
-from md_utils.md_common import (find_files_by_dir, read_csv,
+from md_utils.md_common import (find_files_by_dir, read_csv, get_fname_root,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
                                 create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg,
                                 read_csv_dict, InvalidDataError)
@@ -39,7 +39,8 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
 CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMF_last2ns3_1.txt')
 FRENG_TYPES = [float, str]
 
-ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
+ORIG_WHAM_ROOT = "PMF_last2ns3_1"
+ORIG_WHAM_FNAME = ORIG_WHAM_ROOT + ".txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')
@@ -173,13 +174,22 @@ class TestReadFirstRow(unittest.TestCase):
         self.assertIsNone(read_csv_header(EMPTY_CSV))
 
 
-class TestCreateOutFname(unittest.TestCase):
+class TestFnameManipulation(unittest.TestCase):
     def testOutFname(self):
         """
         Check for prefix addition.
         """
         self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
             os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
+    def testGetRootName(self):
+        """
+        Check for prefix addition.
+        """
+        root_name = get_fname_root(ORIG_WHAM_PATH)
+        self.assertEqual(root_name, ORIG_WHAM_ROOT)
+        self.assertNotEqual(root_name, ORIG_WHAM_FNAME)
+        self.assertNotEqual(root_name, ORIG_WHAM_PATH)
 
 
 class TestReadCsvDict(unittest.TestCase):
