@@ -83,6 +83,9 @@ GOOD_REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info_good.csv'
 DECOMP_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_decomp_ene.ini')
 GOOD_DECOMP_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info.csv')
 
+RMSD_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene_rmsd.ini')
+GOOD_RMSD_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_rmsd_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -228,5 +231,16 @@ class TestEVBGetInfo(unittest.TestCase):
         try:
             main(["-c", DECOMP_ENE_INI])
             self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_DECOMP_ENE_OUT))
+        finally:
+            silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)
+
+    def testRMSDEnergy(self):
+        try:
+            test_input = ["-c", RMSD_ENE_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("23.760125" in output)
+            self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_RMSD_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)

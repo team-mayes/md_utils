@@ -59,6 +59,8 @@ DIFF_LINES_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_prec_diff.csv')
 DIFF_LINES_ONE_VAL_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_val_diff.csv')
 DIFF_LINES_MISS_VAL = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_val.csv')
 MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
+DIFF_LINES_ONE_NAN = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
+DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 
 IMPROP_SEC = os.path.join(LAMMPS_PROC_DIR, 'glue_improp.data')
 IMPROP_SEC_ALT = os.path.join(LAMMPS_PROC_DIR, 'glue_improp_diff_ord.data')
@@ -325,6 +327,15 @@ class TestDiffLines(unittest.TestCase):
     def testDiffOrd(self):
         diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" ")
         self.assertEquals(13, len(diff_line_list))
+
+    def testDiffOneNan(self):
+        diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_ONE_NAN)
+        self.assertEquals(2, len(diff_line_list))
+
+    def testDiffBothNanPrecDiff(self):
+        # make there also be a precision difference so the entry-by-entry comparison will be made
+        diff_line_list = diff_lines(DIFF_LINES_ONE_NAN_PREC_DIFF, DIFF_LINES_ONE_NAN)
+        self.assertFalse(diff_line_list)
 
 
 class TestQuoteDeQuote(unittest.TestCase):

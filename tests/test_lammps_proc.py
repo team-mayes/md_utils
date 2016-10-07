@@ -9,8 +9,8 @@ from md_utils.lammps_proc import main, WAT_H_TYPE, WAT_O_TYPE, PROT_O_IDS, H3O_O
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -37,6 +37,7 @@ OH_DIST_INI = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_sum.csv')
 GOOD_OH_DIST_OUT = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
+EMPTY_LIST_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_empty_list.ini')
 MISS_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_missing_dump.ini')
 BAD_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_bad_dump.ini')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
@@ -179,6 +180,13 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue(WAT_H_TYPE in output)
             self.assertTrue("no such atoms were found" in output)
+
+    def testEmptyList(self):
+        test_input = ["-c", EMPTY_LIST_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Found no dump files to process" in output)
 
 
 class TestLammpsProcData(unittest.TestCase):

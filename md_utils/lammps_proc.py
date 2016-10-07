@@ -13,7 +13,8 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
-                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff)
+                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff,
+                                file_rows_to_list)
 
 try:
     # noinspection PyCompatibility
@@ -851,6 +852,19 @@ def process_dump_files(cfg):
     """
     @param cfg: configuration data read from ini file
     """
+
+    dump_file_list = []
+
+    if os.path.isfile(cfg[DUMP_FILE_LIST]):
+        dump_file_list += file_rows_to_list(cfg[DUMP_FILE_LIST])
+    if cfg[DUMP_FILE] is not None:
+        dump_file_list.append(cfg[DUMP_FILE])
+
+    if len(dump_file_list) == 0:
+        raise InvalidDataError("Found no dump files to process. Use the configuration ('ini') file to specify the name "
+                               "of a single dump file with the keyword '{}' or a file listing dump files with the "
+                               "keyword '{}'.".format(DUMP_FILE, DUMP_FILE_LIST))
+
     gofr_data = {}
     out_fieldnames = None
 
@@ -875,23 +889,6 @@ def process_dump_files(cfg):
 
     if cfg[PER_FRAME_OUTPUT]:
         out_fieldnames = setup_per_frame_output(cfg)
-
-    dump_file_list = []
-
-    if os.path.isfile(cfg[DUMP_FILE_LIST]):
-        with open(cfg[DUMP_FILE_LIST]) as f:
-            for dump_file in f:
-                dump_file = dump_file.strip()
-                # skip any excess blank lines
-                if len(dump_file) > 0:
-                    dump_file_list.append(dump_file)
-    if cfg[DUMP_FILE] is not None:
-        dump_file_list.append(cfg[DUMP_FILE])
-
-    if len(dump_file_list) == 0:
-        raise InvalidDataError("Found no dump files to process. Use the configuration ('ini') file to specify the name "
-                               "of a single dump file with the keyword '{}' or a file listing dump files with the "
-                               "keyword '{}'.".format(DUMP_FILE, DUMP_FILE_LIST))
 
     per_frame_write_mode = 'w'
     base_out_file_name = cfg[DUMP_FILE_LIST]

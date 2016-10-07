@@ -27,7 +27,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, warning, create_out_fname, process_cfg, write_csv,
-                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, file_rows_to_list)
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, file_rows_to_list, read_csv_dict)
 
 try:
     # noinspection PyCompatibility
@@ -61,6 +61,7 @@ PRINT_PER_LIST = 'print_output_file_list'
 PRINT_KEY_PROPS = 'print_key_props_flag'
 SKIP_ONE_STATE = 'skip_one_state_flag'
 PRINT_DECOMP_ENE_PROPS = 'print_decomposed_energy_flag'
+REF_E_FILE = 'ref_e_file'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -79,6 +80,7 @@ DEF_CFG_VALS = {EVB_LIST_FILE: DEF_EVB_LIST_FILE,
                 PRINT_KEY_PROPS: False,
                 PRINT_DECOMP_ENE_PROPS: False,
                 SKIP_ONE_STATE: True,
+                REF_E_FILE: None,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -137,8 +139,10 @@ REL_ENE = 'rel_ene_total'
 REL_PROT_E = 'rel_max_prot_ene'
 REL_HYD_E = 'rel_max_hyd_e'
 REL_NEXT_HYD_E = 'rel_next_max_hyd_e'
-REL_E_PAT = "rel_e_pat"
-REF_ENE = 'ref_ene'
+REL_E_PAT = 'rel_e_pat'
+REL_E_REF = 'rel_e_ref'
+REF_E = 'ref_e'
+RESID_E = 'resid_e'
 MIN_DIAB_ENE = 'min_diab_ene'
 CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
@@ -183,7 +187,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
             rel_e_proc[section_prefix] = {REL_E_PAT: base_e_match_pat,
                                           FILE_NAME: base_e_file_name,
                                           TIMESTEP: base_e_timestep,
-                                          REF_ENE: np.nan,
+                                          REL_E_REF: np.nan,
                                           MIN_DIAB_ENE: np.inf, }
     main_proc[REL_E_SEC] = rel_e_proc
     return main_proc
@@ -323,7 +327,7 @@ def process_evb_file(evb_file, cfg):
                 if rel_e_group is not None:
                     if (base_file_name == cfg[REL_E_SEC][rel_e_group][FILE_NAME]) and \
                            (timestep == cfg[REL_E_SEC][rel_e_group][TIMESTEP]):
-                        cfg[REL_E_SEC][rel_e_group][REF_ENE] = ene_total
+                        cfg[REL_E_SEC][rel_e_group][REL_E_REF] = ene_total
                 section = None
             elif section in [ENE_ENVIRON, ENE_COMPLEX]:
                 split_line = line.split()
@@ -563,16 +567,20 @@ def gather_out_field_names(cfg):
                                ''.format(OPT_FIELD_NAME_DICT.keys()))
 
 
-def find_rel_e(extracted_data, cfg, out_field_names):
+def find_rel_e(extracted_data, cfg, out_field_names, ref_energy_dict):
     """
     calculate relative energies from the gathered data
     @param extracted_data: gathered data (based on flags)
     @param cfg: configuration for file
     @param out_field_names: field names chosen based on user-defined options
+    @param ref_energy_dict: a dictionary of time names and the reference energy for calculating an energy RMSD
     @return: prints out a new outfile unless an error is raised
     """
-    out_field_names = [FILE_NAME, TIMESTEP, REL_E_GROUP, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E,
+    out_field_names = [FILE_NAME, TIMESTEP, REL_E_GROUP, RESID_E, REF_E, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E,
                        ] + out_field_names[1:]
+
+    tot_resid = 0
+    num_resid = 0
 
     for data_dict in extracted_data:
 
@@ -582,20 +590,43 @@ def find_rel_e(extracted_data, cfg, out_field_names):
         #         break
         this_group = data_dict[REL_E_GROUP]
         if this_group:
-            ref_ene = cfg[REL_E_SEC][this_group][REF_ENE]
+            rel_ene_ref = cfg[REL_E_SEC][this_group][REL_E_REF]
             ref_diab_e = cfg[REL_E_SEC][this_group][MIN_DIAB_ENE]
-        if this_group is None or np.isnan(ref_ene):
+        if this_group is None or np.isnan(rel_ene_ref):
             for key in [REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E]:
                 data_dict[key] = np.nan
         else:
-            data_dict[REL_ENE] = data_dict[ENE_TOTAL] - ref_ene
+            rel_e = data_dict[ENE_TOTAL] - rel_ene_ref
+            data_dict[REL_ENE] = rel_e
             data_dict[REL_PROT_E] = data_dict[MAX_PROT_E] - ref_diab_e
             data_dict[REL_HYD_E] = data_dict[MAX_HYD_E] - ref_diab_e
             data_dict[REL_NEXT_HYD_E] = data_dict[NEXT_MAX_HYD_E] - ref_diab_e
+            file_name = data_dict[FILE_NAME]
+            if file_name in ref_energy_dict:
+                ref_e = ref_energy_dict[file_name]
+                resid = np.round(np.sqrt((ref_e - rel_e) ** 2), 6)
+
+                data_dict[REF_E] = ref_e
+                data_dict[RESID_E] = resid
+                tot_resid += resid
+                num_resid += 1
 
     f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_evb_info', ext='.csv',
                              base_dir=cfg[OUT_BASE_DIR])
     write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore")
+    if len(ref_energy_dict) > 1:
+        print("Calculated total energy residual from {} files: {}".format(num_resid, tot_resid))
+
+
+def get_ref_e(file_name):
+    """
+    If a reference E file is provided, read in the pair of comma-separated values as a dict of file name, value
+    @param file_name: to attempt to read; None if not provided
+    @return: dict of file name, value
+    """
+    if file_name is None:
+        return {}
+    return read_csv_dict(file_name, one_to_one=False, str_float=True)
 
 
 def main(argv=None):
@@ -610,7 +641,8 @@ def main(argv=None):
         out_field_names = gather_out_field_names(cfg)
         extracted_data = process_evb_files(cfg, out_field_names)
         if len(cfg[REL_E_SEC]) > 0:
-            find_rel_e(extracted_data, cfg, out_field_names)
+            ref_e_dict = read_csv_dict(cfg[REF_E_FILE], one_to_one=False, str_float=True)
+            find_rel_e(extracted_data, cfg, out_field_names, ref_e_dict)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

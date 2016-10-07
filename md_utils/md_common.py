@@ -719,7 +719,7 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
 
-    @param d_file: the files with csv of old_id,new_id
+    @param d_file: the file with csv of old_id,new_id
     @param ints: boolean to indicate if the values are to be read as integers
     @param one_to_one: flag to check for one-to-one mapping in the dict
     @param pdb_dict: flag to format as required for the PDB output
@@ -1021,8 +1021,12 @@ def conv_num(s):
 def diff_lines(floc1, floc2, delimiter=","):
     """
     Determine all lines in a file are equal.
-    If not, test if the line is a csv that has floats and the difference is due to machine precision.
-    If not, return all lines with differences.
+    This function became complicated because of edge cases:
+        Do not want to flag files as different if the only difference is due to machine precision diffs of floats
+    Thus, if the files are not immediately found to be the same:
+        If not, test if the line is a csv that has floats and the difference is due to machine precision.
+        Be careful if one value is a np.nan, but not the other (the diff evaluates to zero)
+        If not, return all lines with differences.
     @param floc1: file location 1
     @param floc2: file location 1
     @param delimiter: defaults to CSV
@@ -1066,11 +1070,20 @@ def diff_lines(floc1, floc2, delimiter=","):
                 for item_plus, item_neg in zip(line_plus, line_neg):
                     if isinstance(item_plus, float) and isinstance(item_neg, float):
                         # if difference greater than the tolerance, the difference is not just precision
-                        float_diff = abs(item_plus - item_neg)
-                        calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
-                        if float_diff > calc_tol:
-                            warning("Values {} and {} differ by {}, which is greater than the calculated tolerance ({})"
-                                    "".format(item_plus, item_neg, float_diff, calc_tol))
+                        # Note: if only one value is nan, the float diff is zero!
+                        #  Thus, check for diffs only if neither are nan; show different if only one is nan
+                        diff_vals = False
+                        if np.isnan(item_neg) != np.isnan(item_plus):
+                            diff_vals = True
+                            warning("Comparing '{}' to '{}'.".format(item_plus, item_neg))
+                        elif not (np.isnan(item_neg) and np.isnan(item_plus)):
+                            float_diff = abs(item_plus - item_neg)
+                            calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
+                            if float_diff > calc_tol:
+                                diff_vals = True
+                                warning("Values {} and {} differ by {}, which is greater than the calculated tolerance "
+                                        "({})".format(item_plus, item_neg, float_diff, calc_tol))
+                        if diff_vals:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
                             return diff_lines_list
