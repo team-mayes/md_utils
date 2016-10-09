@@ -192,8 +192,18 @@ R_OH_HYD = 'R_OH_hyd'
 R_OH_WAT_HYD = 'R_OH_hyd_wat'
 HIJ_WAT = 'HIJ_OO_hyd_wat'
 # OSTARH_MIN = 'o_star_h_min'
+
+HIJ_ROO_NEW = 'f_r_oo_new'
+F_ROO_NEW = 'f_r_oo_new'
+Q_DOT_NEW = 'q_arq_new'
+V_OO_NEW = 'v_oo_new'
+V_OH_NEW = 'v_oh_new'
+
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
 # OSTARH_FIELDNAMES = [OSTARH_MIN]
+# TODO: Add HIJ new option, read in the params,
+#   calc the field names HIJ_ROO_NEW, F_ROO_NEW, Q_DOT_NEW, V_OO_NEW, V_OH_NEW
+HIJ_NEW_FIELDNAMES = [R_OO, R_OH, HIJ_ROO_NEW, F_ROO_NEW, Q_DOT_NEW, V_OO_NEW, V_OH_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]

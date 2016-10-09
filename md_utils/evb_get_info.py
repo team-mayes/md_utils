@@ -583,11 +583,6 @@ def find_rel_e(extracted_data, cfg, out_field_names, ref_energy_dict):
     num_resid = 0
 
     for data_dict in extracted_data:
-
-        # for group, rel_e_dict in cfg[REL_E_SEC].items():
-        #     if rel_e_dict[REL_E_PAT].match(data_dict[FILE_NAME]):
-        #         data_dict[REL_E_GROUP] = group
-        #         break
         this_group = data_dict[REL_E_GROUP]
         if this_group:
             rel_ene_ref = cfg[REL_E_SEC][this_group][REL_E_REF]

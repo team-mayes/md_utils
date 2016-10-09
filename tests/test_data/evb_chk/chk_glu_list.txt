@@ -1,0 +1,6 @@
+tests/test_data/evb_chk/CHK_gluprot5_15
+tests/test_data/evb_chk/CHK_gluprot5_16
+tests/test_data/evb_chk/CHK_gluprot5_17
+tests/test_data/evb_chk/CHK_gluprot11_-4
+tests/test_data/evb_chk/CHK_gluprot11_-5
+tests/test_data/evb_chk/CHK_gluprot11_-6
