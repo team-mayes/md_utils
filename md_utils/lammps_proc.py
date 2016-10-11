@@ -98,11 +98,12 @@ DEF_MAX_TIMESTEPS = 100000000000
 
 GAMMA_NEW = 'new_gamma'
 LAMBDA_NEW = 'new_lambda'
+R0_DA_NEW = 'new_r0_da'
 R0SC_NEW = 'new_r0_sc'
 ALPHA_NEW = 'new_alpha'
 A_DA_NEW = 'new_a_da'
 VIJ_NEW = 'new_vij'
-NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW]
+NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0_DA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW]
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -136,8 +137,8 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 COMBINE_OUTPUT: False,
-                GAMMA_NEW: None, LAMBDA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None, A_DA_NEW: None,
-                VIJ_NEW: None,
+                GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
+                A_DA_NEW: None, VIJ_NEW: None,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -272,6 +273,7 @@ V0_ii_arq = -106.72
 V_ij_arq = -26.43
 r0_sc_arq = 0.83468
 lambda_arq = -0.076
+r0_da = 2.57
 C_arq = 0.8911
 alpha_arq = 1.83
 a_DA_arq = 2.86
@@ -309,7 +311,7 @@ def calc_q(r_o, r_op, r_h, box):
     return np.dot(q_vec, q_vec)
 
 
-def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, lambda_q):
+def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, r0_da_q, lambda_q):
     """
     Calculates the 3-body term, keeping the pbc in mind, per Maupin et al. 2006,
     http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 7-8
@@ -318,11 +320,12 @@ def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, lambda_q):
     @param r_h: x,y,z position of the reactive H
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
     @param r0_sc: parameter for calc
+    @param r0_da_q: parameter for calc
     @param lambda_q: parameters for calc
     @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
     """
     da_dist = pbc_dist(r_do, r_ao, box)
-    r_sc = r0_sc - lambda_q * da_dist
+    r_sc = r0_sc - lambda_q * (da_dist - r0_da_q)
     r_dh = pbc_vector_diff(r_h, r_do, box)
     r_da = pbc_vector_diff(r_ao, r_do, box)
     q_vec = np.subtract(r_dh, r_sc * r_da / 2.0)
@@ -682,13 +685,13 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                      HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
             if cfg[CALC_HIJ_ARQ_FORM]:
                 q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
-                                       closest_excess_h[XYZ_COORDS], box, r0_sc_arq, lambda_arq,
+                                       closest_excess_h[XYZ_COORDS], box, r0_sc_arq, r0_da, lambda_arq,
                                        )
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
                 calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
             if cfg[CALC_HIJ_NEW]:
                 q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
-                                       closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW],
+                                       closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW], cfg[R0_DA_NEW],
                                        cfg[LAMBDA_NEW])
                 g_of_q = np.exp(-cfg[GAMMA_NEW] * q_dot_arq)
                 f_of_roo = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], o_ostar_dist)
