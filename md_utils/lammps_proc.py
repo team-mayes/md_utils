@@ -16,6 +16,8 @@ from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, wa
                                 find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff,
                                 file_rows_to_list)
 
+PRINT_PROGRESS = 'print_progress'
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, NoSectionError
@@ -203,13 +205,14 @@ HIJ_WAT = 'HIJ_OO_hyd_wat'
 
 HIJ_NEW = 'hij_new'
 F_ROO_NEW = 'f_r_oo_new'
-G_OF_Q_NEW = 'g_q_new'
+G_Q_NEW = 'g_q_new'
+FG_NEW = 'f_g_new'
 Q_DOT_NEW = 'q_arq_new'
 # V_OO_NEW = 'v_oo_new'
 V_OH_NEW = 'v_oh_new'
 
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
-HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_OF_Q_NEW, F_ROO_NEW, HIJ_NEW]
+HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_Q_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
@@ -325,6 +328,9 @@ def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, r0_da_q, lambda_q):
     @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
     """
     da_dist = pbc_dist(r_do, r_ao, box)
+    # todo: remove these
+    diff1 = da_dist - r0_da_q
+    diff2 = lambda_q * (da_dist - r0_da_q)
     r_sc = r0_sc - lambda_q * (da_dist - r0_da_q)
     r_dh = pbc_vector_diff(r_h, r_do, box)
     r_da = pbc_vector_diff(r_ao, r_do, box)
@@ -434,6 +440,10 @@ def parse_cmdline(argv):
                                                "base directory where the program as run. The required keys are: "
                                                "{}".format(DEF_CFG_FILE, REQ_KEYS.keys()),
                         default=DEF_CFG_FILE, type=read_cfg)
+    parser.add_argument("-p", "--hide_progress", help="Omit printing status to standard out (i.e. which file is "
+                                                      "being read, when a file is being written). The default is false "
+                                                      "(progress shown).",
+                        action='store_true')
     args = None
     try:
         args = parser.parse_args(argv)
@@ -696,8 +706,8 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 g_of_q = np.exp(-cfg[GAMMA_NEW] * q_dot_arq)
                 f_of_roo = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], o_ostar_dist)
                 h_ij_new = cfg[VIJ_NEW] * g_of_q * f_of_roo
-                calc_results.update({Q_DOT_NEW: q_dot_arq, G_OF_Q_NEW: g_of_q, F_ROO_NEW: f_of_roo,
-                                     HIJ_NEW: h_ij_new})
+                calc_results.update({Q_DOT_NEW: q_dot_arq, G_Q_NEW: g_of_q, F_ROO_NEW: f_of_roo,
+                                     FG_NEW: g_of_q * f_of_roo, HIJ_NEW: h_ij_new})
 
         if cfg[CALC_HIJ_DA_GAUSS_FORM]:
             r_oh = oh_dist_dict[OH_MIN]
@@ -757,7 +767,8 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
 def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode):
     with open(dump_file) as d:
         # spaces here allow file name to line up with the "completed reading" print line
-        print("{:>17}: {}".format('Reading', dump_file))
+        if cfg[PRINT_PROGRESS]:
+            print("{:>17}: {}".format('Reading', dump_file))
         section = None
         box = np.zeros((3,))
         box_counter = 1
@@ -829,7 +840,8 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                     section = None
                 atom_counter += 1
     if atom_counter == 1:
-        print("Completed reading: {}".format(dump_file))
+        if cfg[PRINT_PROGRESS]:
+            print("Completed reading: {}".format(dump_file))
     else:
         warning("FYI: dump file {} step {} did not have the full list of atom numbers. "
                 "Continuing to next dump file.".format(dump_file, timestep))
@@ -896,12 +908,13 @@ def print_gofr(cfg, gofr_data):
 
     f_out = create_out_fname(cfg[DUMP_FILE_LIST], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
     # list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
-    list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out)
+    list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out, print_message=cfg[PRINT_PROGRESS])
 
 
 def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode):
     f_out = create_out_fname(dump_file, suffix='_sum', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode)
+    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode,
+              print_message=cfg[PRINT_PROGRESS])
 
 
 def ini_gofr_data(gofr_data, bin_count, bins, step_count):
@@ -978,6 +991,10 @@ def main(argv=None):
 
     # Read template and dump files
     cfg = args.config
+    if args.hide_progress:
+        cfg[PRINT_PROGRESS] = False
+    else:
+        cfg[PRINT_PROGRESS] = True
 
     try:
         process_dump_files(cfg)

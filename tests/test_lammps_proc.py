@@ -85,9 +85,9 @@ GOOD_HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_arq_good.csv')
 HIJ_NEW_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new.ini')
 GOOD_HIJ_NEW_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new_hij_good.csv')
 
-HIJ_NEW_GLU_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_glu_arq_new.ini')
-HIJ_NEW_GLU_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_-5no_evb_sum.csv')
-GOOD_HIJ_NEW_GLU_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new_hij_glu_good.csv')
+HIJ_NEW_GLU2_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_glu_arq_new.ini')
+HIJ_NEW_GLU2_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_sum.csv')
+GOOD_HIJ_NEW_GLU2_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_sum_good.csv')
 
 HIJ_NEW_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_missing_param.ini')
 HIJ_NEW_NONFLOAT_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_non_float_param.ini')
@@ -311,11 +311,15 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(HIJ_ARQ_OUT, disable=DISABLE_REMOVE)
 
-    def testHIJArqNew(self):
+    def testHIJArqNew2(self):
         # Test calculating the Maupin form
         try:
-            test_input = ["-c", HIJ_NEW_GLU_INI]
-            main(test_input)
-            self.assertFalse(diff_lines(HIJ_NEW_GLU_OUT, GOOD_HIJ_NEW_GLU_OUT))
+            test_input = ["-c", HIJ_NEW_GLU2_INI, "-p"]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            # because i've turned off printing, there should be no output
+            with capture_stdout(main, test_input) as output:
+                self.assertFalse(output)
+            self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_HIJ_NEW_GLU2_OUT))
         finally:
-            silent_remove(HIJ_NEW_GLU_OUT, disable=DISABLE_REMOVE)
+            silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)

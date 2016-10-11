@@ -672,7 +672,8 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
                                    "".format(col_name, src_file, line))
 
 
-def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC):
+def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC,
+              print_message=True):
     """
     Writes the given data to the given file location.
 
@@ -682,6 +683,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
     @param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
     @param mode: default mode is to overwrite file
+    @param print_message: boolean to flag whether to note that file written or appended
     @param quote_style: dictates csv output style
     """
     with open(out_fname, mode) as csv_file:
@@ -689,13 +691,15 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
         if mode == 'w':
             writer.writeheader()
         writer.writerows(data)
-    if mode == 'a':
-        print("  Appended: {}".format(out_fname))
-    elif mode == 'w':
-        print("Wrote file: {}".format(out_fname))
+    if print_message:
+        if mode == 'a':
+            print("  Appended: {}".format(out_fname))
+        elif mode == 'w':
+            print("Wrote file: {}".format(out_fname))
 
 
-def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC):
+def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC,
+                print_message=True):
     """
     Writes the given data to the given file location.
     @param data: The data to write (list of lists).
@@ -707,7 +711,8 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
         writer.writerows(data)
-    print("Wrote file: {}".format(out_fname))
+    if print_message:
+        print("Wrote file: {}".format(out_fname))
 
 
 # Other input/output files
