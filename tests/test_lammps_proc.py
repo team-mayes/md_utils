@@ -82,6 +82,12 @@ HIJ_ARQ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq.ini')
 HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
 GOOD_HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
 
+HIJ_NEW_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new.ini')
+GOOD_HIJ_NEW_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new_hij_good.csv')
+
+HIJ_NEW_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_missing_param.ini')
+HIJ_NEW_NONFLOAT_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_non_float_param.ini')
+
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
                     'Continuing program.\nCompleted reading'
@@ -188,6 +194,20 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Found no dump files to process" in output)
 
+    def testMissNewHIJMissingParam(self):
+        test_input = ["-c", HIJ_NEW_MISS_PARAM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing input value for key" in output)
+
+    def testMissNewHIJNonfloatParam(self):
+        test_input = ["-c", HIJ_NEW_NONFLOAT_PARAM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Require float inputs for keys" in output)
+
 
 class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
@@ -277,3 +297,12 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:
             silent_remove(DEF_MAX_STEPS_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArqNew(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_NEW_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(HIJ_ARQ_OUT, GOOD_HIJ_NEW_OUT))
+        finally:
+            silent_remove(HIJ_ARQ_OUT, disable=DISABLE_REMOVE)

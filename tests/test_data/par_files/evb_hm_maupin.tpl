@@ -1086,18 +1086,18 @@ PT  : Use the PT coupling
   : parameters
      @@@r0_sc  : r0_sc
      @@@lambda : lambda
-     0.00    : R0_DA
-     0.8911  : C
-     1.83    : alpha
-     2.86    : a_DA
-    -0.058   : beta
-     2.27    : b_DA
+     0.00      : R0_DA  not required
+     1.00      : C
+     @@@arq_alp  : alpha
+     @@@a_da     : a_DA
+     0.00    : beta : with C=1, this is irrelevant
+     2.27    : b_DA : with C=1, this is irrelevant
      0.00    :  1.77 :    : esp
-     2.59    : c_DA
-     7.00    : gamma
+     2.59    : c_DA  : with esp = 0, this is irrelevant
+     @@@gamma   : gamma
 
  : Potential part
-  -26.43  : Vij_const, in kcal/mol
+  @@@vij_cont  : Vij_const, in kcal/mol
     0         : if contains Vij_ex part
 
 [off_diagonal.end]
@@ -1118,17 +1118,17 @@ PT  : Use the PT coupling
      @@@r0_sc  : r0_sc
      @@@lambda : lambda
      0.00    : R0_DA
-     0.8911  : C
-     1.83    : alpha
-     2.86    : a_DA
-    -0.058   : beta
-     2.27    : b_DA
-     0.00    :  1.77   : esp
-     2.59    : c_DA
-     7.00    : gamma
+     1.00    : C  setting to 1.00 makes only the gaussian effective
+     @@@arq_alp    : alpha
+     @@@a_da    : a_DA
+     0.00    : beta : with C=1, this is irrelevant
+     2.27    : b_DA : with C=1, this is irrelevant
+     0.00    :  1.77 :    : esp
+     2.59    : c_DA  : with esp = 0, this is irrelevant
+     @@@gamma    : gamma
 
  : Potential part
-  -26.43  : Vij_const, in kcal/mol
+  @@@vij_cont  : Vij_const, in kcal/mol
     0     : if contains Vij_ex part
 
 [off_diagonal.end]
@@ -1200,11 +1200,11 @@ GLU-P : EVB_Type of center
 1 : Number of pairs: 1
 
 OH1 : type D
-OW : type A
-@@@vb : B
-1.0   : b
-@@@bda   : b_DA
-4.00  : cut-off
+HH : type A
+@@@vb   : B
+@@@vlb  : b
+@@@bda  : b_DA
+2.50    : cut-off
 
 [repulsive.end]
 

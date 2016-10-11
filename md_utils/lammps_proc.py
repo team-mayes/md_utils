@@ -25,7 +25,6 @@ except ImportError:
 
 __author__ = 'hmayes'
 
-
 # Error Codes
 # The good status code
 GOOD_RET = 0
@@ -45,7 +44,6 @@ PROT_RES_MOL_ID = 'prot_res_mol_id'
 PROT_H_TYPE = 'prot_h_type'
 PROT_H_IGNORE = 'prot_ignore_h_atom_nums'
 PROT_O_IDS = 'prot_carboxyl_oxy_atom_nums'
-# Todo: allow calculating center of mass
 PROT_C_ID = 'prot_carboxyl_carb_atom_num'
 WAT_O_TYPE = 'water_o_type'
 WAT_H_TYPE = 'water_h_type'
@@ -74,28 +72,37 @@ CALC_HYD_WAT = 'calc_hyd_water_dist_hij_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
 CALC_HIJ_DA_GAUSS_FORM = 'calc_hij_da_gauss_flag'
 CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
+CALC_HIJ_NEW = 'calc_new_arq'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 WATER_TERMS_PRINT = 'print_water_terms'
 COMBINE_OUTPUT = 'combine_output_flag'
 
 # TODO: talk to Chris about listing many angles, dihedrals
 CALC_COORD_NUM = 'calc_coord_number'
-CALC_ANG_OCO = 'calc_carboxyl_o_c_o_ang'           # 18 17 19
-CALC_ANG_COH = 'calc_carboxyl_c_o_h_ang'           # 17 ?? ??
+CALC_ANG_OCO = 'calc_carboxyl_o_c_o_ang'  # 18 17 19
+CALC_ANG_COH = 'calc_carboxyl_c_o_h_ang'  # 17 ?? ??
 CALC_DIH_CCCC = 'calc_carboxyl_ca_cb_cg_cd_dihed'  # 9 11 14 17
-CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'    # 14 17 ?? ??
+CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'  # 14 17 ?? ??
 
 # Added so I don't have to read all of a really big file
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
 PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM,
-                          WATER_TERMS_PRINT, CALC_HYD_WAT]
+                          WATER_TERMS_PRINT, CALC_HYD_WAT, CALC_HIJ_NEW]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
 # Default max timesteps (1E12 written out to interpreted as int, not float)
 DEF_MAX_TIMESTEPS = 100000000000
+
+GAMMA_NEW = 'new_gamma'
+LAMBDA_NEW = 'new_lambda'
+R0SC_NEW = 'new_r0_sc'
+ALPHA_NEW = 'new_alpha'
+A_DA_NEW = 'new_a_da'
+VIJ_NEW = 'new_vij'
+NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW]
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -129,6 +136,8 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 COMBINE_OUTPUT: False,
+                GAMMA_NEW: None, LAMBDA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None, A_DA_NEW: None,
+                VIJ_NEW: None,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -149,7 +158,6 @@ ATOM_TYPE = 'atom_type'
 CHARGE = 'charge'
 XYZ_COORDS = 'x,y,z'
 
-
 # for g(r) calcs
 GOFR_R = 'gofr_r'
 GOFR_HO = 'gofr_hsow'
@@ -167,7 +175,6 @@ OO_STEPS_COUNTED = 'oo_steps_counted'
 HH_STEPS_COUNTED = 'hh_steps_counted'
 OH_STEPS_COUNTED = 'oh_steps_counted'
 TYPE_STEPS_COUNTED = 'type_steps_counted'
-
 
 # Values to output
 TIMESTEP = 'timestep'
@@ -193,17 +200,15 @@ R_OH_WAT_HYD = 'R_OH_hyd_wat'
 HIJ_WAT = 'HIJ_OO_hyd_wat'
 # OSTARH_MIN = 'o_star_h_min'
 
-HIJ_ROO_NEW = 'f_r_oo_new'
+HIJ_NEW = 'hij_new'
 F_ROO_NEW = 'f_r_oo_new'
+G_OF_Q_NEW = 'g_q_new'
 Q_DOT_NEW = 'q_arq_new'
-V_OO_NEW = 'v_oo_new'
+# V_OO_NEW = 'v_oo_new'
 V_OH_NEW = 'v_oh_new'
 
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
-# OSTARH_FIELDNAMES = [OSTARH_MIN]
-# TODO: Add HIJ new option, read in the params,
-#   calc the field names HIJ_ROO_NEW, F_ROO_NEW, Q_DOT_NEW, V_OO_NEW, V_OH_NEW
-HIJ_NEW_FIELDNAMES = [R_OO, R_OH, HIJ_ROO_NEW, F_ROO_NEW, Q_DOT_NEW, V_OO_NEW, V_OH_NEW]
+HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_OF_Q_NEW, F_ROO_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
@@ -265,9 +270,8 @@ V_ij_water = -21.064268  # kcal/mol
 # glu params for arq (Maupin et al. 2006, http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 4-8)
 V0_ii_arq = -106.72
 V_ij_arq = -26.43
-r0_sc_arq = 1.03
+r0_sc_arq = 0.83468
 lambda_arq = -0.076
-R0_DA_arq = 2.57
 C_arq = 0.8911
 alpha_arq = 1.83
 a_DA_arq = 2.86
@@ -305,7 +309,7 @@ def calc_q(r_o, r_op, r_h, box):
     return np.dot(q_vec, q_vec)
 
 
-def calc_q_arq(r_ao, r_do, r_h, box):
+def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, lambda_q):
     """
     Calculates the 3-body term, keeping the pbc in mind, per Maupin et al. 2006,
     http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 7-8
@@ -313,12 +317,14 @@ def calc_q_arq(r_ao, r_do, r_h, box):
     @param r_do: x,y,z position of the donor oxygen (always using the glu oxygen, for now)
     @param r_h: x,y,z position of the reactive H
     @param box: the dimensions of the periodic box (assumed 90 degree angles)
+    @param r0_sc: parameter for calc
+    @param lambda_q: parameters for calc
     @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
     """
     da_dist = pbc_dist(r_do, r_ao, box)
-    r_sc = r0_sc_arq - lambda_arq * (da_dist - R0_DA_arq)
-    r_dh = pbc_vector_diff(r_do, r_h, box)
-    r_da = pbc_vector_diff(r_do, r_ao, box)
+    r_sc = r0_sc - lambda_q * da_dist
+    r_dh = pbc_vector_diff(r_h, r_do, box)
+    r_da = pbc_vector_diff(r_ao, r_do, box)
     q_vec = np.subtract(r_dh, r_sc * r_da / 2.0)
     return np.dot(q_vec, q_vec)
 
@@ -343,6 +349,18 @@ def calc_hij_arq(r_da, q_dot_arq):
                (1 - C_arq) * np.exp(-beta_arq * np.square(r_da - b_DA_arq)))
     term_a3 = 1 + np.tanh(eps_arq * (r_da - c_DA_arq))
     return V_ij_arq * term_a1 * term_a2 * term_a3
+
+
+def calc_f_da_new(alpha_new, a_da, r_da):
+    """
+    Calculates h_ij per Maupin et al. 2006,
+    http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 4-6
+    @param alpha_new: parameter
+    @param a_da: equilibrium distance parameter
+    @param r_da: o_ostar_dist
+    @return: the portion of the off-diagonal dependant on r_da
+    """
+    return np.exp(-alpha_new * (r_da - a_da) ** 2)
 
 
 def switch_func(rc, rs, r_array):
@@ -377,6 +395,23 @@ def read_cfg(floc, cfg_proc=process_cfg):
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
     main_proc = cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS)
+    main_proc[CALC_HIJ_NEW] = False
+    # first see if we will calculate it
+    for key in NEW_PARAMS:
+        if main_proc[key] is not None:
+            main_proc[CALC_HIJ_NEW] = True
+            break
+    if main_proc[CALC_HIJ_NEW]:
+        for key in NEW_PARAMS:
+            try:
+                main_proc[key] = float(main_proc[key])
+            except (TypeError, ValueError):
+                if main_proc[key] is None:
+                    first_warn = "Missing input value for key '{}'. ".format(key)
+                else:
+                    first_warn = "Found '{}' for key '{}'. ".format(main_proc[key], key)
+                raise InvalidDataError(first_warn + "Require float inputs for keys: {}"
+                                       "".format(NEW_PARAMS))
     return main_proc
 
 
@@ -630,13 +665,14 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                "Check input data.".format(WAT_H_TYPE, cfg[WAT_H_TYPE]))
 
     # Now start looking for data to report
-    if cfg[CALC_OH_DIST] or cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
+    if cfg[CALC_OH_DIST] or (cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or
+                             cfg[CALC_HIJ_NEW]):
         closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
                                                                             hydronium, box, cfg,
                                                                             carboxyl_carb)
         if cfg[CALC_OH_DIST]:
             calc_results.update(oh_dist_dict)
-        if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM]:
+        if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or cfg[CALC_HIJ_NEW]:
             closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
                                                                        cfg[H3O_O_TYPE])
             if cfg[CALC_HIJ_WATER_FORM]:
@@ -646,9 +682,19 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                      HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
             if cfg[CALC_HIJ_ARQ_FORM]:
                 q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
-                                       closest_excess_h[XYZ_COORDS], box)
+                                       closest_excess_h[XYZ_COORDS], box, r0_sc_arq, lambda_arq,
+                                       )
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
                 calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
+            if cfg[CALC_HIJ_NEW]:
+                q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
+                                       closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW],
+                                       cfg[LAMBDA_NEW])
+                g_of_q = np.exp(-cfg[GAMMA_NEW] * q_dot_arq)
+                f_of_roo = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], o_ostar_dist)
+                h_ij_new = cfg[VIJ_NEW] * g_of_q * f_of_roo
+                calc_results.update({Q_DOT_NEW: q_dot_arq, G_OF_Q_NEW: g_of_q, F_ROO_NEW: f_of_roo,
+                                     HIJ_NEW: h_ij_new})
 
         if cfg[CALC_HIJ_DA_GAUSS_FORM]:
             r_oh = oh_dist_dict[OH_MIN]
@@ -799,6 +845,8 @@ def setup_per_frame_output(cfg):
         out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
     if cfg[CALC_HIJ_ARQ_FORM]:
         out_fieldnames.extend(HIJ_ARQ_FIELDNAMES)
+    if cfg[CALC_HIJ_NEW]:
+        out_fieldnames.extend(HIJ_NEW_FIELDNAMES)
     if cfg[CALC_HIJ_WATER_FORM]:
         out_fieldnames.extend(HIJ_WATER_FIELDNAMES)
     if cfg[WATER_TERMS_PRINT]:

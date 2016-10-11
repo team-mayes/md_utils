@@ -1171,19 +1171,19 @@ OC   : Atom_Type of GLU
 
 : ----------------------------------------------------------------------------
 
- 0.0 : 0.125313  : B
+ 0.00  : 0.125313  : B
  0.138908  : b
  2.394032  : b'
  2.400000  : d_OO
- 4.558735  : C
- 9.548471  : c
- 1.000000  : d_OH
+ 0.0  : C
+ 10.00 : c
+ 1.00   : 1.000000  : d_OH
 
 : cutoff for OO
  2.722230   3.274360
 
 : cutoff for OH
-1.978666  4.00
+1.8  4.00
 
 [repulsive.end]
 
@@ -1195,16 +1195,16 @@ GLU-P : EVB_Type of center
 
 : The parameters
 
--315.15 : contant Vii
+-303.5  :: constant Vii
 
 1 : Number of pairs: 1
 
 OH1 : type D
-OW : type A
-0.0 : B
-1.0 : b
-3.0 : b_DA
-3.5 : cut-off
+HW : type A
+2.0   : B
+7.0  : b
+1.6  : b_DA
+2.50    : cut-off
 
 [repulsive.end]
 
