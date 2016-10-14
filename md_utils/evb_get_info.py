@@ -630,7 +630,6 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    # Read template and dump files
     cfg = args.config
     try:
         out_field_names = gather_out_field_names(cfg)

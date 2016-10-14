@@ -28,6 +28,7 @@ from contextlib import contextmanager
 
 # Constants #
 
+TPL_IO_ERR_MSG = "Couldn't read template at:'{}'"
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in kcal/mol Kelvin
@@ -90,6 +91,10 @@ class NotFoundError(MdError):
 
 
 class ArgumentParserError(Exception):
+    pass
+
+
+class TemplateNotReadableError(Exception):
     pass
 
 
@@ -169,28 +174,43 @@ def xyz_distance(fir, sec):
 
 def pbc_dist(a, b, box):
     # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2))
-    return np.linalg.norm(pbc_vector_diff(a, b, box))
+    return np.linalg.norm(pbc_calc_vector(a, b, box))
 
 
-def pbc_vector_diff(a, b, box):
+def pbc_calc_vector(a, b, box):
+    """
+    Finds the vectors between two points
+    @param a:
+    @param b:
+    @param box:
+    @return:
+    """
     vec = np.subtract(a, b)
     return vec - box * np.asarray(map(round, vec / box))
 
 
 def pbc_vector_avg(a, b, box):
-    diff = pbc_vector_diff(a, b, box)
+    diff = pbc_calc_vector(a, b, box)
     mid_pt = np.add(b, np.divide(diff, 2.0))
     # mid-point may not be in the first periodic image. Make it so by getting its difference from the origin
-    return pbc_vector_diff(mid_pt, np.zeros(len(mid_pt)), box)
+    return pbc_calc_vector(mid_pt, np.zeros(len(mid_pt)), box)
 
 # def angle(v1, v2):
 #   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
 
 
 def pbc_angle(p0, p1, p2, box):
-    #
-    print(p0, p1, p2, box)
-    pass
+    """
+    Calculates the angle between the vectors (p2 - p1) and (p0 - p1)
+    @param p0: xyz coordinate for the first pt
+    @param p1: xyz for 2nd pt
+    @param p2: xyz for 3rd pt
+    @param box: box coordinates
+    @return: the angle in ...
+    """
+    vect_1 = pbc_calc_vector(p0, p1, box)
+    vect_2 = pbc_calc_vector(p0, p2, box)
+    print(vect_1, vect_2)
 
 
 # noinspection PyUnresolvedReferences
@@ -208,9 +228,9 @@ def pbc_dihedral(p0, p1, p2, p3, box):
     @param box: periodic box lengths
     @return: dihedral angle in degrees
     """
-    b0 = -1.0 * (pbc_vector_diff(p1, p0, box))
-    b1 = pbc_vector_diff(p2, p1, box)
-    b2 = pbc_vector_diff(p3, p2, box)
+    b0 = -1.0 * (pbc_calc_vector(p1, p0, box))
+    b1 = pbc_calc_vector(p2, p1, box)
+    b2 = pbc_calc_vector(p3, p2, box)
 
     # normalize b1 so that it does not influence magnitude of vector
     # rejections that come next
@@ -249,6 +269,19 @@ def chunk(seq, chunk_size, process=iter):
 
 
 # I/O #
+
+def read_tpl(tpl_loc):
+    """Attempts to read the given template location and throws A
+    TemplateNotReadableError if it can't read the given location.
+
+    :param tpl_loc: The template location to read.
+    :raise TemplateNotReadableError: If there is an IOError reading the location.
+    """
+    try:
+        return file_to_str(tpl_loc)
+    except IOError:
+        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc))
+
 
 def make_dir(tgt_dir):
     """
@@ -702,6 +735,7 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
                 print_message=True):
     """
     Writes the given data to the given file location.
+    @param print_message: boolean to allow update
     @param data: The data to write (list of lists).
     @param out_fname: The name of the file to write to.
     @param delimiter: string

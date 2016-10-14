@@ -11,7 +11,7 @@ import os
 import numpy as np
 from md_utils.md_common import (find_files_by_dir, read_csv, get_fname_root,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg,
+                                create_out_fname, dequote, quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg,
                                 read_csv_dict, InvalidDataError)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
@@ -382,10 +382,10 @@ class TestConversions(unittest.TestCase):
 
 class TestVectorPBCMath(unittest.TestCase):
     def testSubtractInSameImage(self):
-        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
+        self.assertTrue(np.allclose(pbc_calc_vector(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
 
     def testSubtractInDiffImages(self):
-        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, C_VEC, PBC_BOX), GOOD_A_MINUS_C))
+        self.assertTrue(np.allclose(pbc_calc_vector(A_VEC, C_VEC, PBC_BOX), GOOD_A_MINUS_C))
 
     def testAvgInSameImage(self):
         self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, B_VEC, PBC_BOX), GOOD_A_B_AVG))

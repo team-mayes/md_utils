@@ -12,12 +12,12 @@ import math
 import argparse
 import os
 import sys
-from md_utils.md_common import (find_files_by_dir, chunk, file_to_str,
-                                allow_write, str_to_file, warning, GOOD_RET, INVALID_DATA)
+from md_utils.md_common import (find_files_by_dir, chunk, TemplateNotReadableError,
+                                allow_write, str_to_file, warning, GOOD_RET, INVALID_DATA, read_tpl)
 from md_utils.wham import (read_meta, read_meta_rmsd, DIR_KEY, write_rmsd,
                            LINES_KEY, DEF_BASE_SUBMIT_TPL,
                            DEF_TPL_DIR, fill_submit_wham, STEP_SUBMIT_FNAME, DEF_PART_LINE_SUBMIT_TPL,
-                           TemplateNotReadableError)
+                           )
 
 __author__ = 'mayes'
 
@@ -34,7 +34,6 @@ DEF_FILE_PAT = 'meta.00'
 DEF_STEPS_NUM = 12
 
 # Constants #
-TPL_IO_ERR_MSG = "Couldn't read template at:'{}' \nHave you run md_init in this directory?"
 STEP_DBG_MSG = "Step %d: Dividing %d lines from file %s into %d chunks of %d lines each."
 SPLIT_DIR_FMT = "{:02d}_{:02d}"
 STEP_META_FNAME = "meta." + SPLIT_DIR_FMT
@@ -65,18 +64,6 @@ def write_meta(tgt_dir, meta, step, overwrite=False):
                         m_file.write('\n')
             print("Wrote file: {}".format(f_name))
 
-
-def read_tpl(tpl_loc):
-    """Attempts to read the given template location and throws A
-    TemplateNotReadableError if it can't read the given location.
-
-    :param tpl_loc: The template location to read.
-    :raise TemplateNotReadableError: If there is an IOError reading the location.
-    """
-    try:
-        return file_to_str(tpl_loc)
-    except IOError:
-        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc))
 
 # Logic #
 

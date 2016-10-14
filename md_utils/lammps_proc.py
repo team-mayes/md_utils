@@ -13,7 +13,7 @@ import sys
 import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
-                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_vector_diff,
+                                find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_calc_vector,
                                 file_rows_to_list)
 
 PRINT_PROGRESS = 'print_progress'
@@ -332,8 +332,8 @@ def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, r0_da_q, lambda_q):
     diff1 = da_dist - r0_da_q
     diff2 = lambda_q * (da_dist - r0_da_q)
     r_sc = r0_sc - lambda_q * (da_dist - r0_da_q)
-    r_dh = pbc_vector_diff(r_h, r_do, box)
-    r_da = pbc_vector_diff(r_ao, r_do, box)
+    r_dh = pbc_calc_vector(r_h, r_do, box)
+    r_da = pbc_calc_vector(r_ao, r_do, box)
     q_vec = np.subtract(r_dh, r_sc * r_da / 2.0)
     return np.dot(q_vec, q_vec)
 

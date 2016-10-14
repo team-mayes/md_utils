@@ -1,0 +1,20 @@
+[repulsive.start.GLU-P]
+
+Expon2 : Gaussian like repulsive terms V_rep = Vii + B exp[ b (R_DA - b_DA)^2 ]
+
+GLU-P  : EVB_Type of center
+
+: The parameters
+
+-279.55      : constant Vii
+
+1 : Number of pairs: 1
+
+OH1          : type D
+OW           : type A
+-0.56        : B
+-1.00        : b
+3.49         : b_DA
+5.00         : cut-off
+
+[repulsive.end]

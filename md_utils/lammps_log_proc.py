@@ -95,93 +95,6 @@ def parse_cmdline(argv):
         return args, INPUT_ERROR
     return args, GOOD_RET
 
-#
-#
-# def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode):
-#     with open(dump_file) as d:
-#         # spaces here allow file name to line up with the "completed reading" print line
-#         print("{:>17}: {}".format('Reading', dump_file))
-#         section = None
-#         box = np.zeros((3,))
-#         box_counter = 1
-#         atom_counter = 1
-#         timesteps_read = 0
-#         num_atoms = 0
-#         timestep = None
-#         for line in d:
-#             line = line.strip()
-#             if section is None:
-#                 section = find_dump_section_state(line)
-#                 if section is None and len(line) > 0:
-#                     raise InvalidDataError('Unexpected line in file {}: {}'.format(dump_file, line))
-#             elif section == SEC_TIMESTEP:
-#                 # Reset variables
-#                 section = None
-#                 dump_atom_data = []
-#                 try:
-#                     timestep = int(line)
-#                 except ValueError as e:
-#                     raise InvalidDataError("Encountered error tryig to read an integer timestep, : {}".format(e))
-#                 timesteps_read += 1
-#                 if timesteps_read > cfg[MAX_TIMESTEPS]:
-#                     print("Reached the maximum timesteps per dumpfile ({}). "
-#                           "To increase this number, set a larger value for {}. "
-#                           "Continuing program.".format(cfg[MAX_TIMESTEPS], MAX_TIMESTEPS))
-#                     break
-#                 if timesteps_read % cfg[PRINT_TIMESTEPS] == 0:
-#                     if cfg[PER_FRAME_OUTPUT]:
-#                         print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode)
-#                         data_to_print = []
-#                         write_mode = 'a'
-#                     if cfg[GOFR_OUTPUT]:
-#                         print_gofr(cfg, gofr_data)
-#                 result = {FILE_NAME: os.path.basename(dump_file),
-#                           TIMESTEP: timestep}
-#             elif section == SEC_NUM_ATOMS:
-#                 num_atoms = int(line)
-#                 section = None
-#             elif section == SEC_BOX_SIZE:
-#                 split_line = line.split()
-#                 diff = float(split_line[1]) - float(split_line[0])
-#                 box[box_counter - 1] = diff
-#                 if box_counter == 3:
-#                     box_counter = 0
-#                     section = None
-#                 box_counter += 1
-#             elif section == SEC_ATOMS:
-#                 split_line = line.split()
-#                 # If there is an incomplete line in a dump file, move on to the next file
-#                 if len(split_line) < 7:
-#                     break
-#                 atom_num = int(split_line[0])
-#                 mol_num = int(split_line[1])
-#                 atom_type = int(split_line[2])
-#                 charge = float(split_line[3])
-#                 x, y, z = map(float, split_line[4:7])
-#                 # Here, the atoms counting starts at 1. However, the template counted from zero
-#                 atom_struct = {ATOM_NUM: atom_num,
-#                                MOL_NUM: mol_num,
-#                                ATOM_TYPE: atom_type,
-#                                CHARGE: charge,
-#                                XYZ_COORDS: [x, y, z], }
-#                 dump_atom_data.append(atom_struct)
-#                 if atom_counter == num_atoms:
-#                     result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data))
-#                     data_to_print.append(result)
-#                     atom_counter = 0
-#                     section = None
-#                 atom_counter += 1
-#     if atom_counter == 1:
-#         print("Completed reading: {}".format(dump_file))
-#     else:
-#         warning("FYI: dump file {} step {} did not have the full list of atom numbers. "
-#                 "Continuing to next dump file.".format(dump_file, timestep))
-
-
-# def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode):
-#     f_out = create_out_fname(dump_file, suffix='_sum', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-#     write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode)
-
 
 def process_log(log_file):
     """
@@ -228,7 +141,7 @@ def process_log(log_file):
 def process_log_files(source_name, log_file_list):
     """
     Loops through all files and prints output
-    @param source_name: the source name to use as the base for creating an ourfile name
+    @param source_name: the source name to use as the base for creating an outfile name
     @param log_file_list: list of file names to read and process
     """
 
