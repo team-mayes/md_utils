@@ -12,7 +12,7 @@ import numpy as np
 from md_utils.md_common import (find_files_by_dir, read_csv, get_fname_root,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
                                 create_out_fname, dequote, quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg,
-                                read_csv_dict, InvalidDataError)
+                                read_csv_dict, InvalidDataError, unit_vector, vec_angle, vec_dihedral)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -74,6 +74,24 @@ GOOD_A_B_AVG = np.array([3.9245, -0.834, -2.0205])
 C_VEC = [24.117, -20.135, -52.518]
 GOOD_A_MINUS_C = np.array([3.865, -5.918, 2.495])
 GOOD_A_C_AVG = np.array([1.7995, 1.156, -2.7705])
+
+VEC_1 = np.array([3.712, -1.585, -3.116])
+VEC_2 = np.array([4.8760, -1.129, -3.265])
+VEC_3 = np.array([5.498, -0.566, -2.286])
+VEC_4 = np.array([5.464, -1.007, -0.948])
+
+VEC_21 = np.array([-1.164, -0.456, 0.149])
+VEC_23 = np.array([0.622, 0.563, 0.979])
+VEC_34 = np.array([-0.034, -0.441, 1.338])
+
+# vec21 = {ndarray} [-1.164 -0.456  0.149]
+# vec23 = {ndarray} [ 0.622  0.563  0.979]
+# vec34 = {ndarray} [-0.034 -0.441  1.338]
+
+
+UNIT_VEC_3 = np.array([0.91922121129527656, -0.094630630337054641, -0.38220074372881085])
+ANGLE_123 = 120.952786591
+DIH_1234 = 39.4905248514
 
 
 def expected_dir_data():
@@ -382,6 +400,9 @@ class TestConversions(unittest.TestCase):
 
 class TestVectorPBCMath(unittest.TestCase):
     def testSubtractInSameImage(self):
+        self.assertTrue(np.allclose(pbc_calc_vector(VEC_1, VEC_2, PBC_BOX), VEC_21))
+        self.assertTrue(np.allclose(pbc_calc_vector(VEC_3, VEC_2, PBC_BOX), VEC_23))
+        self.assertFalse(np.allclose(pbc_calc_vector(VEC_3, VEC_2, PBC_BOX), VEC_21))
         self.assertTrue(np.allclose(pbc_calc_vector(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
 
     def testSubtractInDiffImages(self):
@@ -392,3 +413,14 @@ class TestVectorPBCMath(unittest.TestCase):
 
     def testAvgInDiffImages(self):
         self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, C_VEC, PBC_BOX), GOOD_A_C_AVG))
+
+    def testUnitVector(self):
+        test_unit_vec = unit_vector(VEC_3)
+        self.assertTrue(np.allclose(test_unit_vec, UNIT_VEC_3))
+        self.assertFalse(np.allclose(test_unit_vec, VEC_1))
+
+    def testAngle(self):
+        self.assertAlmostEqual(vec_angle(VEC_21, VEC_23), ANGLE_123)
+
+    def testDihedral(self):
+        self.assertAlmostEqual(vec_dihedral(VEC_21, VEC_23, VEC_34), DIH_1234)

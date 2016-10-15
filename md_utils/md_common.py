@@ -38,6 +38,8 @@ PLANCK_CONST = 9.53707E-14
 # Universal gas constant in kcal/mol K
 R = 0.001985877534
 
+XYZ_ORIGIN = np.zeros(3)
+
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 # found to be too stringent
 TOL = 0.00000000001
@@ -157,36 +159,31 @@ def calc_k(temp, delta_gibbs):
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (R * temp))
 
 
-def xyz_distance(fir, sec):
-    """
-    Calculates the Euclidean distance between the two given
-    coordinates (expected format is numbers as [x,y,z]).
-
-    TODO: Consider adding numpy optimization if lib is present.
-
-    @param fir: The first XYZ coordinate.
-    @param sec: The second XYZ coordinate.
-    :returns:  float -- The Euclidean distance between the given points.
-    :raises: KeyError
-    """
-    return math.sqrt((fir[0] - sec[0]) ** 2 + (fir[1] - sec[1]) ** 2 + (fir[2] - sec[2]) ** 2)
-
-
 def pbc_dist(a, b, box):
-    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2))
+    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
     return np.linalg.norm(pbc_calc_vector(a, b, box))
 
 
 def pbc_calc_vector(a, b, box):
     """
     Finds the vectors between two points
-    @param a:
-    @param b:
-    @param box:
-    @return:
+    @param a: xyz coords 1
+    @param b: xyz coords 2
+    @param box: vector with PBC box dimensions
+    @return: returns the vector a - b
     """
     vec = np.subtract(a, b)
     return vec - box * np.asarray(map(round, vec / box))
+
+
+def first_pbc_image(xyz_coords, box):
+    """
+    Moves xyz coords to the first PBC image, centered at the origin
+    @param xyz_coords: coordinates to center (move to first image)
+    @param box: PBC box dimensions
+    @return: xyz coords (np array) moved to the first image
+    """
+    return pbc_calc_vector(xyz_coords, XYZ_ORIGIN, box)
 
 
 def pbc_vector_avg(a, b, box):
@@ -195,59 +192,58 @@ def pbc_vector_avg(a, b, box):
     # mid-point may not be in the first periodic image. Make it so by getting its difference from the origin
     return pbc_calc_vector(mid_pt, np.zeros(len(mid_pt)), box)
 
-# def angle(v1, v2):
-#   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.
+    http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
+    """
+    return vector / np.linalg.norm(vector)
 
 
-def pbc_angle(p0, p1, p2, box):
+def vec_angle(vec_1, vec_2):
     """
     Calculates the angle between the vectors (p2 - p1) and (p0 - p1)
-    @param p0: xyz coordinate for the first pt
-    @param p1: xyz for 2nd pt
-    @param p2: xyz for 3rd pt
-    @param box: box coordinates
-    @return: the angle in ...
+    Note: assumes the vector calculation accounted for the PBC
+    @param vec_1: xyz coordinate for the first pt
+    @param vec_2: xyz for 2nd pt
+    @return: the angle in between the vectors
     """
-    vect_1 = pbc_calc_vector(p0, p1, box)
-    vect_2 = pbc_calc_vector(p0, p2, box)
-    print(vect_1, vect_2)
+    unit_vec_1 = unit_vector(vec_1)
+    unit_vec_2 = unit_vector(vec_2)
+
+    return np.rad2deg(np.arccos(np.clip(np.dot(unit_vec_1, unit_vec_2), -1.0, 1.0)))
 
 
-# noinspection PyUnresolvedReferences
-def pbc_dihedral(p0, p1, p2, p3, box):
+def vec_dihedral(vec_ba, vec_bc, vec_cd):
     """
+    calculates the dihedral angle from the vectors b --> a, b --> c, c --> d
+    where a, b, c, and d are the four points
     From:
     http://stackoverflow.com/questions/20305272/
       dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
     Khouli formula
     1 sqrt, 1 cross product
-    @param p0: xyz coordinates of point 0, etc.
-    @param p1:
-    @param p2:
-    @param p3:
-    @param box: periodic box lengths
+    @param vec_ba: the vector connecting points b --> a, accounting for pbc
+    @param vec_bc: b --> c
+    @param vec_cd: c --> d
     @return: dihedral angle in degrees
     """
-    b0 = -1.0 * (pbc_calc_vector(p1, p0, box))
-    b1 = pbc_calc_vector(p2, p1, box)
-    b2 = pbc_calc_vector(p3, p2, box)
-
     # normalize b1 so that it does not influence magnitude of vector
     # rejections that come next
-    b1 /= np.linalg.norm(b1)
+    vec_bc = unit_vector(vec_bc)
 
     # vector rejections
     # v = projection of b0 onto plane perpendicular to b1
     #   = b0 minus component that aligns with b1
     # w = projection of b2 onto plane perpendicular to b1
     #   = b2 minus component that aligns with b1
-    v = b0 - np.dot(b0, b1) * b1
-    w = b2 - np.dot(b2, b1) * b1
+    v = vec_ba - np.dot(vec_ba, vec_bc) * vec_bc
+    w = vec_cd - np.dot(vec_cd, vec_bc) * vec_bc
 
     # angle between v and w in a plane is the torsion angle
     # v and w may not be normalized but that's fine since tan is y/x
     x = np.dot(v, w)
-    y = np.dot(np.cross(b1, v), w)
+    y = np.dot(np.cross(vec_bc, v), w)
     return np.degrees(np.arctan2(y, x))
 
 
@@ -706,10 +702,11 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
 
 
 def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC,
-              print_message=True):
+              print_message=True, round_digits=False):
     """
     Writes the given data to the given file location.
 
+    @param round_digits: if desired, provide decimal number for rouding
     @param data: The data to write (list of dicts).
     @param out_fname: The name of the file to write to.
     @param fieldnames: The sequence of field names to use for the header.
@@ -723,6 +720,15 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
         if mode == 'w':
             writer.writeheader()
+        if round_digits:
+            for row_id in range(len(data)):
+                new_dict = {}
+                for key, val in data[row_id].items():
+                    if isinstance(val, float):
+                        new_dict[key] = round(val, round_digits)
+                    else:
+                        new_dict[key] = val
+                data[row_id] = new_dict
         writer.writerows(data)
     if print_message:
         if mode == 'a':
@@ -732,18 +738,28 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
 
 
 def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC,
-                print_message=True):
+                print_message=True, round_digits=False):
     """
     Writes the given data to the given file location.
-    @param print_message: boolean to allow update
     @param data: The data to write (list of lists).
     @param out_fname: The name of the file to write to.
     @param delimiter: string
     @param mode: default mode is to overwrite file
     @param quote_style: csv quoting style
+    @param print_message: boolean to allow update
+    @param round_digits: boolean to affect printing output; supply an integer to round to that number of decimals
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
+        if round_digits:
+            for row_id in range(len(data)):
+                new_row = []
+                for val in data[row_id]:
+                    if isinstance(val, float):
+                        new_row.append(round(val, round_digits))
+                    else:
+                        new_row.append(val)
+                data[row_id] = new_row
         writer.writerows(data)
     if print_message:
         print("Wrote file: {}".format(out_fname))

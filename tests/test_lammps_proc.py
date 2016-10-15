@@ -93,6 +93,7 @@ HIJ_NEW_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_missing_pa
 HIJ_NEW_NONFLOAT_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_non_float_param.ini')
 
 CALC_GLU_PROPS_INI = os.path.join(SUB_DATA_DIR, 'calc_glu_props.ini')
+GOOD_GLU_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_oco_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -217,6 +218,8 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
 
 class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
+        num = 12
+        print(isinstance(num, float))
         try:
             main(["-c", OH_DIST_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OH_DIST_OUT))
@@ -330,9 +333,6 @@ class TestLammpsProcData(unittest.TestCase):
         try:
             test_input = ["-c", CALC_GLU_PROPS_INI, "-p"]
             main(test_input)
-            # self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_HIJ_NEW_GLU2_OUT))
+            self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_GLU_PROPS_OUT))
         finally:
-            # silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)
-            pass
-
-
+            silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)

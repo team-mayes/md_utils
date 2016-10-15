@@ -14,9 +14,7 @@ import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
                                 find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_calc_vector,
-                                file_rows_to_list)
-
-PRINT_PROGRESS = 'print_progress'
+                                file_rows_to_list, vec_angle, vec_dihedral)
 
 try:
     # noinspection PyCompatibility
@@ -35,6 +33,9 @@ IO_ERROR = 2
 INVALID_DATA = 3
 
 # Constants #
+COM_WEIGHT_PER_C = 0.27291153
+COM_WEIGHT_PER_O = 0.363544235
+ROUND_DIGITS = 6
 
 # Config File Sections
 MAIN_SEC = 'main'
@@ -54,6 +55,7 @@ H3O_H_TYPE = 'h3o_h_type'
 GOFR_TYPE1 = 'gofr_type1'
 GOFR_TYPE2 = 'gofr_type2'
 OUT_BASE_DIR = 'output_directory'
+PRINT_PROGRESS = 'print_progress'
 
 # Types of calculations allowed
 # g(r) types
@@ -69,13 +71,14 @@ GOFR_BINS = 'bins_for_gofr'
 GOFR_RAW_HIST = 'raw_histogram_for_gofr'
 
 # with output from every frame types
-CALC_OH_DIST = 'calc_hydroxyl_dist_flag'
+CALC_OCOH_PROPS = 'calc_hydroxyl_props_flag'
 CALC_HYD_WAT = 'calc_hyd_water_dist_hij_flag'
 # CALC_ALL_OH_DIST = 'calc_all_ostar_h_dist_flag'
 CALC_HIJ_DA_GAUSS_FORM = 'calc_hij_da_gauss_flag'
 CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
 CALC_HIJ_NEW = 'calc_new_arq'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
+CALC_OCO_COM = 'calc_oco_com_h_dist'
 WATER_TERMS_PRINT = 'print_water_terms'
 COMBINE_OUTPUT = 'combine_output_flag'
 
@@ -90,7 +93,7 @@ CALC_DIH_CCOH = 'calc_carboxyl_cg_cd_o_h_dihed'  # 14 17 ?? ??
 MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
-PER_FRAME_OUTPUT_FLAGS = [CALC_OH_DIST, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM,
+PER_FRAME_OUTPUT_FLAGS = [CALC_OCOH_PROPS, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM,
                           WATER_TERMS_PRINT, CALC_HYD_WAT, CALC_HIJ_NEW]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
@@ -117,8 +120,8 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 PROT_C_ID: 0,
                 OUT_BASE_DIR: None,
                 PER_FRAME_OUTPUT: False,
-                CALC_OH_DIST: False,
-                # CALC_ALL_OH_DIST: False,
+                CALC_OCOH_PROPS: False,
+                CALC_OCO_COM: False,
                 CALC_HIJ_DA_GAUSS_FORM: False,
                 CALC_HIJ_ARQ_FORM: False,
                 CALC_HIJ_WATER_FORM: False,
@@ -185,6 +188,8 @@ OH_MIN = 'oh_min'
 OH_MAX = 'oh_max'
 OH_DIFF = 'oh_diff'
 COM_H_DIST = 'com_h_dist'
+OCO_ANGLE = 'oco_angle'
+OCOH_DIH = 'ocoh_dihedral'
 R_OH = 'r_oh_dist'
 R_OO = 'r_oo_dist'
 Q_DOT = 'q_dotted'
@@ -201,7 +206,6 @@ R_OO_HYD_WAT = 'R_OO_hyd_wat'
 R_OH_HYD = 'R_OH_hyd'
 R_OH_WAT_HYD = 'R_OH_hyd_wat'
 HIJ_WAT = 'HIJ_OO_hyd_wat'
-# OSTARH_MIN = 'o_star_h_min'
 
 HIJ_NEW = 'hij_new'
 F_ROO_NEW = 'f_r_oo_new'
@@ -211,7 +215,7 @@ Q_DOT_NEW = 'q_arq_new'
 # V_OO_NEW = 'v_oo_new'
 V_OH_NEW = 'v_oh_new'
 
-OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF]
+OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF, OCO_ANGLE, OCOH_DIH]
 HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_Q_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
@@ -328,9 +332,6 @@ def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, r0_da_q, lambda_q):
     @return: the dot-product of the vector q (not the norm, as we need it squared for the next step)
     """
     da_dist = pbc_dist(r_do, r_ao, box)
-    # todo: remove these
-    diff1 = da_dist - r0_da_q
-    diff2 = lambda_q * (da_dist - r0_da_q)
     r_sc = r0_sc - lambda_q * (da_dist - r0_da_q)
     r_dh = pbc_calc_vector(r_h, r_do, box)
     r_da = pbc_calc_vector(r_ao, r_do, box)
@@ -506,44 +507,69 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
 
 def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carboxyl_carbon):
     # initialize minimum distance to maximum distance possible in the periodic box (assume 90 degree corners)
-    min_dist = np.full(len(carboxyl_oxys), np.linalg.norm(np.divide(box, 2)))
-    closest_h = {}
-    alt_dist = np.nan
+    oxy_h_min_dists = np.full(len(carboxyl_oxys), np.linalg.norm(np.divide(box, 2)))
+    # excess proton will become None if prot_h is none, then calculated
+    excess_proton = prot_h
     for index, oxy in enumerate(carboxyl_oxys):
         if prot_h is None:
             for atom in hydronium:
                 if atom[ATOM_TYPE] == cfg[H3O_H_TYPE]:
                     dist = pbc_dist(np.asarray(atom[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
-                    if dist < min_dist[index]:
-                        min_dist[index] = dist
-                        closest_h[index] = atom
+                    if dist < oxy_h_min_dists[index]:
+                        oxy_h_min_dists[index] = dist
+                        excess_proton = atom
         else:
-            min_dist[index] = pbc_dist(np.asarray(prot_h[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
-            closest_h[index] = prot_h
-    index_min = np.argmin(min_dist)
-    min_min = min_dist[index_min]
+            oxy_h_min_dists[index] = pbc_dist(np.asarray(prot_h[XYZ_COORDS]), np.asarray(oxy[XYZ_COORDS]), box)
+    index_min = np.argmin(oxy_h_min_dists)
     o_star = carboxyl_oxys[index_min]
-    excess_proton = closest_h[index_min]
-    excess_proton_coord = excess_proton[XYZ_COORDS]
-    # The distance calculated again below because this will ensure that the 2nd return distance uses the same excess
-    # proton
-    for index, oxy in enumerate(carboxyl_oxys):
-        if index != index_min:
-            alt_dist = pbc_dist(np.asarray(excess_proton_coord), np.asarray(oxy[XYZ_COORDS]), box)
-    alt_min = np.amin(alt_dist)
-    if carboxyl_carbon is not None:
-        # TODO: account for the case when carboxyl group is broken over the PBC
-        com_xyz = 0.27291153 * np.asarray(carboxyl_carbon[XYZ_COORDS])
-        for oxy in carboxyl_oxys:
-            com_xyz += 0.363544235 * np.asarray(oxy[XYZ_COORDS])
-        com_h_dist = pbc_dist(com_xyz, excess_proton_coord, box)
+    min_oh_dist = oxy_h_min_dists[index_min]
+    oh_prop_dict = {OH_MIN: min_oh_dist}
+    if cfg[CALC_OCOH_PROPS]:
+        # the following depends on there being exactly 2 carboxylic oxygen atoms
+        index_max = abs(index_min - 1)
+
+        o_start_xyz = np.asarray(o_star[XYZ_COORDS])
+        excess_proton_xyz = np.asarray(excess_proton[XYZ_COORDS])
+        alt_o_xyz = np.asarray(carboxyl_oxys[index_max][XYZ_COORDS])
+        # distance calculated again to ensure that the 2nd return distance uses the same excess proton
+        alt_oh_dist = pbc_dist(excess_proton_xyz, alt_o_xyz, box)
+        oh_prop_dict.update({OH_MAX: alt_oh_dist,
+                             OH_DIFF: alt_oh_dist - min_oh_dist,
+                             })
+        if carboxyl_carbon is not None:
+            carboxyl_c_xyz = np.asarray(carboxyl_carbon[XYZ_COORDS])
+            oh_prop_dict.update(calc_more_ocoh_props(box, carboxyl_c_xyz, o_start_xyz, alt_o_xyz, excess_proton_xyz))
+    return excess_proton, o_star, oh_prop_dict
+
+
+def calc_more_ocoh_props(box, carboxyl_c_xyz, o_star_xyz, alt_o_xyz, excess_h_xyz):
+    """
+    If requested and there are xyz coords,
+    @param box: xyz box size
+    @param carboxyl_c_xyz:
+    @param o_star_xyz:
+    @param alt_o_xyz:
+    @param excess_h_xyz:
+    @return: a dict of additional calculated properties
+    """
+    if carboxyl_c_xyz is not None:
+        # TODO: test that accounts for the case when carboxyl group is broken over the PBC
+        # does not have be be shown: move c_carbon to the origin; we know the results of moving it and multiplying
+        #   the resulting xyz coords (0, 0, 0) by the COM_WEIGHT_C
+        c_o_star_vec = pbc_calc_vector(o_star_xyz, carboxyl_c_xyz, box)
+        c_alt_o_vec = pbc_calc_vector(alt_o_xyz, carboxyl_c_xyz, box)
+        c_h_star_vec = pbc_calc_vector(excess_h_xyz, carboxyl_c_xyz, box)
+        o_star_h_vec = pbc_calc_vector(excess_h_xyz, o_star_xyz, box)
+
+        com_xyz = COM_WEIGHT_PER_O * c_o_star_vec
+        com_xyz += COM_WEIGHT_PER_O * c_alt_o_vec
+
+        oh_prop_dict = {COM_H_DIST: pbc_dist(com_xyz, c_h_star_vec, box),
+                        OCO_ANGLE: vec_angle(c_o_star_vec, c_alt_o_vec),
+                        OCOH_DIH: vec_dihedral(c_alt_o_vec, c_o_star_vec, o_star_h_vec)}
     else:
-        com_h_dist = np.nan
-    return excess_proton, o_star, {OH_MIN: min_min,
-                                   OH_MAX: alt_min,
-                                   OH_DIFF: alt_min - min_min,
-                                   COM_H_DIST: com_h_dist,
-                                   }
+        oh_prop_dict = {COM_H_DIST: np.nan, OCO_ANGLE: np.nan, OCOH_DIH: np.nan}
+    return oh_prop_dict
 
 
 def find_closest_o_to_ostar(water_oxys, o_star, hydronium, box, h3o_oxy_atom_type):
@@ -678,13 +704,13 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                "Check input data.".format(WAT_H_TYPE, cfg[WAT_H_TYPE]))
 
     # Now start looking for data to report
-    if cfg[CALC_OH_DIST] or (cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or
-                             cfg[CALC_HIJ_NEW]):
-        closest_excess_h, o_star, oh_dist_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
+    if cfg[CALC_OCOH_PROPS] or (cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or
+                                cfg[CALC_HIJ_NEW]):
+        closest_excess_h, o_star, oh_prop_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
                                                                             hydronium, box, cfg,
                                                                             carboxyl_carb)
-        if cfg[CALC_OH_DIST]:
-            calc_results.update(oh_dist_dict)
+        if cfg[CALC_OCOH_PROPS]:
+            calc_results.update(oh_prop_dict)
         if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or cfg[CALC_HIJ_NEW]:
             closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
                                                                        cfg[H3O_O_TYPE])
@@ -710,10 +736,10 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                      FG_NEW: g_of_q * f_of_roo, HIJ_NEW: h_ij_new})
 
         if cfg[CALC_HIJ_DA_GAUSS_FORM]:
-            r_oh = oh_dist_dict[OH_MIN]
+            r_oh = oh_prop_dict[OH_MIN]
             hij_glu = hij_amino(r_oh, c1_glu, c2_glu, c3_glu)
             hij_asp = hij_amino(r_oh, c1_asp, c2_asp, c3_asp)
-            calc_results.update({R_OH: oh_dist_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
+            calc_results.update({R_OH: oh_prop_dict[OH_MIN], HIJ_GLU: hij_glu, HIJ_ASP: hij_asp})
     if cfg[CALC_HYD_WAT]:
         if len(hydronium) == 0:
             calc_results.update({R_OO_HYD_WAT: np.nan, R_OH_HYD: np.nan, R_OH_WAT_HYD: np.nan, HIJ_WAT: np.nan})
@@ -852,9 +878,9 @@ def setup_per_frame_output(cfg):
     if cfg[COMBINE_OUTPUT]:
         out_fieldnames.append(FILE_NAME)
     out_fieldnames.append(TIMESTEP)
-    if cfg[CALC_OH_DIST]:
+    if cfg[CALC_OCOH_PROPS]:
         out_fieldnames.extend(OH_FIELDNAMES)
-        if cfg[PROT_C_ID] > 0:
+        if cfg[CALC_OCO_COM]:
             out_fieldnames.append(COM_H_DIST)
     if cfg[CALC_HIJ_DA_GAUSS_FORM]:
         out_fieldnames.extend(HIJ_AMINO_FIELDNAMES)
@@ -907,13 +933,14 @@ def print_gofr(cfg, gofr_data):
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
 
     f_out = create_out_fname(cfg[DUMP_FILE_LIST], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    # list_to_file([gofr_out_fieldnames] + gofr_output.tolist(), f_out, delimiter=',')
-    list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out, print_message=cfg[PRINT_PROGRESS])
+    # am not using the dictwriter because the gofr output is a np.array
+    list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out, print_message=cfg[PRINT_PROGRESS],
+                round_digits=ROUND_DIGITS)
 
 
 def print_per_frame(dump_file, cfg, data_to_print, out_fieldnames, write_mode):
     f_out = create_out_fname(dump_file, suffix='_sum', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode,
+    write_csv(data_to_print, f_out, out_fieldnames, extrasaction="ignore", mode=write_mode, round_digits=ROUND_DIGITS,
               print_message=cfg[PRINT_PROGRESS])
 
 

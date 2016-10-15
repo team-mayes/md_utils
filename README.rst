@@ -188,7 +188,7 @@ lammps_proc
   From lammps dump file(s), finds key distance, such as the hydroxyl OH distance on the protonatable residue
   (when protonated). This script assumes we care about one protonatable residue in a simulation with a PBC.
   The options include:
-  * calc_hydroxyl_dist_flag: calculate distance between the closest transferable proton to each of the protonatable residue oxygen atoms.
+  * calc_hydroxyl_props_flag: calculate distance between the closest transferable proton to each of the protonatable residue oxygen atoms.
   * calc_hij_da_gauss_flag: prints the calculated h_ij per Nelson et al. 2014 (http://pubs.acs.org/doi/abs/10.1021/ct500250f)
     equation 7.
   * calc_hij_arg_flag: prints the calculated h_ij per Maupin et al. 2006 (http://pubs.acs.org/doi/pdf/10.1021/jp053596r) equations 4-8.

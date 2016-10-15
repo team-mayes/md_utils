@@ -1,13 +1,15 @@
 # coding=utf-8
 import os
+import numpy as np
 from collections import OrderedDict
-
-from md_utils.md_common import InvalidDataError, warning
+from md_utils.md_common import (InvalidDataError, warning)
 
 # Constants #
 
 MISSING_ATOMS_MSG = "Could not find lines for atoms ({}) in timestep {} in file: {}"
 TSTEP_LINE = 'ITEM: TIMESTEP'
+NUM_ATOM_LINE = 'ITEM: NUMBER OF ATOMS'
+BOX_LINE = 'ITEM: BOX'
 ATOMS_LINE = 'ITEM: ATOMS'
 
 
@@ -22,11 +24,14 @@ def find_atom_data(lammps_f, atom_ids):
     :raises: InvalidDataError If the file is missing atom data or is otherwise malformed.
     """
     tstep_atoms = OrderedDict()
+    tstep_box = {}
     atom_count = len(atom_ids)
+    empty_dims = np.full(3, np.nan)
 
     with open(lammps_f) as lfh:
         file_name = os.path.basename(lammps_f)
         tstep_id = None
+        box_dim = np.copy(empty_dims)
         tstep_val = "(no value)"
         for line in lfh:
             if line.startswith(TSTEP_LINE):
@@ -35,8 +40,18 @@ def find_atom_data(lammps_f, atom_ids):
                     tstep_id = int(tstep_val)
                 # Todo: remove if never used
                 except ValueError as e:
-                    raise InvalidDataError(
-                        "Invalid timestep value {}: {}".format(tstep_val, e))
+                    raise InvalidDataError("Invalid timestep value {}: {}".format(tstep_val, e))
+            elif line.startswith(NUM_ATOM_LINE):
+                # not needed, so just move along
+                next(lfh)
+            elif line.startswith(BOX_LINE):
+                try:
+                    for coord_id in range(len(box_dim)):
+                        box_vals = map(float, next(lfh).strip().split())
+                        if len(box_vals) == 2:
+                            box_dim[coord_id] = box_vals[1] - box_vals[0]
+                except (ValueError, KeyError) as e:
+                    raise InvalidDataError("Invalid PBC value read on timestep {}: {}".format(tstep_val, e))
             elif tstep_id is not None:
                 atom_lines = find_atom_lines(lfh, atom_ids, tstep_id, file_name)
                 if len(atom_lines) != atom_count:
@@ -47,8 +62,10 @@ def find_atom_data(lammps_f, atom_ids):
                         warning("Skipping timestep and continuing.")
                 else:
                     tstep_atoms[tstep_id] = atom_lines
+                    tstep_box[tstep_id] = box_dim
                     tstep_id = None
-    return tstep_atoms
+                    box_dim = empty_dims
+    return tstep_atoms, tstep_box
 
 
 def find_atom_lines(lfh, atom_ids, tstep_id, file_name):
@@ -66,24 +83,23 @@ def find_atom_lines(lfh, atom_ids, tstep_id, file_name):
     :param atom_ids: The set of atom IDs to collect.
     :param tstep_id: The ID for the current time step.
     :param file_name: the file name (basename) for the lammps file (for error printing)
+
     :return: A dict of atom lines keyed by atom ID (int).
     :raises: InvalidDataError If the time step section is missing atom data or
         is otherwise malformed.
     """
     found_atoms = {}
     atom_count = len(atom_ids)
-    for line in lfh:
-        if line.startswith(ATOMS_LINE):
-            for aline in lfh:
-                s_line = aline.split()
-                if len(s_line) == 7 and int(s_line[0]) in atom_ids:
-                    # noinspection PyTypeChecker
-                    p_line = list(map(int, s_line[:3])) + list(map(float, s_line[-4:]))
-                    found_atoms[p_line[0]] = p_line[1:]
-                    if len(found_atoms) == atom_count:
-                        return found_atoms
-                elif aline.startswith(TSTEP_LINE):
-                    missing_atoms_err(atom_ids, found_atoms, tstep_id, file_name)
+    for aline in lfh:
+        s_line = aline.split()
+        if len(s_line) == 7 and int(s_line[0]) in atom_ids:
+            # noinspection PyTypeChecker
+            p_line = list(map(int, s_line[:3])) + list(map(float, s_line[-4:]))
+            found_atoms[p_line[0]] = p_line[1:]
+            if len(found_atoms) == atom_count:
+                return found_atoms
+        elif aline.startswith(TSTEP_LINE):
+            missing_atoms_err(atom_ids, found_atoms, tstep_id, file_name)
     return found_atoms
 
 # Exception Creators #

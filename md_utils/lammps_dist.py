@@ -10,12 +10,11 @@ import csv
 import logging
 import os
 import sys
-from collections import OrderedDict
-
 import itertools
+from collections import OrderedDict
 from md_utils.lammps import find_atom_data
-from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_out_fname, GOOD_RET, INPUT_ERROR, \
-    warning, IO_ERROR, file_rows_to_list
+from md_utils.md_common import (InvalidDataError, unique_list, create_out_fname, GOOD_RET, INPUT_ERROR,
+                                warning, IO_ERROR, file_rows_to_list, pbc_dist)
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ def atom_distances(rst, atom_pairs):
     """
     results = OrderedDict()
     flat_ids = set(itertools.chain.from_iterable(atom_pairs))
-    tstep_atoms = find_atom_data(rst, flat_ids)
+    tstep_atoms, tstep_box = find_atom_data(rst, flat_ids)
 
     for tstep, atoms in tstep_atoms.items():
         pair_dist = OrderedDict({FILENAME: os.path.basename(rst)})
@@ -46,7 +45,7 @@ def atom_distances(rst, atom_pairs):
             try:
                 row1 = atoms[pair[0]]
                 row2 = atoms[pair[1]]
-                pair_dist[pair] = xyz_distance(row1[-3:], row2[-3:])
+                pair_dist[pair] = pbc_dist(row1[-3:], row2[-3:], tstep_box[tstep])
             except KeyError as e:
                 warning(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
                 return
