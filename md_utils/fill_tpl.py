@@ -5,12 +5,11 @@
 Fills in a template evb/rmd parameter files
 """
 import argparse
+import os
 import sys
 
-from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, file_rows_to_list,
-                                process_cfg, read_tpl, create_out_fname, str_to_file)
-
-
+from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg, read_tpl,
+                                create_out_fname, str_to_file, TemplateNotReadableError)
 
 try:
     # noinspection PyCompatibility
@@ -21,7 +20,7 @@ except ImportError:
 
 # Constants #
 TPL_FILE = 'tpl_file'
-FILLED_TPL_FNAME = 'new_file_name'
+FILLED_TPL_FNAME = 'filled_tpl_name'
 OUT_DIR = 'out_dir'
 
 # Config File Sections
@@ -30,10 +29,10 @@ TPL_VALS = 'tpl_vals'
 
 # Defaults
 DEF_CFG_FILE = 'fill_tpl.ini'
-DEF_PAR_TPL = 'evb_par.tpl'
-DEF_CFG_VALS = {TPL_FILE: DEF_PAR_TPL, OUT_DIR: None,
+DEF_TPL = 'fill_tpl.tpl'
+DEF_CFG_VALS = {TPL_FILE: DEF_TPL, OUT_DIR: None, FILLED_TPL_FNAME: None,
                 }
-REQ_KEYS = {FILLED_TPL_FNAME: str}
+REQ_KEYS = {}
 
 
 # Logic #
@@ -56,7 +55,15 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     proc = {TPL_VALS: {}}
     for section in config.sections():
         if section == MAIN_SEC:
-            proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS))
+            try:
+                proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS))
+            except InvalidDataError as e:
+                if 'Unexpected key' in e.message:
+                    raise InvalidDataError(e.message + ' Note: template keys must \nbe in a '
+                                                       'configuration file section other than '
+                                                       '[main]. Any other section name will '
+                                                       'suffice; \nthey can be used to organize '
+                                                       'parameters if desired.')
         else:
             proc[TPL_VALS].update(dict(config.items(section)))
 
@@ -77,11 +84,30 @@ def parse_cmdline(argv=None):
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
+    parser.add_argument("-f", "--filled_tpl_name", help="File name for new file to be created by filling the template "
+                                                        "file. It can also be specified in the configuration file. "
+                                                        "If specified in both places, the command line option will "
+                                                        "take precedence.",
+                        default=None)
 
     args = None
     try:
         args = parser.parse_args(argv)
-    except (KeyError, InvalidDataError, SystemExit) as e:
+        if not os.path.isfile(args.config[TPL_FILE]):
+            if args.config[TPL_FILE] == DEF_TPL:
+                error_message = "Check input for the configuration key '{}'; " \
+                                "could not find the default template file: {}"
+            else:
+                error_message = "Could not find the template file specified with " \
+                                "the configuration key '{}': {}"
+            raise IOError(error_message.format(TPL_FILE, args.config[TPL_FILE]))
+        if args.filled_tpl_name is not None:
+            args.config[FILLED_TPL_FNAME] = args.filled_tpl_name
+        if args.config[FILLED_TPL_FNAME] is None:
+            raise InvalidDataError("Missing required key '{}', which can be specified in the "
+                                   "required either in the command line for configuration file."
+                                   "".format(FILLED_TPL_FNAME))
+    except (KeyError, InvalidDataError, IOError, SystemExit) as e:
         if e.message == 0:
             return args, GOOD_RET
         warning(e)
@@ -99,7 +125,11 @@ def make_tpl(cfg):
 
     tpl_str = read_tpl(cfg[TPL_FILE])
     test_dict = cfg[TPL_VALS]
-    filled_tpl_str = tpl_str.format( **test_dict )
+    try:
+        filled_tpl_str = tpl_str.format(**test_dict)
+    except KeyError as e:
+        raise KeyError("Key '{}' not found in the configuration but required for template file: {}"
+                       "".format(e.message, cfg[TPL_FILE]))
     new_par_fname = create_out_fname(cfg[FILLED_TPL_FNAME], base_dir=cfg[OUT_DIR])
     str_to_file(filled_tpl_str, new_par_fname)
 
@@ -119,12 +149,11 @@ def main(argv=None):
 
     try:
         make_tpl(cfg)
-
-    except IOError as e:
+    except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR
-    except InvalidDataError as e:
-        warning("Invalid Data Error: {}".format(e))
+    except (KeyError, InvalidDataError) as e:
+        warning(e)
         return IO_ERROR
 
     return GOOD_RET  # success

@@ -448,6 +448,11 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
+        if args.hide_progress:
+            args.config[PRINT_PROGRESS] = False
+        else:
+            args.config[PRINT_PROGRESS] = True
+
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -1018,10 +1023,6 @@ def main(argv=None):
 
     # Read template and dump files
     cfg = args.config
-    if args.hide_progress:
-        cfg[PRINT_PROGRESS] = False
-    else:
-        cfg[PRINT_PROGRESS] = True
 
     try:
         process_dump_files(cfg)

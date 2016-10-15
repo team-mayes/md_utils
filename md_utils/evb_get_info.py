@@ -39,7 +39,7 @@ except ImportError:
 __author__ = 'hmayes'
 
 # Constants #
-NUM_DECIMALS = 12
+ROUND_DIGITS = 6
 
 # Config File Sections
 MAIN_SEC = 'main'
@@ -62,6 +62,7 @@ PRINT_KEY_PROPS = 'print_key_props_flag'
 SKIP_ONE_STATE = 'skip_one_state_flag'
 PRINT_DECOMP_ENE_PROPS = 'print_decomposed_energy_flag'
 REF_E_FILE = 'ref_e_file'
+PRINT_PROGRESS = 'print_progress'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -106,6 +107,9 @@ NEXT_MAX_HYD_CI_SQ = 'next_max_hyd_ci2'
 MAX_PROT_E = 'max_prot_energy'
 MAX_HYD_E = 'max_hyd_energy'
 NEXT_MAX_HYD_E = 'next_max_hyd_energy'
+MAX_PROT_REP = 'max_prot_rep'
+MAX_HYD_REP = 'max_hyd_rep'
+NEXT_MAX_HYD_REP = 'next_max_hyd_rep'
 MAX_HYD_MOL = 'max_hyd_mol'
 NEXT_MAX_HYD_MOL = 'next_max_hyd_mol'
 MAX_PROT_STATE_NUM = 'max_prot_state_num'
@@ -134,6 +138,7 @@ E_ANGL = 'angle'
 E_DIHED = 'dihedral'
 E_IMPRO = 'improper'
 E_LONG = 'kspace'
+
 REL_E_GROUP = 'rel_e_group'
 REL_ENE = 'rel_ene_total'
 REL_PROT_E = 'rel_max_prot_ene'
@@ -147,7 +152,8 @@ MIN_DIAB_ENE = 'min_diab_ene'
 CI_FIELDNAMES = [TIMESTEP, ENE_TOTAL,
                  MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, NEXT_MAX_HYD_CI_SQ, MAX_CI_SQ_DIFF,
                  MAX_PROT_E, MAX_HYD_E, NEXT_MAX_HYD_E,
-                 MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF]
+                 MAX_PROT_STATE_COUL, MAX_HYD_STATE_COUL, COUL_DIFF,
+                 MAX_PROT_REP,  MAX_HYD_REP, NEXT_MAX_HYD_REP]
 KEY_PROPS_FIELDNAMES = [TIMESTEP, STATES_TOT, STATES_SHELL1, STATES_SHELL2, STATES_SHELL3, PROT_STATE_FOUND, NUM_WATERS,
                         MAX_PROT_CI_SQ, MAX_HYD_CI_SQ, CEC_X, CEC_Y, CEC_Z]
 CEC_COORD_FIELDNAMES = [TIMESTEP, CEC_X, CEC_Y, CEC_Z]
@@ -209,9 +215,17 @@ def parse_cmdline(argv):
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
+    parser.add_argument("-p", "--hide_progress", help="Omit printing status to standard out (i.e. which file is "
+                                                      "being read, when a file is being written). The default is false "
+                                                      "(progress shown).",
+                        action='store_true')
     args = None
     try:
         args = parser.parse_args(argv)
+        if args.hide_progress:
+            args.config[PRINT_PROGRESS] = False
+        else:
+            args.config[PRINT_PROGRESS] = True
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -334,12 +348,6 @@ def process_evb_file(evb_file, cfg):
                 ene_total = float(split_line[1])
                 result[section] = ene_total
                 section = None
-                # ENE_ENVIRONMENT       -4285.220127
-                # ENE_COMPLEX            -419.665471
-                # ENE_TOTAL             -4704.885598
-                # DECOMPOSED_ENV_ENERGY
-                # ENVIRONMENT [vdw|coul|bond|angle|dihedral|improper|kspace]
-                # 1065.562540 16028.021808   343.956615   351.599426    10.778182     0.891708 -22086.030407
             elif section == SEC_ENVIRON:
                 split_line = map(float, line.split())
                 result.update({E_VDW: split_line[0], E_COUL: split_line[1], E_BOND: split_line[2],
@@ -443,32 +451,40 @@ def process_evb_file(evb_file, cfg):
                     continue
                 if max_prot_state is None:
                     prot_coul = np.nan
+                    prot_rep = np.nan
                     prot_e = np.nan
                 # sometimes, there is only one state, so the diagonal array is a vector
                 elif one_state:
                     prot_coul = diag_array[3] + diag_array[8]
+                    prot_rep = diag_array[9]
                     prot_e = diag_array[1]
                 else:
                     prot_coul = diag_array[max_prot_state][3] + diag_array[max_prot_state][8]
+                    prot_rep = diag_array[max_prot_state][9]
                     prot_e = diag_array[max_prot_state][1]
                 if max_hyd_state is None:
                     hyd_coul = np.nan
+                    hyd_rep = np.nan
                     max_hyd_e = np.nan
                 elif one_state:
                     hyd_coul = diag_array[3] + diag_array[3]
+                    hyd_rep = diag_array[9]
                     max_hyd_e = diag_array[1]
                 else:
                     hyd_coul = diag_array[max_hyd_state][3] + diag_array[max_hyd_state][8]
+                    hyd_rep = diag_array[max_hyd_state][9]
                     max_hyd_e = diag_array[max_hyd_state][1]
                 if next_max_hyd_state is None:
                     next_max_hyd_e = np.nan
-                elif one_state:
-                    next_max_hyd_e = diag_array[1]
+                    next_max_hyd_rep = np.nan
                 else:
+                    # not possible to have a next_max and only 1 state, so that case is not needed
                     next_max_hyd_e = diag_array[next_max_hyd_state][1]
-                result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_HYD_STATE_COUL: hyd_coul,
-                               COUL_DIFF: hyd_coul - prot_coul,
-                               MAX_PROT_E: prot_e, MAX_HYD_E: max_hyd_e, NEXT_MAX_HYD_E: next_max_hyd_e})
+                    next_max_hyd_rep = diag_array[next_max_hyd_state][9]
+                result.update({MAX_PROT_STATE_COUL: prot_coul, MAX_PROT_E: prot_e,  MAX_PROT_REP: prot_rep,
+                               MAX_HYD_STATE_COUL: hyd_coul, COUL_DIFF: hyd_coul - prot_coul,
+                               MAX_HYD_E: max_hyd_e, MAX_HYD_REP: hyd_rep,
+                               NEXT_MAX_HYD_E: next_max_hyd_e, NEXT_MAX_HYD_REP: next_max_hyd_rep})
                 if rel_e_group is not None:
                     for diab_ene in prot_e, max_hyd_e, next_max_hyd_e:
                         if diab_ene < cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE]:
@@ -516,12 +532,14 @@ def process_evb_files(cfg, selected_fieldnames):
             if len(data_to_print) > 0:
                 f_out = create_out_fname(evb_file, suffix='_evb_info', ext='.csv',
                                          base_dir=cfg[OUT_BASE_DIR])
-                write_csv(data_to_print, f_out, selected_fieldnames, extrasaction="ignore")
+                write_csv(data_to_print, f_out, selected_fieldnames, extrasaction="ignore",
+                          print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
             if cfg[PRINT_CI_SUBSET]:
                 if len(subset_to_print) > 0:
                     f_out = create_out_fname(evb_file, suffix='_ci_sq_ts', ext='.csv',
                                              base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore")
+                    write_csv(subset_to_print, f_out, CI_FIELDNAMES, extrasaction="ignore",
+                              print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
                 else:
                     warning("'{}' set to true, but found no data from: {} \n"
                             "No output will be printed for this file."
@@ -536,15 +554,15 @@ def process_evb_files(cfg, selected_fieldnames):
                 if len(subset_to_print) > 0:
                     f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_ci_sq_ts', ext='.csv',
                                              base_dir=cfg[OUT_BASE_DIR])
-                    write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES,
-                              extrasaction="ignore", mode=print_mode)
+                    write_csv(subset_to_print, f_out, [FILE_NAME] + CI_FIELDNAMES, extrasaction="ignore",
+                              mode=print_mode, print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
                 else:
                     warning("'{}' set to true, but found no data meeting criteria."
                             "".format(PRINT_CI_SUBSET))
             f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_evb_info', ext='.csv',
                                      base_dir=cfg[OUT_BASE_DIR])
-            write_csv(data_to_print, f_out, [FILE_NAME] + selected_fieldnames,
-                      extrasaction="ignore", mode=print_mode)
+            write_csv(data_to_print, f_out, [FILE_NAME] + selected_fieldnames, extrasaction="ignore",
+                      mode=print_mode, print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
     return all_data
 
 
@@ -588,7 +606,7 @@ def find_rel_e(extracted_data, cfg, out_field_names, ref_energy_dict):
             rel_ene_ref = cfg[REL_E_SEC][this_group][REL_E_REF]
             ref_diab_e = cfg[REL_E_SEC][this_group][MIN_DIAB_ENE]
         if this_group is None or np.isnan(rel_ene_ref):
-            for key in [REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E]:
+            for key in [RESID_E, REF_E, REL_ENE, REL_PROT_E, REL_HYD_E, REL_NEXT_HYD_E]:
                 data_dict[key] = np.nan
         else:
             rel_e = data_dict[ENE_TOTAL] - rel_ene_ref
@@ -599,29 +617,22 @@ def find_rel_e(extracted_data, cfg, out_field_names, ref_energy_dict):
             file_name = data_dict[FILE_NAME]
             if file_name in ref_energy_dict:
                 ref_e = ref_energy_dict[file_name]
-                resid = np.round(np.sqrt((ref_e - rel_e) ** 2), 6)
+                resid = np.sqrt((ref_e - rel_e) ** 2)
 
                 data_dict[REF_E] = ref_e
                 data_dict[RESID_E] = resid
                 tot_resid += resid
                 num_resid += 1
+            else:
+                data_dict[REF_E] = np.nan
+                data_dict[RESID_E] = np.nan
 
     f_out = create_out_fname(cfg[EVB_LIST_FILE], suffix='_evb_info', ext='.csv',
                              base_dir=cfg[OUT_BASE_DIR])
-    write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore")
+    write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore",
+              print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
     if len(ref_energy_dict) > 1:
         print("Calculated total energy residual from {} files: {}".format(num_resid, tot_resid))
-
-
-def get_ref_e(file_name):
-    """
-    If a reference E file is provided, read in the pair of comma-separated values as a dict of file name, value
-    @param file_name: to attempt to read; None if not provided
-    @return: dict of file name, value
-    """
-    if file_name is None:
-        return {}
-    return read_csv_dict(file_name, one_to_one=False, str_float=True)
 
 
 def main(argv=None):

@@ -1,2 +1,2 @@
-"timestep","ene_total","max_prot_ci2","max_hyd_ci2","next_max_hyd_ci2","max_ci_sq_diff","max_prot_energy","max_hyd_energy","next_max_hyd_energy","max_prot_state_coul","max_hyd_state_coul","coul_diff"
-485013,-4710.236206,0.49291632640000005,0.48795813160000007,0.018966798400000002,0.004958194799999982,-511.27628900000002,-506.56248799999997,-414.14774699999998,-457.41799299999997,-624.07101299999999,-166.65302000000003
+"timestep","ene_total","max_prot_ci2","max_hyd_ci2","next_max_hyd_ci2","max_ci_sq_diff","max_prot_energy","max_hyd_energy","next_max_hyd_energy","max_prot_state_coul","max_hyd_state_coul","coul_diff","max_prot_rep","max_hyd_rep","next_max_hyd_rep"
+485013,-4710.236206,0.492916,0.487958,0.018967,0.004958,-511.276289,-506.562488,-414.147747,-457.417993,-624.071013,-166.65302,-150.291915,9.273061,14.215874

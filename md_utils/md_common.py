@@ -28,7 +28,7 @@ from contextlib import contextmanager
 
 # Constants #
 
-TPL_IO_ERR_MSG = "Couldn't read template at:'{}'"
+TPL_IO_ERR_MSG = "Couldn't read template at: '{}'"
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in kcal/mol Kelvin
@@ -1132,12 +1132,9 @@ def diff_lines(floc1, floc2, delimiter=","):
                             diff_vals = True
                             warning("Comparing '{}' to '{}'.".format(item_plus, item_neg))
                         elif not (np.isnan(item_neg) and np.isnan(item_plus)):
-                            float_diff = abs(item_plus - item_neg)
-                            calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
-                            if float_diff > calc_tol:
+                            if not np.isclose(item_neg, item_plus, TOL):
                                 diff_vals = True
-                                warning("Values {} and {} differ by {}, which is greater than the calculated tolerance "
-                                        "({})".format(item_plus, item_neg, float_diff, calc_tol))
+                                warning("Values {} and {} differ.".format(item_plus, item_neg))
                         if diff_vals:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))

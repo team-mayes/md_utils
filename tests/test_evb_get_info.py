@@ -11,7 +11,6 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 import logging
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -64,9 +63,7 @@ KEY_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info.csv')
 GOOD_KEY_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_evb_info_good.csv')
 
 WATER_MOL_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol.ini')
-WATER_MOL_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_wat_mols.csv')
 GOOD_WATER_MOL_OUT1 = os.path.join(SUB_DATA_DIR, '1.500_20c_short_wat_mols_good.csv')
-WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols.csv')
 GOOD_WATER_MOL_OUT2 = os.path.join(SUB_DATA_DIR, '2.000_20c_short_wat_mols_good.csv')
 
 WATER_MOL_COMB_INI = os.path.join(SUB_DATA_DIR, 'evb_get_water_mol_combine.ini')
@@ -81,7 +78,7 @@ REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info.csv')
 GOOD_REL_ENE_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info_good.csv')
 
 DECOMP_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_decomp_ene.ini')
-GOOD_DECOMP_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_evb_info.csv')
+GOOD_DECOMP_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_ene_info_good.csv')
 
 RMSD_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene_rmsd.ini')
 GOOD_RMSD_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_rmsd_good.csv')
@@ -196,7 +193,7 @@ class TestEVBGetInfo(unittest.TestCase):
 
     def testWaterMol(self):
         try:
-            main(["-c", WATER_MOL_INI])
+            main(["-c", WATER_MOL_INI, "-p"])
             self.assertFalse(diff_lines(DEF_CI_OUT1, GOOD_WATER_MOL_OUT1))
             self.assertFalse(diff_lines(DEF_CI_OUT2, GOOD_WATER_MOL_OUT2))
         finally:
@@ -206,7 +203,7 @@ class TestEVBGetInfo(unittest.TestCase):
     def testWaterMolCombine(self):
         # Should skip the timestep with only 1 state
         try:
-            main(["-c", WATER_MOL_COMB_INI])
+            main(["-c", WATER_MOL_COMB_INI, "-p"])
             self.assertFalse(diff_lines(WATER_MOL_COMB_OUT, GOOD_WATER_MOL_COMB_OUT))
         finally:
             silent_remove(WATER_MOL_COMB_OUT, disable=DISABLE_REMOVE)
@@ -214,7 +211,9 @@ class TestEVBGetInfo(unittest.TestCase):
     def testRelEnergy(self):
         # calculates relative energy
         try:
-            main(["-c", REL_ENE_INI])
+            main(["-c", REL_ENE_INI, "-p"])
+            print(REL_ENE_OUT)
+            print(GOOD_REL_ENE_OUT)
             self.assertFalse(diff_lines(REL_ENE_OUT, GOOD_REL_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT, disable=DISABLE_REMOVE)
@@ -222,14 +221,16 @@ class TestEVBGetInfo(unittest.TestCase):
     def testRelEnergyMissingInfo(self):
         # Check that prints "nan" instead of printing a stack trace (uncaught error)
         try:
-            main(["-c", REL_ENE_INI2])
+            main(["-c", REL_ENE_INI2, "-p"])
+            print(REL_ENE_OUT2)
+            print(GOOD_REL_ENE_OUT2)
             self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_REL_ENE_OUT2))
         finally:
             silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)
 
     def testDecomposedEnergyInfo(self):
         try:
-            main(["-c", DECOMP_ENE_INI])
+            main(["-c", DECOMP_ENE_INI, "-p"])
             self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_DECOMP_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)
@@ -241,6 +242,8 @@ class TestEVBGetInfo(unittest.TestCase):
                 main(test_input)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("23.760125" in output)
+            print(REL_ENE_OUT2)
+            print(GOOD_RMSD_ENE_OUT)
             self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_RMSD_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)
