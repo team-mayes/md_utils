@@ -29,6 +29,7 @@ from contextlib import contextmanager
 # Constants #
 
 TPL_IO_ERR_MSG = "Couldn't read template at: '{}'"
+MISSING_SEC_HEADER_ERR_MSG = "Configuration files must start with a section header such as '[main]'. Check file: {}"
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in kcal/mol Kelvin
@@ -1132,6 +1133,7 @@ def diff_lines(floc1, floc2, delimiter=","):
                             diff_vals = True
                             warning("Comparing '{}' to '{}'.".format(item_plus, item_neg))
                         elif not (np.isnan(item_neg) and np.isnan(item_plus)):
+                            # noinspection PyTypeChecker
                             if not np.isclose(item_neg, item_plus, TOL):
                                 diff_vals = True
                                 warning("Values {} and {} differ.".format(item_plus, item_neg))

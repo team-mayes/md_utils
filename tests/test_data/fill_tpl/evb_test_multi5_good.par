@@ -31,7 +31,7 @@ GLU-P  : EVB_Type of center
 OH1          : type D
 OW           : type A
 -0.5         : B
-1.00         : b
+5.00         : b
 2.5          : b_DA
 5.0          : cut-off
 

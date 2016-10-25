@@ -1,3 +1,21 @@
+#ifdef GLU
+[repulsive.start.GLU-D]
+
+Hydronium : H3O
+
+:::::::::::::::::::::::::::::::::::::::::::
+
+: The parameters
+
+H3O  : EVB_Type of H3O
+OC   : Atom_Type of GLU
+
+: ----------------------------------------------------------------------------
+
+{voo_b:11}  : 0.125313  : B
+
+[repulsive.end]
+
 [repulsive.start.GLU-P]
 
 Expon2 : Gaussian like repulsive terms V_rep = Vii + B exp[ b (R_DA - b_DA)^2 ]
@@ -18,3 +36,4 @@ GLU-P  : EVB_Type of center
 {vii_cut:9}    : cut-off
 
 [repulsive.end]
+#endif
