@@ -42,6 +42,8 @@ GOOD_MULTI_PAR_OUT5 = os.path.join(SUB_DATA_DIR, 'evb_test_multi5_good.par')
 GOOD_MULTI_PAR_OUT6 = os.path.join(SUB_DATA_DIR, 'evb_test_multi6_good.par')
 
 PAR_EQ_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par.ini')
+PAR_EQ_WRONG_ORDER_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_wrong_order.ini')
+PAR_EQ_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_missing_param.ini')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -132,6 +134,20 @@ class TestMakeParFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue('required for filled template file name' in output)
+
+    def testMakeParEqWrongOrder(self):
+        test_input = ["-c", PAR_EQ_WRONG_ORDER_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue('Check order' in output)
+
+    def testMakeParEqMissingParam(self):
+        test_input = ["-c", PAR_EQ_MISS_PARAM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue('Missing parameter value' in output)
 
 
 class TestMain(unittest.TestCase):

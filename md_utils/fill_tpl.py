@@ -189,7 +189,18 @@ def make_tpl(cfg):
         for param, val in zip(cfg[TPL_VALS].keys(), value_set):
             tpl_vals_dict[param] = val
         for eq_param in cfg[TPL_EQ_PARAMS]:
-            tpl_vals_dict[eq_param] = eval(tpl_vals_dict[eq_param].format(**tpl_vals_dict))
+            try:
+                string_to_eval = tpl_vals_dict[eq_param].format(**tpl_vals_dict)
+            except KeyError as e:
+                raise KeyError("Missing parameter value {} needed to evaluate '{}' for the parameter '{}'."
+                               "".format(e, tpl_vals_dict[eq_param], eq_param))
+            try:
+                tpl_vals_dict[eq_param] = eval(string_to_eval)
+            except NameError:
+                raise InvalidDataError("Could not evaluate the string '{}' specifying the value for the parameter "
+                                       "'{}'. Check order of equation entry and/or input parameter values."
+                                       "".format(string_to_eval, eq_param))
+
         fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
 
 
