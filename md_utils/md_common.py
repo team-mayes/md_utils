@@ -318,16 +318,19 @@ def file_rows_to_list(c_file):
         return filter(None, row_list)
 
 
-def str_to_file(str_val, fname, mode='w'):
+def str_to_file(str_val, fname, mode='w', print_info=False):
     """
     Writes the string to the given file.
     @param str_val: The string to write.
     @param fname: The location of the file to write
     @param mode: default mode is to overwrite file
-    @return:
+    @param print_info: boolean to specify whether to print action to stdout
     """
     with open(fname, mode) as f:
         f.write(str_val)
+    if print_info:
+        print("Wrote file: {}".format(fname))
+
 
 
 def round_to_print(val):

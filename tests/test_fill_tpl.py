@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -25,7 +25,8 @@ PAR_FNAME = 'evb_test.par'
 PAR_OUT = os.path.join(SUB_DATA_DIR, PAR_FNAME)
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_test_good.par')
 
-PAR_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_multi_par.ini')
+PAR_ONE_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_one_multi_par.ini')
+PAR_TWO_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_multi_par.ini')
 MULTI_PAR_OUT1 = os.path.join(SUB_DATA_DIR, 'evb_viib0.0_viilb1.00.par')
 MULTI_PAR_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_viib-0.5_viilb1.00.par')
 MULTI_PAR_OUT3 = os.path.join(SUB_DATA_DIR, 'evb_viib-1.0_viilb1.00.par')
@@ -135,6 +136,7 @@ class TestMakeParFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testMakePar(self):
+        # For this test, there is exactly one value provided for each parameter
         try:
             silent_remove(PAR_OUT)
             main(["-c", PAR_INI])
@@ -143,6 +145,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
 
     def testMakeParCommandLine(self):
+        # as in testMakePar, but specifying the created file name from the command line
         try:
             silent_remove(PAR_OUT)
             main(["-c", PAR_NO_NEW_FILE_NAME_INI, "-f", PAR_FNAME])
@@ -150,14 +153,42 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
 
-    def testMakeMultiPar(self):
+    def testMakeOneMultiPar(self):
+        # Now, one parameter has multiple values
         try:
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file)
-            main(["-c", PAR_MULTI_INI])
+            main(["-c", PAR_ONE_MULTI_INI])
             self.assertFalse(diff_lines(MULTI_PAR_OUT1, GOOD_MULTI_PAR_OUT1))
-            # self.assertFalse(diff_lines(MULTI_PAR_OUT2, GOOD_PAR_OUT))
-            # self.assertFalse(diff_lines(MULTI_PAR_OUT3, GOOD_MULTI_PAR_OUT3))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT2, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT3, GOOD_MULTI_PAR_OUT3))
+        finally:
+            for o_file in MULTI_OUT_FILES:
+                silent_remove(o_file, disable=DISABLE_REMOVE)
+
+    def testMakeTwoMultiPar(self):
+        try:
+            for o_file in MULTI_OUT_FILES:
+                silent_remove(o_file)
+            main(["-c", PAR_TWO_MULTI_INI])
+            self.assertFalse(diff_lines(MULTI_PAR_OUT1, GOOD_MULTI_PAR_OUT1))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT2, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT3, GOOD_MULTI_PAR_OUT3))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT4, GOOD_MULTI_PAR_OUT4))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT5, GOOD_MULTI_PAR_OUT5))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT6, GOOD_MULTI_PAR_OUT6))
+        finally:
+            for o_file in MULTI_OUT_FILES:
+                silent_remove(o_file, disable=DISABLE_REMOVE)
+
+    def testMakeEqPar(self):
+        try:
+            for o_file in MULTI_OUT_FILES:
+                silent_remove(o_file)
+            main(["-c", PAR_EQ_INI])
+            self.assertFalse(diff_lines(MULTI_PAR_OUT1, GOOD_MULTI_PAR_OUT1))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT2, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(MULTI_PAR_OUT3, GOOD_MULTI_PAR_OUT3))
         finally:
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file, disable=DISABLE_REMOVE)

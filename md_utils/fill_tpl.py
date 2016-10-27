@@ -9,6 +9,8 @@ import os
 import sys
 from collections import OrderedDict
 
+import itertools
+
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg, read_tpl,
                                 create_out_fname, str_to_file, TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG)
 
@@ -32,9 +34,7 @@ VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC]
 
 # for storing template values
 TPL_VALS = 'parameter_values'
-TPL_EQ_VALS = 'calculated_parameters'
-MULT_VAL_LIST = 'list_params_with_multi_vals'
-
+TPL_EQ_PARAMS = 'calculated_parameter_names'
 
 # Defaults
 DEF_CFG_FILE = 'fill_tpl.ini'
@@ -48,31 +48,19 @@ REQ_KEYS = {}
 
 # CLI Processing #
 
-def process_tpl_vals(raw_key_val_tuple_list, val_dict, multi_val_param_list):
+def process_tpl_vals(raw_key_val_tuple_list):
     """
     In case there are multiple (comma-separated) values, split on comma and strip. Do not convert to int or float;
        that will be done later if needed for equations
     The program creates the val_dict and multi_val_param_list (fed in empty)
 
     @param raw_key_val_tuple_list: key-value dict read from configuration file
-    @param val_dict: a dictionary of values (strings); check for commas to indicate multiple parameters
-    @param multi_val_param_list: a list of the parameters which contain multiple values
+    @return val_dict: a dictionary of values (strings); check for commas to indicate multiple parameters
     """
+    val_dict = OrderedDict()
     for key, val in raw_key_val_tuple_list:
         val_dict[key] = [x.strip() for x in val.split(',')]
-        if len(val_dict[key]) > 1:
-            multi_val_param_list.append(key)
-
-
-# def process_eq_vals(raw_key_val_dict, eq_dict):
-#     """
-#
-#     @param raw_key_val_dict:
-#     @param eq_dict:
-#     @return:
-#     """
-#     # todo: read and process equations
-#     pass
+    return val_dict
 
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
@@ -93,7 +81,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError('Could not read file {}'.format(f_loc))
 
     # Start with empty template value dictionaries to be filled
-    proc = {TPL_VALS: OrderedDict(), TPL_EQ_VALS: OrderedDict(), MULT_VAL_LIST: []}
+    proc = {TPL_VALS: OrderedDict(), TPL_EQ_PARAMS: OrderedDict()}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
@@ -106,10 +94,12 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
                 if 'Unexpected key' in e.message:
                     raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
                                                        "".format(TPL_VALS_SEC))
-        elif section == TPL_VALS_SEC:
-            process_tpl_vals(config.items(section), proc[TPL_VALS], proc[MULT_VAL_LIST])
-        elif section == TPL_EQS_SEC:
-            proc[TPL_EQ_VALS] = dict(config.items(section))
+        elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
+            val_ordered_dict = process_tpl_vals(config.items(section))
+            if section == TPL_EQS_SEC:
+                # just keep the names, so we know special processing is required
+                proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
+            proc[TPL_VALS].update(val_ordered_dict)
         else:
             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
                                    "".format(section, VALID_SEC_NAMES))
@@ -183,39 +173,24 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict):
                        "".format(e.message, cfg[FILLED_TPL_FNAME]))
 
     new_par_fname = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
-    str_to_file(filled_tpl_str, new_par_fname)
+    str_to_file(filled_tpl_str, new_par_fname, print_info=True)
 
 
 def make_tpl(cfg):
     """
-    Combines the dictionary and template file to create the new file
-    @param cfg:
-    @return:
+    Combines the dictionary and template file to create the new file(s)
+    @param cfg: configuration for the run
     """
 
     tpl_str = read_tpl(cfg[TPL_FILE])
     tpl_vals_dict = {}
 
-    # first, populate the template with the first values of all value lists.
-    for key, val_list in cfg[TPL_VALS].items():
-        tpl_vals_dict[key] = val_list[0]
-    for key, eq_tpl in cfg[TPL_EQ_VALS]:
-        print(key, eq_tpl)
-    fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
-
-    # then, for each key that has more than 1 value, print more!
-    for key_id in cfg[MULT_VAL_LIST]:
-
-        for val in cfg[TPL_VALS][key][1:]:
-            tpl_vals_dict[key] = val
-            fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
-    #     for val in cfg[TPL_VALS][key][1:]:
-    #         print(val)
-    #         # tpl_vals_dict[key] = val
-    #         # for eq_key, eq_tpl in cfg[TPL_EQ_VALS].items():
-    #         #     assert isinstance(eq_tpl, str)
-    #         #     print(eq_key)
-    #    fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
+    for value_set in itertools.product(*cfg[TPL_VALS].values()):
+        for param, val in zip(cfg[TPL_VALS].keys(), value_set):
+            tpl_vals_dict[param] = val
+        for eq_param in cfg[TPL_EQ_PARAMS]:
+            tpl_vals_dict[eq_param] = eval(tpl_vals_dict[eq_param].format(**tpl_vals_dict))
+        fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
 
 
 def main(argv=None):

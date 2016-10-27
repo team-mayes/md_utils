@@ -32,8 +32,8 @@ GLU-P  : EVB_Type of center
 {vii_type_a:9}    : type A
 {vii_b:9}    : B
 {vii_lb:9}    : b
-{vii_b_da:9}    : b_DA
-{vii_cut:9}    : cut-off
+{vii_b_da:<9}    : b_DA
+{vii_cut:<9}    : cut-off
 
 [repulsive.end]
 #endif
