@@ -22,8 +22,9 @@ except ImportError:
     from configparser import ConfigParser, MissingSectionHeaderError
 
 # Constants #
-TPL_FILE = 'tpl_file'
+TPL_FNAME = 'tpl_file'
 FILLED_TPL_FNAME = 'filled_tpl_name'
+NEW_FNAME = 'new_file_name'
 OUT_DIR = 'out_dir'
 
 # Config File Sections
@@ -39,7 +40,7 @@ TPL_EQ_PARAMS = 'calculated_parameter_names'
 # Defaults
 DEF_CFG_FILE = 'fill_tpl.ini'
 DEF_TPL = 'fill_tpl.tpl'
-DEF_CFG_VALS = {TPL_FILE: DEF_TPL, OUT_DIR: None, FILLED_TPL_FNAME: None,
+DEF_CFG_VALS = {TPL_FNAME: DEF_TPL, OUT_DIR: None, FILLED_TPL_FNAME: None,
                 }
 REQ_KEYS = {}
 
@@ -119,7 +120,20 @@ def parse_cmdline(argv=None):
     parser = argparse.ArgumentParser(description='Fills in a template evb file with parameter values.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
-                                               "base directory where the program as run.".format(DEF_CFG_FILE),
+                                               "base directory where the program as run. "
+                                               "Note: 1) a [{}] section is required. 2) optional sections are [{}] and "
+                                               "[{}], which allows key values to be calculated based on other tpl "
+                                               "values. 3) Equations will be evaluated in the order provided, so if "
+                                               "an equation depends on the value computed from another equation, list "
+                                               "the dependent equation after its inputs. 4) Multiple values and "
+                                               "equations may be listed for any keys. In that case, the program will "
+                                               "create multiple output files. If a static '{}' is provided, the "
+                                               "file will be overwritten, leaving only one filled file at the end. "
+                                               "The '{}' can include keys (i.e. filled_tpl_name = {{key1}}.txt), so "
+                                               "if multiple values are listed for key1 (i.e. key1 = A,B,C), multiple "
+                                               "output files will be created (A.txt, B.txt, C.txt)."
+                                               "".format(DEF_CFG_FILE, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
+                                                         FILLED_TPL_FNAME, FILLED_TPL_FNAME),
                         default=DEF_CFG_FILE, type=read_cfg)
     parser.add_argument("-f", "--filled_tpl_name", help="File name for new file to be created by filling the template "
                                                         "file. It can also be specified in the configuration file. "
@@ -130,14 +144,14 @@ def parse_cmdline(argv=None):
     args = None
     try:
         args = parser.parse_args(argv)
-        if not os.path.isfile(args.config[TPL_FILE]):
-            if args.config[TPL_FILE] == DEF_TPL:
+        if not os.path.isfile(args.config[TPL_FNAME]):
+            if args.config[TPL_FNAME] == DEF_TPL:
                 error_message = "Check input for the configuration key '{}'; " \
                                 "could not find the default template file: {}"
             else:
                 error_message = "Could not find the template file specified with " \
                                 "the configuration key '{}': {}"
-            raise IOError(error_message.format(TPL_FILE, args.config[TPL_FILE]))
+            raise IOError(error_message.format(TPL_FNAME, args.config[TPL_FNAME]))
         if args.filled_tpl_name is not None:
             args.config[FILLED_TPL_FNAME] = args.filled_tpl_name
         if args.config[FILLED_TPL_FNAME] is None:
@@ -153,36 +167,42 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def fill_save_tpl(cfg, tpl_str, tpl_vals_dict):
+def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name):
     """
     use the dictionary to make the file name and filled template. Then save the file.
     @param cfg: configuration for run
     @param tpl_str: the string to be filled to make the filled tpl file
     @param tpl_vals_dict: dictionary of tpl keys and vals
+    @param tpl_name: the cfg key for the template file name
+    @param filled_tpl_name: the cfg key for the filled template file name
     """
     try:
         filled_tpl_str = tpl_str.format(**tpl_vals_dict)
     except KeyError as e:
         raise KeyError("Key '{}' not found in the configuration but required for template file: {}"
-                       "".format(e.message, cfg[TPL_FILE]))
+                       "".format(e.message, tpl_name))
 
     try:
-        filled_fname_str = cfg[FILLED_TPL_FNAME].format(**tpl_vals_dict)
+        filled_fname_str = filled_tpl_name.format(**tpl_vals_dict)
     except KeyError as e:
         raise KeyError("Key '{}' not found in the configuration but required for filled template file name: {}"
-                       "".format(e.message, cfg[FILLED_TPL_FNAME]))
+                       "".format(e.message, filled_tpl_name))
 
-    new_par_fname = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
-    str_to_file(filled_tpl_str, new_par_fname, print_info=True)
+    tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
+    str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=True)
 
 
-def make_tpl(cfg):
+def make_tpl(cfg, tpl_name, filled_tpl_name, return_dict=False):
     """
     Combines the dictionary and template file to create the new file(s)
+    @param return_dict: a boolean to specify if the template-filling dictionary should be returned
     @param cfg: configuration for the run
+    @param tpl_name: the cfg key for the template file name
+    @param filled_tpl_name: the cfg key for the filled template file name
+    @return tpl_vals_dict: a dictionary to fill in templates
     """
 
-    tpl_str = read_tpl(cfg[TPL_FILE])
+    tpl_str = read_tpl(tpl_name)
     tpl_vals_dict = {}
 
     for value_set in itertools.product(*cfg[TPL_VALS].values()):
@@ -201,7 +221,9 @@ def make_tpl(cfg):
                                        "'{}'. Check order of equation entry and/or input parameter values."
                                        "".format(string_to_eval, eq_param))
 
-        fill_save_tpl(cfg, tpl_str, tpl_vals_dict)
+        fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name)
+    if return_dict:
+        return tpl_vals_dict
 
 
 def main(argv=None):
@@ -218,7 +240,7 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        make_tpl(cfg)
+        make_tpl(cfg, cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR

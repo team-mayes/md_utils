@@ -2,44 +2,39 @@
 # -*- coding: utf-8 -*-
 
 """
-Given an initial set of parameters, and a max and minimum value change, this program will:
-a) generate input template files
-b) run lammps+raptor
-c) gather the residual to determine the next parameter set to try
+Given an initial set of parameters, it will create a parameter file and a copy of it for records.
 """
 import argparse
 import os
 import sys
+from collections import OrderedDict
 
-from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg, read_tpl,
-                                create_out_fname, str_to_file, TemplateNotReadableError)
+import shutil
+
+from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg,
+                                TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname)
+from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
+                               VALID_SEC_NAMES, TPL_VALS, TPL_EQ_PARAMS, process_tpl_vals, make_tpl, NEW_FNAME)
 
 try:
     # noinspection PyCompatibility
-    from ConfigParser import ConfigParser
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
 except ImportError:
     # noinspection PyCompatibility
-    from configparser import ConfigParser
+    from configparser import ConfigParser, MissingSectionHeaderError
 
 # Constants #
-TPL_FILE = 'tpl_file'
-FILLED_TPL_FNAME = 'filled_tpl_name'
-OUT_DIR = 'out_dir'
-
-# Config File Sections
-MAIN_SEC = 'main'
-TPL_VALS_SEC = 'tpl_vals'
-TPL_EQS_SEC = 'tpl_equations'
-EXPECTED_SECS = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC]
-
-# will become config file sections after processing
-TPL_SINGLE_VALS = 'single_val_parameters'
-TPL_MULT_VALS = 'multiple_val_parameters'
+TRIAL_NAME = 'trial_name'
+PAR_TPL = 'par_tpl'
+PAR_COPY_NAME = 'par_copy'
+PAR_FILE_NAME = 'par_name'
+COPY_DIR = 'copy_dir'
 
 # Defaults
-DEF_CFG_FILE = 'fill_tpl.ini'
-DEF_TPL = 'fill_tpl.tpl'
-DEF_CFG_VALS = {TPL_FILE: DEF_TPL, OUT_DIR: None, FILLED_TPL_FNAME: None,
+DEF_CFG_FILE = 'conv_evb_par.ini'
+DEF_TPL = 'evb_par.tpl'
+DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME: None,
+                PAR_COPY_NAME: None, COPY_DIR: None,
                 }
 REQ_KEYS = {}
 
@@ -58,24 +53,36 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     :return: A dict of the processed configuration file's data.
     """
     config = ConfigParser()
-    good_files = config.read(f_loc)
+    try:
+        good_files = config.read(f_loc)
+    except MissingSectionHeaderError:
+        raise InvalidDataError(MISSING_SEC_HEADER_ERR_MSG.format(f_loc))
     if not good_files:
         raise IOError('Could not read file {}'.format(f_loc))
-    proc = {TPL_SINGLE_VALS: {}}
+
+    # Start with empty template value dictionaries to be filled
+    proc = {TPL_VALS: OrderedDict(), TPL_EQ_PARAMS: OrderedDict()}
+
+    if MAIN_SEC not in config.sections():
+        raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
+
     for section in config.sections():
         if section == MAIN_SEC:
             try:
                 proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS))
             except InvalidDataError as e:
                 if 'Unexpected key' in e.message:
-                    raise InvalidDataError(e.message + ' Note: template keys must \nbe in a '
-                                                       'configuration file section other than '
-                                                       '[main]. Any other section name will '
-                                                       'suffice; \nthey can be used to organize '
-                                                       'parameters if desired.')
+                    raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
+                                                       "".format(TPL_VALS_SEC))
+        elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
+            val_ordered_dict = process_tpl_vals(config.items(section))
+            if section == TPL_EQS_SEC:
+                # just keep the names, so we know special processing is required
+                proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
+            proc[TPL_VALS].update(val_ordered_dict)
         else:
-            proc[TPL_SINGLE_VALS].update(dict(config.items(section)))
-
+            raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
+                                   "".format(section, VALID_SEC_NAMES))
     return proc
 
 
@@ -88,34 +95,34 @@ def parse_cmdline(argv=None):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Fills in a template evb file with parameter values.')
+    parser = argparse.ArgumentParser(description='Creates evb parameter files to converge parameters.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
-    parser.add_argument("-f", "--filled_tpl_name", help="File name for new file to be created by filling the template "
-                                                        "file. It can also be specified in the configuration file. "
-                                                        "If specified in both places, the command line option will "
-                                                        "take precedence.",
+    parser.add_argument("-f", "--par_name", help="File name for the parameter file to be created by filling the "
+                                                 "evb parameter template file. It can also be specified in the "
+                                                 "configuration file. If specified in both places, the command line "
+                                                 "option will take precedence.",
                         default=None)
 
     args = None
     try:
         args = parser.parse_args(argv)
-        if not os.path.isfile(args.config[TPL_FILE]):
-            if args.config[TPL_FILE] == DEF_TPL:
+        if not os.path.isfile(args.config[PAR_TPL]):
+            if args.config[PAR_TPL] == DEF_TPL:
                 error_message = "Check input for the configuration key '{}'; " \
                                 "could not find the default template file: {}"
             else:
                 error_message = "Could not find the template file specified with " \
                                 "the configuration key '{}': {}"
-            raise IOError(error_message.format(TPL_FILE, args.config[TPL_FILE]))
-        if args.filled_tpl_name is not None:
-            args.config[FILLED_TPL_FNAME] = args.filled_tpl_name
-        if args.config[FILLED_TPL_FNAME] is None:
+            raise IOError(error_message.format(PAR_TPL, args.config[PAR_TPL]))
+        if args.par_name is not None:
+            args.config[PAR_FILE_NAME] = args.par_name
+        if args.config[PAR_FILE_NAME] is None:
             raise InvalidDataError("Missing required key '{}', which can be specified in the "
                                    "required either in the command line for configuration file."
-                                   "".format(FILLED_TPL_FNAME))
+                                   "".format(PAR_FILE_NAME))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
         if e.message == 0:
             return args, GOOD_RET
@@ -123,24 +130,6 @@ def parse_cmdline(argv=None):
         parser.print_help()
         return args, INPUT_ERROR
     return args, GOOD_RET
-
-
-def make_tpl(cfg):
-    """
-    Combines the dictionary and template file to create the new file
-    @param cfg:
-    @return:
-    """
-
-    tpl_str = read_tpl(cfg[TPL_FILE])
-    test_dict = cfg[TPL_SINGLE_VALS]
-    try:
-        filled_tpl_str = tpl_str.format(**test_dict)
-    except KeyError as e:
-        raise KeyError("Key '{}' not found in the configuration but required for template file: {}"
-                       "".format(e.message, cfg[TPL_FILE]))
-    new_par_fname = create_out_fname(cfg[FILLED_TPL_FNAME], base_dir=cfg[OUT_DIR])
-    str_to_file(filled_tpl_str, new_par_fname)
 
 
 def main(argv=None):
@@ -157,7 +146,23 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        make_tpl(cfg)
+        tpl_dict = make_tpl(cfg, cfg[PAR_TPL], cfg[PAR_FILE_NAME], return_dict=True)
+        if cfg[TRIAL_NAME] is not None:
+            try:
+                tpl_dict[TRIAL_NAME] = cfg[TRIAL_NAME].format(**tpl_dict)
+            except KeyError as e:
+                raise KeyError("Missing key name {} required for '{}': '{}'. Program will terminate."
+                               "".format(e, TRIAL_NAME, cfg[TRIAL_NAME]))
+        if cfg[PAR_COPY_NAME] is not None:
+            try:
+                par_copy = cfg[PAR_COPY_NAME].format(**tpl_dict)
+            except KeyError as e:
+                raise KeyError("Missing key name {} required for '{}': '{}'. Copy of par file will not be made."
+                               "".format(e, PAR_COPY_NAME, cfg[PAR_COPY_NAME]))
+            par_copy_fname = create_out_fname(par_copy, base_dir=cfg[COPY_DIR])
+            shutil.copyfile(tpl_dict[NEW_FNAME], par_copy_fname)
+            print(" Copied to: {}".format(par_copy_fname))
+
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR
@@ -165,7 +170,7 @@ def main(argv=None):
         warning(e)
         return IO_ERROR
 
-    return GOOD_RET  # success
+    return GOOD_RET
 
 
 if __name__ == '__main__':
