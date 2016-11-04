@@ -39,6 +39,7 @@ setup(
                                       'calc_split_avg = md_utils.calc_split_avg:main',
                                       'col_stats = md_utils.col_stats:main',
                                       'comb_col = md_utils.comb_col:main',
+                                      'converge_evb_par = md_utils.converge_evb_par:main',
                                       'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                       'data2data = md_utils.data2data:main',
                                       'data2pdb = md_utils.data2pdb:main',

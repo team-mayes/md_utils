@@ -192,14 +192,13 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name):
     str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=True)
 
 
-def make_tpl(cfg, tpl_name, filled_tpl_name, return_dict=False):
+def make_tpl(cfg, tpl_name, filled_tpl_name):
     """
     Combines the dictionary and template file to create the new file(s)
     @param return_dict: a boolean to specify if the template-filling dictionary should be returned
     @param cfg: configuration for the run
     @param tpl_name: the cfg key for the template file name
     @param filled_tpl_name: the cfg key for the filled template file name
-    @return tpl_vals_dict: a dictionary to fill in templates
     """
 
     tpl_str = read_tpl(tpl_name)
@@ -208,6 +207,7 @@ def make_tpl(cfg, tpl_name, filled_tpl_name, return_dict=False):
     for value_set in itertools.product(*cfg[TPL_VALS].values()):
         for param, val in zip(cfg[TPL_VALS].keys(), value_set):
             tpl_vals_dict[param] = val
+
         for eq_param in cfg[TPL_EQ_PARAMS]:
             try:
                 string_to_eval = tpl_vals_dict[eq_param].format(**tpl_vals_dict)
@@ -222,8 +222,6 @@ def make_tpl(cfg, tpl_name, filled_tpl_name, return_dict=False):
                                        "".format(string_to_eval, eq_param))
 
         fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name)
-    if return_dict:
-        return tpl_vals_dict
 
 
 def main(argv=None):

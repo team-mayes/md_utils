@@ -20,36 +20,15 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'converge_evb_par')
 FILL_DIR = os.path.join(DATA_DIR, 'fill_tpl')
 
 CONV_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par.ini')
+CONV_ALT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_alt.ini')
+PAR_INI = os.path.join(SUB_DATA_DIR, 'evb_par.ini')
+CONV_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_steps.ini')
+CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.00.par')
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good.par')
 ALT_PAR_FNAME = os.path.join(SUB_DATA_DIR, 'evb.par')
-
-# PAR_NO_NEW_FILE_NAME_INI = os.path.join(SUB_DATA_DIR, 'no_new_fname.ini')
-# PAR_FNAME = 'evb_test.par'
-# PAR_OUT = os.path.join(SUB_DATA_DIR, PAR_FNAME)
-# GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_test_good.par')
-#
-# PAR_ONE_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_one_multi_par.ini')
-# PAR_TWO_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_multi_par.ini')
-# MULTI_PAR_OUT1 = os.path.join(SUB_DATA_DIR, 'evb_viib0.0_viilb1.00.par')
-# MULTI_PAR_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_viib-0.5_viilb1.00.par')
-# MULTI_PAR_OUT3 = os.path.join(SUB_DATA_DIR, 'evb_viib-1.0_viilb1.00.par')
-# MULTI_PAR_OUT4 = os.path.join(SUB_DATA_DIR, 'evb_viib0.0_viilb5.00.par')
-# MULTI_PAR_OUT5 = os.path.join(SUB_DATA_DIR, 'evb_viib-0.5_viilb5.00.par')
-# MULTI_PAR_OUT6 = os.path.join(SUB_DATA_DIR, 'evb_viib-1.0_viilb5.00.par')
-# MULTI_OUT_FILES = [MULTI_PAR_OUT1, MULTI_PAR_OUT2, MULTI_PAR_OUT3,
-#                    MULTI_PAR_OUT4, MULTI_PAR_OUT5, MULTI_PAR_OUT6, ]
-# GOOD_MULTI_PAR_OUT1 = os.path.join(SUB_DATA_DIR, 'evb_test_multi1_good.par')
-# GOOD_MULTI_PAR_OUT3 = os.path.join(SUB_DATA_DIR, 'evb_test_multi3_good.par')
-# GOOD_MULTI_PAR_OUT4 = os.path.join(SUB_DATA_DIR, 'evb_test_multi4_good.par')
-# GOOD_MULTI_PAR_OUT5 = os.path.join(SUB_DATA_DIR, 'evb_test_multi5_good.par')
-# GOOD_MULTI_PAR_OUT6 = os.path.join(SUB_DATA_DIR, 'evb_test_multi6_good.par')
-#
-# PAR_EQ_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par.ini')
-# PAR_EQ_WRONG_ORDER_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_wrong_order.ini')
-# PAR_EQ_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_missing_param.ini')
 
 # for testing to fail well
 MISSING_TRIAL_NAME_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_key_in_trial_name.ini')
@@ -61,6 +40,10 @@ TPL_KEY_IN_MAIN_INI = os.path.join(FILL_DIR, 'tpl_key_in_main.ini')
 VAL_BEFORE_SECTION_INI = os.path.join(FILL_DIR, 'no_initial_section.ini')
 MISSING_MAIN_INI = os.path.join(FILL_DIR, 'missing_main.ini')
 EXTRA_SEC_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_extra_section.ini')
+WRONG_STEP_ORDER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_wrong_step_sizes.ini')
+MISSING_STEP_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_step.ini')
+MISSING_EQ_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_eq_key.ini')
+WRONG_EQ_ORDER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_wrong_eq_order.ini')
 
 
 class TestMainFailWell(unittest.TestCase):
@@ -139,7 +122,6 @@ class TestMainFailWell(unittest.TestCase):
         silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
 
     def testMissingTrialNameKey(self):
-        # catch an error if the program finds an unexpected section
         test_input = ["-c", MISSING_TRIAL_NAME_KEY_INI]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
@@ -147,32 +129,39 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue(TRIAL_NAME in output)
         silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
 
-    #
-    # def testMakeParMissingKeyFileName(self):
-    #     test_input = ["-c", PAR_NO_NEW_FILE_NAME_INI, "-f", '{ghost}.par']
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue('required for filled template file name' in output)
-    #
-    # def testMakeParEqWrongOrder(self):
-    #     test_input = ["-c", PAR_EQ_WRONG_ORDER_INI]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue('Check order' in output)
-    #
-    # def testMakeParEqMissingParam(self):
-    #     test_input = ["-c", PAR_EQ_MISS_PARAM_INI]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue('Missing parameter value' in output)
+    def testWrongStepSizeOrder(self):
+        test_input = ["-c", WRONG_STEP_ORDER_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("smaller" in output)
+
+    def testMissingStep(self):
+        test_input = ["-c", MISSING_STEP_INI]
+        main(test_input)
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("2 values were found" in output)
+
+    def testMissingEqKey(self):
+        test_input = ["-c", MISSING_EQ_KEY_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("needed to evaluate" in output)
+
+    def testWrongEqOrder(self):
+        test_input = ["-c", WRONG_EQ_ORDER_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Could not evaluate" in output)
 
 
 class TestMain(unittest.TestCase):
-    def testMakePar(self):
-        # For this test, there is exactly one value provided for each parameter
+    def testMakeParStartLow(self):
+        # For this test, there is exactly one value provided for each parameter, and x_0 is too low
         try:
             silent_remove(PAR_OUT, COPY_PAR)
             main(["-c", CONV_INI])
@@ -181,12 +170,48 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
+            pass
 
-    def testMakeParCommandLine(self):
-        # as in testMakePar, but specifying the created file name from the command line
+    def testMakeParStartHigh(self):
+        # Testing that starting from an x_0 too high still ends at the same answer
         try:
-            main(["-c", CONV_INI, "-f", ALT_PAR_FNAME])
-            self.assertFalse(diff_lines(ALT_PAR_FNAME, GOOD_PAR_OUT))
+            silent_remove(PAR_OUT)
+            main(["-c", CONV_ALT_INI])
+            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT))
         finally:
-            silent_remove(ALT_PAR_FNAME, disable=DISABLE_REMOVE)
-            silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+
+    def testNoOpt(self):
+        # Testing that will run without any params specified to be optimized
+        silent_remove(PAR_OUT)
+        test_input = ["-c", PAR_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        try:
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("No parameters will be optimized" in output)
+            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT))
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+
+    def testMaxIters(self):
+        # Specified a small number of iterations
+        try:
+            main(["-c", CONV_MAX_ITER_INI])
+            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            self.assertEquals(len(diffs), 2)
+            self.assertEquals('- -300.0       : constant Vii', diffs[0])
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+
+    def testMaxStepSize(self):
+        # Stop based on step size
+        try:
+            test_input = ["-c", CONV_MAX_STEP_SIZE_INI]
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("min step size" in output)
+            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            self.assertEquals(len(diffs), 2)
+            self.assertEquals('- -293.75      : constant Vii', diffs[0])
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
