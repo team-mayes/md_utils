@@ -9,6 +9,7 @@ import os
 import sys
 import shutil
 import numpy as np
+from scipy.optimize import minimize
 from collections import OrderedDict
 from subprocess import check_output
 
@@ -34,6 +35,8 @@ COPY_DIR = 'copy_dir'
 BASH_DRIVER = 'bash_driver'
 CONV_CUTOFF = 'converge_tolerance'
 MAX_ITER = 'max_iterations'
+NUM_PARAM_DECIMALS = 'num_decimals'
+PRINT_INFO = 'print_status'
 
 # for storing config data
 MAX_STEP = 'max_step_size'
@@ -44,8 +47,10 @@ DEF_CFG_FILE = 'conv_evb_par.ini'
 DEF_TPL = 'evb_par.tpl'
 DEF_CONV_CUTOFF = 0.001
 DEF_MAX_ITER = 25
+DEF_PARAM_DEC = 6
 DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME: None,
                 PAR_COPY_NAME: None, COPY_DIR: None, CONV_CUTOFF: DEF_CONV_CUTOFF, MAX_ITER: DEF_MAX_ITER,
+                PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -70,16 +75,22 @@ def process_conv_tpl_keys(raw_key_val_tuple_list):
         val_list = [x.strip() for x in val.split(',')]
         val_num = len(val_list)
         if val_num == 1:
-            val_dict[key] = val_list[0]
-        elif val_num == 3:
-                val_list = map(float, val_list)
-                if abs(val_list[2]) > abs(val_list[1]):
-                    raise InvalidDataError("For key '{}', read '{}' which specifies a smaller max_step_size is than "
-                                           "the min_step_size (for each key to be optimized, provide x_0, "
-                                           "max_step_size, min_step_size). Check input data.".format(key, val))
+            # if it can be converted, do so; this helps with my printing formatting
+            if isinstance(val_list[0], int):
+                val_dict[key] = int(val_list[0])
+            elif isinstance(val_list[0], float):
+                val_dict[key] = float(val_list[0])
+            else:
                 val_dict[key] = val_list[0]
-                max_step_dict[key] = val_list[1]
-                min_step_dict[key] = abs(val_list[2])
+        elif val_num == 3:
+            val_list = map(float, val_list)
+            if abs(val_list[2]) > abs(val_list[1]):
+                raise InvalidDataError("For key '{}', read '{}' which specifies a smaller max_step_size is than "
+                                       "the min_step_size (for each key to be optimized, provide x_0, "
+                                       "max_step_size, min_step_size). Check input data.".format(key, val))
+            val_dict[key] = val_list[0]
+            max_step_dict[key] = val_list[1]
+            min_step_dict[key] = abs(val_list[2])
         else:
             raise InvalidDataError("For key '{}', {} values were found ({}). However, each key must have either one "
                                    "value to be used, or three comma-separated values (x_0, max_step_size, "
@@ -226,6 +237,7 @@ def eval_eqs(cfg, tpl_vals_dict):
 def min_convex_param(cfg, iteration_dict, tpl_dict, tpl_str):
     # this allows us to skip an unneeded evaluation when moving from an optimized parameter to the next in line
     next_param = False
+    total_iter_num = 0
     for final_param in range(len(iteration_dict), 0, -1):
         for key, step in iteration_dict.items()[0:final_param]:
             best_result = np.inf
@@ -242,13 +254,12 @@ def min_convex_param(cfg, iteration_dict, tpl_dict, tpl_str):
 
                 trial_val = tpl_dict[key]
 
-                # Todo: delete print line
-                print("trial val", key, trial_val, check_output([cfg[BASH_DRIVER]]))
                 if next_param:
                     next_param = False
                 else:
                     trial_result = float(check_output([cfg[BASH_DRIVER]]).strip())
                 iter_num += 1
+                total_iter_num += 1
                 if abs(trial_result - best_result) < cfg[CONV_CUTOFF]:
                     print("Minimized '{}' within the specified convergence tolerance ({}). Best parameter: {}. "
                           "Best result: {}. "
@@ -313,6 +324,33 @@ def min_convex_param(cfg, iteration_dict, tpl_dict, tpl_str):
                         mid_val = max_val
                         max_val = None
                         tpl_dict[key] = mid_val[0] + step
+    print("Total number of iterations: {}".format(total_iter_num))
+
+
+def obj_fun(x0, cfg, tpl_dict, tpl_str):
+    """Objective function to be minimized"""
+    for param_num, param_name in enumerate(cfg[MAX_STEP]):
+        tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
+
+    eval_eqs(cfg, tpl_dict)
+    fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
+    if cfg[PAR_COPY_NAME] is not None:
+        copy_par_file(cfg, tpl_dict)
+    # print(x0, cfg[BASH_DRIVER], tpl_dict[NEW_FNAME], check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]))
+    # trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+    # return trial_result
+    return float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+
+
+def min_scipy_opt(cfg, tpl_dict, tpl_str):
+    num_opt_params = len(cfg[MAX_STEP])
+    x0 = np.empty(num_opt_params)
+    for param_num, param_name in enumerate(cfg[MAX_STEP]):
+        x0[param_num] = cfg[TPL_VALS][param_name]
+
+    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str), method='Powell',
+                   options={'xtol': 1e-3, 'disp': True})
+    print(res.x)
 
 
 def main(argv=None):
@@ -336,13 +374,14 @@ def main(argv=None):
             warning("No parameters will be optimized, as no keys specified a max and min step size following the "
                     "initial value (format is x_0, max_step_size, min_step_size).")
             eval_eqs(cfg, tpl_dict)
-            fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME])
+            fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
             if cfg[PAR_COPY_NAME] is not None:
                 copy_par_file(cfg, tpl_dict)
             trial_result = float(check_output([cfg[BASH_DRIVER]]).strip())
             print("Result without optimizing parameters: {}".format(trial_result))
         else:
-            min_convex_param(cfg, cfg[MAX_STEP], tpl_dict, tpl_str)
+            # min_convex_param(cfg, cfg[MAX_STEP], tpl_dict, tpl_str)
+            min_scipy_opt(cfg, tpl_dict, tpl_str)
 
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))

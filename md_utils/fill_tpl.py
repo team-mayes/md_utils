@@ -167,7 +167,7 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name):
+def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
     @param cfg: configuration for run
@@ -175,6 +175,7 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name):
     @param tpl_vals_dict: dictionary of tpl keys and vals
     @param tpl_name: the cfg key for the template file name
     @param filled_tpl_name: the cfg key for the filled template file name
+    @param print_info: print to standard out when a file is printed
     """
     try:
         filled_tpl_str = tpl_str.format(**tpl_vals_dict)
@@ -189,7 +190,7 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name):
                        "".format(e.message, filled_tpl_name))
 
     tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
-    str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=True)
+    str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=print_info)
 
 
 def make_tpl(cfg, tpl_name, filled_tpl_name):

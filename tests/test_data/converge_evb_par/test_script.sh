@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-#echo $val1
-val_1=$(grep 'constant Vii' tests/test_data/converge_evb_par/evb_hm_maupin_gauss_3.5.par | awk '{print $1}')
-val_2=$(grep 'Vij_const' tests/test_data/converge_evb_par/evb_hm_maupin_gauss_3.5.par | awk '{print $1}')
-val_3=$(grep 'gamma' tests/test_data/converge_evb_par/evb_hm_maupin_gauss_3.5.par | awk '{print $1}')
+input_file=$1
+val_1=$(grep 'constant Vii' ${input_file}  | awk '{print $1}')
+val_2=$(grep 'Vij_const' ${input_file} | awk '{print $1}')
+val_3=$(grep 'gamma' ${input_file}  | awk '{print $1}')
 if [ ${val_2} = "0.0" ]; then
     if [ ${val_1} = "-310.0" ]; then
         echo "3720.555681"

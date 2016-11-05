@@ -2,7 +2,7 @@
 
 [off_diagonal.start.H3O_GLU-D]
 {vij_0:<11}  : Vij_const, in kcal/mol
-{gamma:<11}  : gamma
+{gamma:<11f}  : gamma
 [off_diagonal.end]
 
 [repulsive.start.GLU-D]
