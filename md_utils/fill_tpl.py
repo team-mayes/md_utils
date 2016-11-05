@@ -12,7 +12,8 @@ from collections import OrderedDict
 import itertools
 
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg, read_tpl,
-                                create_out_fname, str_to_file, TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG)
+                                create_out_fname, str_to_file, TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG,
+                                conv_num)
 
 try:
     # noinspection PyCompatibility
@@ -60,7 +61,7 @@ def process_tpl_vals(raw_key_val_tuple_list):
     """
     val_dict = OrderedDict()
     for key, val in raw_key_val_tuple_list:
-        val_dict[key] = [x.strip() for x in val.split(',')]
+        val_dict[key] = [conv_num(x.strip()) for x in val.split(',')]
     return val_dict
 
 
@@ -196,7 +197,6 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, print_
 def make_tpl(cfg, tpl_name, filled_tpl_name):
     """
     Combines the dictionary and template file to create the new file(s)
-    @param return_dict: a boolean to specify if the template-filling dictionary should be returned
     @param cfg: configuration for the run
     @param tpl_name: the cfg key for the template file name
     @param filled_tpl_name: the cfg key for the filled template file name

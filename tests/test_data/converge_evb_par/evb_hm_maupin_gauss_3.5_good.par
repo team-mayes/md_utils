@@ -2,6 +2,7 @@
 
 [off_diagonal.start.H3O_GLU-D]
 0.0          : Vij_const, in kcal/mol
+0.000000     : gamma
 [off_diagonal.end]
 
 [repulsive.start.GLU-D]
@@ -17,7 +18,7 @@ OC   : Atom_Type of GLU
 
 : ----------------------------------------------------------------------------
 
-0.00         : 0.125313  : B
+0.0          : 0.125313  : B
 
 [repulsive.end]
 
@@ -36,7 +37,7 @@ GLU-P  : EVB_Type of center
 OH1          : type D
 OW           : type A
 0.0          : B
-1.00         : b
+1.0          : b
 2.5          : b_DA
 5.0          : cut-off
 

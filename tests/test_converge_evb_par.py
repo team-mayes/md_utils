@@ -9,7 +9,7 @@ from md_utils.converge_evb_par import main, PAR_FILE_NAME, TRIAL_NAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -24,6 +24,7 @@ CONV_ALT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_alt.ini')
 PAR_INI = os.path.join(SUB_DATA_DIR, 'evb_par.ini')
 CONV_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_steps.ini')
 CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.ini')
+TEST_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_test.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.00.par')
@@ -173,7 +174,6 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
-            pass
 
     def testMakeParStartHigh(self):
         # Testing that starting from an x_0 too high still ends at the same answer
@@ -236,7 +236,21 @@ class TestMain(unittest.TestCase):
     def testScipyOpt(self):
         # Stop based on step size
         try:
-            test_input = ["-c", BASH_EVAL_INI ]
+            test_input = ["-c", BASH_EVAL_INI]
+            main(test_input)
+            # with capture_stdout(main, test_input) as output:
+            #     self.assertTrue("min step size" in output)
+            # diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            # self.assertEquals(len(diffs), 2)
+            # self.assertEquals('- -293.75      : constant Vii', diffs[0])
+        finally:
+            # silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testTest(self):
+        # Stop based on step size
+        try:
+            test_input = ["-c", TEST_INI]
             main(test_input)
             # with capture_stdout(main, test_input) as output:
             #     self.assertTrue("min step size" in output)

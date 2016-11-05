@@ -14,7 +14,8 @@ from collections import OrderedDict
 from subprocess import check_output
 
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg,
-                                TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl)
+                                TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl,
+                                conv_num)
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
                                VALID_SEC_NAMES, TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
 
@@ -76,12 +77,7 @@ def process_conv_tpl_keys(raw_key_val_tuple_list):
         val_num = len(val_list)
         if val_num == 1:
             # if it can be converted, do so; this helps with my printing formatting
-            if isinstance(val_list[0], int):
-                val_dict[key] = int(val_list[0])
-            elif isinstance(val_list[0], float):
-                val_dict[key] = float(val_list[0])
-            else:
-                val_dict[key] = val_list[0]
+            val_dict[key] = conv_num(val_list[0])
         elif val_num == 3:
             val_list = map(float, val_list)
             if abs(val_list[2]) > abs(val_list[1]):
