@@ -1,7 +1,8 @@
 #ifdef GLU
 
 [off_diagonal.start.H3O_GLU-D]
-0.0          : Vij_const, in kcal/mol
+{vij_0:<11}  : Vij_const, in kcal/mol
+{gamma:<11}  : gamma
 [off_diagonal.end]
 
 [repulsive.start.GLU-D]
@@ -17,7 +18,7 @@ OC   : Atom_Type of GLU
 
 : ----------------------------------------------------------------------------
 
-0.00         : 0.125313  : B
+{voo_b:<11}  : 0.125313  : B
 
 [repulsive.end]
 
@@ -29,16 +30,16 @@ GLU-P  : EVB_Type of center
 
 : The parameters
 
--293.4375    : constant Vii
+{vii_0:<11}  : constant Vii
 
 1 : Number of pairs: 1
 
-OH1          : type D
-OW           : type A
-0.0          : B
-1.00         : b
-2.5          : b_DA
-5.0          : cut-off
+{vii_type_d:<9}    : type D
+{vii_type_a:<9}    : type A
+{vii_b:<9}    : B
+{vii_lb:<9}    : b
+{vii_b_da:<9}    : b_DA
+{vii_cut:<9}    : cut-off
 
 [repulsive.end]
 #endif

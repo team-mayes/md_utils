@@ -30,6 +30,9 @@ COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.00.par')
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good.par')
 ALT_PAR_FNAME = os.path.join(SUB_DATA_DIR, 'evb.par')
 
+TWO_PAR_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_2par.ini')
+
+
 # for testing to fail well
 MISSING_TRIAL_NAME_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_key_in_trial_name.ini')
 MISSING_TRIAL_NAME_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_no_trial_name.ini')
@@ -194,7 +197,7 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
 
-    def testMaxIters(self):
+    def testMaxIterNum(self):
         # Specified a small number of iterations
         try:
             main(["-c", CONV_MAX_ITER_INI])
@@ -215,3 +218,17 @@ class TestMain(unittest.TestCase):
             self.assertEquals('- -293.75      : constant Vii', diffs[0])
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+
+    def testTwoParams(self):
+        # Stop based on step size
+        try:
+            test_input = ["-c", TWO_PAR_INI ]
+            main(test_input)
+            # with capture_stdout(main, test_input) as output:
+            #     self.assertTrue("min step size" in output)
+            # diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            # self.assertEquals(len(diffs), 2)
+            # self.assertEquals('- -293.75      : constant Vii', diffs[0])
+        finally:
+            # silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            pass
