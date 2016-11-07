@@ -7,7 +7,7 @@ val_3=$(grep -m 1 'gamma' ${input_file}  | awk '{print $1}')
 if [ ${val_2} = "0.0" ]; then
     if [ ${val_1} = "-310.0" ]; then
         echo "3720.555681"
-    if [ ${val_1} = "-319.0" ]; then
+    elif [ ${val_1} = "-319.0" ]; then
         echo "3720.555681"
     elif [ ${val_1} = "-320.0" ]; then
         echo "3908.564528"

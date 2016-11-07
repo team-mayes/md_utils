@@ -1,3 +1,4 @@
+scipy
 seaborn
 matplotlib
 argparse>=1.2.1

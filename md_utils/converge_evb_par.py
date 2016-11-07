@@ -177,6 +177,9 @@ def parse_cmdline(argv=None):
             raise InvalidDataError("Missing required key '{}', which can be specified in the "
                                    "required either in the command line for configuration file."
                                    "".format(PAR_FILE_NAME))
+        for config_param in [BASH_DRIVER]:
+            if not os.path.isfile(args.config[config_param]):
+                raise IOError("Missing file specified for key '{}': {}".format(config_param, args.config[config_param]))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
         if e.message == 0:
             return args, GOOD_RET
@@ -186,11 +189,12 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def copy_par_file(cfg, tpl_vals_dict):
+def copy_par_file(cfg, tpl_vals_dict, print_info=False):
     """
     To keep a copy of a par file, make the new file name and copy the previously created par file
-    @param cfg:
-    @param tpl_vals_dict:
+    @param cfg: configuration for run
+    @param tpl_vals_dict: dictionary to fill strings
+    @param print_info: boolean to determine if to print to standard out that a copy was made
     @return: KeyError if required variable is not defined
     """
     if cfg[TRIAL_NAME] is not None:
@@ -207,7 +211,8 @@ def copy_par_file(cfg, tpl_vals_dict):
                        "".format(e, PAR_COPY_NAME, cfg[PAR_COPY_NAME]))
     par_copy_fname = create_out_fname(par_copy, base_dir=cfg[COPY_DIR])
     shutil.copyfile(tpl_vals_dict[NEW_FNAME], par_copy_fname)
-    print(" Copied to: {}".format(par_copy_fname))
+    if print_info:
+        print(" Copied to: {}".format(par_copy_fname))
 
 
 def eval_eqs(cfg, tpl_vals_dict):
@@ -331,14 +336,14 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str):
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
     if cfg[PAR_COPY_NAME] is not None:
-        copy_par_file(cfg, tpl_dict)
-    # print(x0, cfg[BASH_DRIVER], tpl_dict[NEW_FNAME], check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]))
-    # trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
-    # return trial_result
-    return float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+        copy_par_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
+    trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+    if cfg[PRINT_INFO]:
+        print(x0, trial_result)
+    return trial_result
 
 
-def min_scipy_opt(cfg, tpl_dict, tpl_str):
+def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[MAX_STEP])
     x0 = np.empty(num_opt_params)
     for param_num, param_name in enumerate(cfg[MAX_STEP]):
@@ -376,8 +381,7 @@ def main(argv=None):
             trial_result = float(check_output([cfg[BASH_DRIVER]]).strip())
             print("Result without optimizing parameters: {}".format(trial_result))
         else:
-            # min_convex_param(cfg, cfg[MAX_STEP], tpl_dict, tpl_str)
-            min_scipy_opt(cfg, tpl_dict, tpl_str)
+            min_params(cfg, tpl_dict, tpl_str)
 
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
