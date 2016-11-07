@@ -30,16 +30,16 @@ GLU-P  : EVB_Type of center
 
 : The parameters
 
-{vii_0:<11}  : constant Vii
+{vii_0:<11f}  : constant Vii
 
 1 : Number of pairs: 1
 
 {vii_type_d:<9}    : type D
 {vii_type_a:<9}    : type A
-{vii_b:<9}    : B
-{vii_lb:<9}    : b
-{vii_b_da:<9}    : b_DA
-{vii_cut:<9}    : cut-off
+{vii_b:<9f}    : B
+{vii_lb:<9f}    : b
+{vii_b_da:<9f}    : b_DA
+{vii_cut:<9f}    : cut-off
 
 [repulsive.end]
 #endif

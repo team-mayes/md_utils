@@ -25,6 +25,7 @@ PAR_INI = os.path.join(SUB_DATA_DIR, 'evb_par.ini')
 CONV_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_steps.ini')
 CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.ini')
 TEST_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_test.ini')
+COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.00.par')
@@ -251,6 +252,20 @@ class TestMain(unittest.TestCase):
         # Stop based on step size
         try:
             test_input = ["-c", TEST_INI]
+            main(test_input)
+            # with capture_stdout(main, test_input) as output:
+            #     self.assertTrue("min step size" in output)
+            # diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            # self.assertEquals(len(diffs), 2)
+            # self.assertEquals('- -293.75      : constant Vii', diffs[0])
+        finally:
+            # silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testCopyOutput(self):
+        # Stop based on step size
+        try:
+            test_input = ["-c", COPY_OUTPUT_INI]
             main(test_input)
             # with capture_stdout(main, test_input) as output:
             #     self.assertTrue("min step size" in output)
