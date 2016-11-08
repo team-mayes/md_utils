@@ -101,7 +101,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
     except MissingSectionHeaderError:
         raise InvalidDataError(MISSING_SEC_HEADER_ERR_MSG.format(f_loc))
     if not good_files:
-        raise IOError('Could not read file {}'.format(f_loc))
+        raise IOError("Could not read file '{}'".format(f_loc))
 
     # Start with empty data structures to be filled
     proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], }
@@ -113,10 +113,14 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         if section == MAIN_SEC:
             try:
                 proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False))
+                if proc[MAX_ITER] is not None:
+                    proc[MAX_ITER] = int(proc[MAX_ITER])
             except InvalidDataError as e:
                 if 'Unexpected key' in e.message:
                     raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
                                                        "".format(TPL_VALS_SEC))
+            except ValueError as e:
+                raise InvalidDataError(e)
         elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
             val_dict = process_conv_tpl_keys(config.items(section))
             if section == TPL_EQS_SEC:
@@ -168,10 +172,10 @@ def parse_cmdline(argv=None):
                                    "".format(PAR_FILE_NAME))
         for config_param in [BASH_DRIVER]:
             if not os.path.isfile(args.config[config_param]):
-                raise IOError("Missing file specified for key '{}': {}".format(config_param, args.config[config_param]))
+                raise IOError("Missing file specified with key '{}': {}".format(config_param, args.config[config_param]))
         if args.config[RESULT_COPY] is not None:
             if args.config[RESULT_FILE] is None:
-                raise InvalidDataError("An bash driver output file name ('{}') is required when a name for a copy "
+                raise InvalidDataError("A bash driver output file name ('{}') is required when a name for a copy "
                                        "of this file is specified ('{}').".format(RESULT_FILE, RESULT_COPY))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
         if e.message == 0:
@@ -259,11 +263,13 @@ def min_params(cfg, tpl_dict, tpl_str):
     res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str), method=cfg[SCIPY_OPT_METHOD],
                    options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
                             'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO]})
-    if cfg[PRINT_INFO]:
-        x_final = res.x
+    x_final = res.x
+    if x_final.size > 1:
         print("Optimized parameters:")
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
             print("{:>11}: {:11f}".format(param_name, x_final[param_num]))
+    else:
+        print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], x_final.tolist()))
 
 
 def main(argv=None):
@@ -283,11 +289,11 @@ def main(argv=None):
         tpl_str = read_tpl(cfg[PAR_TPL])
         tpl_dict = dict(cfg[TPL_VALS])
         if len(cfg[OPT_PARAMS]) == 0:
-            warning("No parameters will be optimized, as no keys specified a max and min step size following the "
-                    "initial value (format is x_0, max_step_size, min_step_size).")
+            warning("No parameters will be optimized, as no parameters were listed for the keyword '{}' "
+                    "in the '{}' section of the configuration file.".format(OPT_PARAMS, MAIN_SEC))
             eval_eqs(cfg, tpl_dict)
             fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
-            trial_result = float(check_output([cfg[BASH_DRIVER]]).strip())
+            trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
             if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
                 copy_par_result_file(cfg, tpl_dict)
             print("Result without optimizing parameters: {}".format(trial_result))

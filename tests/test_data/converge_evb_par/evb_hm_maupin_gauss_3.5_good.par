@@ -30,16 +30,16 @@ GLU-P  : EVB_Type of center
 
 : The parameters
 
--293.4375    : constant Vii
+0.000001     : constant Vii
 
 1 : Number of pairs: 1
 
 OH1          : type D
 OW           : type A
-0.0          : B
-1.0          : b
-2.5          : b_DA
-5.0          : cut-off
+0.000000     : B
+1.000000     : b
+2.500000     : b_DA
+5.000000     : cut-off
 
 [repulsive.end]
 #endif
