@@ -34,6 +34,8 @@ ALT_PAR_FNAME = os.path.join(SUB_DATA_DIR, 'evb.par')
 SCRIPT_OUT = os.path.join(MAIN_DIR, 'script_output.txt')
 SCRIPT_COPY_OUT = os.path.join(DATA_DIR, 'script_viib0.0_viilb1.0.txt')
 GOOD_SCRIPT_OUT = os.path.join(SUB_DATA_DIR, 'script_out_good.txt')
+RESULT_SUM = os.path.join(MAIN_DIR, 'vii0_vij0_gamma.csv')
+GOOD_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'result_sum_good.csv')
 
 # for testing to fail well
 MISSING_TRIAL_NAME_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_key_in_trial_name.ini')
@@ -254,8 +256,10 @@ class TestMain(unittest.TestCase):
             self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
             self.assertFalse(diff_lines(SCRIPT_OUT, GOOD_SCRIPT_OUT))
             self.assertFalse(diff_lines(SCRIPT_COPY_OUT, GOOD_SCRIPT_OUT))
+            self.assertFalse(diff_lines(RESULT_SUM, GOOD_RESULT_SUM))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_COPY_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)

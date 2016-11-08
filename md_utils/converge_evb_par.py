@@ -15,9 +15,11 @@ from subprocess import check_output
 
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg,
                                 TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl,
-                                conv_num)
+                                conv_num, write_csv)
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
                                VALID_SEC_NAMES, TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
+
+RESID = 'resid'
 
 try:
     # noinspection PyCompatibility
@@ -34,6 +36,7 @@ PAR_COPY_NAME = 'par_copy'
 PAR_FILE_NAME = 'par_name'
 RESULT_FILE = 'driver_output_file_name'
 RESULT_COPY = 'driver_output_copy_name'
+FITTING_SUM_FNAME = 'fitting_summary_file_name'
 COPY_DIR = 'copy_dir'
 BASH_DRIVER = 'bash_driver'
 CONV_CUTOFF = 'converge_tolerance'
@@ -55,7 +58,7 @@ DEF_OPT_METHOD = 'Powell'
 DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME: None,
                 PAR_COPY_NAME: None, COPY_DIR: None, CONV_CUTOFF: DEF_CONV_CUTOFF, MAX_ITER: DEF_MAX_ITER,
                 PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC, RESULT_FILE: None,
-                RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD,
+                RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD, FITTING_SUM_FNAME: None,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -172,7 +175,8 @@ def parse_cmdline(argv=None):
                                    "".format(PAR_FILE_NAME))
         for config_param in [BASH_DRIVER]:
             if not os.path.isfile(args.config[config_param]):
-                raise IOError("Missing file specified with key '{}': {}".format(config_param, args.config[config_param]))
+                raise IOError("Missing file specified with key '{}': {}"
+                              "".format(config_param, args.config[config_param]))
         if args.config[RESULT_COPY] is not None:
             if args.config[RESULT_FILE] is None:
                 raise InvalidDataError("A bash driver output file name ('{}') is required when a name for a copy "
@@ -239,10 +243,20 @@ def eval_eqs(cfg, tpl_vals_dict):
                                    "".format(string_to_eval, eq_param))
 
 
-def obj_fun(x0, cfg, tpl_dict, tpl_str):
-    """Objective function to be minimized"""
+def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum):
+    """
+    Objective function to be minimized
+    @param x0: initial parameter values
+    @param cfg: configuration for the run
+    @param tpl_dict: dictionary of values for filling in template strings
+    @param tpl_str: template string (read from file)
+    @param fitting_sum: list of dicts for saving all trial values (to be appended, if needed)
+    @return: the result for the set of values being tested, obtained from the bash script specified in cfg
+    """
+    result_dict = {}
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
+        result_dict[param_name] = tpl_dict[param_name]
 
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
@@ -251,16 +265,22 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str):
         copy_par_result_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
     if cfg[PRINT_INFO]:
         print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0])))
+    if cfg[FITTING_SUM_FNAME] is not None:
+        result_dict[RESID] = trial_result
+        fitting_sum.append(result_dict)
     return trial_result
 
 
 def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[OPT_PARAMS])
     x0 = np.empty(num_opt_params)
+    fitting_sum = []
+    result_sum_headers = [RESID]
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         x0[param_num] = cfg[TPL_VALS][param_name]
+        result_sum_headers.append(param_name)
 
-    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str), method=cfg[SCIPY_OPT_METHOD],
+    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum), method=cfg[SCIPY_OPT_METHOD],
                    options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
                             'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO]})
     x_final = res.x
@@ -270,6 +290,9 @@ def min_params(cfg, tpl_dict, tpl_str):
             print("{:>11}: {:11f}".format(param_name, x_final[param_num]))
     else:
         print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], x_final.tolist()))
+    if cfg[FITTING_SUM_FNAME] is not None:
+        write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_sum_headers, print_message=cfg[PRINT_INFO],
+                  round_digits=cfg[NUM_PARAM_DECIMALS])
 
 
 def main(argv=None):
