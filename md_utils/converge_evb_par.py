@@ -12,14 +12,12 @@ import numpy as np
 from scipy.optimize import minimize
 from collections import OrderedDict
 from subprocess import check_output
-
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg,
                                 TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl,
                                 conv_num, write_csv)
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
-                               VALID_SEC_NAMES, TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
+                               TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
 
-RESID = 'resid'
 
 try:
     # noinspection PyCompatibility
@@ -30,6 +28,9 @@ except ImportError:
 
 # Constants #
 # config keys #
+MAX_VALS = 'max_vals'
+MIN_VALS = 'min_vals'
+VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, MAX_VALS, MIN_VALS]
 TRIAL_NAME = 'trial_name'
 PAR_TPL = 'par_tpl'
 PAR_COPY_NAME = 'par_copy'
@@ -47,6 +48,7 @@ SCIPY_OPT_METHOD = 'scipy_opt_method'
 
 # for storing config data
 OPT_PARAMS = 'opt_params'
+RESID = 'resid'
 
 # Defaults
 DEF_CFG_FILE = 'conv_evb_par.ini'
@@ -55,10 +57,12 @@ DEF_CONV_CUTOFF = 1.0
 DEF_MAX_ITER = None
 DEF_PARAM_DEC = 6
 DEF_OPT_METHOD = 'Powell'
+DEF_PENALTY = 1000000.0
 DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME: None,
                 PAR_COPY_NAME: None, COPY_DIR: None, CONV_CUTOFF: DEF_CONV_CUTOFF, MAX_ITER: DEF_MAX_ITER,
                 PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC, RESULT_FILE: None,
-                RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD, FITTING_SUM_FNAME: None,
+                RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD,
+                FITTING_SUM_FNAME: None,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -69,12 +73,12 @@ REQ_KEYS = {BASH_DRIVER: str}
 
 def process_conv_tpl_keys(raw_key_val_tuple_list):
     """
-    In case there are multiple (comma-separated) values, split on comma and strip. Do not convert to int or float;
-       that will be done later if needed for equations
-    The program creates the val_dict and multi_val_param_list (fed in empty)
+    In case there are multiple (comma-separated) values, split on comma and strip. If possible, convert to int or float;
+       otherwise. Return the tuple as a processed ordered dict
 
     @param raw_key_val_tuple_list: key-value dict read from configuration file
-    @return val_dict: a dictionary of values (strings); check for commas to indicate multiple parameters
+    @return val_dict: a dictionary of values; check for commas to indicate multiple parameters, and converted to int
+       or floats if amenable
     """
     val_dict = OrderedDict()
     for key, val in raw_key_val_tuple_list:
@@ -86,6 +90,33 @@ def process_conv_tpl_keys(raw_key_val_tuple_list):
         else:
             raise InvalidDataError("For key '{}', {} values were found ({}). Each parameter should have only one "
                                    "specified value.".format(key, val_num, val))
+    return val_dict
+
+
+def process_max_min_vals(raw_key_val_tuple_list, default_penalty):
+    """
+    Convert tuple to a dictionary with float values
+    @param raw_key_val_tuple_list:
+    @param default_penalty: default penalty for the flat-bottomed potential
+    @return: dictionary of keys and float values
+    """
+    val_dict = {}
+    for key, val in raw_key_val_tuple_list:
+        try:
+            val_list = [float(x.strip()) for x in val.split(',')]
+            if len(val_list) == 2:
+                val_dict[key] = val_list
+            elif len(val_list) == 1:
+                val_dict[key] = val_list + [default_penalty]
+            else:
+                raise InvalidDataError("For key '{}' in max or min section, read: {}. \nExpected 1 or 2 values: "
+                                       "either the edge of the potential and the penalty stiffness, or only the "
+                                       "edge of the potential, which will be used with "
+                                       "the default penalty for the flat-bottomed potential"
+                                       "".format(key, val))
+        except ValueError as e:
+            raise InvalidDataError("Error in reading max or min value provided for key '{}': {}"
+                                   "".format(key, e.message))
     return val_dict
 
 
@@ -107,7 +138,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError("Could not read file '{}'".format(f_loc))
 
     # Start with empty data structures to be filled
-    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], }
+    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], MAX_VALS: {}, MIN_VALS: {}}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
@@ -130,6 +161,9 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
                 # just keep the names, so we know special processing is required
                 proc[TPL_EQ_PARAMS] = val_dict.keys()
             proc[TPL_VALS].update(val_dict)
+        elif section in [MAX_VALS, MIN_VALS]:
+            val_dict = process_max_min_vals(config.items(section), DEF_PENALTY)
+            proc[section].update(val_dict)
         else:
             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
                                    "".format(section, VALID_SEC_NAMES))
@@ -243,51 +277,76 @@ def eval_eqs(cfg, tpl_vals_dict):
                                    "".format(string_to_eval, eq_param))
 
 
-def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum):
+def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
     """
-    Objective function to be minimized
+    Objective function to be minimized. Also used to save trial input and output.
     @param x0: initial parameter values
     @param cfg: configuration for the run
     @param tpl_dict: dictionary of values for filling in template strings
     @param tpl_str: template string (read from file)
     @param fitting_sum: list of dicts for saving all trial values (to be appended, if needed)
+    @param result_dict: a dictionary of results already found, to keep the program from unnecessarily running
+                the expensive function when we already have solved for that parameter set
     @return: the result for the set of values being tested, obtained from the bash script specified in cfg
     """
-    result_dict = {}
+    resid_dict = {}
+    penalty = 0
+    # TODO: here, check for value above or below value; save a penalty to be added to the final result.
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
-        result_dict[param_name] = tpl_dict[param_name]
+        resid_dict[param_name] = tpl_dict[param_name]
+        if param_name in cfg[MIN_VALS]:
+            min_val = cfg[MIN_VALS][param_name][0]
+            stiffness = cfg[MIN_VALS][param_name][1]
+            if x0[param_num] < min_val:
+                penalty += stiffness * np.square(x0[param_num]-min_val)
+        if param_name in cfg[MAX_VALS]:
+            max_val = cfg[MAX_VALS][param_name][0]
+            stiffness = cfg[MAX_VALS][param_name][1]
+            if x0[param_num] > max_val:
+                penalty += stiffness * np.square(x0[param_num]-max_val)
 
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
-    trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
-    if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
-        copy_par_result_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
+    # Note: found that the minimizer calls the function with the same inputs multiple times!
+    #       only call this expensive function if we don't already have that answer, determined by checking for it in
+    #       the result dictionary
+    # to make the input hashable for a dictionary
+    x0_str = str(x0)
+    if x0_str in result_dict:
+        trial_result = result_dict[x0_str]
+    else:
+        trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+        trial_result += penalty
+        result_dict[x0_str] = trial_result
+        if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
+            copy_par_result_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
     if cfg[PRINT_INFO]:
         print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0])))
     if cfg[FITTING_SUM_FNAME] is not None:
-        result_dict[RESID] = trial_result
-        fitting_sum.append(result_dict)
+        resid_dict[RESID] = trial_result
+        fitting_sum.append(resid_dict)
     return trial_result
 
 
 def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[OPT_PARAMS])
     x0 = np.empty(num_opt_params)
+    result_dict = {}
     fitting_sum = []
     result_sum_headers = [RESID]
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         x0[param_num] = cfg[TPL_VALS][param_name]
         result_sum_headers.append(param_name)
 
-    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum), method=cfg[SCIPY_OPT_METHOD],
+    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum, result_dict), method=cfg[SCIPY_OPT_METHOD],
                    options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
                             'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO]})
     x_final = res.x
     if x_final.size > 1:
         print("Optimized parameters:")
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
-            print("{:>11}: {:11f}".format(param_name, x_final[param_num]))
+            print("{:>11} = {:11f}".format(param_name, x_final[param_num]))
     else:
         print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], x_final.tolist()))
     if cfg[FITTING_SUM_FNAME] is not None:

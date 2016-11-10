@@ -26,10 +26,12 @@ PAR_INI = os.path.join(SUB_DATA_DIR, 'evb_par.ini')
 CONV_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_iters.ini')
 CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.ini')
 COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
+MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_min_val.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good.par')
+GOOD_MAX_MIN_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_min_max_good.par')
 ALT_PAR_FNAME = os.path.join(SUB_DATA_DIR, 'evb.par')
 SCRIPT_OUT = os.path.join(MAIN_DIR, 'script_output.txt')
 SCRIPT_COPY_OUT = os.path.join(DATA_DIR, 'script_viib0.0_viilb1.0.txt')
@@ -53,6 +55,8 @@ WRONG_EQ_ORDER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_wrong_eq_order.ini
 TWO_PARAM_VALS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_vals.ini')
 MISSING_BASH_SCRIPT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_missing_bash.ini')
 MISSING_RESULT_FNAME_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_missing_output_fname.ini')
+NON_FLOAT_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_nonfloat_min.ini')
+TOO_MANY_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_too_many_max.ini')
 
 
 class TestMainFailWell(unittest.TestCase):
@@ -189,6 +193,20 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("bash driver output" in output)
 
+    def testNonfloatMin(self):
+        test_input = ["-c", NON_FLOAT_MIN_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("convert string" in output)
+
+    def testTooManyMax(self):
+        test_input = ["-c", TOO_MANY_MAX_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Expected" in output)
+
 
 class TestMain(unittest.TestCase):
     def testMakeParStartLow(self):
@@ -263,3 +281,12 @@ class TestMain(unittest.TestCase):
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_COPY_OUT, disable=DISABLE_REMOVE)
             silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
+
+    def testMaxMin(self):
+        # Stop based on step size
+        try:
+            test_input = ["-c", MAX_MIN_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(PAR_OUT, GOOD_MAX_MIN_PAR_OUT))
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)

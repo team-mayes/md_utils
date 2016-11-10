@@ -332,7 +332,6 @@ def str_to_file(str_val, fname, mode='w', print_info=False):
         print("Wrote file: {}".format(fname))
 
 
-
 def round_to_print(val):
     """
     To remove floating point digits that are imprecise due to machine precision
@@ -710,7 +709,7 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
     """
     Writes the given data to the given file location.
 
-    @param round_digits: if desired, provide decimal number for rouding
+    @param round_digits: if desired, provide decimal number for rounding
     @param data: The data to write (list of dicts).
     @param out_fname: The name of the file to write to.
     @param fieldnames: The sequence of field names to use for the header.
