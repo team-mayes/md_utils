@@ -27,6 +27,7 @@ CONV_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_iters.ini')
 CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.ini')
 COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
 MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_min_val.ini')
+DIRS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_initial_dirs.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
@@ -38,6 +39,16 @@ SCRIPT_COPY_OUT = os.path.join(DATA_DIR, 'script_viib0.0_viilb1.0.txt')
 GOOD_SCRIPT_OUT = os.path.join(SUB_DATA_DIR, 'script_out_good.txt')
 RESULT_SUM = os.path.join(MAIN_DIR, 'vii0_vij0_gamma.csv')
 GOOD_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'result_sum_good.csv')
+RESID_PAR_OUT = os.path.join(DATA_DIR, 'evb_resid8.0_viilb1.0.par')
+OTHER_RESID_NAMES = ['evb_resid8.145898_viilb1.0.par',
+                     'evb_resid8.381966_viilb1.0.par',
+                     'evb_resid9.0_viilb1.0.par',
+                     'evb_resid10.618034_viilb1.0.par',
+                     'evb_resid10212.284784_viilb1.0.par',
+                     'evb_resid26723.164692_viilb1.0.par',
+                     'evb_resid76948.755062_viilb1.0.par',
+                     'evb_resid77849.0_viilb1.0.par',
+                     'evb_resid78408.0_viilb1.0.par']
 
 # for testing to fail well
 MISSING_TRIAL_NAME_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_key_in_trial_name.ini')
@@ -52,11 +63,12 @@ EXTRA_SEC_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_extra_section.ini')
 WRONG_MAX_ITER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_wrong_max_iter.ini')
 MISSING_EQ_KEY_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_missing_eq_key.ini')
 WRONG_EQ_ORDER_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_wrong_eq_order.ini')
-TWO_PARAM_VALS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_vals.ini')
+TOO_MANY_PARAM_VALS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_vals.ini')
 MISSING_BASH_SCRIPT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_missing_bash.ini')
 MISSING_RESULT_FNAME_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_missing_output_fname.ini')
 NON_FLOAT_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_nonfloat_min.ini')
 TOO_MANY_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_too_many_max.ini')
+NON_FLOAT_DIR_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_bad_dirs.ini')
 
 
 class TestMainFailWell(unittest.TestCase):
@@ -173,11 +185,11 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("Could not evaluate" in output)
 
     def testTwoParamVals(self):
-        test_input = ["-c", TWO_PARAM_VALS_INI]
+        test_input = ["-c", TOO_MANY_PARAM_VALS_INI]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Each parameter should have only one specified value" in output)
+            self.assertTrue("3 values were found" in output)
 
     def testMissingBashScript(self):
         test_input = ["-c", MISSING_BASH_SCRIPT_INI]
@@ -207,6 +219,13 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Expected" in output)
 
+    def testNonFloatDir(self):
+        test_input = ["-c", NON_FLOAT_DIR_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("float" in output)
+
 
 class TestMain(unittest.TestCase):
     def testMakeParStartLow(self):
@@ -229,9 +248,13 @@ class TestMain(unittest.TestCase):
             silent_remove(ALT_PAR_FNAME)
             main(["-c", CONV_ALT_INI, "-f", ALT_PAR_FNAME])
             self.assertFalse(diff_lines(ALT_PAR_FNAME, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(RESID_PAR_OUT, GOOD_PAR_OUT))
         finally:
             silent_remove(ALT_PAR_FNAME, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESID_PAR_OUT, disable=DISABLE_REMOVE)
+            for file_name in OTHER_RESID_NAMES:
+                silent_remove(os.path.join(DATA_DIR, file_name), disable=DISABLE_REMOVE)
 
     def testNoOpt(self):
         # Testing that will run without any params specified to be optimized
@@ -247,6 +270,7 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
 
     def testMaxIterNum(self):
         # Specified a small number of iterations
@@ -265,7 +289,7 @@ class TestMain(unittest.TestCase):
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
 
     def testCopyOutput(self):
-        # Stop based on step size
+        # Stop based on step size; multiple variables
         try:
             test_input = ["-c", COPY_OUTPUT_INI]
             main(test_input)
@@ -290,3 +314,20 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(PAR_OUT, GOOD_MAX_MIN_PAR_OUT))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testInitialDirections(self):
+        # Start multi-variable
+        test_input = ["-c", DIRS_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        try:
+            with capture_stdout(main, test_input) as output:
+                # this option reduced the function calls by 1 (19 to 18)
+                self.assertTrue("Function evaluations: 18" in output)
+            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            self.assertEquals(len(diffs), 2)
+            self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)

@@ -18,7 +18,6 @@ from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
                                TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
 
-
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, MissingSectionHeaderError
@@ -30,6 +29,7 @@ except ImportError:
 # config keys #
 MAX_VALS = 'max_vals'
 MIN_VALS = 'min_vals'
+INITIAL_DIR = 'initial_dir'
 VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, MAX_VALS, MIN_VALS]
 TRIAL_NAME = 'trial_name'
 PAR_TPL = 'par_tpl'
@@ -45,6 +45,7 @@ MAX_ITER = 'max_iterations'
 NUM_PARAM_DECIMALS = 'num_decimals'
 PRINT_INFO = 'print_status'
 SCIPY_OPT_METHOD = 'scipy_opt_method'
+PRINT_CONV_ALL = 'print_conv_all'
 
 # for storing config data
 OPT_PARAMS = 'opt_params'
@@ -57,12 +58,14 @@ DEF_CONV_CUTOFF = 1.0
 DEF_MAX_ITER = None
 DEF_PARAM_DEC = 6
 DEF_OPT_METHOD = 'Powell'
+# for setting up the "direc" option with Powell, i.e. direc=([1,0,0],[0,0.1,0],[0,0,1])
+DEF_DIR = 1.0
 DEF_PENALTY = 1000000.0
 DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME: None,
                 PAR_COPY_NAME: None, COPY_DIR: None, CONV_CUTOFF: DEF_CONV_CUTOFF, MAX_ITER: DEF_MAX_ITER,
                 PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC, RESULT_FILE: None,
                 RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD,
-                FITTING_SUM_FNAME: None,
+                FITTING_SUM_FNAME: None, PRINT_CONV_ALL: False,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -76,21 +79,35 @@ def process_conv_tpl_keys(raw_key_val_tuple_list):
     In case there are multiple (comma-separated) values, split on comma and strip. If possible, convert to int or float;
        otherwise. Return the tuple as a processed ordered dict
 
-    @param raw_key_val_tuple_list: key-value dict read from configuration file
-    @return val_dict: a dictionary of values; check for commas to indicate multiple parameters, and converted to int
+    @param raw_key_val_tuple_list: key-value dict read from configuration file;
+       check for commas to indicate multiple parameters, and converted to int
        or floats if amenable
+    @return val_dict: a dictionary of values
+    @return dir_dict: a dictionary of initial directions for minimization
     """
     val_dict = OrderedDict()
+    dir_dict = {}
     for key, val in raw_key_val_tuple_list:
         val_list = [x.strip() for x in val.split(',')]
         val_num = len(val_list)
         if val_num == 1:
             # if it can be converted, do so; this helps with my printing formatting
             val_dict[key] = conv_num(val_list[0])
+            dir_dict[key] = DEF_DIR
+        elif val_num == 2:
+            # if there are two values, assume that it is a float with the ability to be optimized
+            try:
+                val_dict[key] = float(val_list[0])
+                dir_dict[key] = float(val_list[1])
+            except ValueError:
+                raise InvalidDataError("For key '{}', read '{}', which could not be converted to floats. When two "
+                                       "values are provided, they are read as an initial float that may be optimized, "
+                                       "and the initial search direction for optimization.".format(key, val))
         else:
-            raise InvalidDataError("For key '{}', {} values were found ({}). Each parameter should have only one "
-                                   "specified value.".format(key, val_num, val))
-    return val_dict
+            raise InvalidDataError("For key '{}', {} values were found ({}). Each parameter should have either one or "
+                                   "two specified values (x0, optionally followed by initial search direction, which "
+                                   "defaults to {}.".format(key, val_num, val, DEF_DIR))
+    return val_dict, dir_dict
 
 
 def process_max_min_vals(raw_key_val_tuple_list, default_penalty):
@@ -138,7 +155,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError("Could not read file '{}'".format(f_loc))
 
     # Start with empty data structures to be filled
-    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], MAX_VALS: {}, MIN_VALS: {}}
+    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], MAX_VALS: {}, MIN_VALS: {}, INITIAL_DIR: {}}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
@@ -156,11 +173,12 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
             except ValueError as e:
                 raise InvalidDataError(e)
         elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
-            val_dict = process_conv_tpl_keys(config.items(section))
+            val_dict, dir_dict = process_conv_tpl_keys(config.items(section))
             if section == TPL_EQS_SEC:
                 # just keep the names, so we know special processing is required
                 proc[TPL_EQ_PARAMS] = val_dict.keys()
             proc[TPL_VALS].update(val_dict)
+            proc[INITIAL_DIR].update(dir_dict)
         elif section in [MAX_VALS, MIN_VALS]:
             val_dict = process_max_min_vals(config.items(section), DEF_PENALTY)
             proc[section].update(val_dict)
@@ -291,7 +309,6 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
     """
     resid_dict = {}
     penalty = 0
-    # TODO: here, check for value above or below value; save a penalty to be added to the final result.
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
         resid_dict[param_name] = tpl_dict[param_name]
@@ -299,12 +316,12 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
             min_val = cfg[MIN_VALS][param_name][0]
             stiffness = cfg[MIN_VALS][param_name][1]
             if x0[param_num] < min_val:
-                penalty += stiffness * np.square(x0[param_num]-min_val)
+                penalty += stiffness * np.square(x0[param_num] - min_val)
         if param_name in cfg[MAX_VALS]:
             max_val = cfg[MAX_VALS][param_name][0]
             stiffness = cfg[MAX_VALS][param_name][1]
             if x0[param_num] > max_val:
-                penalty += stiffness * np.square(x0[param_num]-max_val)
+                penalty += stiffness * np.square(x0[param_num] - max_val)
 
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
@@ -319,6 +336,7 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
         trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
         trial_result += penalty
         result_dict[x0_str] = trial_result
+        tpl_dict[RESID] = round(trial_result, cfg[NUM_PARAM_DECIMALS])
         if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
             copy_par_result_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
     if cfg[PRINT_INFO]:
@@ -332,16 +350,22 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
 def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[OPT_PARAMS])
     x0 = np.empty(num_opt_params)
+    ini_direc = np.zeros((num_opt_params, num_opt_params))
     result_dict = {}
     fitting_sum = []
     result_sum_headers = [RESID]
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         x0[param_num] = cfg[TPL_VALS][param_name]
+        ini_direc[param_num, param_num] = cfg[INITIAL_DIR][param_name]
         result_sum_headers.append(param_name)
 
     res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum, result_dict), method=cfg[SCIPY_OPT_METHOD],
                    options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
-                            'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO]})
+                            'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO],
+                            'direc': ini_direc,
+                            # 'full_output': cfg[PRINT_CONV_ALL],
+                            'return_all': cfg[PRINT_CONV_ALL],
+                            })
     x_final = res.x
     if x_final.size > 1:
         print("Optimized parameters:")
