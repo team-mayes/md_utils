@@ -295,7 +295,7 @@ def eval_eqs(cfg, tpl_vals_dict):
                                    "".format(string_to_eval, eq_param))
 
 
-def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
+def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers):
     """
     Objective function to be minimized. Also used to save trial input and output.
     @param x0: initial parameter values
@@ -305,6 +305,7 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
     @param fitting_sum: list of dicts for saving all trial values (to be appended, if needed)
     @param result_dict: a dictionary of results already found, to keep the program from unnecessarily running
                 the expensive function when we already have solved for that parameter set
+    @param result_headers: list of headers for printing results
     @return: the result for the set of values being tested, obtained from the bash script specified in cfg
     """
     resid_dict = {}
@@ -339,6 +340,9 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict):
         tpl_dict[RESID] = round(trial_result, cfg[NUM_PARAM_DECIMALS])
         if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
             copy_par_result_file(cfg, tpl_dict, print_info=cfg[PRINT_INFO])
+        if cfg[FITTING_SUM_FNAME] is not None:
+            write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_headers, print_message=cfg[PRINT_INFO],
+                      round_digits=cfg[NUM_PARAM_DECIMALS])
     if cfg[PRINT_INFO]:
         print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0])))
     if cfg[FITTING_SUM_FNAME] is not None:
@@ -359,7 +363,8 @@ def min_params(cfg, tpl_dict, tpl_str):
         ini_direc[param_num, param_num] = cfg[INITIAL_DIR][param_name]
         result_sum_headers.append(param_name)
 
-    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum, result_dict), method=cfg[SCIPY_OPT_METHOD],
+    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers),
+                   method=cfg[SCIPY_OPT_METHOD],
                    options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
                             'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO],
                             'direc': ini_direc,
@@ -373,9 +378,6 @@ def min_params(cfg, tpl_dict, tpl_str):
             print("{:>11} = {:11f}".format(param_name, x_final[param_num]))
     else:
         print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], x_final.tolist()))
-    if cfg[FITTING_SUM_FNAME] is not None:
-        write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_sum_headers, print_message=cfg[PRINT_INFO],
-                  round_digits=cfg[NUM_PARAM_DECIMALS])
 
 
 def main(argv=None):

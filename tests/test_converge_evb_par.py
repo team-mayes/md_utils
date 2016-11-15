@@ -304,7 +304,7 @@ class TestMain(unittest.TestCase):
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_COPY_OUT, disable=DISABLE_REMOVE)
-            silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
+            # silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
 
     def testMaxMin(self):
         # Stop based on step size
