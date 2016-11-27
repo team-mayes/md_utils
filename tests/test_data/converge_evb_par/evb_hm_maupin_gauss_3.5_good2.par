@@ -30,7 +30,7 @@ GLU-P  : EVB_Type of center
 
 : The parameters
 
-0.000000     : constant Vii
+0.000001     : constant Vii
 
 1 : Number of pairs: 1
 

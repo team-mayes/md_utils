@@ -1097,6 +1097,7 @@ def diff_lines(floc1, floc2, delimiter=","):
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
+
     for line in diff:
         if line.startswith('-') or line.startswith('+'):
             diff_lines_list.append(line)
@@ -1105,6 +1106,10 @@ def diff_lines(floc1, floc2, delimiter=","):
             elif line.startswith('+'):
                 output_plus += line[2:]+'\n'
 
+    if len(diff_lines_list) == 0:
+        return diff_lines_list
+
+    warning("Checking for differences between files {} {}".format(floc1, floc2))
     try:
         # pycharm doesn't know six very well
         # noinspection PyCallingNonCallable
@@ -1124,7 +1129,7 @@ def diff_lines(floc1, floc2, delimiter=","):
         diff_lines_list = []
         for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
             if len(line_plus) == len(line_neg):
-                print("Checking for differences between: ", line_neg, line_plus)
+                # print("Checking for differences between: ", line_neg, line_plus)
                 for item_plus, item_neg in zip(line_plus, line_neg):
                     if isinstance(item_plus, float) and isinstance(item_neg, float):
                         # if difference greater than the tolerance, the difference is not just precision
@@ -1142,13 +1147,13 @@ def diff_lines(floc1, floc2, delimiter=","):
                         if diff_vals:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            return diff_lines_list
+                            break
                     else:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            return diff_lines_list
+                            break
             # Not the same number of items in the lines
             else:
                 diff_lines_list.append("- " + " ".join(map(str, line_neg)))

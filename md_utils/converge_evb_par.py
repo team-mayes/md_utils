@@ -373,6 +373,9 @@ def min_params(cfg, tpl_dict, tpl_str):
                             })
     x_final = res.x
     if x_final.size > 1:
+        if cfg[FITTING_SUM_FNAME] is not None:
+            write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_sum_headers, print_message=cfg[PRINT_INFO],
+                      round_digits=cfg[NUM_PARAM_DECIMALS])
         print("Optimized parameters:")
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
             print("{:>11} = {:11f}".format(param_name, x_final[param_num]))

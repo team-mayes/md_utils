@@ -32,6 +32,7 @@ DIRS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_initial_dirs.ini')
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good.par')
+GOOD_PAR_OUT2 = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good2.par')
 GOOD_MAX_MIN_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_min_max_good.par')
 ALT_PAR_FNAME = os.path.join(SUB_DATA_DIR, 'evb.par')
 SCRIPT_OUT = os.path.join(MAIN_DIR, 'script_output.txt')
@@ -234,8 +235,8 @@ class TestMain(unittest.TestCase):
         silent_remove(COPY_PAR)
         try:
             main(["-c", CONV_INI])
-            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT))
-            self.assertFalse(diff_lines(COPY_PAR, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT2))
+            self.assertFalse(diff_lines(COPY_PAR, GOOD_PAR_OUT2))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
@@ -247,8 +248,8 @@ class TestMain(unittest.TestCase):
         try:
             silent_remove(ALT_PAR_FNAME)
             main(["-c", CONV_ALT_INI, "-f", ALT_PAR_FNAME])
-            self.assertFalse(diff_lines(ALT_PAR_FNAME, GOOD_PAR_OUT))
-            self.assertFalse(diff_lines(RESID_PAR_OUT, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(ALT_PAR_FNAME, GOOD_PAR_OUT2))
+            self.assertFalse(diff_lines(RESID_PAR_OUT, GOOD_PAR_OUT2))
         finally:
             silent_remove(ALT_PAR_FNAME, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
@@ -265,8 +266,8 @@ class TestMain(unittest.TestCase):
         try:
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("No parameters will be optimized" in output)
-            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT))
-            self.assertFalse(diff_lines(COPY_PAR, GOOD_PAR_OUT))
+            self.assertFalse(diff_lines(PAR_OUT, GOOD_PAR_OUT2))
+            self.assertFalse(diff_lines(COPY_PAR, GOOD_PAR_OUT2))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
@@ -294,7 +295,7 @@ class TestMain(unittest.TestCase):
             test_input = ["-c", COPY_OUTPUT_INI]
             main(test_input)
             diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
-            self.assertEquals(len(diffs), 2)
+            self.assertEquals(len(diffs), 4)
             self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
             self.assertFalse(diff_lines(SCRIPT_OUT, GOOD_SCRIPT_OUT))
             self.assertFalse(diff_lines(SCRIPT_COPY_OUT, GOOD_SCRIPT_OUT))
@@ -304,7 +305,7 @@ class TestMain(unittest.TestCase):
             silent_remove(COPY_PAR, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_COPY_OUT, disable=DISABLE_REMOVE)
-            # silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
+            silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
 
     def testMaxMin(self):
         # Stop based on step size
@@ -326,7 +327,7 @@ class TestMain(unittest.TestCase):
                 # this option reduced the function calls by 1 (19 to 18)
                 self.assertTrue("Function evaluations: 18" in output)
             diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
-            self.assertEquals(len(diffs), 2)
+            self.assertEquals(len(diffs), 4)
             self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
