@@ -9,12 +9,12 @@ import os
 import sys
 import shutil
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, basinhopping
 from collections import OrderedDict
 from subprocess import check_output
-from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg,
+from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR,
                                 TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl,
-                                conv_num, write_csv)
+                                conv_num, write_csv, conv_raw_val)
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
                                TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
 
@@ -27,10 +27,9 @@ except ImportError:
 
 # Constants #
 # config keys #
-MAX_VALS = 'max_vals'
-MIN_VALS = 'min_vals'
-INITIAL_DIR = 'initial_dir'
-VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, MAX_VALS, MIN_VALS]
+RIGHT_SIDE_PENALTY = 'right_side_penalty'
+LEFT_SIDE_POTENTIAL = 'left_side_penalty'
+VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, RIGHT_SIDE_PENALTY, LEFT_SIDE_POTENTIAL]
 TRIAL_NAME = 'trial_name'
 PAR_TPL = 'par_tpl'
 PAR_COPY_NAME = 'par_copy'
@@ -46,10 +45,20 @@ NUM_PARAM_DECIMALS = 'num_decimals'
 PRINT_INFO = 'print_status'
 SCIPY_OPT_METHOD = 'scipy_opt_method'
 PRINT_CONV_ALL = 'print_conv_all'
+POWELL = 'powell'
+NELDER_MEAD = 'nelder-mead'
+BASIN_HOP = 'basinhopping'
+TESTED_SCIPY_MIN = [NELDER_MEAD, POWELL]
+TEMP = 'basin_hop_temp'
+BASIN_NITER = 'basin_hop_niter'
+NITER_SUCCESS = 'niter_success'
+BASIN_DEF_STEP = 'basin_default_step'
+BASIN_SEED = 'basin_random_seed'
 
 # for storing config data
 OPT_PARAMS = 'opt_params'
 RESID = 'resid'
+INITIAL_DIR = 'initial_dir'
 
 # Defaults
 DEF_CFG_FILE = 'conv_evb_par.ini'
@@ -57,7 +66,7 @@ DEF_TPL = 'evb_par.tpl'
 DEF_CONV_CUTOFF = 1.0
 DEF_MAX_ITER = None
 DEF_PARAM_DEC = 6
-DEF_OPT_METHOD = 'Powell'
+DEF_OPT_METHOD = POWELL
 # for setting up the "direc" option with Powell, i.e. direc=([1,0,0],[0,0.1,0],[0,0,1])
 DEF_DIR = 1.0
 DEF_PENALTY = 1000000.0
@@ -66,6 +75,8 @@ DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME
                 PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC, RESULT_FILE: None,
                 RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD,
                 FITTING_SUM_FNAME: None, PRINT_CONV_ALL: False,
+                BASIN_HOP: False, TEMP: None, NITER_SUCCESS: None, BASIN_NITER: 50,
+                BASIN_DEF_STEP: 1.0, BASIN_SEED: None,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -73,6 +84,27 @@ REQ_KEYS = {BASH_DRIVER: str}
 # Logic #
 
 # CLI Processing #
+
+
+class RandomDisplacementBounds(object):
+    """random displacement with bounds"""
+    def __init__(self, x_min, x_max, step_size):
+        self.x_min = x_min
+        self.x_max = x_max
+        self.step_size = step_size
+
+    def __call__(self, x):
+        """take a random step but ensure the new position is within the bounds"""
+
+        x_new = x + np.random.uniform(-self.step_size, self.step_size, np.shape(x))
+        comp_max = x_new < self.x_max
+        comp_min = x_new > self.x_min
+        if not np.all(comp_max):
+            print(comp_max)
+        if not np.all(comp_min):
+            print(comp_min)
+        return x_new
+
 
 def process_conv_tpl_keys(raw_key_val_tuple_list):
     """
@@ -137,7 +169,44 @@ def process_max_min_vals(raw_key_val_tuple_list, default_penalty):
     return val_dict
 
 
-def read_cfg(f_loc, cfg_proc=process_cfg):
+def process_cfg_conv(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
+    """
+    Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
+    default value's type.
+    @param raw_cfg: The configuration map.
+    @param def_cfg_vals: dictionary of default values
+    @param req_keys: dictionary of required types
+    @param int_list: flag to specify if lists should converted to a list of integers
+    @return: The processed configuration.
+
+    """
+    proc_cfg = {}
+    for key in raw_cfg:
+        if not (key in def_cfg_vals or key in req_keys):
+            raise InvalidDataError("Unexpected key '{}' in configuration ('ini') file.".format(key))
+    key = None
+    try:
+        for key, def_val in def_cfg_vals.items():
+            proc_cfg[key] = conv_raw_val(raw_cfg.get(key), def_val, int_list)
+        for key, type_func in req_keys.items():
+            proc_cfg[key] = type_func(raw_cfg[key])
+    except KeyError as e:
+        raise KeyError("Missing config val for key '{}'".format(key, e))
+    except Exception as e:
+        raise InvalidDataError('Problem with config vals on key {}: {}'.format(key, e))
+    if proc_cfg[SCIPY_OPT_METHOD] != DEF_OPT_METHOD:
+        proc_cfg[SCIPY_OPT_METHOD] = proc_cfg[SCIPY_OPT_METHOD].lower()
+        if proc_cfg[SCIPY_OPT_METHOD] not in TESTED_SCIPY_MIN:
+            warning("Only the following optimization methods have been tested: scipy.optimize.minimize with {}."
+                    "".format(TESTED_SCIPY_MIN))
+    for int_key in [TEMP, NITER_SUCCESS]:
+        if proc_cfg[int_key] is not None:
+            proc_cfg[int_key] = float(proc_cfg[int_key])
+
+    return proc_cfg
+
+
+def read_cfg(f_loc, cfg_proc=process_cfg_conv):
     """
     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
 
@@ -155,7 +224,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError("Could not read file '{}'".format(f_loc))
 
     # Start with empty data structures to be filled
-    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], MAX_VALS: {}, MIN_VALS: {}, INITIAL_DIR: {}}
+    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], RIGHT_SIDE_PENALTY: {}, LEFT_SIDE_POTENTIAL: {}, INITIAL_DIR: {}}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
@@ -179,7 +248,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
                 proc[TPL_EQ_PARAMS] = val_dict.keys()
             proc[TPL_VALS].update(val_dict)
             proc[INITIAL_DIR].update(dir_dict)
-        elif section in [MAX_VALS, MIN_VALS]:
+        elif section in [RIGHT_SIDE_PENALTY, LEFT_SIDE_POTENTIAL]:
             val_dict = process_max_min_vals(config.items(section), DEF_PENALTY)
             proc[section].update(val_dict)
         else:
@@ -313,14 +382,14 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
         resid_dict[param_name] = tpl_dict[param_name]
-        if param_name in cfg[MIN_VALS]:
-            min_val = cfg[MIN_VALS][param_name][0]
-            stiffness = cfg[MIN_VALS][param_name][1]
+        if param_name in cfg[LEFT_SIDE_POTENTIAL]:
+            min_val = cfg[LEFT_SIDE_POTENTIAL][param_name][0]
+            stiffness = cfg[LEFT_SIDE_POTENTIAL][param_name][1]
             if x0[param_num] < min_val:
                 penalty += stiffness * np.square(x0[param_num] - min_val)
-        if param_name in cfg[MAX_VALS]:
-            max_val = cfg[MAX_VALS][param_name][0]
-            stiffness = cfg[MAX_VALS][param_name][1]
+        if param_name in cfg[RIGHT_SIDE_PENALTY]:
+            max_val = cfg[RIGHT_SIDE_PENALTY][param_name][0]
+            stiffness = cfg[RIGHT_SIDE_PENALTY][param_name][1]
             if x0[param_num] > max_val:
                 penalty += stiffness * np.square(x0[param_num] - max_val)
 
@@ -351,6 +420,19 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
     return trial_result
 
 
+def basin_func(x, b):
+    result = (np.cos(np.multiply(14.5, x) - 0.3) + np.multiply(np.add(x, 0.2), x) + np.square(x - b)).sum()
+    return result
+
+
+def func2d(x):
+    f = np.cos(14.5 * x[0] - 0.3) + (x[1] + 0.2) * x[1] + (x[0] + 0.2) * x[0]
+    df = np.zeros(2)
+    df[0] = -14.5 * np.sin(14.5 * x[0] - 0.3) + 2. * x[0] + 0.2
+    df[1] = 2. * x[1] + 0.2
+    return f, df
+
+
 def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[OPT_PARAMS])
     x0 = np.empty(num_opt_params)
@@ -358,20 +440,61 @@ def min_params(cfg, tpl_dict, tpl_str):
     result_dict = {}
     fitting_sum = []
     result_sum_headers = [RESID]
+
+    # setup minimization
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
         x0[param_num] = cfg[TPL_VALS][param_name]
         ini_direc[param_num, param_num] = cfg[INITIAL_DIR][param_name]
         result_sum_headers.append(param_name)
 
-    res = minimize(obj_fun, x0, args=(cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers),
-                   method=cfg[SCIPY_OPT_METHOD],
-                   options={'xtol': cfg[CONV_CUTOFF], 'ftol': cfg[CONV_CUTOFF],
-                            'maxiter': cfg[MAX_ITER], 'maxfev': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO],
-                            'direc': ini_direc,
-                            # 'full_output': cfg[PRINT_CONV_ALL],
-                            'return_all': cfg[PRINT_CONV_ALL],
-                            })
-    x_final = res.x
+    # arguments for objective function
+    obj_fun_args = (cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers)
+
+    # options for minimizer
+    opt_options = {'maxiter': cfg[MAX_ITER], 'disp': cfg[PRINT_INFO],
+                   'return_all': cfg[PRINT_CONV_ALL],
+                   }
+    if cfg[SCIPY_OPT_METHOD] == POWELL:
+        opt_options['direc'] = ini_direc
+    if cfg[SCIPY_OPT_METHOD] in [POWELL, NELDER_MEAD]:
+        opt_options['xtol'] = cfg[CONV_CUTOFF]
+        opt_options['ftol'] = cfg[CONV_CUTOFF]
+        opt_options['maxfev'] = cfg[MAX_ITER]
+
+    if cfg[BASIN_HOP]:
+        # In case
+        if cfg[BASIN_SEED]:
+            np.random.seed(1)
+        x_min = np.empty(num_opt_params)
+        x_max = np.empty(num_opt_params)
+
+        # the bounds
+        x_min = [-5., 5.0]
+        x_max = [11., 11.]
+        step_size = [0.5, 0.5]
+
+        # Todo: use take_step???
+        take_step = RandomDisplacementBounds(x_min, x_max, step_size)
+
+        minimizer_kwargs = dict(method=POWELL,  args=obj_fun_args, options=opt_options)
+        # noinspection PyTypeChecker,PyTypeChecker
+        ret = basinhopping(obj_fun, x0, minimizer_kwargs=minimizer_kwargs,
+                           disp=cfg[PRINT_INFO], niter=cfg[BASIN_NITER], niter_success=cfg[NITER_SUCCESS],
+                           # take_step=take_step
+                           )
+        return_message = ret.message[-1] + "."
+    else:
+        # Only minimize once
+        ret = minimize(obj_fun, x0, args=obj_fun_args,
+                       method=cfg[SCIPY_OPT_METHOD],
+                       options=opt_options)
+        return_message = ret.message
+
+    if cfg[PRINT_CONV_ALL]:
+        print(return_message + " Number of function calls: {}".format(ret.nfev))
+
+    # Same final printing either way
+    x_final = ret.x
     if x_final.size > 1:
         if cfg[FITTING_SUM_FNAME] is not None:
             write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_sum_headers, print_message=cfg[PRINT_INFO],
@@ -380,7 +503,7 @@ def min_params(cfg, tpl_dict, tpl_str):
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
             print("{:>11} = {:11f}".format(param_name, x_final[param_num]))
     else:
-        print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], x_final.tolist()))
+        print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], float(x_final)))
 
 
 def main(argv=None):

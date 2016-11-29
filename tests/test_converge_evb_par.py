@@ -29,6 +29,11 @@ COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
 MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_min_val.ini')
 DIRS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_initial_dirs.ini')
 
+CONV_NM_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so.ini')
+CONV_NM_MULTI_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so_multi.ini')
+CONV_NOT_TESTED_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_not_tested_method.ini')
+CONV_HOP_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop.ini')
+
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5_good.par')
@@ -329,6 +334,63 @@ class TestMain(unittest.TestCase):
             diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
             self.assertEquals(len(diffs), 4)
             self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testNonTestedMethod(self):
+        # Try alternate minimization method
+        try:
+            test_input = ["-c", CONV_NOT_TESTED_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("Only the following optimization methods" in output)
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testNelderMead(self):
+        # Try alternate minimization method
+        try:
+            test_input = ["-c", CONV_NM_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Function evaluations: 24" in output)
+                self.assertTrue("vii_0:    0.000000" in output)
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testNelderMeadMultiVar(self):
+        # Try alternate minimization method for multiple variable. Did worse than Powell, with more iterations.
+        # Results from Powell are:
+        # Current function value: 0.981524
+        # Iterations: 2
+        # Function evaluations: 41
+        try:
+            test_input = ["-c", CONV_NM_MULTI_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Current function value: 6.230156" in output)
+                self.assertTrue("Iterations: 27" in output)
+                self.assertTrue("Function evaluations: 53" in output)
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testBasinHop(self):
+        # Try alternate minimization method
+        try:
+            test_input = ["-c", CONV_HOP_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("success condition satisfied. Number of function calls: 101" in output)
+                self.assertTrue("vii_0 =    0.000000" in output)
+                self.assertTrue("gamma =   -2.000000" in output)
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
