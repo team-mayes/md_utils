@@ -29,7 +29,8 @@ except ImportError:
 # config keys #
 RIGHT_SIDE_PENALTY = 'right_side_penalty'
 LEFT_SIDE_POTENTIAL = 'left_side_penalty'
-VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, RIGHT_SIDE_PENALTY, LEFT_SIDE_POTENTIAL]
+BASIN_HOP_MIN_MAX = 'basin_hop_min_max'
+VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC, RIGHT_SIDE_PENALTY, LEFT_SIDE_POTENTIAL, BASIN_HOP_MIN_MAX]
 TRIAL_NAME = 'trial_name'
 PAR_TPL = 'par_tpl'
 PAR_COPY_NAME = 'par_copy'
@@ -59,6 +60,9 @@ BASIN_SEED = 'basin_random_seed'
 OPT_PARAMS = 'opt_params'
 RESID = 'resid'
 INITIAL_DIR = 'initial_dir'
+BASIN_HOPS = 'basin_hops'
+BASIN_MAXS = 'basin_maxs'
+BASIN_MINS = 'basin_mins'
 
 # Defaults
 DEF_CFG_FILE = 'conv_evb_par.ini'
@@ -88,22 +92,28 @@ REQ_KEYS = {BASH_DRIVER: str}
 
 class RandomDisplacementBounds(object):
     """random displacement with bounds"""
-    def __init__(self, x_min, x_max, step_size):
+    def __init__(self, x_min, x_max, step_size, print_info):
         self.x_min = x_min
         self.x_max = x_max
         self.step_size = step_size
+        self.print_info = print_info
 
     def __call__(self, x):
         """take a random step but ensure the new position is within the bounds"""
-
         x_new = x + np.random.uniform(-self.step_size, self.step_size, np.shape(x))
         comp_max = x_new < self.x_max
         comp_min = x_new > self.x_min
         if not np.all(comp_max):
-            print(comp_max)
+            for val_id, less_than_max in enumerate(comp_max):
+                if not less_than_max:
+                    x_new[val_id] = self.x_max[val_id]
         if not np.all(comp_min):
-            print(comp_min)
-        return x_new
+            for val_id, more_than_min in enumerate(comp_min):
+                if not more_than_min:
+                    x_new[val_id] = self.x_min[val_id]
+        if self.print_info:
+            print("Hopping to parameter values: {}".format(",".join(["{:11f}".format(x) for x in x_new])))
+        return x_new.tolist()
 
 
 def process_conv_tpl_keys(raw_key_val_tuple_list):
@@ -140,6 +150,37 @@ def process_conv_tpl_keys(raw_key_val_tuple_list):
                                    "two specified values (x0, optionally followed by initial search direction, which "
                                    "defaults to {}.".format(key, val_num, val, DEF_DIR))
     return val_dict, dir_dict
+
+
+def process_bin_max_min_vals(raw_key_val_tuple_list):
+    """
+    Convert tuple to a dictionary with float values
+    @param raw_key_val_tuple_list: raw entries to be processed
+    @return: dictionaries of keys and float values
+    """
+    hop_dict = {}
+    min_dict = {}
+    max_dict = {}
+    for key, val in raw_key_val_tuple_list:
+        try:
+            val_list = [float(x.strip()) for x in val.split(',')]
+            if len(val_list) in [1, 3]:
+                hop_dict[key] = val_list[0]
+                if len(val_list) == 3:
+                    if val_list[1] < val_list[2]:
+                        min_dict[key] = val_list[1]
+                        max_dict[key] = val_list[2]
+                    else:
+                        raise InvalidDataError("Min value ({}) is not less than max value ({})"
+                                               "".format(round(val_list[1], 6), round(val_list[2], 6)))
+            else:
+                raise InvalidDataError("Unexpected number of values ({})".format(len(val_list)))
+        except (ValueError, InvalidDataError) as e:
+            raise InvalidDataError("Encountered error '{}' For key '{}' in section {}, read: {}.\n"
+                                   "Expected 1 or 3 comma-separated floats for each variable (key): the max "
+                                   "hop (step) size, \noptionally followed by the min value, max value that "
+                                   "should be obtained from hopping.".format(e.message, key, BASIN_HOP_MIN_MAX, val))
+    return hop_dict, min_dict, max_dict
 
 
 def process_max_min_vals(raw_key_val_tuple_list, default_penalty):
@@ -224,23 +265,26 @@ def read_cfg(f_loc, cfg_proc=process_cfg_conv):
         raise IOError("Could not read file '{}'".format(f_loc))
 
     # Start with empty data structures to be filled
-    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], RIGHT_SIDE_PENALTY: {}, LEFT_SIDE_POTENTIAL: {}, INITIAL_DIR: {}}
+    proc = {TPL_VALS: {}, TPL_EQ_PARAMS: [], RIGHT_SIDE_PENALTY: {}, LEFT_SIDE_POTENTIAL: {}, INITIAL_DIR: {}, }
 
-    if MAIN_SEC not in config.sections():
+    if MAIN_SEC in config.sections():
+        try:
+            proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False))
+            if proc[MAX_ITER] is not None:
+                proc[MAX_ITER] = int(proc[MAX_ITER])
+        except InvalidDataError as e:
+            if 'Unexpected key' in e.message:
+                raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
+                                                   "".format(TPL_VALS_SEC))
+        except ValueError as e:
+            raise InvalidDataError(e)
+    else:
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
 
     for section in config.sections():
         if section == MAIN_SEC:
-            try:
-                proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS, int_list=False))
-                if proc[MAX_ITER] is not None:
-                    proc[MAX_ITER] = int(proc[MAX_ITER])
-            except InvalidDataError as e:
-                if 'Unexpected key' in e.message:
-                    raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
-                                                       "".format(TPL_VALS_SEC))
-            except ValueError as e:
-                raise InvalidDataError(e)
+            # this section already processed
+            continue
         elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
             val_dict, dir_dict = process_conv_tpl_keys(config.items(section))
             if section == TPL_EQS_SEC:
@@ -251,6 +295,10 @@ def read_cfg(f_loc, cfg_proc=process_cfg_conv):
         elif section in [RIGHT_SIDE_PENALTY, LEFT_SIDE_POTENTIAL]:
             val_dict = process_max_min_vals(config.items(section), DEF_PENALTY)
             proc[section].update(val_dict)
+        elif section == BASIN_HOP_MIN_MAX:
+            proc[BASIN_HOPS], proc[BASIN_MINS], proc[BASIN_MAXS] = process_bin_max_min_vals(config.items(section))
+            if proc[BASIN_DEF_STEP] < 0.0:
+                proc[BASIN_DEF_STEP] = abs(proc[BASIN_DEF_STEP])
         else:
             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
                                    "".format(section, VALID_SEC_NAMES))
@@ -420,19 +468,6 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
     return trial_result
 
 
-def basin_func(x, b):
-    result = (np.cos(np.multiply(14.5, x) - 0.3) + np.multiply(np.add(x, 0.2), x) + np.square(x - b)).sum()
-    return result
-
-
-def func2d(x):
-    f = np.cos(14.5 * x[0] - 0.3) + (x[1] + 0.2) * x[1] + (x[0] + 0.2) * x[0]
-    df = np.zeros(2)
-    df[0] = -14.5 * np.sin(14.5 * x[0] - 0.3) + 2. * x[0] + 0.2
-    df[1] = 2. * x[1] + 0.2
-    return f, df
-
-
 def min_params(cfg, tpl_dict, tpl_str):
     num_opt_params = len(cfg[OPT_PARAMS])
     x0 = np.empty(num_opt_params)
@@ -462,25 +497,42 @@ def min_params(cfg, tpl_dict, tpl_str):
         opt_options['maxfev'] = cfg[MAX_ITER]
 
     if cfg[BASIN_HOP]:
-        # In case
+        # for tests
         if cfg[BASIN_SEED]:
             np.random.seed(1)
+
+        step_spec = False
         x_min = np.empty(num_opt_params)
         x_max = np.empty(num_opt_params)
+        step_size = np.empty(num_opt_params)
 
-        # the bounds
-        x_min = [-5., 5.0]
-        x_max = [11., 11.]
-        step_size = [0.5, 0.5]
-
-        # Todo: use take_step???
-        take_step = RandomDisplacementBounds(x_min, x_max, step_size)
+        if BASIN_HOPS in cfg:
+            hop_dict = cfg[BASIN_HOPS]
+            min_dict = cfg[BASIN_MINS]
+            max_dict = cfg[BASIN_MAXS]
+            if len(hop_dict) > 0:
+                for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
+                    if param_name in hop_dict:
+                        step_size[param_num] = hop_dict[param_name]
+                        step_spec = True
+                    else:
+                        step_size[param_num] = cfg[BASIN_DEF_STEP]
+                    if param_name in min_dict:
+                        x_min[param_num] = min_dict[param_name]
+                        x_max[param_num] = max_dict[param_name]
+                    else:
+                        x_min[param_num] = -np.inf
+                        x_max[param_num] = np.inf
+        if step_spec:
+            take_step = RandomDisplacementBounds(x_min, x_max, step_size, cfg[PRINT_INFO])
+        else:
+            take_step = None
 
         minimizer_kwargs = dict(method=POWELL,  args=obj_fun_args, options=opt_options)
-        # noinspection PyTypeChecker,PyTypeChecker
+
         ret = basinhopping(obj_fun, x0, minimizer_kwargs=minimizer_kwargs,
                            disp=cfg[PRINT_INFO], niter=cfg[BASIN_NITER], niter_success=cfg[NITER_SUCCESS],
-                           # take_step=take_step
+                           take_step=take_step
                            )
         return_message = ret.message[-1] + "."
     else:

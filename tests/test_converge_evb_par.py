@@ -33,6 +33,7 @@ CONV_NM_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so.ini')
 CONV_NM_MULTI_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so_multi.ini')
 CONV_NOT_TESTED_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_not_tested_method.ini')
 CONV_HOP_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop.ini')
+CONV_HOP_MIN_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop_min_max.ini')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
@@ -75,6 +76,8 @@ MISSING_RESULT_FNAME_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_missing_output_f
 NON_FLOAT_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_nonfloat_min.ini')
 TOO_MANY_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_too_many_max.ini')
 NON_FLOAT_DIR_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_bad_dirs.ini')
+CONV_HOP_MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop_switch_min_max.ini')
+CONV_HOP_NONFLOAT_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop_nonfloat_max.ini')
 
 
 class TestMainFailWell(unittest.TestCase):
@@ -232,6 +235,22 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("float" in output)
 
+    def testBasinHopMaxMin(self):
+        # test catching min greater than max
+        test_input = ["-c", CONV_HOP_MAX_MIN_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("is not less than" in output)
+
+    def testBasinHopNonFloatMax(self):
+        # test catching min greater than max
+        test_input = ["-c", CONV_HOP_NONFLOAT_MAX_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("could not convert string" in output)
+
 
 class TestMain(unittest.TestCase):
     def testMakeParStartLow(self):
@@ -382,7 +401,7 @@ class TestMain(unittest.TestCase):
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
 
     def testBasinHop(self):
-        # Try alternate minimization method
+        # Try hopping + minimization
         try:
             test_input = ["-c", CONV_HOP_INI]
             if logger.isEnabledFor(logging.DEBUG):
@@ -391,6 +410,18 @@ class TestMain(unittest.TestCase):
                 self.assertTrue("success condition satisfied. Number of function calls: 101" in output)
                 self.assertTrue("vii_0 =    0.000000" in output)
                 self.assertTrue("gamma =   -2.000000" in output)
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testBasinHopBounds(self):
+        # Try hopping + minimization
+        try:
+            test_input = ["-c", CONV_HOP_MIN_MAX_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("success condition satisfied. Number of function calls: 83" in output)
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
