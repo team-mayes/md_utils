@@ -14,7 +14,7 @@ from collections import OrderedDict
 from subprocess import check_output
 from md_utils.md_common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR,
                                 TemplateNotReadableError, MISSING_SEC_HEADER_ERR_MSG, create_out_fname, read_tpl,
-                                conv_num, write_csv, conv_raw_val)
+                                conv_num, write_csv, conv_raw_val, move_existing_file)
 from md_utils.fill_tpl import (OUT_DIR, MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC,
                                TPL_VALS, TPL_EQ_PARAMS, NEW_FNAME, fill_save_tpl)
 
@@ -553,7 +553,7 @@ def min_params(cfg, tpl_dict, tpl_str):
                       round_digits=cfg[NUM_PARAM_DECIMALS])
         print("Optimized parameters:")
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
-            print("{:>11} = {:11f}".format(param_name, x_final[param_num]))
+            print("{:} = {:f}".format(param_name, x_final[param_num]))
     else:
         print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], float(x_final)))
 
@@ -574,6 +574,8 @@ def main(argv=None):
     try:
         tpl_str = read_tpl(cfg[PAR_TPL])
         tpl_dict = dict(cfg[TPL_VALS])
+        if cfg[FITTING_SUM_FNAME] is not None:
+            move_existing_file(cfg[FITTING_SUM_FNAME])
         if len(cfg[OPT_PARAMS]) == 0:
             warning("No parameters will be optimized, as no parameters were listed for the keyword '{}' "
                     "in the '{}' section of the configuration file.".format(OPT_PARAMS, MAIN_SEC))

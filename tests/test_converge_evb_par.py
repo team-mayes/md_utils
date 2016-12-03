@@ -34,6 +34,8 @@ CONV_NM_MULTI_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so_multi.ini')
 CONV_NOT_TESTED_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_not_tested_method.ini')
 CONV_HOP_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop.ini')
 CONV_HOP_MIN_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop_min_max.ini')
+BIN_HOP_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'bin_hop_results.csv')
+GOOD_BIN_HOP_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'bin_hop_results_good.csv')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
@@ -316,6 +318,8 @@ class TestMain(unittest.TestCase):
     def testCopyOutput(self):
         # Stop based on step size; multiple variables
         try:
+            # since we backup RESULT_SUM, start by removing it so we don't accidentally make a copy
+            silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
             test_input = ["-c", COPY_OUTPUT_INI]
             main(test_input)
             diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
@@ -404,15 +408,13 @@ class TestMain(unittest.TestCase):
         # Try hopping + minimization
         try:
             test_input = ["-c", CONV_HOP_INI]
-            if logger.isEnabledFor(logging.DEBUG):
-                main(test_input)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("success condition satisfied. Number of function calls: 101" in output)
-                self.assertTrue("vii_0 =    0.000000" in output)
-                self.assertTrue("gamma =   -2.000000" in output)
+            silent_remove(BIN_HOP_RESULT_SUM, disable=DISABLE_REMOVE)
+            main(test_input)
+            self.assertFalse(diff_lines(BIN_HOP_RESULT_SUM, GOOD_BIN_HOP_RESULT_SUM))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(BIN_HOP_RESULT_SUM, disable=DISABLE_REMOVE)
 
     def testBasinHopBounds(self):
         # Try hopping + minimization
