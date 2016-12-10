@@ -38,6 +38,8 @@ PAR_FILE_NAME = 'par_name'
 RESULT_FILE = 'driver_output_file_name'
 RESULT_COPY = 'driver_output_copy_name'
 FITTING_SUM_FNAME = 'fitting_summary_file_name'
+BEST_PARAMS_FNAME = 'best_params_file_name'
+LOWEST_RESID = 'max_resid_to_save'
 COPY_DIR = 'copy_dir'
 BASH_DRIVER = 'bash_driver'
 CONV_CUTOFF = 'converge_tolerance'
@@ -55,6 +57,7 @@ BASIN_NITER = 'basin_hop_niter'
 NITER_SUCCESS = 'niter_success'
 BASIN_DEF_STEP = 'basin_default_step'
 BASIN_SEED = 'basin_random_seed'
+MINI_CYCLES = 'mini_cycles'
 
 # for storing config data
 OPT_PARAMS = 'opt_params'
@@ -78,9 +81,9 @@ DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME
                 PAR_COPY_NAME: None, COPY_DIR: None, CONV_CUTOFF: DEF_CONV_CUTOFF, MAX_ITER: DEF_MAX_ITER,
                 PRINT_INFO: False, NUM_PARAM_DECIMALS: DEF_PARAM_DEC, RESULT_FILE: None,
                 RESULT_COPY: None, OPT_PARAMS: [], SCIPY_OPT_METHOD: DEF_OPT_METHOD,
-                FITTING_SUM_FNAME: None, PRINT_CONV_ALL: False,
+                FITTING_SUM_FNAME: None, PRINT_CONV_ALL: False, MINI_CYCLES: 1,
                 BASIN_HOP: False, TEMP: None, NITER_SUCCESS: None, BASIN_NITER: 50,
-                BASIN_DEF_STEP: 1.0, BASIN_SEED: None,
+                BASIN_DEF_STEP: 1.0, BASIN_SEED: None, BEST_PARAMS_FNAME: None, LOWEST_RESID: np.inf,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -243,6 +246,17 @@ def process_cfg_conv(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True):
     for int_key in [TEMP, NITER_SUCCESS]:
         if proc_cfg[int_key] is not None:
             proc_cfg[int_key] = float(proc_cfg[int_key])
+
+    # Remove any repeated parameters, or zero-character-length params (can happen if accidentally an additional comma)
+    if len(proc_cfg[OPT_PARAMS]) > 0:
+        filtered_opt_params = []
+        for param in proc_cfg[OPT_PARAMS]:
+            if len(param) > 0:
+                if param in filtered_opt_params:
+                    warning("'{}' repeated in '{}'; skipping repeated entry".format(param, OPT_PARAMS))
+                else:
+                    filtered_opt_params.append(param)
+        proc_cfg[OPT_PARAMS] = filtered_opt_params
 
     return proc_cfg
 
@@ -443,6 +457,7 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
 
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
+
     # Note: found that the minimizer calls the function with the same inputs multiple times!
     #       only call this expensive function if we don't already have that answer, determined by checking for it in
     #       the result dictionary
@@ -460,6 +475,13 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
         if cfg[FITTING_SUM_FNAME] is not None:
             write_csv(fitting_sum, cfg[FITTING_SUM_FNAME], result_headers, print_message=cfg[PRINT_INFO],
                       round_digits=cfg[NUM_PARAM_DECIMALS])
+        if cfg[BEST_PARAMS_FNAME] is not None:
+            if trial_result < cfg[LOWEST_RESID]:
+                cfg[LOWEST_RESID] = trial_result
+                with open(cfg[BEST_PARAMS_FNAME], 'w') as w_file:
+                    for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
+                        w_file.write("{:} = {:f},{:f}\n".format(param_name, x0[param_num],
+                                                                cfg[INITIAL_DIR][param_name]))
     if cfg[PRINT_INFO]:
         print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0])))
     if cfg[FITTING_SUM_FNAME] is not None:
@@ -536,11 +558,19 @@ def min_params(cfg, tpl_dict, tpl_str):
                            )
         return_message = ret.message[-1] + "."
     else:
-        # Only minimize once
-        ret = minimize(obj_fun, x0, args=obj_fun_args,
-                       method=cfg[SCIPY_OPT_METHOD],
-                       options=opt_options)
-        return_message = ret.message
+        # Number of minimization cycles set by default or user input
+        num_minis = 0
+        return_message = "No minimization cycles completed"
+        ret = None
+        while num_minis < cfg[MINI_CYCLES]:
+            ret = minimize(obj_fun, x0, args=obj_fun_args,
+                           method=cfg[SCIPY_OPT_METHOD],
+                           options=opt_options)
+            x0 = ret.x
+            return_message = ret.message
+            num_minis += 1
+            if cfg[MINI_CYCLES] - num_minis > 0:
+                print(return_message + " Completed {} of {} minimization cycles".format(num_minis, cfg[MINI_CYCLES]))
 
     if cfg[PRINT_CONV_ALL]:
         print(return_message + " Number of function calls: {}".format(ret.nfev))
@@ -553,9 +583,10 @@ def min_params(cfg, tpl_dict, tpl_str):
                       round_digits=cfg[NUM_PARAM_DECIMALS])
         print("Optimized parameters:")
         for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
-            print("{:} = {:f}".format(param_name, x_final[param_num]))
+            print("{:>11} = {:11f}".format(param_name, x_final[param_num]))
     else:
-        print("Optimized parameter:\n{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], float(x_final)))
+        print("Optimized parameter:\n"
+              "{:>11}: {:11f}".format(cfg[OPT_PARAMS][0], float(x_final)))
 
 
 def main(argv=None):
@@ -574,8 +605,9 @@ def main(argv=None):
     try:
         tpl_str = read_tpl(cfg[PAR_TPL])
         tpl_dict = dict(cfg[TPL_VALS])
-        if cfg[FITTING_SUM_FNAME] is not None:
-            move_existing_file(cfg[FITTING_SUM_FNAME])
+        for f_name_key in [BEST_PARAMS_FNAME, FITTING_SUM_FNAME]:
+            if cfg[f_name_key] is not None:
+                move_existing_file(cfg[f_name_key])
         if len(cfg[OPT_PARAMS]) == 0:
             warning("No parameters will be optimized, as no parameters were listed for the keyword '{}' "
                     "in the '{}' section of the configuration file.".format(OPT_PARAMS, MAIN_SEC))

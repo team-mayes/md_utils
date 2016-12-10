@@ -108,7 +108,9 @@ R0SC_NEW = 'new_r0_sc'
 ALPHA_NEW = 'new_alpha'
 A_DA_NEW = 'new_a_da'
 VIJ_NEW = 'new_vij'
-NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0_DA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW]
+EPS_NEW = 'new_eps'
+C_DA_NEW = 'new_c_da'
+NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0_DA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW, EPS_NEW, C_DA_NEW]
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -143,7 +145,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 COMBINE_OUTPUT: False,
                 GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
-                A_DA_NEW: None, VIJ_NEW: None,
+                A_DA_NEW: None, VIJ_NEW: None, EPS_NEW: None, C_DA_NEW: None,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -208,6 +210,8 @@ R_OH_WAT_HYD = 'R_OH_hyd_wat'
 HIJ_WAT = 'HIJ_OO_hyd_wat'
 
 HIJ_NEW = 'hij_new'
+F_ROO1_NEW = 'f_r_oo_term1_new'
+F_ROO2_NEW = 'f_r_oo_term2_new'
 F_ROO_NEW = 'f_r_oo_new'
 G_Q_NEW = 'g_q_new'
 FG_NEW = 'f_g_new'
@@ -216,7 +220,7 @@ Q_DOT_NEW = 'q_arq_new'
 V_OH_NEW = 'v_oh_new'
 
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF, OCO_ANGLE, OCOH_DIH]
-HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_Q_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
+HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_Q_NEW, F_ROO1_NEW, F_ROO2_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
@@ -361,16 +365,20 @@ def calc_hij_arq(r_da, q_dot_arq):
     return V_ij_arq * term_a1 * term_a2 * term_a3
 
 
-def calc_f_da_new(alpha_new, a_da, r_da):
+def calc_f_da_new(alpha_new, a_da, eps_da, c_da, r_da):
     """
     Calculates h_ij per Maupin et al. 2006,
     http://pubs.acs.org/doi/pdf/10.1021/jp053596r, equations 4-6
     @param alpha_new: parameter
     @param a_da: equilibrium distance parameter
+    @param eps_da: parameter
+    @param c_da: equilibrium distance parameter
     @param r_da: o_ostar_dist
     @return: the portion of the off-diagonal dependant on r_da
     """
-    return np.exp(-alpha_new * (r_da - a_da) ** 2)
+    term1 = np.exp(-alpha_new * (r_da - a_da) ** 2)
+    term2 = 1 + np.tanh(eps_da * (r_da - c_da))
+    return term1, term2
 
 
 def switch_func(rc, rs, r_array):
@@ -735,10 +743,13 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                                        closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW], cfg[R0_DA_NEW],
                                        cfg[LAMBDA_NEW])
                 g_of_q = np.exp(-cfg[GAMMA_NEW] * q_dot_arq)
-                f_of_roo = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], o_ostar_dist)
+                f_of_roo1, f_of_roo2 = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], cfg[EPS_NEW],
+                                                     cfg[C_DA_NEW], o_ostar_dist)
+                f_of_roo = f_of_roo1 * f_of_roo2
                 h_ij_new = cfg[VIJ_NEW] * g_of_q * f_of_roo
-                calc_results.update({Q_DOT_NEW: q_dot_arq, G_Q_NEW: g_of_q, F_ROO_NEW: f_of_roo,
-                                     FG_NEW: g_of_q * f_of_roo, HIJ_NEW: h_ij_new})
+                calc_results.update({Q_DOT_NEW: q_dot_arq, G_Q_NEW: g_of_q,
+                                     F_ROO1_NEW: f_of_roo1, F_ROO2_NEW: f_of_roo2,
+                                     F_ROO_NEW: f_of_roo, FG_NEW: g_of_q * f_of_roo, HIJ_NEW: h_ij_new})
 
         if cfg[CALC_HIJ_DA_GAUSS_FORM]:
             r_oh = oh_prop_dict[OH_MIN]
@@ -938,7 +949,7 @@ def print_gofr(cfg, gofr_data):
                     "This output will not be printed.".format(CALC_TYPE_GOFR))
 
     f_out = create_out_fname(cfg[DUMP_FILE_LIST], suffix='_gofrs', ext='.csv', base_dir=cfg[OUT_BASE_DIR])
-    # am not using the dictwriter because the gofr output is a np.array
+    # am not using the dict writer because the gofr output is a np.array
     list_to_csv([gofr_out_fieldnames] + gofr_output.tolist(), f_out, print_message=cfg[PRINT_PROGRESS],
                 round_digits=ROUND_DIGITS)
 

@@ -28,6 +28,7 @@ CONV_MAX_STEP_SIZE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_max_step_size.
 COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
 MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_min_val.ini')
 DIRS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_initial_dirs.ini')
+REPEAT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_repeat_min.ini')
 
 CONV_NM_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so.ini')
 CONV_NM_MULTI_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so_multi.ini')
@@ -36,6 +37,8 @@ CONV_HOP_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop.ini')
 CONV_HOP_MIN_MAX_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_basin_hop_min_max.ini')
 BIN_HOP_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'bin_hop_results.csv')
 GOOD_BIN_HOP_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'bin_hop_results_good.csv')
+BEST_PARAMS = os.path.join(SUB_DATA_DIR, 'best_params.txt')
+GOOD_BEST_PARAMS = os.path.join(SUB_DATA_DIR, 'best_params_good.txt')
 
 PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_hm_maupin_gauss_3.5.par')
 COPY_PAR = os.path.join(DATA_DIR, 'evb_viib0.0_viilb1.0.par')
@@ -307,8 +310,7 @@ class TestMain(unittest.TestCase):
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Maximum number of function evaluations has been exceeded" in output)
-
-            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
+            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT2)
             self.assertEquals(len(diffs), 2)
             self.assertEquals('- -0.000000    : constant Vii', diffs[0])
         finally:
@@ -319,12 +321,9 @@ class TestMain(unittest.TestCase):
         # Stop based on step size; multiple variables
         try:
             # since we backup RESULT_SUM, start by removing it so we don't accidentally make a copy
-            silent_remove(RESULT_SUM, disable=DISABLE_REMOVE)
+            silent_remove(RESULT_SUM)
             test_input = ["-c", COPY_OUTPUT_INI]
             main(test_input)
-            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
-            self.assertEquals(len(diffs), 4)
-            self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
             self.assertFalse(diff_lines(SCRIPT_OUT, GOOD_SCRIPT_OUT))
             self.assertFalse(diff_lines(SCRIPT_COPY_OUT, GOOD_SCRIPT_OUT))
             self.assertFalse(diff_lines(RESULT_SUM, GOOD_RESULT_SUM))
@@ -348,18 +347,18 @@ class TestMain(unittest.TestCase):
     def testInitialDirections(self):
         # Start multi-variable
         test_input = ["-c", DIRS_INI]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
         try:
+            silent_remove(BEST_PARAMS)
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
             with capture_stdout(main, test_input) as output:
                 # this option reduced the function calls by 1 (19 to 18)
-                self.assertTrue("Function evaluations: 18" in output)
-            diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT)
-            self.assertEquals(len(diffs), 4)
-            self.assertEquals('- 2.0          : Vij_const  in kcal/mol', diffs[0])
+                self.assertTrue("Function evaluations: 223" in output)
+                self.assertFalse(diff_lines(BEST_PARAMS, GOOD_BEST_PARAMS))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(BEST_PARAMS, disable=DISABLE_REMOVE)
 
     def testNonTestedMethod(self):
         # Try alternate minimization method
@@ -387,19 +386,23 @@ class TestMain(unittest.TestCase):
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
 
     def testNelderMeadMultiVar(self):
-        # Try alternate minimization method for multiple variable. Did worse than Powell, with more iterations.
+        # Try alternate minimization method for multiple variable. Did worse than Powell for multiple functions
         # Results from Powell are:
-        # Current function value: 0.981524
-        # Iterations: 2
-        # Function evaluations: 41
+        # Current function value: 0.000000
+        # Iterations: 10
+        # Function evaluations: 242
+        # Optimized parameters:
+        # vii_0 = 2.000000
+        # vij_0 = 0.000000
+        # gamma = -2.000000
         try:
             test_input = ["-c", CONV_NM_MULTI_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("Current function value: 6.230156" in output)
-                self.assertTrue("Iterations: 27" in output)
-                self.assertTrue("Function evaluations: 53" in output)
+                self.assertTrue("Current function value: 6.192328" in output)
+                self.assertTrue("Iterations: 29" in output)
+                self.assertTrue("Function evaluations: 56" in output)
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
@@ -408,7 +411,7 @@ class TestMain(unittest.TestCase):
         # Try hopping + minimization
         try:
             test_input = ["-c", CONV_HOP_INI]
-            silent_remove(BIN_HOP_RESULT_SUM, disable=DISABLE_REMOVE)
+            silent_remove(BIN_HOP_RESULT_SUM)
             main(test_input)
             self.assertFalse(diff_lines(BIN_HOP_RESULT_SUM, GOOD_BIN_HOP_RESULT_SUM))
         finally:
@@ -427,3 +430,19 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+
+    def testRepeatMin(self):
+        # Test repeating minimization and removing duplicate opt_params
+        test_input = ["-c", REPEAT_INI]
+        try:
+            silent_remove(BEST_PARAMS)
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Optimization terminated successfully. Completed 2 of 3 minimization cycles\n"
+                                in output)
+                self.assertFalse(diff_lines(BEST_PARAMS, GOOD_BEST_PARAMS))
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(BEST_PARAMS, disable=DISABLE_REMOVE)

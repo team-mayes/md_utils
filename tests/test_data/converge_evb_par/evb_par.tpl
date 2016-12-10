@@ -1,7 +1,7 @@
 #ifdef GLU
 
 [off_diagonal.start.H3O_GLU-D]
-{vij_0:<11}  : Vij_const, in kcal/mol
+{vij_0:<11f}  : Vij_const, in kcal/mol
 {gamma:<11f}  : gamma
 [off_diagonal.end]
 
@@ -18,7 +18,7 @@ OC   : Atom_Type of GLU
 
 : ----------------------------------------------------------------------------
 
-{voo_b:<11}  : 0.125313  : B
+{voo_b:<11f}  : 0.125313  : B
 
 [repulsive.end]
 
