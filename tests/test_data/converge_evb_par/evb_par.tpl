@@ -18,7 +18,7 @@ OC   : Atom_Type of GLU
 
 : ----------------------------------------------------------------------------
 
-{voo_b:<11f}  : 0.125313  : B
+{voo_b:<11f}  : 0.125313  : B  (voo_b)
 
 [repulsive.end]
 
@@ -37,7 +37,7 @@ GLU-P  : EVB_Type of center
 {vii_type_d:<9}    : type D
 {vii_type_a:<9}    : type A
 {vii_b:<9f}    : B
-{vii_lb:<9f}    : b
+{vii_lb:<9f}    : b (vii_lb)
 {vii_b_da:<9f}    : b_DA
 {vii_cut:<9f}    : cut-off
 

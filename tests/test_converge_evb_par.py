@@ -449,14 +449,16 @@ class TestMain(unittest.TestCase):
             silent_remove(BEST_PARAMS, disable=DISABLE_REMOVE)
 
     def testTriangleMin(self):
-        # Test stepwise minimization
+        # Test stepwise minimization with multiple minimization steps
         test_input = ["-c", TRIANGLE_INI]
         try:
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("Resid:    4.000000 for parameters:    0.000000,   2.000000\n" in output)
-                self.assertTrue("Resid:    0.000000 for parameters:    0.000000,   2.000000,  -2.000000\n" in output)
+                self.assertTrue("Resid:   34.416667 for parameters:    0.500000,   1.833333\n" in output)
+                self.assertTrue("Resid:    4.496540 for parameters:    0.853871,   1.414121,  -3.133996, "
+                                "  4.085879,   2.381966\n" in output)
+                self.assertTrue("Optimization terminated successfully. Completed 2 of 2 minimization cycles" in output)
         finally:
-            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
-            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
+                silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+                silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)

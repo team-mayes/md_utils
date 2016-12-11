@@ -575,17 +575,17 @@ def min_params(cfg, tpl_dict, tpl_str):
         ret = None
         trial_param_num = len(x0)
 
-        # Set up "triangle" or step-wise minimization
-        if trial_param_num < 3 or not cfg[TRIANGLE_MINI]:
-            x0_trial = x0
-        else:
-            trial_param_num = 2
-            x0_trial = x0[:trial_param_num]
-            obj_fun_args = (cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers, x0)
-            if 'direc' in opt_options:
-                opt_options['direc'] = ini_direc[:trial_param_num, :trial_param_num]
-
         while num_minis < cfg[MINI_CYCLES]:
+            # Set up "triangle" or step-wise minimization
+            if trial_param_num < 3 or not cfg[TRIANGLE_MINI]:
+                x0_trial = x0
+            else:
+                trial_param_num = 2
+                x0_trial = x0[:trial_param_num]
+                obj_fun_args = (cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers, x0)
+                if 'direc' in opt_options:
+                    opt_options['direc'] = ini_direc[:trial_param_num, :trial_param_num]
+
             while trial_param_num <= len(x0):
                 ret = minimize(obj_fun, x0_trial, args=obj_fun_args,
                                method=cfg[SCIPY_OPT_METHOD],
@@ -597,7 +597,7 @@ def min_params(cfg, tpl_dict, tpl_str):
                 if trial_param_num <= len(x0):
                     x0_trial = x0[:trial_param_num]
                     if 'direc' in opt_options:
-                        opt_options['direc'] = ini_direc[:trial_param_num]
+                        opt_options['direc'] = ini_direc[:trial_param_num, :trial_param_num]
             num_minis += 1
             if cfg[MINI_CYCLES] - num_minis >= 0:
                 print(return_message + " Completed {} of {} minimization cycles".format(num_minis, cfg[MINI_CYCLES]))
