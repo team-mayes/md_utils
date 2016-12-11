@@ -58,6 +58,7 @@ NITER_SUCCESS = 'niter_success'
 BASIN_DEF_STEP = 'basin_default_step'
 BASIN_SEED = 'basin_random_seed'
 MINI_CYCLES = 'mini_cycles'
+TRIANGLE_MINI = 'triangle_mini'
 
 # for storing config data
 OPT_PARAMS = 'opt_params'
@@ -84,6 +85,7 @@ DEF_CFG_VALS = {TRIAL_NAME: None, PAR_TPL: DEF_TPL, OUT_DIR: None, PAR_FILE_NAME
                 FITTING_SUM_FNAME: None, PRINT_CONV_ALL: False, MINI_CYCLES: 1,
                 BASIN_HOP: False, TEMP: None, NITER_SUCCESS: None, BASIN_NITER: 50,
                 BASIN_DEF_STEP: 1.0, BASIN_SEED: None, BEST_PARAMS_FNAME: None, LOWEST_RESID: np.inf,
+                TRIANGLE_MINI: False,
                 }
 REQ_KEYS = {BASH_DRIVER: str}
 
@@ -426,10 +428,11 @@ def eval_eqs(cfg, tpl_vals_dict):
                                    "".format(string_to_eval, eq_param))
 
 
-def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers):
+def obj_fun(x0_trial, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers, x0_full=None):
     """
     Objective function to be minimized. Also used to save trial input and output.
-    @param x0: initial parameter values
+    @param x0_trial: initial parameter values to minimize
+    @param x0_full: all parameter values to minimize (may be larger than x0 trail
     @param cfg: configuration for the run
     @param tpl_dict: dictionary of values for filling in template strings
     @param tpl_str: template string (read from file)
@@ -439,21 +442,29 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
     @param result_headers: list of headers for printing results
     @return: the result for the set of values being tested, obtained from the bash script specified in cfg
     """
+    if x0_full is None:
+        x0_full = x0_trial
+    else:
+        x0_full[:len(x0_trial)] = x0_trial
+
     resid_dict = {}
     penalty = 0
     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
-        tpl_dict[param_name] = round(x0[param_num], cfg[NUM_PARAM_DECIMALS])
+        # Needed to add break for triangle/stepwise minimization
+        if param_num >= len(x0_trial):
+                break
+        tpl_dict[param_name] = round(x0_trial[param_num], cfg[NUM_PARAM_DECIMALS])
         resid_dict[param_name] = tpl_dict[param_name]
         if param_name in cfg[LEFT_SIDE_POTENTIAL]:
             min_val = cfg[LEFT_SIDE_POTENTIAL][param_name][0]
             stiffness = cfg[LEFT_SIDE_POTENTIAL][param_name][1]
-            if x0[param_num] < min_val:
-                penalty += stiffness * np.square(x0[param_num] - min_val)
+            if x0_trial[param_num] < min_val:
+                penalty += stiffness * np.square(x0_trial[param_num] - min_val)
         if param_name in cfg[RIGHT_SIDE_PENALTY]:
             max_val = cfg[RIGHT_SIDE_PENALTY][param_name][0]
             stiffness = cfg[RIGHT_SIDE_PENALTY][param_name][1]
-            if x0[param_num] > max_val:
-                penalty += stiffness * np.square(x0[param_num] - max_val)
+            if x0_trial[param_num] > max_val:
+                penalty += stiffness * np.square(x0_trial[param_num] - max_val)
 
     eval_eqs(cfg, tpl_dict)
     fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
@@ -462,7 +473,7 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
     #       only call this expensive function if we don't already have that answer, determined by checking for it in
     #       the result dictionary
     # to make the input hashable for a dictionary
-    x0_str = str(x0)
+    x0_str = str(x0_full)
     if x0_str in result_dict:
         trial_result = result_dict[x0_str]
     else:
@@ -480,10 +491,10 @@ def obj_fun(x0, cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_headers
                 cfg[LOWEST_RESID] = trial_result
                 with open(cfg[BEST_PARAMS_FNAME], 'w') as w_file:
                     for param_num, param_name in enumerate(cfg[OPT_PARAMS]):
-                        w_file.write("{:} = {:f},{:f}\n".format(param_name, x0[param_num],
+                        w_file.write("{:} = {:f},{:f}\n".format(param_name, x0_full[param_num],
                                                                 cfg[INITIAL_DIR][param_name]))
     if cfg[PRINT_INFO]:
-        print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0])))
+        print("Resid: {:11f} for parameters: {}".format(trial_result, ",".join(["{:11f}".format(x) for x in x0_trial])))
     if cfg[FITTING_SUM_FNAME] is not None:
         resid_dict[RESID] = trial_result
         fitting_sum.append(resid_dict)
@@ -562,15 +573,35 @@ def min_params(cfg, tpl_dict, tpl_str):
         num_minis = 0
         return_message = "No minimization cycles completed"
         ret = None
+        trial_param_num = len(x0)
+
+        # Set up "triangle" or step-wise minimization
+        if trial_param_num < 3 or not cfg[TRIANGLE_MINI]:
+            x0_trial = x0
+        else:
+            trial_param_num = 2
+            x0_trial = x0[:trial_param_num]
+            obj_fun_args = (cfg, tpl_dict, tpl_str, fitting_sum, result_dict, result_sum_headers, x0)
+            if 'direc' in opt_options:
+                opt_options['direc'] = ini_direc[:trial_param_num, :trial_param_num]
+
         while num_minis < cfg[MINI_CYCLES]:
-            ret = minimize(obj_fun, x0, args=obj_fun_args,
-                           method=cfg[SCIPY_OPT_METHOD],
-                           options=opt_options)
-            x0 = ret.x
-            return_message = ret.message
+            while trial_param_num <= len(x0):
+                ret = minimize(obj_fun, x0_trial, args=obj_fun_args,
+                               method=cfg[SCIPY_OPT_METHOD],
+                               options=opt_options)
+                x0_trial = ret.x
+                return_message = ret.message
+                x0[:trial_param_num] = x0_trial
+                trial_param_num += 1
+                if trial_param_num <= len(x0):
+                    x0_trial = x0[:trial_param_num]
+                    if 'direc' in opt_options:
+                        opt_options['direc'] = ini_direc[:trial_param_num]
             num_minis += 1
-            if cfg[MINI_CYCLES] - num_minis > 0:
+            if cfg[MINI_CYCLES] - num_minis >= 0:
                 print(return_message + " Completed {} of {} minimization cycles".format(num_minis, cfg[MINI_CYCLES]))
+
 
     if cfg[PRINT_CONV_ALL]:
         print(return_message + " Number of function calls: {}".format(ret.nfev))

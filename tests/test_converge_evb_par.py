@@ -29,6 +29,7 @@ COPY_OUTPUT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par.ini')
 MAX_MIN_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_min_val.ini')
 DIRS_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_initial_dirs.ini')
 REPEAT_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_repeat_min.ini')
+TRIANGLE_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_multi_par_triangle.ini')
 
 CONV_NM_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so.ini')
 CONV_NM_MULTI_INI = os.path.join(SUB_DATA_DIR, 'conv_evb_par_so_multi.ini')
@@ -446,3 +447,16 @@ class TestMain(unittest.TestCase):
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(BEST_PARAMS, disable=DISABLE_REMOVE)
+
+    def testTriangleMin(self):
+        # Test stepwise minimization
+        test_input = ["-c", TRIANGLE_INI]
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Resid:    4.000000 for parameters:    0.000000,   2.000000\n" in output)
+                self.assertTrue("Resid:    0.000000 for parameters:    0.000000,   2.000000,  -2.000000\n" in output)
+        finally:
+            silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
+            silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
