@@ -53,6 +53,7 @@ GOOD_SCRIPT_OUT = os.path.join(SUB_DATA_DIR, 'script_out_good.txt')
 RESULT_SUM = os.path.join(MAIN_DIR, 'vii0_vij0_gamma.csv')
 GOOD_RESULT_SUM = os.path.join(SUB_DATA_DIR, 'result_sum_good.csv')
 RESID_PAR_OUT = os.path.join(DATA_DIR, 'evb_resid8.0_viilb1.0.par')
+TEST_OUT = os.path.join(SUB_DATA_DIR, 'test_out.csv')
 OTHER_RESID_NAMES = ['evb_resid8.145898_viilb1.0.par',
                      'evb_resid8.381966_viilb1.0.par',
                      'evb_resid9.0_viilb1.0.par',
@@ -367,6 +368,7 @@ class TestMain(unittest.TestCase):
             test_input = ["-c", CONV_NOT_TESTED_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(SCRIPT_OUT)
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("Only the following optimization methods" in output)
         finally:
@@ -376,9 +378,11 @@ class TestMain(unittest.TestCase):
     def testNelderMead(self):
         # Try alternate minimization method
         try:
+            silent_remove(SCRIPT_OUT)
             test_input = ["-c", CONV_NM_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(SCRIPT_OUT)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Function evaluations: 24" in output)
                 self.assertTrue("vii_0:    0.000000" in output)
@@ -398,8 +402,10 @@ class TestMain(unittest.TestCase):
         # gamma = -2.000000
         try:
             test_input = ["-c", CONV_NM_MULTI_INI]
+            silent_remove(SCRIPT_OUT)
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(SCRIPT_OUT)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Current function value: 6.192328" in output)
                 self.assertTrue("Iterations: 29" in output)
@@ -413,6 +419,7 @@ class TestMain(unittest.TestCase):
         try:
             test_input = ["-c", CONV_HOP_INI]
             silent_remove(BIN_HOP_RESULT_SUM)
+            silent_remove(SCRIPT_OUT)
             main(test_input)
             self.assertFalse(diff_lines(BIN_HOP_RESULT_SUM, GOOD_BIN_HOP_RESULT_SUM))
         finally:
@@ -423,9 +430,11 @@ class TestMain(unittest.TestCase):
     def testBasinHopBounds(self):
         # Try hopping + minimization
         try:
+            silent_remove(SCRIPT_OUT)
             test_input = ["-c", CONV_HOP_MIN_MAX_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(SCRIPT_OUT)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("success condition satisfied. Number of function calls: 83" in output)
         finally:
@@ -437,28 +446,37 @@ class TestMain(unittest.TestCase):
         test_input = ["-c", REPEAT_INI]
         try:
             silent_remove(BEST_PARAMS)
+            silent_remove(SCRIPT_OUT)
+            silent_remove(TEST_OUT)
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(BEST_PARAMS)
+                silent_remove(SCRIPT_OUT)
+                silent_remove(TEST_OUT)
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("Optimization terminated successfully. Completed 2 of 3 minimization cycles\n"
-                                in output)
-                self.assertFalse(diff_lines(BEST_PARAMS, GOOD_BEST_PARAMS))
+                self.assertTrue("Function evaluations: 25\nOptimization terminated successfully. "
+                                "Completed 2 of 3 minimization cycles" in output)
+            self.assertFalse(diff_lines(BEST_PARAMS, GOOD_BEST_PARAMS))
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)
             silent_remove(BEST_PARAMS, disable=DISABLE_REMOVE)
+            silent_remove(TEST_OUT, disable=DISABLE_REMOVE)
 
     def testTriangleMin(self):
         # Test stepwise minimization with multiple minimization steps
         test_input = ["-c", TRIANGLE_INI]
         try:
+            silent_remove(SCRIPT_OUT)
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+                silent_remove(SCRIPT_OUT)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Resid:   34.416667 for parameters:    0.500000,   1.833333\n" in output)
                 self.assertTrue("Resid:    4.496540 for parameters:    0.853871,   1.414121,  -3.133996, "
                                 "  4.085879,   2.381966\n" in output)
-                self.assertTrue("Optimization terminated successfully. Completed 2 of 2 minimization cycles" in output)
+                self.assertTrue("Function evaluations: 35\nOptimization terminated successfully. "
+                                "Completed 2 of 2 minimization cycles" in output)
         finally:
                 silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
                 silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)

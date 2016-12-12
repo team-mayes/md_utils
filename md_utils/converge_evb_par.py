@@ -579,6 +579,8 @@ def min_params(cfg, tpl_dict, tpl_str):
             # Set up "triangle" or step-wise minimization
             if trial_param_num < 3 or not cfg[TRIANGLE_MINI]:
                 x0_trial = x0
+                # needed for after the first round of minimization
+                trial_param_num = len(x0)
             else:
                 trial_param_num = 2
                 x0_trial = x0[:trial_param_num]
@@ -601,7 +603,6 @@ def min_params(cfg, tpl_dict, tpl_str):
             num_minis += 1
             if cfg[MINI_CYCLES] - num_minis >= 0:
                 print(return_message + " Completed {} of {} minimization cycles".format(num_minis, cfg[MINI_CYCLES]))
-
 
     if cfg[PRINT_CONV_ALL]:
         print(return_message + " Number of function calls: {}".format(ret.nfev))
