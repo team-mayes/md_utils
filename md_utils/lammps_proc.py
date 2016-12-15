@@ -239,7 +239,7 @@ CEC_COM_DIST = 'cec_com_dist'
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF, OCO_ANGLE, OCOH_DIH]
 HIJ_NEW_FIELDNAMES = [DA_DIST, Q_DOT_NEW, G_Q_NEW, F_ROO1_NEW, F_ROO2_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
-HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
+HIJ_ARQ_FIELDNAMES = [DA_DIST, Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
 EXTRA_WATER_FIELDNAMES = [HIJ_A1, HIJ_A2, HIJ_A3]
 HYD_WAT_FIELDNAMES = [R_OO_HYD_WAT, R_OH_HYD, R_OH_WAT_HYD, HIJ_WAT]
@@ -783,11 +783,11 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data, result_dict
                 calc_results.update({R_OO: o_ostar_dist, Q_DOT: q_dot, HIJ_WATER: hij_wat,
                                      HIJ_A1: term_a1, HIJ_A2: term_a2, HIJ_A3: term_a3, })
             if cfg[CALC_HIJ_ARQ_FORM]:
-                q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
-                                       closest_excess_h[XYZ_COORDS], box, r0_sc_arq, r0_da, lambda_arq,
-                                       )
+                da_dist, q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
+                                                closest_excess_h[XYZ_COORDS], box, r0_sc_arq, r0_da, lambda_arq,
+                                                )
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
-                calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
+                calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq, DA_DIST: da_dist})
             if cfg[CALC_HIJ_NEW]:
                 da_dist, q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
                                                 closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW], cfg[R0_DA_NEW],
