@@ -63,6 +63,7 @@ SKIP_ONE_STATE = 'skip_one_state_flag'
 PRINT_DECOMP_ENE_PROPS = 'print_decomposed_energy_flag'
 REF_E_FILE = 'ref_e_file'
 PRINT_PROGRESS = 'print_progress'
+MAX_STEPS = 'max_timesteps'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -82,6 +83,7 @@ DEF_CFG_VALS = {EVB_LIST_FILE: DEF_EVB_LIST_FILE,
                 PRINT_DECOMP_ENE_PROPS: False,
                 SKIP_ONE_STATE: True,
                 REF_E_FILE: None,
+                MAX_STEPS: 10000000
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -278,6 +280,7 @@ def find_section_state(line):
 
 
 def process_evb_file(evb_file, cfg):
+    steps_read = 0
     with open(evb_file) as d:
         base_file_name = os.path.basename(evb_file)
         section = None
@@ -314,6 +317,9 @@ def process_evb_file(evb_file, cfg):
             if section == SEC_TIMESTEP:
                 split_line = line.split()
                 timestep = int(split_line[1])
+                if steps_read > cfg[MAX_STEPS]:
+                    break
+                steps_read += 1
                 result = {FILE_NAME: base_file_name,
                           TIMESTEP: timestep,
                           REL_E_GROUP: rel_e_group}

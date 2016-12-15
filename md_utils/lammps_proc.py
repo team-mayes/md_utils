@@ -56,6 +56,7 @@ GOFR_TYPE1 = 'gofr_type1'
 GOFR_TYPE2 = 'gofr_type2'
 OUT_BASE_DIR = 'output_directory'
 PRINT_PROGRESS = 'print_progress'
+EVB_SUM_FILE = 'evb_sum_file_name'
 
 # Types of calculations allowed
 # g(r) types

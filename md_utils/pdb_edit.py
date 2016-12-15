@@ -41,6 +41,8 @@ PDB_NEW_FILE = 'new_pdb_name'
 ATOM_REORDER_FILE = 'atom_reorder_old_new_file'
 MOL_RENUM_FILE = 'mol_renum_old_new_file'
 RENUM_MOL = 'mol_renum_flag'
+# TODO: if desired, make a option to add a chain label
+# CHAIN_LABEL = 'chain_label_flag'
 FIRST_ADD_ELEM = 'first_atom_add_element'
 LAST_ADD_ELEM = 'last_atom_add_element'
 FIRST_WAT_ID = 'first_wat_atom'

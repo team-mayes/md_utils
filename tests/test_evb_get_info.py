@@ -83,6 +83,10 @@ GOOD_DECOMP_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_ene_info_good.cs
 RMSD_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_rel_ene_rmsd.ini')
 GOOD_RMSD_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_ene_list2_rmsd_good.csv')
 
+MAX_STEPS_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_max_steps.ini')
+MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_short_evb_info.csv')
+GOOD_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_max_steps_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -247,3 +251,11 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(REL_ENE_OUT2, GOOD_RMSD_ENE_OUT))
         finally:
             silent_remove(REL_ENE_OUT2, disable=DISABLE_REMOVE)
+
+    def testMaxSteps(self):
+        try:
+            test_input = ["-c", MAX_STEPS_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(MAX_STEPS_OUT, GOOD_MAX_STEPS_OUT))
+        finally:
+            silent_remove(MAX_STEPS_OUT, disable=DISABLE_REMOVE)
