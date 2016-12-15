@@ -695,7 +695,10 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
     for line in csv_reader:
         val = convert_dict_line(all_conv, data_conv, line)
         if col_name in val:
-            col_val = val[col_name]
+            try:
+                col_val = int(val[col_name])
+            except ValueError:
+                col_val = val[col_name]
             if col_val in result:
                 warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
             result[col_val] = convert_dict_line(all_conv, data_conv, line)

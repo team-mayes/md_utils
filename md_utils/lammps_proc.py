@@ -14,7 +14,8 @@ import argparse
 import numpy as np
 from md_utils.md_common import (InvalidDataError, create_out_fname, pbc_dist, warning, process_cfg,
                                 find_dump_section_state, write_csv, list_to_csv, pbc_vector_avg, pbc_calc_vector,
-                                file_rows_to_list, vec_angle, vec_dihedral)
+                                file_rows_to_list, vec_angle, vec_dihedral, read_csv_to_dict, read_csv_header)
+from md_utils.evb_get_info import (CEC_X, CEC_Y, CEC_Z)
 
 try:
     # noinspection PyCompatibility
@@ -57,6 +58,9 @@ GOFR_TYPE2 = 'gofr_type2'
 OUT_BASE_DIR = 'output_directory'
 PRINT_PROGRESS = 'print_progress'
 EVB_SUM_FILE = 'evb_sum_file_name'
+EVB_SUM_HEADERS = 'evb_sum_headers'
+ALIGN_COL = 'evb_align_col'
+TIMESTEP = 'timestep'
 
 # Types of calculations allowed
 # g(r) types
@@ -80,6 +84,7 @@ CALC_HIJ_ARQ_FORM = 'calc_hij_arg_flag'
 CALC_HIJ_NEW = 'calc_new_arq'
 CALC_HIJ_WATER_FORM = 'calc_hij_water_form_flag'
 CALC_OCO_COM = 'calc_oco_com_h_dist'
+CALC_CEC_DIST = 'calc_cec_dist_flag'
 WATER_TERMS_PRINT = 'print_water_terms'
 COMBINE_OUTPUT = 'combine_output_flag'
 
@@ -95,7 +100,7 @@ MAX_TIMESTEPS = 'max_timesteps_per_dumpfile'
 PRINT_TIMESTEPS = 'print_output_every_x_timesteps'
 PER_FRAME_OUTPUT = 'requires_output_for_every_frame'
 PER_FRAME_OUTPUT_FLAGS = [CALC_OCOH_PROPS, CALC_HIJ_DA_GAUSS_FORM, CALC_HIJ_ARQ_FORM, CALC_HIJ_WATER_FORM,
-                          WATER_TERMS_PRINT, CALC_HYD_WAT, CALC_HIJ_NEW]
+                          WATER_TERMS_PRINT, CALC_HYD_WAT, CALC_HIJ_NEW, CALC_CEC_DIST]
 GOFR_OUTPUT = 'flag_for_gofr_output'
 GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CALC_TYPE_GOFR]
 
@@ -112,6 +117,7 @@ VIJ_NEW = 'new_vij'
 EPS_NEW = 'new_eps'
 C_DA_NEW = 'new_c_da'
 NEW_PARAMS = [GAMMA_NEW, LAMBDA_NEW, R0_DA_NEW, R0SC_NEW, ALPHA_NEW, A_DA_NEW, VIJ_NEW, EPS_NEW, C_DA_NEW]
+MIN_DIST_BETA = 'min_dist_beta'
 
 # Defaults
 DEF_CFG_FILE = 'lammps_proc_data.ini'
@@ -147,6 +153,8 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 COMBINE_OUTPUT: False,
                 GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
                 A_DA_NEW: None, VIJ_NEW: None, EPS_NEW: None, C_DA_NEW: None,
+                EVB_SUM_FILE: None, ALIGN_COL: TIMESTEP, CALC_CEC_DIST: False,
+                MIN_DIST_BETA: 250.0,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -165,7 +173,9 @@ ATOM_NUM = 'atom_num'
 MOL_NUM = 'mol_num'
 ATOM_TYPE = 'atom_type'
 CHARGE = 'charge'
-XYZ_COORDS = 'x,y,z'
+XYZ_COORDS = 'xyz'
+COM_XYZ = 'COM_XYZ'
+CEC_XYZ = 'cec_xyz'
 
 # for g(r) calcs
 GOFR_R = 'gofr_r'
@@ -186,7 +196,6 @@ OH_STEPS_COUNTED = 'oh_steps_counted'
 TYPE_STEPS_COUNTED = 'type_steps_counted'
 
 # Values to output
-TIMESTEP = 'timestep'
 OH_MIN = 'oh_min'
 OH_MAX = 'oh_max'
 OH_DIFF = 'oh_diff'
@@ -210,6 +219,7 @@ R_OH_HYD = 'R_OH_hyd'
 R_OH_WAT_HYD = 'R_OH_hyd_wat'
 HIJ_WAT = 'HIJ_OO_hyd_wat'
 
+DA_DIST = 'da_dist'
 HIJ_NEW = 'hij_new'
 F_ROO1_NEW = 'f_r_oo_term1_new'
 F_ROO2_NEW = 'f_r_oo_term2_new'
@@ -219,14 +229,21 @@ FG_NEW = 'f_g_new'
 Q_DOT_NEW = 'q_arq_new'
 # V_OO_NEW = 'v_oo_new'
 V_OH_NEW = 'v_oh_new'
+CEC_O_MIN_DIST = 'cec_o_min_dist'
+CEC_O_MIN = 'cec_o_min'
+CEC_O_MAX = 'cec_o_max'
+CEC_O_DIFF = 'cec_o_diff'
+CEC_H_DIST = 'cec_h_dist'
+CEC_COM_DIST = 'cec_com_dist'
 
 OH_FIELDNAMES = [OH_MIN, OH_MAX, OH_DIFF, OCO_ANGLE, OCOH_DIH]
-HIJ_NEW_FIELDNAMES = [Q_DOT_NEW, G_Q_NEW, F_ROO1_NEW, F_ROO2_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
+HIJ_NEW_FIELDNAMES = [DA_DIST, Q_DOT_NEW, G_Q_NEW, F_ROO1_NEW, F_ROO2_NEW, F_ROO_NEW, FG_NEW, HIJ_NEW]
 HIJ_AMINO_FIELDNAMES = [R_OH, HIJ_GLU, HIJ_ASP]
 HIJ_ARQ_FIELDNAMES = [Q_DOT_ARQ, HIJ_ARQ]
 HIJ_WATER_FIELDNAMES = [R_OO, Q_DOT, HIJ_WATER]
 EXTRA_WATER_FIELDNAMES = [HIJ_A1, HIJ_A2, HIJ_A3]
 HYD_WAT_FIELDNAMES = [R_OO_HYD_WAT, R_OH_HYD, R_OH_WAT_HYD, HIJ_WAT]
+CEC_DIST_FIELDNAMES = [CEC_O_MIN_DIST, CEC_O_MIN, CEC_O_MAX, CEC_O_DIFF, CEC_H_DIST, CEC_COM_DIST]
 FILE_NAME = 'filename'
 
 # EVB Params
@@ -296,6 +313,16 @@ c_DA_arq = 2.59
 gamma_arq = 6.43
 
 
+def calc_min_dist(dist_array, min_dist_beta):
+    """
+    Per http://plumed.github.io/doc-v2.0/user-doc/html/mindist.html
+    @param dist_array: a numpy array of distances from which to determine the minimum
+    @param min_dist_beta: user-specified parameter
+    @return: float, minimum distance
+    """
+    temp = np.log(np.sum((np.exp(np.divide(min_dist_beta, dist_array)))))
+    return min_dist_beta / np.log(np.sum((np.exp(np.divide(min_dist_beta, dist_array)))))
+
 # EVB Formulas
 
 def u_morse(r):
@@ -341,7 +368,7 @@ def calc_q_arq(r_ao, r_do, r_h, box, r0_sc, r0_da_q, lambda_q):
     r_dh = pbc_calc_vector(r_h, r_do, box)
     r_da = pbc_calc_vector(r_ao, r_do, box)
     q_vec = np.subtract(r_dh, r_sc * r_da / 2.0)
-    return np.dot(q_vec, q_vec)
+    return da_dist, np.dot(q_vec, q_vec)
 
 
 def calc_hij_wat(r_oo, q_dot):
@@ -431,6 +458,12 @@ def read_cfg(floc, cfg_proc=process_cfg):
                     first_warn = "Found '{}' for key '{}'. ".format(main_proc[key], key)
                 raise InvalidDataError(first_warn + "Require float inputs for keys: {}"
                                        "".format(NEW_PARAMS))
+    if main_proc[ALIGN_COL] not in [TIMESTEP, FILE_NAME]:
+        raise InvalidDataError("The program currently can only align CEC data on either '{}' or '{}'"
+                               .format(TIMESTEP, FILE_NAME))
+    if main_proc[CALC_CEC_DIST] and main_proc[EVB_SUM_FILE] is None:
+        raise InvalidDataError("To calculate CEC distances ('{}' set to True), an '{}' must be specified."
+                               .format(CALC_CEC_DIST, EVB_SUM_FILE))
     return main_proc
 
 
@@ -519,7 +552,7 @@ def calc_pair_dists(atom_a_list, atom_b_list, box):
     return dist
 
 
-def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carboxyl_carbon):
+def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carboxyl_carbon, cec_xyz):
     # initialize minimum distance to maximum distance possible in the periodic box (assume 90 degree corners)
     oxy_h_min_dists = np.full(len(carboxyl_oxys), np.linalg.norm(np.divide(box, 2)))
     # excess proton will become None if prot_h is none, then calculated
@@ -538,11 +571,11 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carbo
     o_star = carboxyl_oxys[index_min]
     min_oh_dist = oxy_h_min_dists[index_min]
     oh_prop_dict = {OH_MIN: min_oh_dist}
-    if cfg[CALC_OCOH_PROPS]:
+    if cfg[CALC_OCOH_PROPS] or cfg[CALC_CEC_DIST]:
         # the following depends on there being exactly 2 carboxylic oxygen atoms
         index_max = abs(index_min - 1)
 
-        o_start_xyz = np.asarray(o_star[XYZ_COORDS])
+        o_star_xyz = np.asarray(o_star[XYZ_COORDS])
         excess_proton_xyz = np.asarray(excess_proton[XYZ_COORDS])
         alt_o_xyz = np.asarray(carboxyl_oxys[index_max][XYZ_COORDS])
         # distance calculated again to ensure that the 2nd return distance uses the same excess proton
@@ -552,7 +585,18 @@ def find_closest_excess_proton(carboxyl_oxys, prot_h, hydronium, box, cfg, carbo
                              })
         if carboxyl_carbon is not None:
             carboxyl_c_xyz = np.asarray(carboxyl_carbon[XYZ_COORDS])
-            oh_prop_dict.update(calc_more_ocoh_props(box, carboxyl_c_xyz, o_start_xyz, alt_o_xyz, excess_proton_xyz))
+            oh_prop_dict.update(calc_more_ocoh_props(box, carboxyl_c_xyz, o_star_xyz, alt_o_xyz, excess_proton_xyz))
+        if cfg[CALC_CEC_DIST] and cec_xyz is not None:
+            cec_o_dists = np.array([pbc_dist(cec_xyz, o_star_xyz, box), pbc_dist(cec_xyz, alt_o_xyz, box)])
+            oh_prop_dict[CEC_O_MIN] = cec_o_dists.min()
+            oh_prop_dict[CEC_O_MAX] = cec_o_dists.max()
+            oh_prop_dict[CEC_O_DIFF] = oh_prop_dict[CEC_O_MAX] - oh_prop_dict[CEC_O_MIN]
+            oh_prop_dict[CEC_H_DIST] = pbc_dist(cec_xyz, excess_proton_xyz, box)
+            oh_prop_dict[CEC_O_MIN_DIST] = calc_min_dist(np.array([oh_prop_dict[CEC_O_MIN], oh_prop_dict[CEC_O_MAX]]),
+                                                         cfg[MIN_DIST_BETA])
+            if carboxyl_carbon is not None:
+                oh_prop_dict[CEC_COM_DIST] = pbc_dist(cec_xyz, oh_prop_dict[COM_XYZ], box)
+
     return excess_proton, o_star, oh_prop_dict
 
 
@@ -580,9 +624,10 @@ def calc_more_ocoh_props(box, carboxyl_c_xyz, o_star_xyz, alt_o_xyz, excess_h_xy
 
         oh_prop_dict = {COM_H_DIST: pbc_dist(com_xyz, c_h_star_vec, box),
                         OCO_ANGLE: vec_angle(c_o_star_vec, c_alt_o_vec),
-                        OCOH_DIH: vec_dihedral(c_alt_o_vec, c_o_star_vec, o_star_h_vec)}
+                        OCOH_DIH: vec_dihedral(c_alt_o_vec, c_o_star_vec, o_star_h_vec),
+                        COM_XYZ: carboxyl_c_xyz + com_xyz}
     else:
-        oh_prop_dict = {COM_H_DIST: np.nan, OCO_ANGLE: np.nan, OCOH_DIH: np.nan}
+        oh_prop_dict = {COM_H_DIST: np.nan, OCO_ANGLE: np.nan, OCOH_DIH: np.nan, COM_XYZ: np.nan}
     return oh_prop_dict
 
 
@@ -659,7 +704,7 @@ def find_closest_wat_o_to_hyd_o(water_oxys, hydronium, box, h3o_oxy_atom_type):
     return hyd_wat_dict, hyd_o, close_hyd_h_to_wat, close_wat_o_to_hyd
 
 
-def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
+def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data, result_dict):
     carboxyl_oxys = []
     carboxyl_carb = None
     water_oxys = []
@@ -670,6 +715,10 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     type1 = []
     type2 = []
     calc_results = {}
+    if CEC_XYZ in result_dict:
+        cec_xyz = result_dict[CEC_XYZ]
+    else:
+        cec_xyz = None
     for atom in dump_atom_data:
         if atom[MOL_NUM] == cfg[PROT_RES_MOL_ID]:
             if atom[ATOM_NUM] in cfg[PROT_O_IDS]:
@@ -719,11 +768,11 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
 
     # Now start looking for data to report
     if cfg[CALC_OCOH_PROPS] or (cfg[CALC_HIJ_DA_GAUSS_FORM] or cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or
-                                cfg[CALC_HIJ_NEW]):
+                                cfg[CALC_HIJ_NEW] or cfg[CALC_CEC_DIST]):
         closest_excess_h, o_star, oh_prop_dict = find_closest_excess_proton(carboxyl_oxys, excess_proton,
                                                                             hydronium, box, cfg,
-                                                                            carboxyl_carb)
-        if cfg[CALC_OCOH_PROPS]:
+                                                                            carboxyl_carb, cec_xyz)
+        if cfg[CALC_OCOH_PROPS] or cfg[CALC_CEC_DIST]:
             calc_results.update(oh_prop_dict)
         if cfg[CALC_HIJ_WATER_FORM] or cfg[CALC_HIJ_ARQ_FORM] or cfg[CALC_HIJ_NEW]:
             closest_o_to_ostar, o_ostar_dist = find_closest_o_to_ostar(water_oxys, o_star, hydronium, box,
@@ -740,15 +789,15 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
                 hij_arq = calc_hij_arq(o_ostar_dist, q_dot_arq)
                 calc_results.update({Q_DOT_ARQ: q_dot_arq, HIJ_ARQ: hij_arq})
             if cfg[CALC_HIJ_NEW]:
-                q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
-                                       closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW], cfg[R0_DA_NEW],
-                                       cfg[LAMBDA_NEW])
+                da_dist, q_dot_arq = calc_q_arq(closest_o_to_ostar[XYZ_COORDS], o_star[XYZ_COORDS],
+                                                closest_excess_h[XYZ_COORDS], box, cfg[R0SC_NEW], cfg[R0_DA_NEW],
+                                                cfg[LAMBDA_NEW])
                 g_of_q = np.exp(-cfg[GAMMA_NEW] * q_dot_arq)
                 f_of_roo1, f_of_roo2 = calc_f_da_new(cfg[ALPHA_NEW], cfg[A_DA_NEW], cfg[EPS_NEW],
                                                      cfg[C_DA_NEW], o_ostar_dist)
                 f_of_roo = f_of_roo1 * f_of_roo2
                 h_ij_new = cfg[VIJ_NEW] * g_of_q * f_of_roo
-                calc_results.update({Q_DOT_NEW: q_dot_arq, G_Q_NEW: g_of_q,
+                calc_results.update({DA_DIST: da_dist, Q_DOT_NEW: q_dot_arq, G_Q_NEW: g_of_q,
                                      F_ROO1_NEW: f_of_roo1, F_ROO2_NEW: f_of_roo2,
                                      F_ROO_NEW: f_of_roo, FG_NEW: g_of_q * f_of_roo, HIJ_NEW: h_ij_new})
 
@@ -807,7 +856,7 @@ def process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data):
     return calc_results
 
 
-def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode):
+def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, write_mode, evb_dict):
     with open(dump_file) as d:
         # spaces here allow file name to line up with the "completed reading" print line
         if cfg[PRINT_PROGRESS]:
@@ -848,6 +897,18 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                         print_gofr(cfg, gofr_data)
                 result = {FILE_NAME: os.path.basename(dump_file),
                           TIMESTEP: timestep}
+                if cfg[EVB_SUM_FILE] is not None:
+                    align_val = result[cfg[ALIGN_COL]]
+                    if align_val in evb_dict:
+                        step_dict = evb_dict[timestep]
+                        for evb_header in cfg[EVB_SUM_HEADERS]:
+                            result[evb_header] = step_dict[evb_header]
+                        if cfg[CALC_CEC_DIST]:
+                            result[CEC_XYZ] = np.asarray([step_dict[CEC_X], step_dict[CEC_Y], step_dict[CEC_Z]])
+                    else:
+                        warning("Did not find '{}' value {} in the data read from: {}"
+                                .format(cfg[ALIGN_COL], result[cfg[ALIGN_COL]], cfg[EVB_SUM_FILE]))
+
             elif section == SEC_NUM_ATOMS:
                 num_atoms = int(line)
                 section = None
@@ -877,7 +938,7 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                                XYZ_COORDS: [x, y, z], }
                 dump_atom_data.append(atom_struct)
                 if atom_counter == num_atoms:
-                    result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data))
+                    result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data, result))
                     data_to_print.append(result)
                     atom_counter = 0
                     section = None
@@ -911,6 +972,8 @@ def setup_per_frame_output(cfg):
         out_fieldnames.extend(EXTRA_WATER_FIELDNAMES)
     if cfg[CALC_HYD_WAT]:
         out_fieldnames.extend(HYD_WAT_FIELDNAMES)
+    if cfg[CALC_CEC_DIST]:
+        out_fieldnames.extend(CEC_DIST_FIELDNAMES)
     return out_fieldnames
 
 
@@ -984,6 +1047,7 @@ def process_dump_files(cfg):
                                "keyword '{}'.".format(DUMP_FILE, DUMP_FILE_LIST))
 
     gofr_data = {}
+    evb_dict = {}
     out_fieldnames = None
 
     # If RDFs are to be calculated, initialize empty data structures
@@ -1008,6 +1072,20 @@ def process_dump_files(cfg):
     if cfg[PER_FRAME_OUTPUT]:
         out_fieldnames = setup_per_frame_output(cfg)
 
+    if cfg[EVB_SUM_FILE] is not None:
+        evb_dict = read_csv_to_dict(cfg[EVB_SUM_FILE], cfg[ALIGN_COL])
+        evb_headers = read_csv_header(cfg[EVB_SUM_FILE])
+        cfg[EVB_SUM_HEADERS] = []
+        for header in evb_headers:
+            if header not in out_fieldnames:
+                cfg[EVB_SUM_HEADERS].append(header)
+        if cfg[CALC_CEC_DIST]:
+            for header in [CEC_X, CEC_Y, CEC_Z]:
+                if header not in cfg[EVB_SUM_HEADERS]:
+                    raise InvalidDataError("If '{}' is set to True, these headers must be found in the '{}': {}."
+                                           "".format(CALC_CEC_DIST, EVB_SUM_FILE, [CEC_X, CEC_Y, CEC_Z]))
+        out_fieldnames += cfg[EVB_SUM_HEADERS]
+
     per_frame_write_mode = 'w'
     base_out_file_name = cfg[DUMP_FILE_LIST]
     for dump_file in dump_file_list:
@@ -1015,7 +1093,7 @@ def process_dump_files(cfg):
         # output file base name to change at each iteration if not combining output
         if cfg[COMBINE_OUTPUT] is False:
             base_out_file_name = dump_file
-        read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, per_frame_write_mode)
+        read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, per_frame_write_mode, evb_dict)
         if cfg[PER_FRAME_OUTPUT]:
             print_per_frame(base_out_file_name, cfg, data_to_print, out_fieldnames, per_frame_write_mode)
         # if combining files, after first loop, always append to file

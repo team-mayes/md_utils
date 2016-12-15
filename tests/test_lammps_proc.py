@@ -95,6 +95,11 @@ HIJ_NEW_NONFLOAT_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_non_fl
 CALC_GLU_PROPS_INI = os.path.join(SUB_DATA_DIR, 'calc_glu_props.ini')
 GOOD_GLU_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_oco_good.csv')
 
+COMBINE_CEC_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist.ini')
+COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
+GOOD_COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum_good.csv')
+
+
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
                     'Continuing program.\nCompleted reading'
@@ -336,3 +341,14 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_GLU_PROPS_OUT))
         finally:
             silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCEC(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("Did not find 'timestep' value" in output)
+            self.assertFalse(diff_lines(COMBINE_CEC_OUT, GOOD_COMBINE_CEC_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_OUT, disable=DISABLE_REMOVE)
