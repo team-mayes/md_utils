@@ -99,6 +99,9 @@ COMBINE_CEC_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist.ini')
 COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
 GOOD_COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum_good.csv')
 
+COMBINE_CEC_MULTI_FILE_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_multifile.ini')
+COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum.csv')
+GOOD_COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -352,3 +355,11 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(COMBINE_CEC_OUT, GOOD_COMBINE_CEC_OUT))
         finally:
             silent_remove(COMBINE_CEC_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCECMultifile(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_MULTI_FILE_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(COMBINE_CEC_MULTI_FILE_OUT, GOOD_COMBINE_CEC_MULTI_FILE_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_MULTI_FILE_OUT, disable=DISABLE_REMOVE)

@@ -59,6 +59,7 @@ OUT_BASE_DIR = 'output_directory'
 PRINT_PROGRESS = 'print_progress'
 EVB_SUM_FILE = 'evb_sum_file_name'
 EVB_SUM_HEADERS = 'evb_sum_headers'
+EVB_FILE_EXT = 'evb_file_extension'
 ALIGN_COL = 'evb_align_col'
 TIMESTEP = 'timestep'
 
@@ -153,7 +154,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 COMBINE_OUTPUT: False,
                 GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
                 A_DA_NEW: None, VIJ_NEW: None, EPS_NEW: None, C_DA_NEW: None,
-                EVB_SUM_FILE: None, ALIGN_COL: TIMESTEP, CALC_CEC_DIST: False,
+                EVB_SUM_FILE: None, ALIGN_COL: TIMESTEP, CALC_CEC_DIST: False, EVB_FILE_EXT: '.evb',
                 MIN_DIST_BETA: 250.0,
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
@@ -320,8 +321,8 @@ def calc_min_dist(dist_array, min_dist_beta):
     @param min_dist_beta: user-specified parameter
     @return: float, minimum distance
     """
-    temp = np.log(np.sum((np.exp(np.divide(min_dist_beta, dist_array)))))
     return min_dist_beta / np.log(np.sum((np.exp(np.divide(min_dist_beta, dist_array)))))
+
 
 # EVB Formulas
 
@@ -898,9 +899,12 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                 result = {FILE_NAME: os.path.basename(dump_file),
                           TIMESTEP: timestep}
                 if cfg[EVB_SUM_FILE] is not None:
-                    align_val = result[cfg[ALIGN_COL]]
+                    if cfg[ALIGN_COL] == FILE_NAME:
+                        align_val = os.path.splitext(result[cfg[ALIGN_COL]])[0] + cfg[EVB_FILE_EXT]
+                    else:
+                        align_val = result[cfg[ALIGN_COL]]
                     if align_val in evb_dict:
-                        step_dict = evb_dict[timestep]
+                        step_dict = evb_dict[align_val]
                         for evb_header in cfg[EVB_SUM_HEADERS]:
                             result[evb_header] = step_dict[evb_header]
                         if cfg[CALC_CEC_DIST]:

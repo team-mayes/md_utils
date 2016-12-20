@@ -87,6 +87,14 @@ MAX_STEPS_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_max_steps.ini')
 MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_short_evb_info.csv')
 GOOD_MAX_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_max_steps_good.csv')
 
+MULTI_SUM_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_multi_sum.ini')
+MULTI_SUM_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_evb_evb_info.csv')
+GOOD_MULTI_SUM_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_evb_evb_info_good.csv')
+
+REPEATED_EVB_STEP_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_repeated_timestep.ini')
+REPEATED_EVB_STEP_OUT = os.path.join(SUB_DATA_DIR, 'gluprot13_-6_evb_info.csv')
+GOOD_REPEATED_EVB_STEP_OUT = os.path.join(SUB_DATA_DIR, 'gluprot13_-6_evb_info_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -259,3 +267,23 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(MAX_STEPS_OUT, GOOD_MAX_STEPS_OUT))
         finally:
             silent_remove(MAX_STEPS_OUT, disable=DISABLE_REMOVE)
+
+    def testMultiFileSum(self):
+        try:
+            test_input = ["-c", MULTI_SUM_INI]
+            silent_remove(MULTI_SUM_OUT)
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("setting 'print_output_file_list' to 'True'" in output)
+            self.assertFalse(diff_lines(MULTI_SUM_OUT, GOOD_MULTI_SUM_OUT))
+        finally:
+            silent_remove(MULTI_SUM_OUT, disable=DISABLE_REMOVE)
+
+    def testRepeatedTimestep(self):
+        try:
+            test_input = ["-c", REPEATED_EVB_STEP_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(REPEATED_EVB_STEP_OUT, GOOD_REPEATED_EVB_STEP_OUT))
+        finally:
+            silent_remove(REPEATED_EVB_STEP_OUT, disable=DISABLE_REMOVE)

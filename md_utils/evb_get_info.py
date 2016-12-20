@@ -198,6 +198,11 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
                                           REL_E_REF: np.nan,
                                           MIN_DIAB_ENE: np.inf, }
     main_proc[REL_E_SEC] = rel_e_proc
+    if not main_proc[PRINT_PER_FILE] and not main_proc[PRINT_PER_LIST]:
+        main_proc[PRINT_PER_LIST] = True
+        warning("'{}' set to '{}'; setting '{}' to '{}'".format(PRINT_PER_FILE, main_proc[PRINT_PER_FILE],
+                                                                PRINT_PER_LIST, main_proc[PRINT_PER_LIST]))
+
     return main_proc
 
 
@@ -286,8 +291,10 @@ def process_evb_file(evb_file, cfg):
         section = None
         # cec_array = np.zeros(3)
         states_array = None
-        data_to_print = []
-        subset_to_print = []
+        # Made an ordered dict so if timestep is repeated, keep the second instance
+        # (timestep repeated when EVB pivot changes)
+        data_to_print = OrderedDict()
+        subset_to_print = OrderedDict()
         prot_wat_to_print = []
         state_count = 0
         one_state = False
@@ -495,12 +502,12 @@ def process_evb_file(evb_file, cfg):
                     for diab_ene in prot_e, max_hyd_e, next_max_hyd_e:
                         if diab_ene < cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE]:
                             cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE] = diab_ene
-                data_to_print.append(result)
+                data_to_print[timestep] = result
                 if cfg[PRINT_CI_SUBSET]:
                     if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
-                        subset_to_print.append(result)
-
-    return data_to_print, subset_to_print, prot_wat_to_print
+                        subset_to_print[timestep] = result
+    # Ordered dict back to list by keeping values only
+    return data_to_print.values(), subset_to_print.values(), prot_wat_to_print
 
 
 def process_evb_files(cfg, selected_fieldnames):

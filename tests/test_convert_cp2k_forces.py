@@ -13,7 +13,7 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 __author__ = 'hmayes'
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -175,6 +175,7 @@ class TestConvertCP2K(unittest.TestCase):
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429      0.065     -0.677     -0.401      0.789" in output)
+                self.assertTrue("Found 44 QM atoms" in output)
             self.assertFalse(diff_lines(GLU_2QM_OUT, GOOD_GLU_2QM_OUT))
         finally:
             silent_remove(GLU_2QM_OUT, disable=DISABLE_REMOVE)

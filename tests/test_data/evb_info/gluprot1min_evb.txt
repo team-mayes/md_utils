@@ -1,0 +1,5 @@
+tests/test_data/evb_info/gluprot1min_-5test.evb
+tests/test_data/evb_info/gluprot1min_-4test.evb
+tests/test_data/evb_info/gluprot1min_-3test.evb
+tests/test_data/evb_info/gluprot1min_-2test.evb
+tests/test_data/evb_info/gluprot1min_-1test.evb

@@ -196,6 +196,8 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                 else:
                     if qm_sum is None:
                         qm_sum = line
+                        qm_atom_num = last_line.split()[0]
+                        print("Found {} QM atoms.".format(qm_atom_num))
                         ready_to_read = True
                     elif line == qm_sum:
                         raise InvalidDataError("Did not expect to read QM summary twice infile: {}".format(f_file))
