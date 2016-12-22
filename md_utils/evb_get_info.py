@@ -64,6 +64,7 @@ PRINT_DECOMP_ENE_PROPS = 'print_decomposed_energy_flag'
 REF_E_FILE = 'ref_e_file'
 PRINT_PROGRESS = 'print_progress'
 MAX_STEPS = 'max_timesteps'
+ONLY_STEPS = 'only_timesteps'
 
 # Defaults
 DEF_CFG_FILE = 'evb_get_info.ini'
@@ -83,7 +84,7 @@ DEF_CFG_VALS = {EVB_LIST_FILE: DEF_EVB_LIST_FILE,
                 PRINT_DECOMP_ENE_PROPS: False,
                 SKIP_ONE_STATE: True,
                 REF_E_FILE: None,
-                MAX_STEPS: 10000000
+                MAX_STEPS: 10000000, ONLY_STEPS: [],
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int, }
 
@@ -502,10 +503,11 @@ def process_evb_file(evb_file, cfg):
                     for diab_ene in prot_e, max_hyd_e, next_max_hyd_e:
                         if diab_ene < cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE]:
                             cfg[REL_E_SEC][rel_e_group][MIN_DIAB_ENE] = diab_ene
-                data_to_print[timestep] = result
-                if cfg[PRINT_CI_SUBSET]:
-                    if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
-                        subset_to_print[timestep] = result
+                if len(cfg[ONLY_STEPS]) == 0 or timestep in cfg[ONLY_STEPS]:
+                    data_to_print[timestep] = result
+                    if cfg[PRINT_CI_SUBSET]:
+                        if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
+                            subset_to_print[timestep] = result
     # Ordered dict back to list by keeping values only
     return data_to_print.values(), subset_to_print.values(), prot_wat_to_print
 

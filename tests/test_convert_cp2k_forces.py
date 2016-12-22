@@ -105,7 +105,7 @@ class TestConvertCP2KFailWell(unittest.TestCase):
                 self.assertTrue("Check file" in output)
                 self.assertTrue("Could not read file" in output)
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("1429     -0.215      0.156     -0.387      0.470" in output)
+                self.assertTrue("1429         47     -0.215      0.156     -0.387      0.470" in output)
             self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
         finally:
             silent_remove(GLU_OUT1)
@@ -147,7 +147,7 @@ class TestConvertCP2K(unittest.TestCase):
             main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("1429     -0.215      0.156     -0.387      0.470" in output)
+                self.assertTrue("1429         47     -0.215      0.156     -0.387      0.470" in output)
             self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
         finally:
             silent_remove(GLU_OUT1, disable=DISABLE_REMOVE)
@@ -158,8 +158,8 @@ class TestConvertCP2K(unittest.TestCase):
             main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("1429     -0.274     -0.728     -0.387      0.470" in output)
-                self.assertTrue("1429     -0.215      0.156      0.269      0.822" in output)
+                self.assertTrue("1429         47     -0.274     -0.728     -0.387      0.470" in output)
+                self.assertTrue("1429         53     -0.215      0.156      0.269      0.822" in output)
             self.assertFalse(diff_lines(GLU_SUM, GLU_SUM))
             self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
             self.assertFalse(diff_lines(GLU_OUT2, GOOD_GLU_OUT2))
@@ -174,8 +174,7 @@ class TestConvertCP2K(unittest.TestCase):
             main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("1429      0.065     -0.677     -0.401      0.789" in output)
-                self.assertTrue("Found 44 QM atoms" in output)
+                self.assertTrue("1429         44      0.065     -0.677     -0.401      0.789" in output)
             self.assertFalse(diff_lines(GLU_2QM_OUT, GOOD_GLU_2QM_OUT))
         finally:
             silent_remove(GLU_2QM_OUT, disable=DISABLE_REMOVE)
@@ -186,7 +185,7 @@ class TestConvertCP2K(unittest.TestCase):
             main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("1429      0.065     -0.677     -0.401      0.789" in output)
+                self.assertTrue("1429         44      0.065     -0.677     -0.401      0.789" in output)
             self.assertFalse(diff_lines(GLU_2MM_AFTER_QM_OUT, GOOD_GLU_2QM_OUT))
         finally:
             silent_remove(GLU_2MM_AFTER_QM_OUT, disable=DISABLE_REMOVE)

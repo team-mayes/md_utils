@@ -36,13 +36,14 @@ DEF_OUT_DIR = None
 OUT_FORMAT = '%d %.3f%.3f%.f'
 F_NAME = "file_name"
 NUM_ATOMS = "num_atoms"
+QM_ATOMS = "qm_atoms"
 FORCE_X = "force_x"
 FORCE_Y = "force_y"
 FORCE_Z = "force_z"
 FORCE_TOT = "force_tot"
 FORCE_TOT_UNITS = "total_force_kcal_per_mol"
-STDOUT_HEADERS = [NUM_ATOMS, FORCE_X, FORCE_Y, FORCE_Z, FORCE_TOT]
-SUM_FILE_HEADERS = [F_NAME, NUM_ATOMS, FORCE_X, FORCE_Y, FORCE_Z, FORCE_TOT_UNITS]
+STDOUT_HEADERS = [NUM_ATOMS, QM_ATOMS, FORCE_X, FORCE_Y, FORCE_Z, FORCE_TOT]
+SUM_FILE_HEADERS = [F_NAME, NUM_ATOMS, QM_ATOMS, FORCE_X, FORCE_Y, FORCE_Z, FORCE_TOT_UNITS]
 
 
 def parse_cmdline(argv):
@@ -176,6 +177,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
 
     with open(f_file) as f:
         atom_num = None
+        qm_atom_num = None
         for line in f:
             line = line.strip()
             if len(line) == 0:
@@ -196,8 +198,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                 else:
                     if qm_sum is None:
                         qm_sum = line
-                        qm_atom_num = last_line.split()[0]
-                        print("Found {} QM atoms.".format(qm_atom_num))
+                        qm_atom_num = int(last_line.split()[0])
                         ready_to_read = True
                     elif line == qm_sum:
                         raise InvalidDataError("Did not expect to read QM summary twice infile: {}".format(f_file))
@@ -241,7 +242,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
             raise InvalidDataError("Did not find the expected four force values (x, y, z, total)")
         f_out = create_out_fname(f_file, prefix=OUT_FILE_PREFIX, base_dir=out_dir, ext='')
         list_to_file(to_print, f_out)
-        return np.append([atom_num], sums)
+        return np.append([atom_num, qm_atom_num], sums)
     except (ValueError, InvalidDataError) as e:
         warning("{}\nCheck file: {}\n"
                 "   Problem converting values in line: {}\n"
@@ -280,24 +281,25 @@ def process_file_list(file_name, file_list, out_dir, req_atom_num):
 
     if summary_array is None:
         warning("No valid cp2k force output files were read.")
-    elif summary_array.size == 5:
+    elif summary_array.size == 6:
         print('For the one CP2K force file read:')
-        stdout_head_format = '{:>10s}' + ' {:>10}' * 4
+        stdout_head_format = '{:>10s}' + ' {:>10}' * 5
         print(stdout_head_format.format(*STDOUT_HEADERS))
-        print(' '.join(['%10.0f' % summary_array[0]] + ['%10.3f' % F for F in summary_array[1:]]))
+        print(' '.join(['%10.0f' % num for num in summary_array[0:2]] + ['%10.3f' % F for F in summary_array[2:]]))
     else:
         f_out = create_out_fname(file_name, prefix='force_sums_', base_dir=out_dir, ext='.csv')
         with open(f_out, 'w') as csv_file:
             writer = csv.writer(csv_file, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
             writer.writerows([SUM_FILE_HEADERS])
             for data_f_name, sum_data in zip(f_name_list, summary_array):
-                writer.writerows([[data_f_name] + [int(sum_data[0])] + [round(num, 6) for num in sum_data[1:]]])
+                writer.writerows([[data_f_name] + [int(sum_data[0])] + [int(sum_data[1])] +
+                                  [round(num, 6) for num in sum_data[2:]]])
         print('Finished reading all cp2k force files. Printed each atomic force sum to: {}'.format(f_out))
         min_vals = np.amin(summary_array, axis=0)
         max_vals = np.amax(summary_array, axis=0)
-        stdout_head_format = '{:>10s}' * 2 + ' {:>10}' * 4
+        stdout_head_format = '{:>10s}' * 2 + ' {:>10}' * 5
         print(stdout_head_format.format('', *STDOUT_HEADERS))
-        stdout_num_format = '{:10s}{:10.0f}' + ' {:10.3f}' * 4
+        stdout_num_format = '{:10s}{:10.0f} {:10.0f}' + ' {:10.3f}' * 4
         # noinspection PyArgumentList
         print(stdout_num_format.format('min_vals: ', *min_vals))
         # noinspection PyArgumentList

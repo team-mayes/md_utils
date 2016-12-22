@@ -16,7 +16,7 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
-                                list_to_file, read_csv_dict, LAMMPS_SECTION_NAMES)
+                                list_to_file, read_csv_dict, LAMMPS_SECTION_NAMES, pbc_calc_vector)
 
 __author__ = 'hmayes'
 
@@ -44,10 +44,13 @@ XYZ1 = 'xyz1'
 XYZ2 = 'xyz2'
 XYZ_STEPS = 'xyz_steps'
 XYZ_STEPS_EXTEND = 'xyz_steps_extend'
+ATOMS_DIST = 'atoms_dist'
+DIST_RANGE = 'dist_min_max_step'
 
 # data file info
 ATOMS_PAT = re.compile(r"^Atoms.*")
 NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
+BOX_PAT = re.compile(r".*xhi")
 
 # Defaults
 DEF_CFG_FILE = 'data2data.ini'
@@ -62,12 +65,15 @@ DEF_CFG_VALS = {DATA_FILES: 'data_list.txt',
                 XYZ2: [],
                 XYZ_STEPS: 0,
                 XYZ_STEPS_EXTEND: 0,
+                ATOMS_DIST: [],
+                DIST_RANGE: [],
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
             }
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
+BOX_SIZE = 'box_size'
 HEAD_CONTENT = 'head_content'
 ATOMS_CONTENT = 'atoms_content'
 TAIL_CONTENT = 'tail_content'
@@ -78,6 +84,7 @@ ATOM_ID_DICT = 'atom_id_dict'
 SEC_HEAD = 'head_section'
 SEC_ATOMS = 'atoms_section'
 SEC_TAIL = 'tail_section'
+NEW_DIST_LIST = 'new_dist_list'
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -109,12 +116,53 @@ def read_cfg(floc, cfg_proc=process_cfg):
                                    "steps to be taken between coordinates provided for '{}' and '{}'."
                                    "".format(ADJUST_ATOM, XYZ_STEPS, XYZ1, XYZ2))
         for key in [XYZ1, XYZ2]:
-            if len(main_proc[key]) == 3:
-                main_proc[key] = np.asarray([float(x) for x in main_proc[key]])
-            else:
+            key_len = len(main_proc[key])
+            try:
+                if key_len == 3:
+                    main_proc[key] = np.asarray([float(x) for x in main_proc[key]])
+                else:
+                    raise InvalidDataError
+            except (ValueError, InvalidDataError):
                 raise InvalidDataError("Use the '{}' keyword to provide a comma-separated list of three floats "
-                                       "to be used as XYZ coordinates \nfor the atom to be adjusted "
                                        "(read '{}').".format(key, main_proc[key]))
+
+    num_atoms_dist = len(main_proc[ATOMS_DIST])
+    if num_atoms_dist > 0:
+        try:
+            if num_atoms_dist == 2:
+                main_proc[ATOMS_DIST] = [int(x) for x in main_proc[ATOMS_DIST]]
+            else:
+                raise InvalidDataError
+        except (ValueError, InvalidDataError):
+            raise InvalidDataError("Use the '{}' keyword to provide a comma-separated list of two integers (atom "
+                                   "ids, with the second one to be moved as specified; "
+                                   "read {}).".format(ATOMS_DIST, main_proc[ATOMS_DIST]))
+        try:
+            if len(main_proc[DIST_RANGE]) == 3:
+                dist_range = [float(x) for x in main_proc[DIST_RANGE]]
+                if dist_range[0] == dist_range[1]:
+                    main_proc[NEW_DIST_LIST] = [dist_range[0]]
+                else:
+                    main_proc[NEW_DIST_LIST] = []
+                    if dist_range[0] < dist_range[1] and dist_range[2] > 0:
+                        min_val = dist_range[0]
+                        max_val = dist_range[1]
+                        step = dist_range[2]
+                    elif dist_range[0] > dist_range[1] and dist_range[2] < 0:
+                        min_val = dist_range[0]
+                        max_val = dist_range[1]
+                        step = dist_range[2]
+                    else:
+                        raise InvalidDataError
+                    new_val = min_val
+                    while new_val <= max_val:
+                        main_proc[NEW_DIST_LIST].append(new_val)
+                        new_val += step
+            else:
+                raise InvalidDataError
+        except (ValueError, InvalidDataError):
+            raise InvalidDataError("Use the '{}' keyword to provide a comma-separated list of three floats (min dist,"
+                                   "max dist, step-size) (read '{}').".format(DIST_RANGE, main_proc[DIST_RANGE]))
 
     return main_proc
 
@@ -164,7 +212,7 @@ def process_data_tpl(cfg):
     section = SEC_HEAD
 
     with open(tpl_loc) as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
@@ -175,7 +223,19 @@ def process_data_tpl(cfg):
                     if atoms_match:
                         # regex is 1-based
                         tpl_data[NUM_ATOMS] = int(atoms_match.group(1))
-                elif ATOMS_PAT.match(line):
+                if BOX_SIZE not in tpl_data:
+                    box_match = BOX_PAT.match(line)
+                    if box_match:
+                        split_line = line.split()
+                        i = 0
+                        tpl_data[BOX_SIZE] = np.zeros(3)
+                        while i < 3:
+                            box_dist = float(split_line[1]) - float(split_line[0])
+                            tpl_data[BOX_SIZE][i] = box_dist
+                            i += 1
+                            line = next(f).strip()
+                            tpl_data[HEAD_CONTENT].append(line)
+                if ATOMS_PAT.match(line):
                     section = SEC_ATOMS
                     tpl_data[HEAD_CONTENT].append('')
 
@@ -420,6 +480,42 @@ def adjust_atom_xyz(cfg, data_tpl_content):
         list_to_file(head_content + atoms_content + tail_content, f_name)
 
 
+def adjust_atom_dist(cfg, data_tpl_content):
+    """
+    If this options is selected, adjust the xyz coordinates to specified distances
+    @param cfg: configuration for the run
+    @param data_tpl_content: processed data from the template
+    @return: will print new data files or raise InvalidDataError
+    """
+    for atom_num in cfg[ATOMS_DIST]:
+        if atom_num > data_tpl_content[NUM_ATOMS]:
+            raise InvalidDataError("Keyword '{}' specified atom indexes {} but found only "
+                                   "{} atoms in the data template file: {}".format(ATOMS_DIST, cfg[ATOMS_DIST],
+                                                                                   data_tpl_content[NUM_ATOMS],
+                                                                                   cfg[DATA_TPL_FILE]))
+    # since python is zero-based, must subtract 1
+    pivot_atom_num = cfg[ATOMS_DIST][0] - 1
+    pivot_atom = data_tpl_content[ATOMS_CONTENT][pivot_atom_num]
+    pivot_xyz = np.array(pivot_atom[4:7])
+
+    moving_atom_num = cfg[ATOMS_DIST][1] - 1
+    moving_atom = data_tpl_content[ATOMS_CONTENT][moving_atom_num]
+    moving_xyz = np.array(moving_atom[4:7])
+
+    diff_vector = pbc_calc_vector(moving_xyz, pivot_xyz, data_tpl_content[BOX_SIZE])
+    base_dist = np.linalg.norm(diff_vector)
+
+    head_content = data_tpl_content[HEAD_CONTENT]
+    atoms_content = data_tpl_content[ATOMS_CONTENT]
+    tail_content = data_tpl_content[TAIL_CONTENT]
+
+    for new_dist in cfg[NEW_DIST_LIST]:
+        multiplier = new_dist / base_dist
+        f_name = create_out_fname(cfg[DATA_TPL_FILE], suffix='_' + str(new_dist), ext='.data')
+        atoms_content[moving_atom_num][4:7] = np.round(multiplier * diff_vector + pivot_xyz, 6)
+        list_to_file(head_content + atoms_content + tail_content, f_name)
+
+
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
@@ -442,10 +538,12 @@ def main(argv=None):
         # Will return empty dicts if no file
         if not cfg[MAKE_ATOM_TYPE_DICT]:
             old_new_atom_type_dict = read_csv_dict(cfg[ATOM_TYPE_DICT_FILE])
-        if cfg[ADJUST_ATOM] is None:
+        if cfg[ADJUST_ATOM] is None and len(cfg[ATOMS_DIST]) == 0:
             process_data_files(cfg, data_tpl_content, old_new_atom_type_dict)
-        else:
+        elif len(cfg[ATOMS_DIST]) == 0:
             adjust_atom_xyz(cfg, data_tpl_content)
+        else:
+            adjust_atom_dist(cfg, data_tpl_content)
 
     except IOError as e:
         warning("Problems reading file:", e)

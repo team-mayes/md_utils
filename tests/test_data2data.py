@@ -3,9 +3,9 @@ import unittest
 import os
 
 from md_utils.data2data import main
-from md_utils.md_common import diff_lines, silent_remove, capture_stderr, capture_stdout
+from md_utils.md_common import (diff_lines, silent_remove, capture_stderr, capture_stdout)
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -69,6 +69,18 @@ GOOD_GLU_ADJUST_OUT_2 = os.path.join(SUB_DATA_DIR, '1.250_prot_min_2_good.data')
 
 # For comparison:
 GLU_DEPROT_DATA = os.path.join(SUB_DATA_DIR, 'glu_deprot.data')
+
+GLU_DIST_INI = os.path.join(SUB_DATA_DIR, 'data2data_set_distance.ini')
+GLU_DIST_OUT = os.path.join(SUB_DATA_DIR, '1.250_prot_min_2.6.data')
+GOOD_GLU_DIST_OUT = os.path.join(SUB_DATA_DIR, '1.250_prot_min_2.6_good.data')
+
+GLU_DIST_ONE_ATOM_INI = os.path.join(SUB_DATA_DIR, 'data2data_set_dist_one_atom.ini')
+
+GLU_MULT_DIST_INI = os.path.join(SUB_DATA_DIR, 'data2data_set_dist_mult.ini')
+GLU_MULT_DIST_OUT1 = os.path.join(SUB_DATA_DIR, '1.250_prot_min_0.95.data')
+GOOD_GLU_MULT_DIST_OUT1 = os.path.join(SUB_DATA_DIR, '1.250_prot_min_0.95_good.data')
+GLU_MULT_DIST_OUT2 = os.path.join(SUB_DATA_DIR, '1.250_prot_min_1.0.data')
+GOOD_GLU_MULT_DIST_OUT2 = os.path.join(SUB_DATA_DIR, '1.250_prot_min_1.0_good.data')
 
 
 class TestData2DataFailWell(unittest.TestCase):
@@ -140,6 +152,13 @@ class TestData2DataFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("found only" in output)
 
+    def testSetDistOneAtom(self):
+        test_input = ["-c", GLU_DIST_ONE_ATOM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("WARNING:  Use the 'atoms_dist' keyword" in output)
+
 
 class TestData2Data(unittest.TestCase):
     def testSerca(self):
@@ -183,3 +202,19 @@ class TestData2Data(unittest.TestCase):
             silent_remove(GLU_ADJUST_OUT_0)
             silent_remove(GLU_ADJUST_OUT_1)
             silent_remove(GLU_ADJUST_OUT_2)
+
+    def testSetDist(self):
+        try:
+            main(["-c", GLU_DIST_INI])
+            self.assertFalse(diff_lines(GLU_DIST_OUT, GOOD_GLU_DIST_OUT))
+        finally:
+            silent_remove(GLU_DIST_OUT)
+
+    def testSetDistMult(self):
+        try:
+            main(["-c", GLU_MULT_DIST_INI])
+            self.assertFalse(diff_lines(GLU_MULT_DIST_OUT1, GOOD_GLU_MULT_DIST_OUT1))
+            self.assertFalse(diff_lines(GLU_MULT_DIST_OUT2, GOOD_GLU_MULT_DIST_OUT2))
+        finally:
+            silent_remove(GLU_MULT_DIST_OUT1)
+            silent_remove(GLU_MULT_DIST_OUT2)

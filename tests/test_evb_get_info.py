@@ -95,6 +95,10 @@ REPEATED_EVB_STEP_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_repeated_timest
 REPEATED_EVB_STEP_OUT = os.path.join(SUB_DATA_DIR, 'gluprot13_-6_evb_info.csv')
 GOOD_REPEATED_EVB_STEP_OUT = os.path.join(SUB_DATA_DIR, 'gluprot13_-6_evb_info_good.csv')
 
+ONLY_STEPS_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_specific_step.ini')
+ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_short_evb_info.csv')
+GOOD_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_only_step_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -287,3 +291,11 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(REPEATED_EVB_STEP_OUT, GOOD_REPEATED_EVB_STEP_OUT))
         finally:
             silent_remove(REPEATED_EVB_STEP_OUT, disable=DISABLE_REMOVE)
+
+    def testSpecificTimestep(self):
+        try:
+            test_input = ["-c", ONLY_STEPS_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(ONLY_STEPS_OUT, GOOD_ONLY_STEPS_OUT))
+        finally:
+            silent_remove(ONLY_STEPS_OUT, disable=DISABLE_REMOVE)
