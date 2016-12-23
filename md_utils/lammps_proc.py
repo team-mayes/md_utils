@@ -62,6 +62,7 @@ EVB_SUM_HEADERS = 'evb_sum_headers'
 EVB_FILE_EXT = 'evb_file_extension'
 ALIGN_COL = 'evb_align_col'
 TIMESTEP = 'timestep'
+ONLY_STEPS = 'only_timesteps'
 
 # Types of calculations allowed
 # g(r) types
@@ -155,7 +156,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
                 A_DA_NEW: None, VIJ_NEW: None, EPS_NEW: None, C_DA_NEW: None,
                 EVB_SUM_FILE: None, ALIGN_COL: TIMESTEP, CALC_CEC_DIST: False, EVB_FILE_EXT: '.evb',
-                MIN_DIST_BETA: 250.0,
+                MIN_DIST_BETA: 250.0, ONLY_STEPS: [],
                 }
 REQ_KEYS = {PROT_RES_MOL_ID: int,
             PROT_H_TYPE: int,
@@ -942,8 +943,9 @@ def read_dump_file(dump_file, cfg, data_to_print, gofr_data, out_fieldnames, wri
                                XYZ_COORDS: [x, y, z], }
                 dump_atom_data.append(atom_struct)
                 if atom_counter == num_atoms:
-                    result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data, result))
-                    data_to_print.append(result)
+                    if len(cfg[ONLY_STEPS]) == 0 or timestep in cfg[ONLY_STEPS]:
+                        result.update(process_atom_data(cfg, dump_atom_data, box, timestep, gofr_data, result))
+                        data_to_print.append(result)
                     atom_counter = 0
                     section = None
                 atom_counter += 1

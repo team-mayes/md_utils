@@ -192,7 +192,11 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
             # when the ini file is read, upper case becomes lower, so I'll ignore case in pattern matching
             base_e_match_pat = re.compile(r"^" + section_prefix + ".*", re.I)
             base_e_file_name = vals[0]
-            base_e_timestep = int(vals[1])
+            try:
+                base_e_timestep = int(vals[1])
+            except ValueError:
+                raise InvalidDataError("Could not convert second entry in '{}' to an integer (expected an "
+                                       "integer timestep)".format(entry[1]))
             rel_e_proc[section_prefix] = {REL_E_PAT: base_e_match_pat,
                                           FILE_NAME: base_e_file_name,
                                           TIMESTEP: base_e_timestep,

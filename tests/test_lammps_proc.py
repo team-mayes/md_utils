@@ -103,6 +103,10 @@ COMBINE_CEC_MULTI_FILE_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_multifile
 COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum.csv')
 GOOD_COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum_good.csv')
 
+COMBINE_CEC_ONLY_STEPS_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_restrict_timesteps.ini')
+COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
+GOOD_COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_restrict_timestep_good.csv')
+
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
                     'Continuing program.\nCompleted reading'
@@ -363,3 +367,11 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(COMBINE_CEC_MULTI_FILE_OUT, GOOD_COMBINE_CEC_MULTI_FILE_OUT))
         finally:
             silent_remove(COMBINE_CEC_MULTI_FILE_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCECRestrictTimesteps(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_ONLY_STEPS_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(COMBINE_CEC_ONLY_STEPS_OUT, GOOD_COMBINE_CEC_ONLY_STEPS_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_ONLY_STEPS_OUT, disable=DISABLE_REMOVE)

@@ -99,6 +99,12 @@ ONLY_STEPS_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_specific_step.ini')
 ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_short_evb_info.csv')
 GOOD_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.000_20c_only_step_good.csv')
 
+REF_ENE_NON_INT_TIME_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_non_int_timestep.ini')
+
+ONLY_STEPS_REF_ENE_INI = os.path.join(SUB_DATA_DIR, 'evb_get_info_timestep_ref.ini')
+ONLY_STEPS_REF_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_timestep_ref_evb_info.csv')
+GOOD_ONLY_STEPS_REF_ENE_OUT = os.path.join(SUB_DATA_DIR, 'evb_list_timestep_ref_evb_info_good.csv')
+
 
 class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testHelp(self):
@@ -153,6 +159,13 @@ class TestEVBGetInfoNoOutput(unittest.TestCase):
     def testNoSuchEVB(self):
         with capture_stderr(main, ["-c", NO_SUCH_EVB_INI]) as output:
             self.assertTrue("No such file or directory" in output)
+
+    def testNonIntTimestep(self):
+        test_input = ["-c", REF_ENE_NON_INT_TIME_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Could not convert" in output)
 
 
 class TestEVBGetInfo(unittest.TestCase):
@@ -299,3 +312,11 @@ class TestEVBGetInfo(unittest.TestCase):
             self.assertFalse(diff_lines(ONLY_STEPS_OUT, GOOD_ONLY_STEPS_OUT))
         finally:
             silent_remove(ONLY_STEPS_OUT, disable=DISABLE_REMOVE)
+
+    def testSpecificTimestepWithRefEne(self):
+        try:
+            test_input = ["-c", ONLY_STEPS_REF_ENE_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(ONLY_STEPS_REF_ENE_OUT, GOOD_ONLY_STEPS_REF_ENE_OUT))
+        finally:
+            silent_remove(ONLY_STEPS_REF_ENE_OUT, disable=DISABLE_REMOVE)
