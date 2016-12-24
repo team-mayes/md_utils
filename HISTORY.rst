@@ -3,6 +3,11 @@
 History
 -------
 
+0.14.0 (2016-12-24)
+-------------------
+
+* added functionality and new scripts such as cp2k2data
+
 0.10.0 (2016-09-07)
 -------------------
 

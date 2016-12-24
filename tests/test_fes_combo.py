@@ -132,4 +132,6 @@ class TestFesComboMain(unittest.TestCase):
 
     def testHelpOption(self):
         with capture_stdout(main, ["-h"]) as output:
-            self.assertTrue("optional arguments" in output)
+                self.assertTrue("optional arguments" in output)
+        with capture_stderr(main, ["-h"]) as output:
+            self.assertEqual(len(output), 0)
