@@ -34,6 +34,8 @@ MISSING_TEMPLATE_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_miss_file.ini')
 CUTOFF_CP2K_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_cutoff.ini')
 TOO_FEW_CP2K_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_too_few.ini')
 TOO_MANY_CP2K_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_too_many.ini')
+NO_FILES_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_no_files.ini')
+MISSING_KEY_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_missing_key.ini')
 
 
 class TestData2DataFailWell(unittest.TestCase):
@@ -73,6 +75,20 @@ class TestData2DataFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("After reading" in output)
 
+    def testNoFiles(self):
+        test_input = ["-c", NO_FILES_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Found no file names to process" in output)
+
+    def testMissingKey(self):
+        test_input = ["-c", MISSING_KEY_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing config val" in output)
+
 
 class TestCP2K2Data(unittest.TestCase):
     def testHelpOption(self):
@@ -95,7 +111,12 @@ class TestCP2K2Data(unittest.TestCase):
     def testFileList(self):
         try:
             silent_remove(GLU_DATA_OUT)
-            main(["-c", MULT_FILE_INI])
+            test_input = ["-c", MULT_FILE_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("tests/test_data/cp2k2data/glu_2.5_1.0.out energy: -283.342271788704181" in output)
+                self.assertTrue("tests/test_data/cp2k2data/glu_3.0_1.075.out energy: -472.455097972129295" in output)
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             diffs1 = diff_lines(GLU_DATA_OUT2, GOOD_GLU_DATA_OUT2)
             for diff_list in [diffs, diffs1]:

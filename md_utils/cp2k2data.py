@@ -44,7 +44,8 @@ CP2K_FILE = 'cp2k_file'
 
 # data file info
 
-COORD_PAT = re.compile(r".*ATOMIC COORDINATES IN angstrom.*")
+COORD_PAT = re.compile(r".*MODULE FIST:  ATOMIC COORDINATES IN.*")
+ENERGY_PAT = re.compile(r".*ENERGY\| Total FORCE_EVAL \( QMMM \).*")
 NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
 BOX_PAT = re.compile(r".*xhi")
 
@@ -174,20 +175,21 @@ def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname):
                                                                          )
         for line in f:
             line = line.strip()
-            # not keeping anything before the section with coordinates
+            if ENERGY_PAT.match(line):
+                qmmm_energy = line.split()[-1]
             if COORD_PAT.match(line):
                 # Now advance to first line of coordinates
                 for _ in range(3):
                     next(f)
                 new_atoms_section = process_coords(f, data_tpl_content)
-                break
 
     # If we successfully returned the new_atoms_section, make new file
     if new_atoms_section is None:
         raise InvalidDataError("Did not file atoms coordinates in file: {}".format(cp2k_file))
+    print("{} energy: {}".format(cp2k_file, qmmm_energy))
     f_name = create_out_fname(cp2k_file, ext='.data')
     list_to_file(data_tpl_content[HEAD_CONTENT] + new_atoms_section + data_tpl_content[TAIL_CONTENT],
-                 f_name)
+                 f_name, print_message=False)
 
 
 def main(argv=None):
