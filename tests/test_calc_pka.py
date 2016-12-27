@@ -6,13 +6,16 @@ Tests for wham_rad.
 
 import unittest
 import os
-
+import logging
 from md_utils.calc_pka import calc_pka, NO_MAX_ERR, NoMaxError, main
 from md_utils.md_common import read_csv, calc_kbt, capture_stderr, diff_lines, silent_remove
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY
 
+__author__ = 'mayes'
 
-__author__ = 'cmayes'
+# logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 PKA_DATA_DIR = os.path.join(DATA_DIR, 'calc_pka')
@@ -70,30 +73,22 @@ class TestCalcPkaMain(unittest.TestCase):
             main([str(EXP_TEMP), "-d", PKA_DATA_DIR, "-o"])
             self.assertFalse(diff_lines(DEF_DIR_OUT, GOOD_DIR_OUT))
         finally:
-            silent_remove(DEF_DIR_OUT)
-            # pass
+            silent_remove(DEF_DIR_OUT, disable=DISABLE_REMOVE)
 
     def testGoodFile(self):
         try:
             main([str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-o"])
             self.assertFalse(diff_lines(DEF_FILE_OUT, GOOD_FILE_OUT))
         finally:
-            silent_remove(DEF_FILE_OUT)
-            # pass
+            silent_remove(DEF_FILE_OUT, disable=DISABLE_REMOVE)
 
     def testDefineTS(self):
         """
         In addition to testing the case where a TS location is defined, tests for overwriting file warning
         """
         try:
-            main([str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-o", "-c", "2.4"])
+            test_input = [str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-o", "-c", "2.4"]
+            main(test_input)
             self.assertFalse(diff_lines(DEF_FILE_OUT, GOOD_TS_OUT))
-            # main([str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-c", "2.4"])
-            # with capture_stdout(main, [str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-c", "2.4"]) as output:
-            #     print("output out", output)
-            with capture_stderr(main, [str(EXP_TEMP), "-f", GOOD_RAD_PATH, "-c", "2.4"]) as output:
-                # print("output err", output)
-                self.assertTrue("Not overwriting existing file" in output)
         finally:
-            silent_remove(DEF_FILE_OUT)
-            # pass
+            silent_remove(DEF_FILE_OUT, disable=DISABLE_REMOVE)

@@ -10,9 +10,9 @@ from md_utils.fes_combo import combine, DEF_FILE_PAT, DEF_TGT, map_fes, extract_
 __author__ = 'cmayes'
 
 # Logging #
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 FES_OUT_DIR = 'fes_out'
@@ -115,7 +115,7 @@ class TestFesComboMain(unittest.TestCase):
             main(["-d", FES_OUT_MULTI])
             self.assertFalse(diff_lines(FES_ALL_MULTI_FILE, GOOD_FES_ALL_MULTI_FILE))
         finally:
-            silent_remove(FES_ALL_MULTI_FILE)
+            silent_remove(FES_ALL_MULTI_FILE, disable=DISABLE_REMOVE)
 
     def testBadArg(self):
         with capture_stderr(main, ["-@"]) as output:
@@ -126,12 +126,15 @@ class TestFesComboMain(unittest.TestCase):
             self.assertTrue("Found 0 dirs with files to combine" in output)
 
     def testNoOverwrite(self):
-        # main(["-d", FES_OUT_NO_OVERWRITE])
-        with capture_stderr(main, ["-d", FES_OUT_NO_OVERWRITE]) as output:
+        test_input = ["-d", FES_OUT_NO_OVERWRITE]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("already exists" in output)
 
     def testHelpOption(self):
-        with capture_stdout(main, ["-h"]) as output:
-                self.assertTrue("optional arguments" in output)
-        with capture_stderr(main, ["-h"]) as output:
+        test_input = ["-h"]
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+        with capture_stderr(main, test_input) as output:
             self.assertEqual(len(output), 0)

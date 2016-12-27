@@ -7,7 +7,7 @@ Tests for calc_split_avg.
 import shutil
 import tempfile
 import unittest
-
+import logging
 import os
 
 from md_utils.calc_split_avg import bin_by_pattern, calc_avg_stdev, OUT_FNAME_FMT, write_avg_stdev, OUT_KEY_SEQ, \
@@ -15,6 +15,11 @@ from md_utils.calc_split_avg import bin_by_pattern, calc_avg_stdev, OUT_FNAME_FM
 from md_utils.md_common import read_csv, diff_lines, silent_remove, capture_stderr, capture_stdout
 
 __author__ = 'mayes'
+
+# logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
+
 
 # Directories #
 
@@ -71,18 +76,22 @@ class TestWriteAvg(unittest.TestCase):
             shutil.rmtree(directory_name)
 
 
+class TestMainCatchErrors(unittest.TestCase):
+    def testNoSuchOption(self):
+        test_input = ["-@", DEF_OUT]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("unrecognized argument" in output)
+            self.assertTrue(DEF_OUT in output)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("optional arguments" in output)
+
+
 class TestMain(unittest.TestCase):
     def testDefault(self):
         try:
             main(["-o"])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OUT))
         finally:
-            silent_remove(DEF_OUT)
-
-    def testNoSuchOption(self):
-        # main(["-@", DEF_OUT])
-        with capture_stderr(main, ["-@", DEF_OUT]) as output:
-            self.assertTrue("unrecognized argument" in output)
-            self.assertTrue(DEF_OUT in output)
-        with capture_stdout(main, ["-@", DEF_OUT]) as output:
-            self.assertTrue("optional arguments" in output)
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
