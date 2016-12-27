@@ -1,0 +1,45 @@
+#ifdef GLU
+
+[off_diagonal.start.H3O_GLU-D]
+1.381966     : Vij_const, in kcal/mol
+-0.000001    : gamma
+[off_diagonal.end]
+
+[repulsive.start.GLU-D]
+
+Hydronium : H3O
+
+:::::::::::::::::::::::::::::::::::::::::::
+
+: The parameters
+
+H3O  : EVB_Type of H3O
+OC   : Atom_Type of GLU
+
+: ----------------------------------------------------------------------------
+
+0.000000     : 0.125313  : B  (voo_b)
+
+[repulsive.end]
+
+[repulsive.start.GLU-P]
+
+Expon2 : Gaussian like repulsive terms V_rep = Vii + B exp[ b (R_DA - b_DA)^2 ]
+
+GLU-P  : EVB_Type of center
+
+: The parameters
+
+0.000000     : constant Vii
+
+1 : Number of pairs: 1
+
+OH1          : type D
+OW           : type A
+0.000000     : B
+1.000000     : b (vii_lb)
+2.500000     : b_DA
+5.000000     : cut-off
+
+[repulsive.end]
+#endif

@@ -5,11 +5,14 @@ values after a buffer distance is added
 """
 
 from __future__ import print_function
+
 import os
-import numpy as np
-from md_utils.md_common import InvalidDataError, warning, create_out_fname, write_csv
 import sys
 import argparse
+import numpy as np
+from md_utils.md_common import (InvalidDataError, warning, create_out_fname, write_csv, IO_ERROR, INPUT_ERROR,
+                                GOOD_RET, INVALID_DATA, dequote)
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser
@@ -20,34 +23,59 @@ except ImportError:
 __author__ = 'hmayes'
 
 
-# Error Codes
-# The good status code
-GOOD_RET = 0
-INPUT_ERROR = 1
-IO_ERROR = 2
-INVALID_DATA = 3
-
 # Constants #
 TOL = 0.0000001
 
 # Config File Sections
 SECTIONS = 'sections'
 MAIN_SEC = 'main'
+ARQ_SEC = 'ARQ'
+ARQ2_SEC = 'ARQ2'
+ARQ5_SEC = 'ARQ5'
+ARQ6_SEC = 'ARQ6'
+ARQ7_SEC = 'ARQ7'
 DA_GAUSS_SEC = 'DA_Gaussian'
 VII_SEC = 'VII'
 REP1_SEC = 'REP1'
-PARAM_SECS = [DA_GAUSS_SEC, VII_SEC, REP1_SEC]
+REP_EXPON2_SEC = 'REP_EXPON2'
+HIJ_FIT = 'hij_fit'
+HIJ_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, ARQ5_SEC, ARQ6_SEC, ARQ7_SEC]
+PARAM_SECS = [DA_GAUSS_SEC, ARQ_SEC, ARQ2_SEC, VII_SEC, REP1_SEC, REP_EXPON2_SEC,
+              ARQ5_SEC, ARQ6_SEC, ARQ7_SEC, ]
+
+ARQ_PARAMS = ['r0_sc', 'lambda', 'r0_da', 'c', 'alpha', 'a_da', 'beta',
+              'b_da', 'epsinal', 'c_da', 'gamma', 'vij_const']
+ARQ2_PARAMS = ['gamma', 'p', 'k', 'd_oo', 'beta',
+               'cap_r0_oo', 'p_prime', 'alpha', 'r0_oo', 'vij_const']
+REP_EXPON_PARAMS = ['a', 'b', 'r0']
+FIT_OPT = 'fit_option'
 
 # Config keys
 GROUP_NAMES = 'group_names'
-FIT_PARAMS = {DA_GAUSS_SEC: ['c1', 'c2', 'c3'],
+# NB: the config reader will read in capitalized letters as lower case. Thus, if any of these parameters use
+# uppercase letters, they will not match input values! Thus, all these parameter names use exclusively lowercase
+# letters, using the prefix "cap" to specify capitalized parameter names (from the corresponding paper). For example,
+# to disambiguate the parameters 'B' and 'b', I use "cap_b" and "b"
+FIT_PARAMS = {ARQ_SEC: ARQ_PARAMS,
+              ARQ2_SEC: ARQ2_PARAMS,
+              ARQ5_SEC: ARQ_PARAMS,
+              ARQ6_SEC: ARQ2_PARAMS,
+              ARQ7_SEC: ARQ2_PARAMS,
+              DA_GAUSS_SEC: ['c1', 'c2', 'c3'],
               VII_SEC: ['vii'],
               REP1_SEC: ['cap_b', 'b', 'b_prime', 'd_oo', 'cap_c', 'c', 'd_oh', 'cutoff_oo_low', 'cutoff_oo_high',
-                         'cutoff_ho_low', 'cutoff_ho_high']
+                         'cutoff_ho_low', 'cutoff_ho_high'],
+              REP_EXPON2_SEC: REP_EXPON_PARAMS,
               }
 SEC_PARAMS = 'parameters'
 INP_FILE = 'new_input_file_name'
 OUT_BASE_DIR = 'output_directory'
+PARAM_NUM = 'param_num'
+BEST_FILE = 'best_param_file'
+SUMMARY_FILE = 'summary_file'
+SUM_HEAD_SUFFIX = 'summary_heading_suffix'
+RESID_IN_BEST = 'resid_printed_in_best'
+RESIDUAL = 'residual'
 
 LOW = 'low'
 HIGH = 'high'
@@ -57,15 +85,21 @@ PROP_LIST = [LOW, HIGH, DESCRIP]
 # Defaults
 MAIN_SEC_DEF_CFG_VALS = {INP_FILE: 'fit.inp',
                          OUT_BASE_DIR: None,
+                         BEST_FILE: None,
+                         PARAM_NUM: 0,
+                         SUMMARY_FILE: None,
+                         SECTIONS: None,
+                         RESID_IN_BEST: False,
+                         SUM_HEAD_SUFFIX: '',
                          }
-PARAM_SEC_DEF_CFG_VALS = {GROUP_NAMES: 'NOT_SPECIFIED',
+PARAM_SEC_REQ_CFG_VALS = {GROUP_NAMES: str,
                           }
-DEF_FIT_VII = False
+
 DEF_CFG_FILE = 'fitevb_setup.ini'
 DEF_BEST_FILE = 'fit.best'
 DEF_GROUP_NAME = ''
 DEF_DESCRIP = ''
-PRINT_FORMAT = '%12.6f  %12.6f  : %s\n'
+PRINT_FORMAT = '{:12.6f}  {:12.6f}  : {}\n'
 
 
 def read_cfg(floc):
@@ -80,9 +114,19 @@ def read_cfg(floc):
     if not good_files:
         raise IOError('Could not read file {}'.format(floc))
     proc = {}
+    if MAIN_SEC not in config.sections():
+        proc[MAIN_SEC] = []
+    else:
+        proc[MAIN_SEC] = config.items(MAIN_SEC)
+    proc[MAIN_SEC].append([SECTIONS])
     for section in config.sections():
-        raw_configs = config.items(section)
-        proc[section] = raw_configs
+        if section != MAIN_SEC:
+            raw_configs = config.items(section)
+            proc[section] = raw_configs
+            if len(proc[MAIN_SEC][-1]) == 1:
+                proc[MAIN_SEC][-1].append([section])
+            else:
+                proc[MAIN_SEC][-1][1] = proc[MAIN_SEC][-1][1] + [section]
     return proc
 
 
@@ -96,18 +140,40 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Reads in best output file and generates new input files.')
-    parser.add_argument("-f", "--file", help="The fitevb output file to read. The default is {}".format(DEF_BEST_FILE),
-                        default=DEF_BEST_FILE)
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
-                                               "base directory where the program as run.".format(DEF_CFG_FILE),
+                                               "base directory where the program as run. See example files in the test "
+                                               "directory ({}). Note that in FitEVB, 'ARQ' is the same ARQ as in "
+                                               "the evb parameter file and corresponds to the off-diagonal term from "
+                                               "Maupin 2006 (http://pubs.acs.org/doi/pdf/10.1021/jp053596r). "
+                                               "'ARQ2' corresponds to 'PT' with "
+                                               "option 1 ('1-symmetric') and no exchange charges."
+                                               "".format(DEF_CFG_FILE, 'tests/test_data/fitevb'),
                         default=DEF_CFG_FILE, type=read_cfg)
-    parser.add_argument("-v", "--vii_fit", help="Flag to specify fitting the VII term. The default value "
-                                                "is {}.".format(DEF_FIT_VII),
-                        default=DEF_FIT_VII)
+    parser.add_argument("-f", "--file", help="The fitevb output file to read, if some values are to be obtained from "
+                                             "a previous fitEVB run.",
+                        default=None)
+    parser.add_argument("-r", "--resid", help="Flag to specify that the residual is printed at the end of the "
+                                              "'best.inp' file, and thus should be accounted for in reading this file. "
+                                              "The default is false.",
+                        action='store_true')
     parser.add_argument("-s", "--summary_file", help="If a summary file name is specified, the program will append "
                                                      "results to a summary file and specify parameter value changes.",
-                        default=False)
+                        default=None)
+    parser.add_argument("-hij", "--hij_fit", help="Flag to specify fitting the off-diagonal (h_ij) term. "
+                                                  "The default is false (use previous fit, if available).",
+                        action='store_true')
+    parser.add_argument("-re2", "--rep_exp2_fit", help="Flag to specify fitting the REP_EXPON2 term. "
+                                                       "The default is false (use previous fit, if available).",
+                        action='store_true')
+
+    parser.add_argument("-rep1", "--rep1_fit", help="Flag to specify fitting the REP1 term. "
+                                                    "The default is false (use previous fit, if available).",
+                        action='store_true')
+    parser.add_argument("-vii", "--vii_fit", help="Flag to specify using fitting the VII term. "
+                                                  "The default is false (use previous fit, if available).",
+                        action='store_true')
+
     args = None
     try:
         args = parser.parse_args(argv)
@@ -119,8 +185,14 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except SystemExit as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
 
-    if not os.path.isfile(args.file):
+    if args.file is not None and not os.path.isfile(args.file):
         if args.file == DEF_BEST_FILE:
             warning("Problems reading specified default fitevb output file ({}) in current directory. "
                     "A different name or directory can be specified with the optional "
@@ -133,85 +205,106 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_output_file(data_file):
+def process_output_file(cfg):
     """
     Reads in an initial set of parameters values from a space-separated list, as provided by 'fit.best' output from
     fitEVB. The order is important; thus read through the sections and parameters from the (ordered) lists (specified
     in the constants
-    @param data_file: contains a space-separated list of parameters values in the order that corresponds to the lists
-    of sections and parameters in constants.
+    @param cfg: the configuration for this run
     @return: initial values to use in fitting, with both the high and low values set to that initial value
     """
-    raw_vals = np.loadtxt(data_file, dtype=np.float64)
     vals = {}
-    index = 0
-    for section in PARAM_SECS:
-        for param in FIT_PARAMS[section]:
-            vals[param] = {}
-            vals[param][LOW] = raw_vals[index]
-            vals[param][HIGH] = raw_vals[index]
-            index += 1
+    best_file = cfg[MAIN_SEC][BEST_FILE]
+    if best_file is not None:
+        raw_vals = np.loadtxt(best_file, dtype=np.float64)
+        if len(raw_vals) != cfg[MAIN_SEC][PARAM_NUM]:
+            raise InvalidDataError("The total number of parameters for the specified sections ({}) does not "
+                                   "equal the total number of values ({}) in the specified fitEVB output file: {}"
+                                   "".format(cfg[MAIN_SEC][PARAM_NUM], len(raw_vals), best_file))
+        param_index = 0
+        if best_file is not None:
+            for section in cfg[MAIN_SEC][SECTIONS]:
+                vals[section] = {}
+                for param in FIT_PARAMS[section]:
+                    vals[section][param] = {LOW: raw_vals[param_index], HIGH: raw_vals[param_index]}
+                    param_index += 1
     return vals
 
 
-def make_inp(initial_vals, cfg, fit_vii_flag):
+def make_inp(initial_vals, cfg):
     """
     cfg has the sections, default ranges for each parameter, and parameter descriptions
     Use that to seed the inp_vals (used for printing) and overwrite with initial values if a parameter
     is not to be fit in the current step.
     @param initial_vals: parameter values from last fitting iteration
     @param cfg: configuration values, whether the Vii parameter is to be fit
-    @return:
+    @return: nothing; will have written a new fit_evb input file when done
     """
-    # dict to collect data to print
+    # dict to collect data to print; copy config values and (if specified) overwrite with values from fitEVB output
     inp_vals = {}
 
-    for section in PARAM_SECS:
-        for param in cfg[section][SEC_PARAMS]:
-            inp_vals[param] = cfg[section][param]
-            if section == VII_SEC:
-                if not fit_vii_flag:
-                    for prop in initial_vals[param]:
-                        inp_vals[param][prop] = initial_vals[param][prop]
+    for section in cfg[MAIN_SEC][SECTIONS]:
+        inp_vals[section] = cfg[section].copy()
+        if len(initial_vals) > 0:
+            if section in HIJ_SECS:
+                if not cfg[FIT_OPT][HIJ_FIT]:
+                    for param in FIT_PARAMS[section]:
+                        for prop in initial_vals[section][param]:
+                            inp_vals[section][param][prop] = initial_vals[section][param][prop]
             else:
-                # all other parameters set to initial values
-                if fit_vii_flag:
-                    for prop in initial_vals[param]:
-                        inp_vals[param][prop] = initial_vals[param][prop]
+                if not cfg[FIT_OPT][section]:
+                    for param in FIT_PARAMS[section]:
+                        for prop in initial_vals[section][param]:
+                            inp_vals[section][param][prop] = initial_vals[section][param][prop]
 
     with open(cfg[MAIN_SEC][INP_FILE], 'w') as inp_file:
-        for section in PARAM_SECS:
+        for section in cfg[MAIN_SEC][SECTIONS]:
             inp_file.write('FIT  {} {}\n'.format(section, cfg[section][GROUP_NAMES]))
             for param in FIT_PARAMS[section]:
-                inp_file.write(PRINT_FORMAT % (inp_vals[param][LOW], inp_vals[param][HIGH], inp_vals[param][DESCRIP]))
+                inp_file.write(PRINT_FORMAT.format(inp_vals[section][param][LOW], inp_vals[section][param][HIGH],
+                                                   inp_vals[section][param][DESCRIP]))
+    print("Wrote file: {}".format(cfg[MAIN_SEC][INP_FILE]))
 
 
-def process_raw_cfg(raw_cfg):
-    cfgs = {}
-    param_sections = []
-    # Process raw values
+def process_raw_cfg(raw_cfg, args):
+    """
+    Add default information and perform error checking
+    @param raw_cfg: configuration read by config parser
+    @param args: command-line arguments
+    @return: processed, error-checked config
+    """
+    # boolean to specify if an additional output (resid) is in the fit.best
+    resid_in_best = args.resid
+    # None or file location
+    last_best_file = args.file
+    # None or file location
+    summary_file_name = args.summary_file
+
+    cfgs = {FIT_OPT: {HIJ_FIT: args.hij_fit, VII_SEC: args.vii_fit, REP1_SEC: args.rep1_fit,
+                      REP_EXPON2_SEC: args.rep_exp2_fit}}
+
+    # Process raw cfg values
     for section in raw_cfg:
         section_dict = {}
         if section == MAIN_SEC:
             for entry in raw_cfg[section]:
                 section_dict[entry[0]] = entry[1]
         else:
-            param_sections.append(section)
-            section_dict[SEC_PARAMS] = []
+            section_dict = {}
             for entry in raw_cfg[section]:
                 if entry[0] == GROUP_NAMES:
                     section_dict[entry[0]] = entry[1]
                 else:
-                    section_dict[SEC_PARAMS].append(entry[0])
                     vals = [x.strip() for x in entry[1].split(',')]
                     if len(vals) == 2:
                         vals.append(DEF_DESCRIP)
                     try:
                         section_dict[entry[0]] = {LOW: float(vals[0]), HIGH: float(vals[1]), DESCRIP: vals[2]}
                     except ValueError:
-                        warning("In configuration file section {}, expected comma-separated numerical lower range "
-                                "value, upper-range value, and (optional) description (i.e. '-10,10,d_OO') for key {}. "
-                                "Found {}. Please check input.".format(section, entry[0], entry[1]))
+                        raise InvalidDataError("Check input. In configuration file section '{}', expected "
+                                               "comma-separated numerical lower range value, upper-range value, and "
+                                               "(optional) description (i.e. '-10,10,d_OO') for key '{}'. "
+                                               "Found: {}".format(section, entry[0], entry[1]))
         cfgs[section] = section_dict
 
     # Check for defaults
@@ -222,67 +315,110 @@ def process_raw_cfg(raw_cfg):
                     cfgs[section][cfg] = MAIN_SEC_DEF_CFG_VALS[cfg]
         else:
             if section in PARAM_SECS:
-                for cfg in PARAM_SEC_DEF_CFG_VALS:
-                    if cfg not in cfgs[section]:
-                        cfgs[section][cfg] = PARAM_SEC_DEF_CFG_VALS[cfg]
+                for param in PARAM_SEC_REQ_CFG_VALS:
+                    if param not in cfgs[section]:
+                        raise InvalidDataError("In configuration file section '{}', missing parameter '{}'."
+                                               "".format(section, param))
             else:
-                warning("This program currently expects only the sections {} and an optional section {}. Read section "
-                        "{}, which will be ignored.".format(PARAM_SECS, MAIN_SEC, section))
-
-    # Add main section with defaults if this optional section is missing; make sure required sections and parameters
-    # have been read.
+                if section != FIT_OPT:
+                    raise InvalidDataError("Found section '{}' in the configuration file. This program expects only "
+                                           "sections: {}".format(section, [MAIN_SEC, FIT_OPT] + PARAM_SECS))
+    # Add main section with defaults if the optional main section is missing
     if MAIN_SEC not in cfgs:
         cfgs[MAIN_SEC] = MAIN_SEC_DEF_CFG_VALS
-    for section in PARAM_SECS:
-        if section in cfgs:
+    if resid_in_best:
+        cfgs[MAIN_SEC][PARAM_NUM] = 1
+        cfgs[MAIN_SEC][RESID_IN_BEST] = True
+    else:
+        cfgs[MAIN_SEC][PARAM_NUM] = 0
+        cfgs[MAIN_SEC][RESID_IN_BEST] = False
+    # Ensure all required info is present for specified sections.
+    for section in cfgs:
+        if section == MAIN_SEC:
+            for param in cfgs[section]:
+                if param not in MAIN_SEC_DEF_CFG_VALS:
+                    raise InvalidDataError("The configuration file contains parameter '{}' in section '{}'; expected "
+                                           "only the following parameters for this section: {}"
+                                           "".format(param, section, MAIN_SEC_DEF_CFG_VALS.keys()))
+            if len(cfgs[MAIN_SEC][SUM_HEAD_SUFFIX]) > 1:
+                cfgs[MAIN_SEC][param] = dequote(cfgs[MAIN_SEC][param])
+            if cfgs[section][OUT_BASE_DIR] is None:
+                cfgs[section][OUT_BASE_DIR] = ""
+
+            cfgs[section][INP_FILE] = os.path.abspath(os.path.join(cfgs[section][OUT_BASE_DIR],
+                                                                   cfgs[section][INP_FILE]))
+            if not os.path.exists(os.path.dirname(cfgs[section][INP_FILE])):
+                raise IOError("Invalid directory provided in configuration section '{}' "
+                              "parameter '{}': {}".format(section, OUT_BASE_DIR, cfgs[section][OUT_BASE_DIR]))
+        elif section != FIT_OPT:
             for param in FIT_PARAMS[section]:
+                cfgs[MAIN_SEC][PARAM_NUM] += 1
                 if param not in cfgs[section]:
-                    raise InvalidDataError('The configuration file is missing parameter {} in section {}. '
-                                           'Check input.'.format(param, section))
+                    raise InvalidDataError("The configuration file is missing parameter '{}' in section '{}'. "
+                                           "Check input.".format(param, section))
+            for param in cfgs[section]:
+                if param not in FIT_PARAMS[section] and param != GROUP_NAMES:
+                    raise InvalidDataError("The configuration file contains parameter '{}' in section '{}'; expected "
+                                           "only the following parameters for this section: {}"
+                                           "".format(param, section, FIT_PARAMS[section]))
+
+    if last_best_file is not None:
+        if os.path.exists(last_best_file):
+            cfgs[MAIN_SEC][BEST_FILE] = last_best_file
         else:
-            raise InvalidDataError('The configuration file is missing section {}. Check input.'.format(section))
+            raise IOError("Invalid '{}' provided".format(last_best_file))
+    if summary_file_name is not None:
+        if cfgs[MAIN_SEC][BEST_FILE] is None:
+            raise InvalidDataError("No '{}' specified, which is required with a specified '{}'"
+                                   "".format(BEST_FILE, SUMMARY_FILE))
+        if os.path.exists(summary_file_name):
+            cfgs[MAIN_SEC][SUMMARY_FILE] = summary_file_name
+        else:
+            # can create a new file, but make sure directory exists
+            dir_name = os.path.dirname(summary_file_name)
+            if os.path.exists(dir_name) or dir_name == '':
+                warning("Will create a new summary file, as specified '{}' not found: {}"
+                        "".format(SUMMARY_FILE, summary_file_name))
+                cfgs[MAIN_SEC][SUMMARY_FILE] = summary_file_name
+            else:
+                raise IOError("Invalid '{}' provided. Neither file nor directory found for "
+                              "specified file: {}".format(SUMMARY_FILE, summary_file_name))
 
     return cfgs
 
 
 def get_param_info(cfg):
+    """
+    Convert to tracking by location rather than section
+    @param cfg: configuration for run
+    @return: param info by order found in fit.best
+    """
     headers = []
     low = []
     high = []
-    for section in PARAM_SECS:
+    for section in cfg[MAIN_SEC][SECTIONS]:
         for param in FIT_PARAMS[section]:
             low.append(cfg[section][param][LOW])
             high.append(cfg[section][param][HIGH])
-            headers.append(cfg[section][param][DESCRIP].rjust(8))
+            headers.append(cfg[section][param][DESCRIP] + cfg[MAIN_SEC][SUM_HEAD_SUFFIX])
+    if cfg[MAIN_SEC][RESID_IN_BEST]:
+        low.append(0)
+        high.append(np.inf)
+        headers.append(RESIDUAL + cfg[MAIN_SEC][SUM_HEAD_SUFFIX])
     return np.array(low), np.array(high), headers
 
 
-def get_resid(base_dir, base_name='ga.total', ):
-    ga_total_file = os.path.abspath(os.path.join(base_dir, base_name))
-    resid = np.nan
-    if os.path.isfile(ga_total_file):
-        with open(ga_total_file) as g:
-            for line in reversed(g.readlines()):
-                if "Best" in line:
-                    split_line = line.split()
-                    try:
-                        resid = float(split_line[-1])
-                        break
-                    except ValueError:
-                        continue
-    return resid
+def make_summary(cfg):
+    """
+    If the option is specified, add the last best fit output file to the list of outputs and evaluate changes
+    @param cfg: configuration for the run
+    @return:
+    """
+    best_file = cfg[MAIN_SEC][BEST_FILE]
+    summary_file = cfg[MAIN_SEC][SUMMARY_FILE]
 
-
-def make_summary(output_file, summary_file, cfg):
     low, high, headers = get_param_info(cfg)
-    latest_output = np.loadtxt(output_file, dtype=np.float64)
-
-    # append last best resid
-    low = np.append(low, np.nan)
-    high = np.append(high, np.nan)
-    headers.append('resid')
-    base_dir = os.path.dirname(output_file)
-    latest_output = np.append(latest_output, get_resid(base_dir))
+    latest_output = np.loadtxt(best_file, dtype=np.float64)
 
     if os.path.isfile(summary_file):
         last_row = None
@@ -300,9 +436,10 @@ def make_summary(output_file, summary_file, cfg):
                                 "".format(val, headers[index], index))
                     if abs(diff[index]) > TOL:
                         if abs(last_row[index]) > TOL:
-                            percent_diff[headers[index]] = "%8.2f" % (diff[index] / last_row[index] * 100)
+                            percent_diff[headers[index]] = round(diff[index] / last_row[index] * 100, 2)
                         else:
-                            percent_diff[headers[index]] = '        '
+                            if abs(diff[index]) > TOL:
+                                percent_diff[headers[index]] = np.inf
                         if abs(val-low[index]) < TOL:
                             warning("Value ({}) near lower bound ({}) encountered for parameter {} (col {})."
                                     "".format(val, low[index], headers[index], index))
@@ -310,14 +447,25 @@ def make_summary(output_file, summary_file, cfg):
                             warning("Value ({}) near upper bound ({}) encountered for parameter {} (col {})."
                                     "".format(val, high[index], headers[index], index))
                     else:
-                        percent_diff[headers[index]] = '        '
+                        percent_diff[headers[index]] = np.nan
                 percent_diffs.append(percent_diff)
             last_row = row
+        if len(percent_diffs) > 0:
+            max_percent_diff = 0
+            max_diff_param = None
+            for param, val in percent_diffs[-1].items():
+                if abs(val) > abs(max_percent_diff):
+                    max_percent_diff = val
+                    max_diff_param = param
+            print("Maximum (absolute value) percent difference from last read line is {} % for parameter '{}'."
+                  "".format(max_percent_diff, max_diff_param))
+            if cfg[MAIN_SEC][RESID_IN_BEST]:
+                print("Percent change in residual: {} %"
+                      "".format(percent_diffs[-1][RESIDUAL + cfg[MAIN_SEC][SUM_HEAD_SUFFIX]]))
 
         # format for gnuplot and np.loadtxt
         f_out = create_out_fname(summary_file, suffix='_perc_diff', ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
         write_csv(percent_diffs, f_out, headers, extrasaction="ignore")
-        print('Wrote file: {}'.format(f_out))
 
         f_out = create_out_fname(summary_file, ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
         with open(f_out, 'w') as s_file:
@@ -328,33 +476,32 @@ def make_summary(output_file, summary_file, cfg):
         # in addition to csv (above), print format for gnuplot and np.loadtxt
         with open(summary_file, 'w') as s_file:
             np.savetxt(s_file, all_output, fmt='%12.6f')
-            print(summary_file)
-        print("Wrote summary file {}".format(summary_file))
+        print("Wrote file: {}".format(summary_file))
     else:
         # have this as sep statement, because now printing a 1D array, handled differently than 2D array (newline=' ')
         with open(summary_file, 'w') as s_file:
             np.savetxt(s_file, latest_output, fmt='%12.6f', newline=' ')
-        print("Wrote results from {} to new summary file {}".format(output_file, summary_file))
+        print("Wrote results from {} to new summary file {}".format(best_file, summary_file))
 
 
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
-    if ret != GOOD_RET:
+    if ret != GOOD_RET or args is None:
         return ret
     raw_cfg = args.config
 
     try:
-        cfg = process_raw_cfg(raw_cfg)
-        initial_vals = process_output_file(args.file)
-        if args.summary_file is not False:
-            make_summary(args.file, args.summary_file, cfg)
-        make_inp(initial_vals, cfg, args.vii_fit)
+        cfg = process_raw_cfg(raw_cfg, args)
+        initial_vals = process_output_file(cfg)
+        if args.summary_file is not None:
+            make_summary(cfg)
+        make_inp(initial_vals, cfg)
     except IOError as e:
-        warning("Problems reading file:", e)
+        warning("IOError:", e)
         return IO_ERROR
     except InvalidDataError as e:
-        warning("Problems reading data:", e)
+        warning("Invalid data:", e)
         return INVALID_DATA
 
     return GOOD_RET  # success

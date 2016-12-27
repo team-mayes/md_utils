@@ -8,17 +8,19 @@ LAMMPS dump file.
 import argparse
 import csv
 import logging
+import os
 import sys
-from collections import OrderedDict
-
 import itertools
+from collections import OrderedDict
 from md_utils.lammps import find_atom_data
-from md_utils.md_common import xyz_distance, InvalidDataError, unique_list, create_out_fname
+from md_utils.md_common import (InvalidDataError, unique_list, create_out_fname, GOOD_RET, INPUT_ERROR,
+                                warning, IO_ERROR, file_rows_to_list, pbc_dist)
 
 logger = logging.getLogger(__name__)
 
 # Constants #
 
+FILENAME = 'filename'
 MISSING_TSTEP_ATOM_MSG = "Couldn't find an atom in file {} for timestep {}: {}"
 DEF_PAIRS_FILE = 'atom_pairs.txt'
 
@@ -35,36 +37,43 @@ def atom_distances(rst, atom_pairs):
     """
     results = OrderedDict()
     flat_ids = set(itertools.chain.from_iterable(atom_pairs))
-    tstep_atoms = find_atom_data(rst, flat_ids)
+    tstep_atoms, tstep_box = find_atom_data(rst, flat_ids)
 
     for tstep, atoms in tstep_atoms.items():
-        pair_dist = OrderedDict()
+        pair_dist = OrderedDict({FILENAME: os.path.basename(rst)})
         for pair in atom_pairs:
             try:
                 row1 = atoms[pair[0]]
                 row2 = atoms[pair[1]]
-                pair_dist[pair] = xyz_distance(row1[-3:], row2[-3:])
+                pair_dist[pair] = pbc_dist(row1[-3:], row2[-3:], tstep_box[tstep])
             except KeyError as e:
-                raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
+                warning(MISSING_TSTEP_ATOM_MSG.format(rst, tstep, e))
+                return
         results[tstep] = pair_dist
     return results
 
 
-def write_results(out_fname, dist_data, atom_pairs):
-    with open(out_fname, 'w') as o_file:
-        o_writer = csv.writer(o_file)
-        o_writer.writerow(["timestep"] +
-                          ["_".join(map(str, t_pair)) for t_pair in atom_pairs])
+def write_results(out_fname, dist_data, atom_pairs, write_mode='w'):
+    with open(out_fname, write_mode) as o_file:
+        o_writer = csv.writer(o_file, quoting=csv.QUOTE_NONNUMERIC)
+        # add header only if write mode (if appending, do not add header)
+        if write_mode == 'w':
+            o_writer.writerow([FILENAME, "timestep"] +
+                              ["_".join(map(str, t_pair)) for t_pair in atom_pairs])
         for tstep, pair_dists in dist_data.items():
-            t_str = str(tstep)
-            dist_row = [t_str]
+            f_name = pair_dists[FILENAME]
+            dist_row = [f_name, tstep]
             pair = None
             try:
                 for pair in atom_pairs:
-                    dist_row.append("{:.6f}".format(pair_dists[pair]))
+                    dist_row.append(round(pair_dists[pair], 6))
                 o_writer.writerow(dist_row)
             except KeyError as e:
                 raise InvalidDataError(MISSING_TSTEP_ATOM_MSG.format("_".join(map(str, pair)), tstep, e))
+    if write_mode == 'w':
+        print("Wrote file: {}".format(out_fname))
+    elif write_mode == 'a':
+        print("  Appended: {}".format(out_fname))
 
 
 def parse_pairs(pair_files):
@@ -103,13 +112,26 @@ def parse_cmdline(argv=None):
     parser.add_argument("-p", "--pair_files", action="append", default=[],
                         help="One or more files containing atom pairs (default {0})".format(
                             DEF_PAIRS_FILE))
-    parser.add_argument("file", help="The dump file to process")
-    args = parser.parse_args(argv)
+    parser.add_argument("-f", "--file", help="The dump file to process", default=None)
+    parser.add_argument("-l", "--list_file", help="The file with a list of dump files to process", default=None)
 
-    if not args.pair_files:
-        args.pair_files.append(DEF_PAIRS_FILE)
-
-    return args, 0
+    args = None
+    try:
+        args = parser.parse_args(argv)
+        if not args.pair_files:
+            args.pair_files.append(DEF_PAIRS_FILE)
+            if not os.path.isfile(DEF_PAIRS_FILE):
+                raise InvalidDataError("No pair file specified and did not find the default "
+                                       "pair file: {}".format(DEF_PAIRS_FILE))
+        if (args.file is None) and (args.list_file is None):
+            raise InvalidDataError("Specify either a file or list of files to process.")
+    except (KeyError, InvalidDataError, SystemExit) as e:
+        if e.message == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
+    return args, GOOD_RET
 
 
 def main(argv=None):
@@ -120,15 +142,36 @@ def main(argv=None):
     :return: The return code for the program's termination.
     """
     args, ret = parse_cmdline(argv)
-    if ret != 0:
+    if ret != GOOD_RET or args is None:
         return ret
 
-    pairs = parse_pairs(args.pair_files)
-    dists = atom_distances(args.file, pairs)
-    write_results(create_out_fname(args.file, prefix='pairs_', ext='.csv'),
-                  dists, pairs)
+    try:
+        if args.list_file is None:
+            file_list = []
+            base_file_name = args.file
+        else:
+            file_list = file_rows_to_list(args.list_file)
+            base_file_name = args.list_file
+        if args.file is not None:
+            file_list.append(args.file)
 
-    return 0  # success
+        dists = OrderedDict()
+        pairs = parse_pairs(args.pair_files)
+        write_mode = 'w'
+        for l_file in file_list:
+            dists.update(atom_distances(l_file, pairs))
+            if len(dists) > 0:
+                write_results(create_out_fname(base_file_name, prefix='pairs_', ext='.csv'),
+                              dists, pairs, write_mode=write_mode)
+                write_mode = 'a'
+    except IOError as e:
+        warning("Problems reading file: {}".format(e))
+        return IO_ERROR
+    except InvalidDataError as e:
+        warning("Invalid Data Error: {}".format(e))
+        return IO_ERROR
+
+    return GOOD_RET  # success
 
 
 if __name__ == '__main__':

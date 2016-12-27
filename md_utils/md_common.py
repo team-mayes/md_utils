@@ -28,6 +28,8 @@ from contextlib import contextmanager
 
 # Constants #
 
+TPL_IO_ERR_MSG = "Couldn't read template at: '{}'"
+MISSING_SEC_HEADER_ERR_MSG = "Configuration files must start with a section header such as '[main]'. Check file: {}"
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in kcal/mol Kelvin
@@ -36,6 +38,8 @@ BOLTZ_CONST = 0.0019872041
 PLANCK_CONST = 9.53707E-14
 # Universal gas constant in kcal/mol K
 R = 0.001985877534
+
+XYZ_ORIGIN = np.zeros(3)
 
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 # found to be too stringent
@@ -90,6 +94,10 @@ class NotFoundError(MdError):
 
 
 class ArgumentParserError(Exception):
+    pass
+
+
+class TemplateNotReadableError(Exception):
     pass
 
 
@@ -152,82 +160,91 @@ def calc_k(temp, delta_gibbs):
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (R * temp))
 
 
-def xyz_distance(fir, sec):
-    """
-    Calculates the Euclidean distance between the two given
-    coordinates (expected format is numbers as [x,y,z]).
-
-    TODO: Consider adding numpy optimization if lib is present.
-
-    @param fir: The first XYZ coordinate.
-    @param sec: The second XYZ coordinate.
-    :returns:  float -- The Euclidean distance between the given points.
-    :raises: KeyError
-    """
-    return math.sqrt((fir[0] - sec[0]) ** 2 + (fir[1] - sec[1]) ** 2 + (fir[2] - sec[2]) ** 2)
-
-
 def pbc_dist(a, b, box):
-    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2))
-    return np.linalg.norm(pbc_vector_diff(a, b, box))
+    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
+    return np.linalg.norm(pbc_calc_vector(a, b, box))
 
 
-def pbc_vector_diff(a, b, box):
+def pbc_calc_vector(a, b, box):
+    """
+    Finds the vectors between two points
+    @param a: xyz coords 1
+    @param b: xyz coords 2
+    @param box: vector with PBC box dimensions
+    @return: returns the vector a - b
+    """
     vec = np.subtract(a, b)
     return vec - box * np.asarray(map(round, vec / box))
 
 
+def first_pbc_image(xyz_coords, box):
+    """
+    Moves xyz coords to the first PBC image, centered at the origin
+    @param xyz_coords: coordinates to center (move to first image)
+    @param box: PBC box dimensions
+    @return: xyz coords (np array) moved to the first image
+    """
+    return pbc_calc_vector(xyz_coords, XYZ_ORIGIN, box)
+
+
 def pbc_vector_avg(a, b, box):
-    diff = pbc_vector_diff(a, b, box)
+    diff = pbc_calc_vector(a, b, box)
     mid_pt = np.add(b, np.divide(diff, 2.0))
     # mid-point may not be in the first periodic image. Make it so by getting its difference from the origin
-    return pbc_vector_diff(mid_pt, np.zeros(len(mid_pt)), box)
-
-# def angle(v1, v2):
-#   return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
+    return pbc_calc_vector(mid_pt, np.zeros(len(mid_pt)), box)
 
 
-def pbc_angle(p0, p1, p2, box):
-    #
-    print(p0, p1, p2, box)
-    pass
-
-
-# noinspection PyUnresolvedReferences
-def pbc_dihedral(p0, p1, p2, p3, box):
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.
+    http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
     """
+    return vector / np.linalg.norm(vector)
+
+
+def vec_angle(vec_1, vec_2):
+    """
+    Calculates the angle between the vectors (p2 - p1) and (p0 - p1)
+    Note: assumes the vector calculation accounted for the PBC
+    @param vec_1: xyz coordinate for the first pt
+    @param vec_2: xyz for 2nd pt
+    @return: the angle in between the vectors
+    """
+    unit_vec_1 = unit_vector(vec_1)
+    unit_vec_2 = unit_vector(vec_2)
+
+    return np.rad2deg(np.arccos(np.clip(np.dot(unit_vec_1, unit_vec_2), -1.0, 1.0)))
+
+
+def vec_dihedral(vec_ba, vec_bc, vec_cd):
+    """
+    calculates the dihedral angle from the vectors b --> a, b --> c, c --> d
+    where a, b, c, and d are the four points
     From:
     http://stackoverflow.com/questions/20305272/
       dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
     Khouli formula
     1 sqrt, 1 cross product
-    @param p0: xyz coordinates of point 0, etc.
-    @param p1:
-    @param p2:
-    @param p3:
-    @param box: periodic box lengths
+    @param vec_ba: the vector connecting points b --> a, accounting for pbc
+    @param vec_bc: b --> c
+    @param vec_cd: c --> d
     @return: dihedral angle in degrees
     """
-    b0 = -1.0 * (pbc_vector_diff(p1, p0, box))
-    b1 = pbc_vector_diff(p2, p1, box)
-    b2 = pbc_vector_diff(p3, p2, box)
-
     # normalize b1 so that it does not influence magnitude of vector
     # rejections that come next
-    b1 /= np.linalg.norm(b1)
+    vec_bc = unit_vector(vec_bc)
 
     # vector rejections
     # v = projection of b0 onto plane perpendicular to b1
     #   = b0 minus component that aligns with b1
     # w = projection of b2 onto plane perpendicular to b1
     #   = b2 minus component that aligns with b1
-    v = b0 - np.dot(b0, b1) * b1
-    w = b2 - np.dot(b2, b1) * b1
+    v = vec_ba - np.dot(vec_ba, vec_bc) * vec_bc
+    w = vec_cd - np.dot(vec_cd, vec_bc) * vec_bc
 
     # angle between v and w in a plane is the torsion angle
     # v and w may not be normalized but that's fine since tan is y/x
     x = np.dot(v, w)
-    y = np.dot(np.cross(b1, v), w)
+    y = np.dot(np.cross(vec_bc, v), w)
     return np.degrees(np.arctan2(y, x))
 
 
@@ -249,6 +266,19 @@ def chunk(seq, chunk_size, process=iter):
 
 
 # I/O #
+
+def read_tpl(tpl_loc):
+    """Attempts to read the given template location and throws A
+    TemplateNotReadableError if it can't read the given location.
+
+    :param tpl_loc: The template location to read.
+    :raise TemplateNotReadableError: If there is an IOError reading the location.
+    """
+    try:
+        return file_to_str(tpl_loc)
+    except IOError:
+        raise TemplateNotReadableError(TPL_IO_ERR_MSG.format(tpl_loc))
+
 
 def make_dir(tgt_dir):
     """
@@ -277,16 +307,29 @@ def file_to_str(fname):
         return f.read()
 
 
-def str_to_file(str_val, fname, mode='w'):
+def file_rows_to_list(c_file):
+    """
+    Given the name of a file, returns a list of its rows, after filtering out empty rows
+    @param c_file: file location
+    @return: list of non-empty rows
+    """
+    with open(c_file) as f:
+        row_list = [row.strip() for row in f.readlines()]
+        return filter(None, row_list)
+
+
+def str_to_file(str_val, fname, mode='w', print_info=False):
     """
     Writes the string to the given file.
     @param str_val: The string to write.
     @param fname: The location of the file to write
     @param mode: default mode is to overwrite file
-    @return:
+    @param print_info: boolean to specify whether to print action to stdout
     """
     with open(fname, mode) as f:
         f.write(str_val)
+    if print_info:
+        print("Wrote file: {}".format(fname))
 
 
 def round_to_print(val):
@@ -440,6 +483,15 @@ def move_existing_file(f_loc):
     """
     if os.path.exists(f_loc):
         shutil.move(f_loc, create_backup_filename(f_loc))
+
+
+def get_fname_root(src_file):
+    """
+
+    @param src_file:
+    @return: the file root name (no directory, no extension)
+    """
+    return os.path.splitext(os.path.basename(src_file))[0]
 
 
 def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
@@ -643,7 +695,10 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
     for line in csv_reader:
         val = convert_dict_line(all_conv, data_conv, line)
         if col_name in val:
-            col_val = val[col_name]
+            try:
+                col_val = int(val[col_name])
+            except ValueError:
+                col_val = val[col_name]
             if col_val in result:
                 warning("Duplicate values found for {}. Value for key will be overwritten.".format(col_val))
             result[col_val] = convert_dict_line(all_conv, data_conv, line)
@@ -652,30 +707,44 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
                                    "".format(col_name, src_file, line))
 
 
-def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC):
+def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC,
+              print_message=True, round_digits=False):
     """
     Writes the given data to the given file location.
 
+    @param round_digits: if desired, provide decimal number for rounding
     @param data: The data to write (list of dicts).
     @param out_fname: The name of the file to write to.
     @param fieldnames: The sequence of field names to use for the header.
     @param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
     @param mode: default mode is to overwrite file
+    @param print_message: boolean to flag whether to note that file written or appended
     @param quote_style: dictates csv output style
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
         if mode == 'w':
             writer.writeheader()
+        if round_digits:
+            for row_id in range(len(data)):
+                new_dict = {}
+                for key, val in data[row_id].items():
+                    if isinstance(val, float):
+                        new_dict[key] = round(val, round_digits)
+                    else:
+                        new_dict[key] = val
+                data[row_id] = new_dict
         writer.writerows(data)
-    if mode == 'a':
-        print("  Appended: {}".format(out_fname))
-    elif mode == 'w':
-        print("Wrote file: {}".format(out_fname))
+    if print_message:
+        if mode == 'a':
+            print("  Appended: {}".format(out_fname))
+        elif mode == 'w':
+            print("Wrote file: {}".format(out_fname))
 
 
-def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC):
+def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC,
+                print_message=True, round_digits=False):
     """
     Writes the given data to the given file location.
     @param data: The data to write (list of lists).
@@ -683,11 +752,23 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
     @param delimiter: string
     @param mode: default mode is to overwrite file
     @param quote_style: csv quoting style
+    @param print_message: boolean to allow update
+    @param round_digits: boolean to affect printing output; supply an integer to round to that number of decimals
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
+        if round_digits:
+            for row_id in range(len(data)):
+                new_row = []
+                for val in data[row_id]:
+                    if isinstance(val, float):
+                        new_row.append(round(val, round_digits))
+                    else:
+                        new_row.append(val)
+                data[row_id] = new_row
         writer.writerows(data)
-    print("Wrote file: {}".format(out_fname))
+    if print_message:
+        print("Wrote file: {}".format(out_fname))
 
 
 # Other input/output files
@@ -699,7 +780,7 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
 
-    @param d_file: the files with csv of old_id,new_id
+    @param d_file: the file with csv of old_id,new_id
     @param ints: boolean to indicate if the values are to be read as integers
     @param one_to_one: flag to check for one-to-one mapping in the dict
     @param pdb_dict: flag to format as required for the PDB output
@@ -1001,8 +1082,12 @@ def conv_num(s):
 def diff_lines(floc1, floc2, delimiter=","):
     """
     Determine all lines in a file are equal.
-    If not, test if the line is a csv that has floats and the difference is due to machine precision.
-    If not, return all lines with differences.
+    This function became complicated because of edge cases:
+        Do not want to flag files as different if the only difference is due to machine precision diffs of floats
+    Thus, if the files are not immediately found to be the same:
+        If not, test if the line is a csv that has floats and the difference is due to machine precision.
+        Be careful if one value is a np.nan, but not the other (the diff evaluates to zero)
+        If not, return all lines with differences.
     @param floc1: file location 1
     @param floc2: file location 1
     @param delimiter: defaults to CSV
@@ -1015,6 +1100,7 @@ def diff_lines(floc1, floc2, delimiter=","):
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
             diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
+
     for line in diff:
         if line.startswith('-') or line.startswith('+'):
             diff_lines_list.append(line)
@@ -1023,6 +1109,10 @@ def diff_lines(floc1, floc2, delimiter=","):
             elif line.startswith('+'):
                 output_plus += line[2:]+'\n'
 
+    if len(diff_lines_list) == 0:
+        return diff_lines_list
+
+    warning("Checking for differences between files {} {}".format(floc1, floc2))
     try:
         # pycharm doesn't know six very well
         # noinspection PyCallingNonCallable
@@ -1042,24 +1132,31 @@ def diff_lines(floc1, floc2, delimiter=","):
         diff_lines_list = []
         for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
             if len(line_plus) == len(line_neg):
-                print("Checking for differences between: ", line_neg, line_plus)
+                # print("Checking for differences between: ", line_neg, line_plus)
                 for item_plus, item_neg in zip(line_plus, line_neg):
                     if isinstance(item_plus, float) and isinstance(item_neg, float):
                         # if difference greater than the tolerance, the difference is not just precision
-                        float_diff = abs(item_plus - item_neg)
-                        calc_tol = max(TOL * max(abs(item_plus), abs(item_neg)), TOL)
-                        if float_diff > calc_tol:
-                            warning("Values {} and {} differ by {}, which is greater than the calculated tolerance ({})"
-                                    "".format(item_plus, item_neg, float_diff, calc_tol))
+                        # Note: if only one value is nan, the float diff is zero!
+                        #  Thus, check for diffs only if neither are nan; show different if only one is nan
+                        diff_vals = False
+                        if np.isnan(item_neg) != np.isnan(item_plus):
+                            diff_vals = True
+                            warning("Comparing '{}' to '{}'.".format(item_plus, item_neg))
+                        elif not (np.isnan(item_neg) and np.isnan(item_plus)):
+                            # noinspection PyTypeChecker
+                            if not np.isclose(item_neg, item_plus, TOL):
+                                diff_vals = True
+                                warning("Values {} and {} differ.".format(item_plus, item_neg))
+                        if diff_vals:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            return diff_lines_list
+                            break
                     else:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            return diff_lines_list
+                            break
             # Not the same number of items in the lines
             else:
                 diff_lines_list.append("- " + " ".join(map(str, line_neg)))
@@ -1124,6 +1221,7 @@ def longest_common_substring(s1, s2):
     @param s2: string 2
     @return: string: the longest common string!
     """
+    # noinspection PyUnusedLocal
     m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
     longest, x_longest = 0, 0
     for x in range(1, 1 + len(s1)):

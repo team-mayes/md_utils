@@ -1,2 +1,0 @@
-tests/test_data/cp2k_files/15_2_502000.dat
-tests/test_data/cp2k_files/20_1_508000.dat

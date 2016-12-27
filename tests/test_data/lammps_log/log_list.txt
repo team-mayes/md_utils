@@ -1,0 +1,3 @@
+tests/test_data/lammps_log/1.875_0.out
+tests/test_data/lammps_log/gluprot8_-6no_evb.log
+tests/test_data/lammps_log/gluprot8_-6test.log

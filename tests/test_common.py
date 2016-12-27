@@ -9,10 +9,10 @@ import tempfile
 import unittest
 import os
 import numpy as np
-from md_utils.md_common import (find_files_by_dir, read_csv,
+from md_utils.md_common import (find_files_by_dir, read_csv, get_fname_root,
                                 write_csv, str_to_bool, read_csv_header, fmt_row_data, calc_k, diff_lines,
-                                create_out_fname, dequote, quote, conv_raw_val, pbc_vector_diff, pbc_vector_avg,
-                                read_csv_dict, InvalidDataError)
+                                create_out_fname, dequote, quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg,
+                                read_csv_dict, InvalidDataError, unit_vector, vec_angle, vec_dihedral)
 from md_utils.fes_combo import DEF_FILE_PAT
 from md_utils.wham import CORR_KEY, COORD_KEY, FREE_KEY, RAD_KEY_SEQ
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Constants #
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
 LAMMPS_PROC_DIR = os.path.join(DATA_DIR, 'lammps_proc')
 FES_DIR = os.path.join(DATA_DIR, 'fes_out')
 CALC_PKA_DIR = 'calc_pka'
@@ -38,7 +39,8 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
 CSV_FILE = os.path.join(DATA_DIR, CALC_PKA_DIR, 'rad_PMF_last2ns3_1.txt')
 FRENG_TYPES = [float, str]
 
-ORIG_WHAM_FNAME = "PMF_last2ns3_1.txt"
+ORIG_WHAM_ROOT = "PMF_last2ns3_1"
+ORIG_WHAM_FNAME = ORIG_WHAM_ROOT + ".txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(DATA_DIR, 'empty.csv')
@@ -52,11 +54,13 @@ GHOST = 'ghost'
 
 # Output files #
 
-GOOD_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good.csv')
-ALMOST_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_good_small_diff.csv')
-NOT_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_diff_val.csv')
-MISS_COL_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_miss_val.csv')
-MISS_LINE_OH_DIST_OUT_PATH = os.path.join(LAMMPS_PROC_DIR, 'glue_oh_dist_missing_line.csv')
+DIFF_LINES_BASE_FILE = os.path.join(SUB_DATA_DIR, 'diff_lines_base_file.csv')
+DIFF_LINES_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_prec_diff.csv')
+DIFF_LINES_ONE_VAL_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_val_diff.csv')
+DIFF_LINES_MISS_VAL = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_val.csv')
+MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
+DIFF_LINES_ONE_NAN = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
+DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 
 IMPROP_SEC = os.path.join(LAMMPS_PROC_DIR, 'glue_improp.data')
 IMPROP_SEC_ALT = os.path.join(LAMMPS_PROC_DIR, 'glue_improp_diff_ord.data')
@@ -70,6 +74,24 @@ GOOD_A_B_AVG = np.array([3.9245, -0.834, -2.0205])
 C_VEC = [24.117, -20.135, -52.518]
 GOOD_A_MINUS_C = np.array([3.865, -5.918, 2.495])
 GOOD_A_C_AVG = np.array([1.7995, 1.156, -2.7705])
+
+VEC_1 = np.array([3.712, -1.585, -3.116])
+VEC_2 = np.array([4.8760, -1.129, -3.265])
+VEC_3 = np.array([5.498, -0.566, -2.286])
+VEC_4 = np.array([5.464, -1.007, -0.948])
+
+VEC_21 = np.array([-1.164, -0.456, 0.149])
+VEC_23 = np.array([0.622, 0.563, 0.979])
+VEC_34 = np.array([-0.034, -0.441, 1.338])
+
+# vec21 = {ndarray} [-1.164 -0.456  0.149]
+# vec23 = {ndarray} [ 0.622  0.563  0.979]
+# vec34 = {ndarray} [-0.034 -0.441  1.338]
+
+
+UNIT_VEC_3 = np.array([0.91922121129527656, -0.094630630337054641, -0.38220074372881085])
+ANGLE_123 = 120.952786591
+DIH_1234 = 39.4905248514
 
 
 def expected_dir_data():
@@ -172,13 +194,22 @@ class TestReadFirstRow(unittest.TestCase):
         self.assertIsNone(read_csv_header(EMPTY_CSV))
 
 
-class TestCreateOutFname(unittest.TestCase):
+class TestFnameManipulation(unittest.TestCase):
     def testOutFname(self):
         """
         Check for prefix addition.
         """
         self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
             os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
+    def testGetRootName(self):
+        """
+        Check for prefix addition.
+        """
+        root_name = get_fname_root(ORIG_WHAM_PATH)
+        self.assertEqual(root_name, ORIG_WHAM_ROOT)
+        self.assertNotEqual(root_name, ORIG_WHAM_FNAME)
+        self.assertNotEqual(root_name, ORIG_WHAM_PATH)
 
 
 class TestReadCsvDict(unittest.TestCase):
@@ -290,31 +321,39 @@ class TestFormatData(unittest.TestCase):
 
 class TestDiffLines(unittest.TestCase):
     def testSameFile(self):
-        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_BASE_FILE))
 
     def testMachinePrecDiff(self):
-        self.assertFalse(diff_lines(GOOD_OH_DIST_OUT_PATH, ALMOST_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_PREC_DIFF))
 
     def testMachinePrecDiff2(self):
-        self.assertFalse(diff_lines(ALMOST_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH))
+        self.assertFalse(diff_lines(DIFF_LINES_PREC_DIFF, DIFF_LINES_BASE_FILE))
 
     def testDiff(self):
-        diffs = diff_lines(NOT_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        diffs = diff_lines(DIFF_LINES_ONE_VAL_DIFF, DIFF_LINES_BASE_FILE)
         self.assertEquals(len(diffs), 2)
-        self.assertTrue("1.2132" in diffs[0])
 
     def testDiffColNum(self):
-        diff_list_line = diff_lines(MISS_COL_OH_DIST_OUT_PATH, GOOD_OH_DIST_OUT_PATH)
+        diff_list_line = diff_lines(DIFF_LINES_MISS_VAL, DIFF_LINES_BASE_FILE)
         self.assertEquals(len(diff_list_line), 2)
 
     def testMissLine(self):
-        diff_line_list = diff_lines(GOOD_OH_DIST_OUT_PATH, MISS_LINE_OH_DIST_OUT_PATH)
+        diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, MISS_LINES_MISS_LINE)
         self.assertEquals(len(diff_line_list), 1)
         self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])
 
     def testDiffOrd(self):
         diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" ")
         self.assertEquals(13, len(diff_line_list))
+
+    def testDiffOneNan(self):
+        diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_ONE_NAN)
+        self.assertEquals(2, len(diff_line_list))
+
+    def testDiffBothNanPrecDiff(self):
+        # make there also be a precision difference so the entry-by-entry comparison will be made
+        diff_line_list = diff_lines(DIFF_LINES_ONE_NAN_PREC_DIFF, DIFF_LINES_ONE_NAN)
+        self.assertFalse(diff_line_list)
 
 
 class TestQuoteDeQuote(unittest.TestCase):
@@ -361,13 +400,27 @@ class TestConversions(unittest.TestCase):
 
 class TestVectorPBCMath(unittest.TestCase):
     def testSubtractInSameImage(self):
-        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
+        self.assertTrue(np.allclose(pbc_calc_vector(VEC_1, VEC_2, PBC_BOX), VEC_21))
+        self.assertTrue(np.allclose(pbc_calc_vector(VEC_3, VEC_2, PBC_BOX), VEC_23))
+        self.assertFalse(np.allclose(pbc_calc_vector(VEC_3, VEC_2, PBC_BOX), VEC_21))
+        self.assertTrue(np.allclose(pbc_calc_vector(A_VEC, B_VEC, PBC_BOX), GOOD_A_MINUS_B))
 
     def testSubtractInDiffImages(self):
-        self.assertTrue(np.allclose(pbc_vector_diff(A_VEC, C_VEC, PBC_BOX), GOOD_A_MINUS_C))
+        self.assertTrue(np.allclose(pbc_calc_vector(A_VEC, C_VEC, PBC_BOX), GOOD_A_MINUS_C))
 
     def testAvgInSameImage(self):
         self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, B_VEC, PBC_BOX), GOOD_A_B_AVG))
 
     def testAvgInDiffImages(self):
         self.assertTrue(np.allclose(pbc_vector_avg(A_VEC, C_VEC, PBC_BOX), GOOD_A_C_AVG))
+
+    def testUnitVector(self):
+        test_unit_vec = unit_vector(VEC_3)
+        self.assertTrue(np.allclose(test_unit_vec, UNIT_VEC_3))
+        self.assertFalse(np.allclose(test_unit_vec, VEC_1))
+
+    def testAngle(self):
+        self.assertAlmostEqual(vec_angle(VEC_21, VEC_23), ANGLE_123)
+
+    def testDihedral(self):
+        self.assertAlmostEqual(vec_dihedral(VEC_21, VEC_23, VEC_34), DIH_1234)

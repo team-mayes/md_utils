@@ -10,7 +10,7 @@ from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silen
 import logging
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -37,9 +37,7 @@ OH_DIST_INI = os.path.join(SUB_DATA_DIR, 'hydroxyl_oh_dist.ini')
 DEF_OUT = os.path.join(SUB_DATA_DIR, 'glue_sum.csv')
 GOOD_OH_DIST_OUT = os.path.join(SUB_DATA_DIR, 'glue_oh_dist_good.csv')
 
-OH_DIST_INI2 = os.path.join(SUB_DATA_DIR, 'lammps_proc_glu.ini')
-
-
+EMPTY_LIST_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_empty_list.ini')
 MISS_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_missing_dump.ini')
 BAD_DUMP_INI = os.path.join(SUB_DATA_DIR, 'lammps_proc_data_bad_dump.ini')
 INCOMP_GOFR_INI_PATH = os.path.join(SUB_DATA_DIR, 'hstar_o_gofr_missing_delta_r.ini')
@@ -76,10 +74,38 @@ HIJ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij.ini')
 HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_sum.csv')
 GOOD_HIJ_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_proc_data_good.csv')
 
-HIJ_ALT_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_alt.ini')
+WAT_HYD_INI = os.path.join(SUB_DATA_DIR, 'calc_wat_hyd.ini')
+GOOD_WAT_HYD_OUT = os.path.join(SUB_DATA_DIR, 'glu_prot_deprot_wat_hyd_good.csv')
+
+HIJ_ARQ_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq.ini')
 # noinspection PyUnresolvedReferences
-HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
-GOOD_HIJ_ALT_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_proc_data_good.csv')
+HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_sum.csv')
+GOOD_HIJ_ARQ_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_arq_good.csv')
+
+HIJ_NEW_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new.ini')
+GOOD_HIJ_NEW_OUT = os.path.join(SUB_DATA_DIR, 'glue_revised_new_hij_good.csv')
+
+HIJ_NEW_GLU2_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_glu_arq_new.ini')
+HIJ_NEW_GLU2_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_sum.csv')
+GOOD_HIJ_NEW_GLU2_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_sum_good.csv')
+
+HIJ_NEW_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_missing_param.ini')
+HIJ_NEW_NONFLOAT_PARAM_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq_new_non_float_param.ini')
+
+CALC_GLU_PROPS_INI = os.path.join(SUB_DATA_DIR, 'calc_glu_props.ini')
+GOOD_GLU_PROPS_OUT = os.path.join(SUB_DATA_DIR, 'gluprot10_10no_evb_oco_good.csv')
+
+COMBINE_CEC_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist.ini')
+COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
+GOOD_COMBINE_CEC_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum_good.csv')
+
+COMBINE_CEC_MULTI_FILE_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_multifile.ini')
+COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum.csv')
+GOOD_COMBINE_CEC_MULTI_FILE_OUT = os.path.join(SUB_DATA_DIR, 'gluprot1min_dump_sum_good.csv')
+
+COMBINE_CEC_ONLY_STEPS_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_restrict_timesteps.ini')
+COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
+GOOD_COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_restrict_timestep_good.csv')
 
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
@@ -104,15 +130,17 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testInvalidData(self):
-        with capture_stderr(main, ["-c", INVALID_INI]) as output:
+        test_input = ["-c", INVALID_INI]
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("Problem with config vals on key h3o_o_type: invalid literal for int" in output)
-        with capture_stdout(main, ["-c", INVALID_INI]) as output:
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testNoAction(self):
-        with capture_stderr(main, ["-c", NO_ACTION_INI_PATH]) as output:
+        test_input = ["-c", NO_ACTION_INI_PATH]
+        with capture_stderr(main, test_input) as output:
             self.assertTrue("No calculations have been requested" in output)
-        with capture_stdout(main, ["-c", NO_ACTION_INI_PATH]) as output:
+        with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
     def testMissDump(self):
@@ -178,22 +206,37 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
             self.assertTrue(WAT_H_TYPE in output)
             self.assertTrue("no such atoms were found" in output)
 
+    def testEmptyList(self):
+        test_input = ["-c", EMPTY_LIST_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Found no dump files to process" in output)
+
+    def testMissNewHIJMissingParam(self):
+        test_input = ["-c", HIJ_NEW_MISS_PARAM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Missing input value for key" in output)
+
+    def testMissNewHIJNonfloatParam(self):
+        test_input = ["-c", HIJ_NEW_NONFLOAT_PARAM_INI]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Require float inputs for keys" in output)
+
 
 class TestLammpsProcData(unittest.TestCase):
     def testOHDist(self):
+        num = 12
+        print(isinstance(num, float))
         try:
             main(["-c", OH_DIST_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_OH_DIST_OUT))
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-
-    def testOHDist2(self):
-        try:
-            main(["-c", OH_DIST_INI2])
-            # self.assertFalse(diff_lines(DEF_OUT, GOOD_OH_DIST_OUT))
-        finally:
-            # silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
-            pass
 
     def testMaxTimestepsCalcHIJ(self):
         try:
@@ -203,16 +246,24 @@ class TestLammpsProcData(unittest.TestCase):
         finally:
             silent_remove(HIJ_OUT, disable=DISABLE_REMOVE)
 
-    def testHIJAlt(self):
+    def testMaxTimestepsCalcWatHyd(self):
         try:
-            test_input = ["-c", HIJ_ALT_INI]
+            main(["-c", WAT_HYD_INI])
+            self.assertFalse(diff_lines(HIJ_OUT, GOOD_WAT_HYD_OUT))
+        finally:
+            silent_remove(HIJ_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArq(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_ARQ_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("did not have the full list of atom numbers" in output)
-            self.assertFalse(diff_lines(HIJ_ALT_OUT, GOOD_HIJ_ALT_OUT))
+            self.assertFalse(diff_lines(HIJ_ARQ_OUT, GOOD_HIJ_ARQ_OUT))
         finally:
-            silent_remove(HIJ_ALT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(HIJ_ARQ_OUT, disable=DISABLE_REMOVE)
 
     def testIncompDump(self):
         try:
@@ -267,3 +318,60 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(DEF_MAX_STEPS_OUT, GOOD_HO_OO_HH_OH_GOFR_OUT_MAX_STEPS))
         finally:
             silent_remove(DEF_MAX_STEPS_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArqNew(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_NEW_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(HIJ_ARQ_OUT, GOOD_HIJ_NEW_OUT))
+        finally:
+            silent_remove(HIJ_ARQ_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArqNew2(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_NEW_GLU2_INI, "-p"]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            # because i've turned off printing, there should be no output
+            with capture_stdout(main, test_input) as output:
+                self.assertFalse(output)
+            self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_HIJ_NEW_GLU2_OUT))
+        finally:
+            silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)
+
+    def testCalcProps(self):
+        try:
+            test_input = ["-c", CALC_GLU_PROPS_INI, "-p"]
+            main(test_input)
+            self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_GLU_PROPS_OUT))
+        finally:
+            silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCEC(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("Did not find 'timestep' value" in output)
+            self.assertFalse(diff_lines(COMBINE_CEC_OUT, GOOD_COMBINE_CEC_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCECMultifile(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_MULTI_FILE_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(COMBINE_CEC_MULTI_FILE_OUT, GOOD_COMBINE_CEC_MULTI_FILE_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_MULTI_FILE_OUT, disable=DISABLE_REMOVE)
+
+    def testCombineCECRestrictTimesteps(self):
+        try:
+            test_input = ["-c", COMBINE_CEC_ONLY_STEPS_INI]
+            main(test_input)
+            self.assertFalse(diff_lines(COMBINE_CEC_ONLY_STEPS_OUT, GOOD_COMBINE_CEC_ONLY_STEPS_OUT))
+        finally:
+            silent_remove(COMBINE_CEC_ONLY_STEPS_OUT, disable=DISABLE_REMOVE)

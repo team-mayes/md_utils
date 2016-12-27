@@ -1,0 +1,4 @@
+tests/test_data/evb_info/glu_2.4_1.275test.evb
+tests/test_data/evb_info/glu_2.4_1.4test.evb
+tests/test_data/evb_info/glu_2.5_1.05test.evb
+tests/test_data/evb_info/glu_2.5_1.5test.evb

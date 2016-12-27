@@ -1,0 +1,3 @@
+tests/test_data/cp2k_files/0.750_20c_100ps_reorder_555260.dat
+tests/test_data/cp2k_files/1.000_20c_100ps_reorder_485050.dat
+tests/test_data/cp2k_files/1.125_20c_100ps_reorder_562260.dat

@@ -1,0 +1,5 @@
+tests/test_data/lammps_proc/gluprot1min_-5test.dump
+tests/test_data/lammps_proc/gluprot1min_-4test.dump
+tests/test_data/lammps_proc/gluprot1min_-3test.dump
+tests/test_data/lammps_proc/gluprot1min_-2test.dump
+tests/test_data/lammps_proc/gluprot1min_-1test.dump

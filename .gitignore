@@ -82,3 +82,4 @@ tests/test_data/lammps_proc/glue_dump_incomp_gofrs.csv
 tests/reproduced_tpl.data
 tests/test_data/evbd2d/0.625_20c_reorder_retype_548990.data
 tests/test_data/cp2k_files/REF_15_2_502000
+tests/test_data/converge_evb_par/conv_evb_test.ini
