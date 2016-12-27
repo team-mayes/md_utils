@@ -62,6 +62,7 @@ setup(
                                       'psf_edit = md_utils.psf_edit:main',
                                       'press_dups = md_utils.press_dups:main',
                                       'proc_plumed_cv = md_utils.proc_plumed_cv:main',
+                                      'rename_files = md_utils.rename_files:main',
                                       'wham_block = md_utils.wham_block:main',
                                       'wham_rad = md_utils.wham_rad:main',
                                       'wham_split = md_utils.wham_split:main',
