@@ -20,7 +20,7 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
-                                list_to_file, file_rows_to_list)
+                                list_to_file, file_rows_to_list, create_element_dict)
 
 __author__ = 'hmayes'
 
@@ -40,7 +40,8 @@ MAIN_SEC = 'main'
 DATA_TPL_FILE = 'data_tpl_file'
 CP2K_LIST_FILE = 'cp2k_list_file'
 CP2K_FILE = 'cp2k_file'
-
+XYZ_FILE_SUF = 'xyz_file_suffix'
+PRINT_XYZ_FLAG = 'print_xyz_files'
 
 # data file info
 
@@ -51,9 +52,10 @@ BOX_PAT = re.compile(r".*xhi")
 
 # Defaults
 DEF_CFG_FILE = 'cp2k2data.ini'
+ELEMENT_DICT_FILE = os.path.join(os.path.dirname(__file__), 'cfg', 'charmm36_atoms_elements.txt')
 # Set notation
-DEF_CFG_VALS = {CP2K_LIST_FILE: 'cp2k_files.txt',
-                CP2K_FILE: None,
+DEF_CFG_VALS = {CP2K_LIST_FILE: 'cp2k_files.txt', CP2K_FILE: None,
+                PRINT_XYZ_FLAG: False, XYZ_FILE_SUF: '.xyz',
                 }
 REQ_KEYS = {DATA_TPL_FILE: str,
             }
@@ -133,14 +135,17 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_coords(cp2k_file, data_tpl_content):
+def process_coords(cp2k_file, data_tpl_content, print_xyz_flag, element_dict):
     """
     Creates the new atoms section based on coordinates from the cp2k file
+    @param print_xyz_flag: boolean to make xyz files
+    @param element_dict: a dictionary of MM types to atomic elements
     @param cp2k_file: file being read
     @param data_tpl_content: data from the template file
     @return: new atoms section, with replaced coordinates
     """
     new_atoms = list(data_tpl_content[ATOMS_CONTENT])
+    atoms_xyz = []
     atom_count = 0
     atom_num = 0
     for line in cp2k_file:
@@ -150,13 +155,18 @@ def process_coords(cp2k_file, data_tpl_content):
                                    "coordinates for {} atoms before encountering a blank line."
                                    "".format(atom_num, data_tpl_content[NUM_ATOMS]))
         atom_num = int(split_line[0])
-        new_atoms[atom_count][4:7] = map(float, split_line[3:6])
+        xyz_coords = map(float, split_line[3:6])
+        new_atoms[atom_count][4:7] = xyz_coords
+        if print_xyz_flag:
+            charmm_type = new_atoms[atom_count][8].strip(',')
+            element_type = element_dict[charmm_type]
+            atoms_xyz.append([element_type] + xyz_coords)
         atom_count += 1
         if atom_num == data_tpl_content[NUM_ATOMS]:
             # If that is the end of the atoms, the next line should be blank
             line = next(cp2k_file).strip()
             if len(line) == 0:
-                return new_atoms
+                return new_atoms, atoms_xyz
             else:
                 raise InvalidDataError("After reading the number of atoms found in the template data file "
                                        "({}), did not encounter a blank line, but: {}"
@@ -166,8 +176,10 @@ def process_coords(cp2k_file, data_tpl_content):
                                                                                        cp2k_file.name))
 
 
-def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname):
+def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname, print_xyz_flag, xyz_suffix, element_dict):
     new_atoms_section = None
+    qmmm_energy = None
+    atoms_xyz = None
     with open(cp2k_file) as f:
         data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
                                             "cp2k output file {}".format(datetime.now(), __name__, __version__,
@@ -181,7 +193,7 @@ def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname):
                 # Now advance to first line of coordinates
                 for _ in range(3):
                     next(f)
-                new_atoms_section = process_coords(f, data_tpl_content)
+                new_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, print_xyz_flag, element_dict)
 
     # If we successfully returned the new_atoms_section, make new file
     if new_atoms_section is None:
@@ -190,6 +202,9 @@ def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname):
     f_name = create_out_fname(cp2k_file, ext='.data')
     list_to_file(data_tpl_content[HEAD_CONTENT] + new_atoms_section + data_tpl_content[TAIL_CONTENT],
                  f_name, print_message=False)
+    if print_xyz_flag:
+        f_name = create_out_fname(cp2k_file, ext=xyz_suffix)
+        list_to_file(atoms_xyz, f_name, print_message=False)
 
 
 def main(argv=None):
@@ -203,8 +218,10 @@ def main(argv=None):
 
     try:
         data_tpl_content = process_data_tpl(cfg)
+        element_dict = create_element_dict(ELEMENT_DICT_FILE, pdb_dict=False)
         for cp2k_file in cfg[CP2K_FILES]:
-            process_cp2k_file(cp2k_file, data_tpl_content, cfg[DATA_TPL_FILE])
+            process_cp2k_file(cp2k_file, data_tpl_content, cfg[DATA_TPL_FILE], cfg[PRINT_XYZ_FLAG], cfg[XYZ_FILE_SUF],
+                              element_dict)
 
     except IOError as e:
         warning("Problems reading file:", e)

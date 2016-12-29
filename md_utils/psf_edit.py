@@ -244,7 +244,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
                         atoms_for_vmd.append(atom_num - 1)
 
                 if cfg[PRINT_FOR_CP2K]:
-                    types_for_mm_kind.add(atom_type)
+                    types_for_mm_kind.add(charmm_type)
 
                 if len(psf_data[ATOMS_CONTENT]) == num_atoms:
                     section = SEC_TAIL
@@ -279,6 +279,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
         f_name = create_out_fname('mm_kinds.dat', base_dir=cfg[OUT_BASE_DIR])
         print_mode = "w"
 
+        types_for_mm_kind = sorted(types_for_mm_kind)
         for atom_type in types_for_mm_kind:
             try:
                 print_mm_kind(atom_type, radii_dict[atom_type], f_name, mode=print_mode)
