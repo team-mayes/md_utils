@@ -1,0 +1,2 @@
+tests/test_data/cp2k_proc/glu_2.5_1.0.out
+tests/test_data/cp2k_proc/glu_3.0_1.075.out

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Given a template data file, will make new data files populating the xyz coordinates with xyz coordinates from the
-cp2k output file
+Get information from cp2k output files, such as coordinates and final QMMM energy.
+Given a template data or pdb file, it will make new files with the xyz coordinates from the cp2k output file
 """
 
 from __future__ import print_function
@@ -12,6 +12,7 @@ import re
 import sys
 from datetime import datetime
 from md_utils.data2data import process_data_tpl
+from md_utils.data2pdb import process_pdb_tpl
 
 try:
     # noinspection PyCompatibility
@@ -38,6 +39,7 @@ MAIN_SEC = 'main'
 
 # Config keys
 DATA_TPL_FILE = 'data_tpl_file'
+PDB_TPL_FILE = 'pdb_tpl_file'
 CP2K_LIST_FILE = 'cp2k_list_file'
 CP2K_FILE = 'cp2k_file'
 XYZ_FILE_SUF = 'xyz_file_suffix'
@@ -51,14 +53,14 @@ NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
 BOX_PAT = re.compile(r".*xhi")
 
 # Defaults
-DEF_CFG_FILE = 'cp2k2data.ini'
+DEF_CFG_FILE = 'cp2k_proc.ini'
 ELEMENT_DICT_FILE = os.path.join(os.path.dirname(__file__), 'cfg', 'charmm36_atoms_elements.txt')
 # Set notation
 DEF_CFG_VALS = {CP2K_LIST_FILE: 'cp2k_files.txt', CP2K_FILE: None,
+                DATA_TPL_FILE: None, PDB_TPL_FILE: None,
                 PRINT_XYZ_FLAG: False, XYZ_FILE_SUF: '.xyz',
                 }
-REQ_KEYS = {DATA_TPL_FILE: str,
-            }
+REQ_KEYS = {}
 
 # From data template file
 NUM_ATOMS = 'num_atoms'
@@ -110,10 +112,10 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates data files from cp2k output files in the format of a '
-                                                 'template data file. The required input file provides the location '
-                                                 'of the template file along with a file with a list of files to '
-                                                 'convert and/or a single file to convert.')
+    parser = argparse.ArgumentParser(description='Gathers data from cp2k output files, such as final system energy and '
+                                                 'xyz coordinates. Options in the configuration file can lead to '
+                                                 'creating data, pdb, or xyz files with the coordinates from the '
+                                                 'cp2k output file.')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
@@ -144,47 +146,78 @@ def process_coords(cp2k_file, data_tpl_content, print_xyz_flag, element_dict):
     @param data_tpl_content: data from the template file
     @return: new atoms section, with replaced coordinates
     """
-    new_atoms = list(data_tpl_content[ATOMS_CONTENT])
+    if data_tpl_content is None:
+        make_data_file = False
+        new_atoms = []
+    else:
+        make_data_file = True
+        new_atoms = list(data_tpl_content[ATOMS_CONTENT])
+
     atoms_xyz = []
     atom_count = 0
     atom_num = 0
     for line in cp2k_file:
         split_line = line.split()
         if len(split_line) == 0:
-            raise InvalidDataError("Encountered an empty line after reading {} atoms. Expected to read "
-                                   "coordinates for {} atoms before encountering a blank line."
-                                   "".format(atom_num, data_tpl_content[NUM_ATOMS]))
+            if make_data_file:
+                # If there was a data file, should separately catch the end of the section (see below). Otherwise,
+                # all is fine and return data
+                raise InvalidDataError("Encountered an empty line after reading {} atoms. Expected to read "
+                                       "coordinates for {} atoms before encountering a blank line."
+                                       "".format(atom_num, data_tpl_content[NUM_ATOMS]))
+            else:
+                return new_atoms, atoms_xyz
         atom_num = int(split_line[0])
         xyz_coords = map(float, split_line[3:6])
-        new_atoms[atom_count][4:7] = xyz_coords
+        if make_data_file:
+            new_atoms[atom_count][4:7] = xyz_coords
         if print_xyz_flag:
-            charmm_type = new_atoms[atom_count][8].strip(',')
-            element_type = element_dict[charmm_type]
-            atoms_xyz.append([element_type] + xyz_coords)
-        atom_count += 1
-        if atom_num == data_tpl_content[NUM_ATOMS]:
-            # If that is the end of the atoms, the next line should be blank
-            line = next(cp2k_file).strip()
-            if len(line) == 0:
-                return new_atoms, atoms_xyz
+            if make_data_file:
+                charmm_type = new_atoms[atom_count][8].strip(',')
+                element_type = element_dict[charmm_type]
+                atoms_xyz.append([element_type] + xyz_coords)
             else:
-                raise InvalidDataError("After reading the number of atoms found in the template data file "
-                                       "({}), did not encounter a blank line, but: {}"
-                                       "".format(data_tpl_content[NUM_ATOMS], line))
+                atoms_xyz.append([split_line[3]] + xyz_coords)
+        atom_count += 1
+
+        if make_data_file:
+            if atom_num == data_tpl_content[NUM_ATOMS]:
+                # If that is the end of the atoms, the next line should be blank
+                line = next(cp2k_file).strip()
+                if len(line) == 0:
+                    return new_atoms, atoms_xyz
+                else:
+                    raise InvalidDataError("After reading the number of atoms found in the template data file "
+                                           "({}), did not encounter a blank line, but: {}"
+                                           "".format(data_tpl_content[NUM_ATOMS], line))
+
     # if went through even line and didn't get all the atoms, catch the error
     raise InvalidDataError("Did not read coordinates from {} atoms in file: {}".format(data_tpl_content[NUM_ATOMS],
                                                                                        cp2k_file.name))
 
 
-def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname, print_xyz_flag, xyz_suffix, element_dict):
+def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element_dict):
+    """
+    Gather info from CP2K output file and update xyz data if needed
+    @param cfg: confirmation for the run
+    @param cp2k_file: the file to open
+    @param data_tpl_content: list of lists
+    @param pdb_tpl_content: list of lists
+    @param element_dict: element dictionary for making xyz files
+    @return: xyz coordinates info in data, pdb, and xyz formats (as needed)
+    """
     new_atoms_section = None
+    if data_tpl_content is None:
+        make_data_file = False
+    else:
+        make_data_file = True
     qmmm_energy = None
     atoms_xyz = None
     with open(cp2k_file) as f:
-        data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
-                                            "cp2k output file {}".format(datetime.now(), __name__, __version__,
-                                                                         data_template_fname, cp2k_file
-                                                                         )
+        if make_data_file:
+            data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
+                                                "cp2k output file {}".format(datetime.now(), __name__, __version__,
+                                                                             cfg[DATA_TPL_FILE], cp2k_file)
         for line in f:
             line = line.strip()
             if ENERGY_PAT.match(line):
@@ -193,17 +226,18 @@ def process_cp2k_file(cp2k_file, data_tpl_content, data_template_fname, print_xy
                 # Now advance to first line of coordinates
                 for _ in range(3):
                     next(f)
-                new_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, print_xyz_flag, element_dict)
+                new_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, cfg[PRINT_XYZ_FLAG], element_dict)
 
     # If we successfully returned the new_atoms_section, make new file
     if new_atoms_section is None:
         raise InvalidDataError("Did not file atoms coordinates in file: {}".format(cp2k_file))
     print("{} energy: {}".format(cp2k_file, qmmm_energy))
-    f_name = create_out_fname(cp2k_file, ext='.data')
-    list_to_file(data_tpl_content[HEAD_CONTENT] + new_atoms_section + data_tpl_content[TAIL_CONTENT],
-                 f_name, print_message=False)
-    if print_xyz_flag:
-        f_name = create_out_fname(cp2k_file, ext=xyz_suffix)
+    if make_data_file:
+        f_name = create_out_fname(cp2k_file, ext='.data')
+        list_to_file(data_tpl_content[HEAD_CONTENT] + new_atoms_section + data_tpl_content[TAIL_CONTENT],
+                     f_name, print_message=False)
+    if cfg[PRINT_XYZ_FLAG]:
+        f_name = create_out_fname(cp2k_file, ext=cfg[XYZ_FILE_SUF])
         list_to_file(atoms_xyz, f_name, print_message=False)
 
 
@@ -217,11 +251,19 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        data_tpl_content = process_data_tpl(cfg)
+        if cfg[PDB_TPL_FILE] is None:
+            pdb_tpl_content = None
+        else:
+            pdb_tpl_content = process_pdb_tpl(cfg)
+        if cfg[DATA_TPL_FILE] is None:
+            data_tpl_content = None
+        else:
+            data_tpl_content = process_data_tpl(cfg)
+
         element_dict = create_element_dict(ELEMENT_DICT_FILE, pdb_dict=False)
+
         for cp2k_file in cfg[CP2K_FILES]:
-            process_cp2k_file(cp2k_file, data_tpl_content, cfg[DATA_TPL_FILE], cfg[PRINT_XYZ_FLAG], cfg[XYZ_FILE_SUF],
-                              element_dict)
+            process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element_dict)
 
     except IOError as e:
         warning("Problems reading file:", e)

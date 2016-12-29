@@ -1,4 +1,4 @@
-Created on 2016-12-25 14:40:59.917033 by md_utils.cp2k2data version 0.15.0 from template file tests/test_data/cp2k2data/glue_revised.data and cp2k output file tests/test_data/cp2k2data/glu_3.0_1.075.out
+Created on 2016-12-25 14:40:59.917033 by md_utils.cp2k_proc version 0.15.0 from template file tests/test_data/cp2k_proc/glue_revised.data and cp2k output file tests/test_data/cp2k_proc/glu_3.0_1.075.out
 
 1429  atoms
 961  bonds

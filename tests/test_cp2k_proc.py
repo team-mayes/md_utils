@@ -2,7 +2,7 @@ import logging
 import unittest
 import os
 
-from md_utils.cp2k2data import main
+from md_utils.cp2k_proc import main
 from md_utils.md_common import (diff_lines, silent_remove, capture_stderr, capture_stdout)
 
 # logging.basicConfig(level=logging.DEBUG)
@@ -15,13 +15,15 @@ __author__ = 'hmayes'
 
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-SUB_DATA_DIR = os.path.join(DATA_DIR, 'cp2k2data')
+SUB_DATA_DIR = os.path.join(DATA_DIR, 'cp2k_proc')
 
 # For testing good input/output #
 
 ONE_FILE_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data.ini')
 GLU_DATA_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.data')
 GOOD_GLU_DATA_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.data')
+GLU_XYZ_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.xyz')
+GOOD_GLU_XYZ_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.xyz')
 
 MULT_FILE_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data_mult.ini')
 GLU_DATA_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.data')
@@ -37,7 +39,7 @@ NO_FILES_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_no_files.ini')
 MISSING_KEY_INI = os.path.join(SUB_DATA_DIR, 'bad_cp2k2data_missing_key.ini')
 
 
-class TestData2DataFailWell(unittest.TestCase):
+class TestCP2KProcFailWell(unittest.TestCase):
 
     def testNoDefault(self):
         test_input = []
@@ -81,15 +83,8 @@ class TestData2DataFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Found no file names to process" in output)
 
-    def testMissingKey(self):
-        test_input = ["-c", MISSING_KEY_INI]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Missing config val" in output)
 
-
-class TestCP2K2Data(unittest.TestCase):
+class TestCP2KProc(unittest.TestCase):
     def testHelpOption(self):
         test_input = ["-h"]
         with capture_stdout(main, test_input) as output:
@@ -97,25 +92,27 @@ class TestCP2K2Data(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertEqual(len(output), 0)
 
-    def testOneFile(self):
+    def testOneFileToDataXYZ(self):
         # When checking output, ignore differences in version and time
         try:
             main(["-c", ONE_FILE_INI])
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             self.assertEquals(len(diffs), 2)
             self.assertTrue("Created on " in diffs[0])
+            self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_GLU_XYZ_OUT))
         finally:
             silent_remove(GLU_DATA_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_XYZ_OUT, disable=DISABLE_REMOVE)
 
-    def testFileList(self):
+    def testFileListToData(self):
         try:
             silent_remove(GLU_DATA_OUT)
             test_input = ["-c", MULT_FILE_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
             with capture_stdout(main, test_input) as output:
-                self.assertTrue("tests/test_data/cp2k2data/glu_2.5_1.0.out energy: -283.342271788704181" in output)
-                self.assertTrue("tests/test_data/cp2k2data/glu_3.0_1.075.out energy: -472.455097972129295" in output)
+                self.assertTrue("tests/test_data/cp2k_proc/glu_2.5_1.0.out energy: -283.342271788704181" in output)
+                self.assertTrue("tests/test_data/cp2k_proc/glu_3.0_1.075.out energy: -472.455097972129295" in output)
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             diffs1 = diff_lines(GLU_DATA_OUT2, GOOD_GLU_DATA_OUT2)
             for diff_list in [diffs, diffs1]:
