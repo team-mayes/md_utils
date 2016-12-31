@@ -12,7 +12,6 @@ import re
 import sys
 from datetime import datetime
 from md_utils.data2data import process_data_tpl
-from md_utils.data2pdb import process_pdb_tpl
 
 try:
     # noinspection PyCompatibility
@@ -21,7 +20,8 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 from md_utils.md_common import (InvalidDataError, create_out_fname, warning, process_cfg,
-                                list_to_file, file_rows_to_list, create_element_dict)
+                                list_to_file, file_rows_to_list, create_element_dict,
+                                HEAD_CONTENT, ATOMS_CONTENT, TAIL_CONTENT, process_pdb_tpl, PDB_FORMAT)
 
 __author__ = 'hmayes'
 
@@ -62,12 +62,8 @@ DEF_CFG_VALS = {CP2K_LIST_FILE: 'cp2k_files.txt', CP2K_FILE: None,
                 }
 REQ_KEYS = {}
 
-# From data template file
+# From template files
 NUM_ATOMS = 'num_atoms'
-BOX_SIZE = 'box_size'
-HEAD_CONTENT = 'head_content'
-ATOMS_CONTENT = 'atoms_content'
-TAIL_CONTENT = 'tail_content'
 
 # For cp2k file processing
 CP2K_FILES = 'cp2k_file_list'
@@ -137,21 +133,36 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_coords(cp2k_file, data_tpl_content, print_xyz_flag, element_dict):
+def process_coords(cp2k_file, data_tpl_content, pdb_tpl_content, print_xyz_flag, element_dict):
     """
     Creates the new atoms section based on coordinates from the cp2k file
-    @param print_xyz_flag: boolean to make xyz files
-    @param element_dict: a dictionary of MM types to atomic elements
     @param cp2k_file: file being read
     @param data_tpl_content: data from the template file
+    @param pdb_tpl_content: data from template file
+    @param print_xyz_flag: boolean to make xyz files
+    @param element_dict: a dictionary of MM types to atomic elements
     @return: new atoms section, with replaced coordinates
     """
+    num_atoms = None
     if data_tpl_content is None:
         make_data_file = False
         new_atoms = []
     else:
         make_data_file = True
         new_atoms = list(data_tpl_content[ATOMS_CONTENT])
+        num_atoms = data_tpl_content[NUM_ATOMS]
+
+    if pdb_tpl_content is None:
+        make_pdb_file = False
+        new_pdb_atoms = []
+    else:
+        make_pdb_file = True
+        new_pdb_atoms = list(pdb_tpl_content[ATOMS_CONTENT])
+        if num_atoms is None:
+            num_atoms = pdb_tpl_content[NUM_ATOMS]
+        elif num_atoms != pdb_tpl_content[NUM_ATOMS]:
+            raise InvalidDataError("Number of atoms from data temple ({}) does not equal the number in the pdb "
+                                   "template ({})".format(data_tpl_content[NUM_ATOMS], pdb_tpl_content[NUM_ATOMS]))
 
     atoms_xyz = []
     atom_count = 0
@@ -159,33 +170,46 @@ def process_coords(cp2k_file, data_tpl_content, print_xyz_flag, element_dict):
     for line in cp2k_file:
         split_line = line.split()
         if len(split_line) == 0:
-            if make_data_file:
-                # If there was a data file, should separately catch the end of the section (see below). Otherwise,
-                # all is fine and return data
+            if num_atoms is None:
+                # if can't stop because we are looking for a certain number of atoms, need this criterion
+                return new_atoms, new_pdb_atoms, atoms_xyz
+            else:
+                # otherwise, should not be able to meet this criterion
                 raise InvalidDataError("Encountered an empty line after reading {} atoms. Expected to read "
                                        "coordinates for {} atoms before encountering a blank line."
-                                       "".format(atom_num, data_tpl_content[NUM_ATOMS]))
-            else:
-                return new_atoms, atoms_xyz
+                                       "".format(atom_num, num_atoms))
+
         atom_num = int(split_line[0])
         xyz_coords = map(float, split_line[3:6])
         if make_data_file:
             new_atoms[atom_count][4:7] = xyz_coords
+        if make_pdb_file:
+            new_pdb_atoms[atom_count][5:8] = xyz_coords
         if print_xyz_flag:
-            if make_data_file:
+            # needs an atom type. If reading a PDB, use that; else the data file; lastly the CP2K file itself
+            if make_pdb_file:
+                charmm_type = new_pdb_atoms[atom_count][2].strip()
+            elif make_data_file:
                 charmm_type = new_atoms[atom_count][8].strip(',')
-                element_type = element_dict[charmm_type]
-                atoms_xyz.append([element_type] + xyz_coords)
             else:
-                atoms_xyz.append([split_line[3]] + xyz_coords)
+                charmm_type = split_line[2]
+            try:
+                element_type = element_dict[charmm_type]
+            except KeyError:
+                warning("Did not find the element type for '{}'; printing this type in the xyz file."
+                        "".format(charmm_type))
+                # Now add to element dict so don't get the same error printed multiple times
+                element_dict[charmm_type] = charmm_type
+                element_type = charmm_type
+            atoms_xyz.append([element_type] + xyz_coords)
         atom_count += 1
 
-        if make_data_file:
-            if atom_num == data_tpl_content[NUM_ATOMS]:
+        if num_atoms is not None:
+            if atom_num == num_atoms:
                 # If that is the end of the atoms, the next line should be blank
                 line = next(cp2k_file).strip()
                 if len(line) == 0:
-                    return new_atoms, atoms_xyz
+                    return new_atoms, new_pdb_atoms, atoms_xyz
                 else:
                     raise InvalidDataError("After reading the number of atoms found in the template data file "
                                            "({}), did not encounter a blank line, but: {}"
@@ -206,14 +230,28 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
     @param element_dict: element dictionary for making xyz files
     @return: xyz coordinates info in data, pdb, and xyz formats (as needed)
     """
-    new_atoms_section = None
+    data_atoms_section = []
+    pdb_atoms_section = []
+
     if data_tpl_content is None:
         make_data_file = False
     else:
         make_data_file = True
+
+    if pdb_tpl_content is None:
+        make_pdb_file = False
+    else:
+        make_pdb_file = True
+
     qmmm_energy = None
     atoms_xyz = None
     with open(cp2k_file) as f:
+        if make_pdb_file:
+            pdb_tpl_content[HEAD_CONTENT][0] = "REMARK 450 Created on {} by {} version {}" \
+                                               "".format(datetime.now(), __name__, __version__)
+            pdb_tpl_content[HEAD_CONTENT][1] = "REMARK 450 from template {}".format(cfg[PDB_TPL_FILE])
+            pdb_tpl_content[HEAD_CONTENT][2] = "REMARK 450 and coordinates from {}".format(cp2k_file)
+
         if make_data_file:
             data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
                                                 "cp2k output file {}".format(datetime.now(), __name__, __version__,
@@ -226,16 +264,22 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
                 # Now advance to first line of coordinates
                 for _ in range(3):
                     next(f)
-                new_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, cfg[PRINT_XYZ_FLAG], element_dict)
+                data_atoms_section, pdb_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, pdb_tpl_content,
+                                                                                  cfg[PRINT_XYZ_FLAG], element_dict)
 
-    # If we successfully returned the new_atoms_section, make new file
-    if new_atoms_section is None:
+    # If we successfully returned the data_atoms_section, make new file
+    if (make_data_file and len(data_atoms_section) == 0) or (make_pdb_file and len(pdb_atoms_section) == 0
+                                                             ) or (cfg[PRINT_XYZ_FLAG] and len(atoms_xyz) == 0):
         raise InvalidDataError("Did not file atoms coordinates in file: {}".format(cp2k_file))
     print("{} energy: {}".format(cp2k_file, qmmm_energy))
     if make_data_file:
         f_name = create_out_fname(cp2k_file, ext='.data')
-        list_to_file(data_tpl_content[HEAD_CONTENT] + new_atoms_section + data_tpl_content[TAIL_CONTENT],
+        list_to_file(data_tpl_content[HEAD_CONTENT] + data_atoms_section + data_tpl_content[TAIL_CONTENT],
                      f_name, print_message=False)
+    if make_pdb_file:
+        f_name = create_out_fname(cp2k_file, ext='.pdb')
+        list_to_file(pdb_tpl_content[HEAD_CONTENT] + pdb_atoms_section + pdb_tpl_content[TAIL_CONTENT],
+                     f_name, list_format=PDB_FORMAT)
     if cfg[PRINT_XYZ_FLAG]:
         f_name = create_out_fname(cp2k_file, ext=cfg[XYZ_FILE_SUF])
         list_to_file(atoms_xyz, f_name, print_message=False)
@@ -254,7 +298,9 @@ def main(argv=None):
         if cfg[PDB_TPL_FILE] is None:
             pdb_tpl_content = None
         else:
-            pdb_tpl_content = process_pdb_tpl(cfg)
+            pdb_tpl_content = process_pdb_tpl(cfg[PDB_TPL_FILE])
+            # add new row at the beginning for remark
+            pdb_tpl_content[HEAD_CONTENT] = ["REMARK 450 "]*3 + pdb_tpl_content[HEAD_CONTENT]
         if cfg[DATA_TPL_FILE] is None:
             data_tpl_content = None
         else:

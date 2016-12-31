@@ -53,6 +53,12 @@ SEC_NUM_ATOMS = 'dump_num_atoms'
 SEC_BOX_SIZE = 'dump_box_size'
 SEC_ATOMS = 'atoms_section'
 
+# From template files
+NUM_ATOMS = 'num_atoms'
+HEAD_CONTENT = 'head_content'
+ATOMS_CONTENT = 'atoms_content'
+TAIL_CONTENT = 'tail_content'
+
 # Lammps-specific sections
 MASSES = 'Masses'
 PAIR_COEFFS = 'Pair Coeffs'
@@ -67,6 +73,17 @@ IMPR_COEFFS = 'Improper Coeffs'
 IMPRS = 'Impropers'
 LAMMPS_SECTION_NAMES = [MASSES, PAIR_COEFFS, ATOMS, BOND_COEFFS, BONDS, ANGLE_COEFFS, ANGLES,
                         DIHE_COEFFS, DIHES, IMPR_COEFFS, IMPRS]
+
+# PDB file info
+PDB_FORMAT = '{:s}{:s}{:s}{:s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:s}'
+PDB_LINE_TYPE_LAST_CHAR = 6
+PDB_ATOM_NUM_LAST_CHAR = 11
+PDB_ATOM_TYPE_LAST_CHAR = 17
+PDB_RES_TYPE_LAST_CHAR = 22
+PDB_MOL_NUM_LAST_CHAR = 28
+PDB_X_LAST_CHAR = 38
+PDB_Y_LAST_CHAR = 46
+PDB_Z_LAST_CHAR = 54
 
 # Error Codes
 # The good status code
@@ -1212,6 +1229,60 @@ def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_N
         return sec_box_size
     elif atoms_pat.match(line):
         return sec_atoms
+
+
+def process_pdb_tpl(tpl_loc):
+    tpl_data = {NUM_ATOMS: 0, HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
+
+    atom_id = 0
+
+    with open(tpl_loc) as f:
+        for line in f:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            line_head = line[:PDB_LINE_TYPE_LAST_CHAR]
+            # head_content to contain Everything before 'Atoms' section
+            # also capture the number of atoms
+            # match 5 letters so don't need to set up regex for the ones that have numbers following the letters
+            # noinspection SpellCheckingInspection
+            if line_head[:-1] in ['HEADE', 'TITLE', 'REMAR', 'CRYST', 'MODEL', 'COMPN',
+                                  'NUMMD', 'ORIGX', 'SCALE', 'SOURC', 'AUTHO', 'CAVEA',
+                                  'EXPDT', 'MDLTY', 'KEYWD', 'OBSLT', 'SPLIT', 'SPRSD',
+                                  'REVDA', 'JRNL ', 'DBREF', 'SEQRE', 'HET  ', 'HETNA',
+                                  'HETSY', 'FORMU', 'HELIX', 'SHEET', 'SSBON', 'LINK ',
+                                  'CISPE', 'SITE ', ]:
+                tpl_data[HEAD_CONTENT].append(line)
+
+            # atoms_content to contain everything but the xyz
+            elif line_head == 'ATOM  ':
+
+                # By renumbering, handles the case when a PDB template has ***** after atom_id 99999.
+                # For renumbering, making sure prints in the correct format, including num of characters:
+                atom_id += 1
+                if atom_id > 99999:
+                    atom_num = format(atom_id, 'x')
+                else:
+                    atom_num = '{:5d}'.format(atom_id)
+                # Alternately, use this:
+                # atom_num = line[cfg[PDB_LINE_TYPE_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
+
+                atom_type = line[PDB_ATOM_NUM_LAST_CHAR:PDB_ATOM_TYPE_LAST_CHAR]
+                res_type = line[PDB_ATOM_TYPE_LAST_CHAR:PDB_RES_TYPE_LAST_CHAR]
+                mol_num = int(line[PDB_RES_TYPE_LAST_CHAR:PDB_MOL_NUM_LAST_CHAR])
+                pdb_x = float(line[PDB_MOL_NUM_LAST_CHAR:PDB_X_LAST_CHAR])
+                pdb_y = float(line[PDB_X_LAST_CHAR:PDB_Y_LAST_CHAR])
+                pdb_z = float(line[PDB_Y_LAST_CHAR:PDB_Z_LAST_CHAR])
+                last_cols = line[PDB_Z_LAST_CHAR:]
+
+                line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+                tpl_data[ATOMS_CONTENT].append(line_struct)
+
+            # tail_content to contain everything after the 'Atoms' section
+            else:
+                tpl_data[TAIL_CONTENT].append(line)
+    tpl_data[NUM_ATOMS] = len(tpl_data[ATOMS_CONTENT])
+    return tpl_data
 
 
 def longest_common_substring(s1, s2):

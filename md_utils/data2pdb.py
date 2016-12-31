@@ -12,7 +12,9 @@ import logging
 import re
 import sys
 import argparse
-from md_utils.md_common import InvalidDataError, warning, process_cfg, create_out_fname, list_to_file
+from md_utils.md_common import (InvalidDataError, warning, process_cfg, create_out_fname, list_to_file, process_pdb_tpl,
+                                HEAD_CONTENT, ATOMS_CONTENT, TAIL_CONTENT, PDB_FORMAT, NUM_ATOMS)
+
 try:
     # noinspection PyCompatibility
     from ConfigParser import ConfigParser, MissingSectionHeaderError
@@ -47,16 +49,7 @@ DATA_FILES = 'data_files_list'
 DATA_FILE = 'data_file'
 ATOM_TYPE_DICT_FILE = 'atom_type_dict_file'
 CENTER_ATOM = 'center_to_atom_num'
-# PDB file info
-PDB_LINE_TYPE_LAST_CHAR = 'pdb_line_type_last_char'
-PDB_ATOM_NUM_LAST_CHAR = 'pdb_atom_num_last_char'
-PDB_ATOM_TYPE_LAST_CHAR = 'pdb_atom_type_last_char'
-PDB_RES_TYPE_LAST_CHAR = 'pdb_res_type_last_char'
-PDB_MOL_NUM_LAST_CHAR = 'pdb_mol_num_last_char'
-PDB_X_LAST_CHAR = 'pdb_x_last_char'
-PDB_Y_LAST_CHAR = 'pdb_y_last_char'
-PDB_Z_LAST_CHAR = 'pdb_z_last_char'
-PDB_FORMAT = 'pdb_print_format'
+
 LAST_PROT_ID = 'last_prot_atom'
 OUT_BASE_DIR = 'output_directory'
 MAKE_DICT_BOOL = 'make_dictionary_flag'
@@ -71,15 +64,6 @@ NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
 DEF_CFG_FILE = 'data2pdb.ini'
 # Set notation
 DEF_CFG_VALS = {DATA_FILES_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dict.json',
-                PDB_FORMAT: '{:s}{:s}{:s}{:s}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:s}',
-                PDB_LINE_TYPE_LAST_CHAR: 6,
-                PDB_ATOM_NUM_LAST_CHAR: 11,
-                PDB_ATOM_TYPE_LAST_CHAR: 17,
-                PDB_RES_TYPE_LAST_CHAR: 22,
-                PDB_MOL_NUM_LAST_CHAR: 28,
-                PDB_X_LAST_CHAR: 38,
-                PDB_Y_LAST_CHAR: 46,
-                PDB_Z_LAST_CHAR: 54,
                 LAST_PROT_ID: 0,
                 OUT_BASE_DIR: None,
                 MAKE_DICT_BOOL: False,
@@ -88,12 +72,6 @@ DEF_CFG_VALS = {DATA_FILES_FILE: 'data_list.txt', ATOM_TYPE_DICT_FILE: 'atom_dic
                 }
 REQ_KEYS = {PDB_TPL_FILE: str,
             }
-
-# From data template file
-NUM_ATOMS = 'num_atoms'
-HEAD_CONTENT = 'head_content'
-ATOMS_CONTENT = 'atoms_content'
-TAIL_CONTENT = 'tail_content'
 
 # For data template file processing
 SEC_HEAD = 'head_section'
@@ -161,66 +139,6 @@ def parse_cmdline(argv):
         return args, INPUT_ERROR
 
     return args, GOOD_RET
-
-
-def process_pdb_tpl(cfg):
-    tpl_loc = cfg[PDB_TPL_FILE]
-    tpl_data = {HEAD_CONTENT: [], ATOMS_CONTENT: [], TAIL_CONTENT: []}
-
-    atom_id = 0
-
-    with open(tpl_loc) as f:
-        for line in f:
-            line = line.strip()
-            if len(line) == 0:
-                continue
-            line_head = line[:cfg[PDB_LINE_TYPE_LAST_CHAR]]
-            # head_content to contain Everything before 'Atoms' section
-            # also capture the number of atoms
-            # match 5 letters so don't need to set up regex for the ones that have numbers following the letters
-            # noinspection SpellCheckingInspection
-            if line_head[:-1] in ['HEADE', 'TITLE', 'REMAR', 'CRYST', 'MODEL', 'COMPN',
-                                  'NUMMD', 'ORIGX', 'SCALE', 'SOURC', 'AUTHO', 'CAVEA',
-                                  'EXPDT', 'MDLTY', 'KEYWD', 'OBSLT', 'SPLIT', 'SPRSD',
-                                  'REVDA', 'JRNL ', 'DBREF', 'SEQRE', 'HET  ', 'HETNA',
-                                  'HETSY', 'FORMU', 'HELIX', 'SHEET', 'SSBON', 'LINK ',
-                                  'CISPE', 'SITE ', ]:
-                tpl_data[HEAD_CONTENT].append(line)
-
-            # atoms_content to contain everything but the xyz
-            elif line_head == 'ATOM  ':
-
-                # By renumbering, handles the case when a PDB template has ***** after atom_id 99999.
-                # For renumbering, making sure prints in the correct format, including num of characters:
-                atom_id += 1
-                if atom_id > 99999:
-                    atom_num = format(atom_id, 'x')
-                else:
-                    atom_num = '{:5d}'.format(atom_id)
-                # Alternately, use this:
-                # atom_num = line[cfg[PDB_LINE_TYPE_LAST_CHAR]:cfg[PDB_ATOM_NUM_LAST_CHAR]]
-
-                atom_type = line[cfg[PDB_ATOM_NUM_LAST_CHAR]:cfg[PDB_ATOM_TYPE_LAST_CHAR]]
-                res_type = line[cfg[PDB_ATOM_TYPE_LAST_CHAR]:cfg[PDB_RES_TYPE_LAST_CHAR]]
-                # There is already a try when calling the subroutine, so maybe I don't need to?
-                mol_num = int(line[cfg[PDB_RES_TYPE_LAST_CHAR]:cfg[PDB_MOL_NUM_LAST_CHAR]])
-                pdb_x = float(line[cfg[PDB_MOL_NUM_LAST_CHAR]:cfg[PDB_X_LAST_CHAR]])
-                pdb_y = float(line[cfg[PDB_X_LAST_CHAR]:cfg[PDB_Y_LAST_CHAR]])
-                pdb_z = float(line[cfg[PDB_Y_LAST_CHAR]:cfg[PDB_Z_LAST_CHAR]])
-                last_cols = line[cfg[PDB_Z_LAST_CHAR]:]
-
-                line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
-                tpl_data[ATOMS_CONTENT].append(line_struct)
-
-            # tail_content to contain everything after the 'Atoms' section
-            else:
-                tpl_data[TAIL_CONTENT].append(line)
-
-    if logger.isEnabledFor(logging.DEBUG):
-        f_name = create_out_fname('reproduced_tpl', ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
-        list_to_file(tpl_data[HEAD_CONTENT] + tpl_data[ATOMS_CONTENT] + tpl_data[TAIL_CONTENT],
-                     f_name, list_format=cfg[PDB_FORMAT])
-    return tpl_data
 
 
 def make_dict(cfg, data_tpl_content):
@@ -311,10 +229,9 @@ def process_data_files(cfg, data_tpl_content):
         process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content)
 
 
-def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content):
+def process_data_file(cfg, chk_atom_type, data_dict, data_file, pdb_tpl_content):
     with open(data_file) as d:
-        pdb_data_section = copy.deepcopy(data_tpl_content[ATOMS_CONTENT])
-        pdb_atom_num = len(pdb_data_section)
+        pdb_data_section = copy.deepcopy(pdb_tpl_content[ATOMS_CONTENT])
         section = SEC_HEAD
         atom_id = 0
         num_atoms = None
@@ -331,11 +248,11 @@ def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content
                     if atoms_match:
                         # regex is 1-based
                         num_atoms = int(atoms_match.group(1))
-                        if num_atoms != pdb_atom_num:
+                        if num_atoms != pdb_tpl_content[NUM_ATOMS]:
                             raise InvalidDataError("Mismatched numbers of atoms: \n"
                                                    "  Found {} atoms in file: {}\n"
                                                    "    and {} atoms in file: {}\n"
-                                                   "".format(pdb_atom_num, cfg[PDB_TPL_FILE],
+                                                   "".format(pdb_tpl_content[NUM_ATOMS], cfg[PDB_TPL_FILE],
                                                              num_atoms, data_file))
 
             # atoms_content to contain only xyz; also perform some checking
@@ -376,9 +293,8 @@ def process_data_file(cfg, chk_atom_type, data_dict, data_file, data_tpl_content
                 warning('Did not find data file atom type {} in the atom type dictionary {}'
                         ''.format(data_type, cfg[ATOM_TYPE_DICT_FILE]))
     f_name = create_out_fname(data_file, ext='.pdb', base_dir=cfg[OUT_BASE_DIR])
-    list_to_file(data_tpl_content[HEAD_CONTENT] + pdb_data_section + data_tpl_content[TAIL_CONTENT],
-                 f_name,
-                 list_format=cfg[PDB_FORMAT])
+    list_to_file(pdb_tpl_content[HEAD_CONTENT] + pdb_data_section + pdb_tpl_content[TAIL_CONTENT],
+                 f_name, list_format=PDB_FORMAT)
 
 
 def main(argv=None):
@@ -391,7 +307,7 @@ def main(argv=None):
 
     # Read template and data files
     try:
-        pdb_tpl_content = process_pdb_tpl(cfg)
+        pdb_tpl_content = process_pdb_tpl(cfg[PDB_TPL_FILE])
         # TODO: Test and use dictionary
         if cfg[MAKE_DICT_BOOL]:
             make_dict(cfg, pdb_tpl_content)

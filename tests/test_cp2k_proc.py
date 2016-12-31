@@ -19,15 +19,25 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'cp2k_proc')
 
 # For testing good input/output #
 
-ONE_FILE_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data.ini')
+ONE_2DATA_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data.ini')
 GLU_DATA_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.data')
 GOOD_GLU_DATA_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.data')
 GLU_XYZ_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.xyz')
 GOOD_GLU_XYZ_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.xyz')
 
-MULT_FILE_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data_mult.ini')
+MULT_2PDB_INI = os.path.join(SUB_DATA_DIR, 'cp2k2pdb.ini')
+GLU_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.pdb')
+GOOD_GLU_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.pdb')
+GLU_PDB_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.pdb')
+GOOD_GLU_PDB_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0_good.pdb')
+GLU_XYZ_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.xyz')
+
+MULT_2DATA_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data_mult.ini')
 GLU_DATA_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.data')
 GOOD_GLU_DATA_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0_good.data')
+
+XYZ_ONLY_INI = os.path.join(SUB_DATA_DIR, 'cp2k_proc.ini')
+GOOD_XYZ_ONLY_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_xyz_only_good.xyz')
 
 # For testing catching errors #
 
@@ -95,7 +105,7 @@ class TestCP2KProc(unittest.TestCase):
     def testOneFileToDataXYZ(self):
         # When checking output, ignore differences in version and time
         try:
-            main(["-c", ONE_FILE_INI])
+            main(["-c", ONE_2DATA_INI])
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             self.assertEquals(len(diffs), 2)
             self.assertTrue("Created on " in diffs[0])
@@ -107,7 +117,7 @@ class TestCP2KProc(unittest.TestCase):
     def testFileListToData(self):
         try:
             silent_remove(GLU_DATA_OUT)
-            test_input = ["-c", MULT_FILE_INI]
+            test_input = ["-c", MULT_2DATA_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
             with capture_stdout(main, test_input) as output:
@@ -121,3 +131,31 @@ class TestCP2KProc(unittest.TestCase):
         finally:
             silent_remove(GLU_DATA_OUT, disable=DISABLE_REMOVE)
             silent_remove(GLU_DATA_OUT2, disable=DISABLE_REMOVE)
+
+    def testMultFileToPDBXYZ(self):
+        # When checking output, ignore differences in version and time
+        try:
+            main(["-c", MULT_2PDB_INI])
+            diffs = diff_lines(GLU_PDB_OUT, GOOD_GLU_PDB_OUT)
+            diffs1 = diff_lines(GLU_PDB_OUT2, GOOD_GLU_PDB_OUT2)
+            for diff_list in [diffs, diffs1]:
+                self.assertEquals(len(diff_list), 2)
+                self.assertTrue("Created on " in diff_list[0])
+            self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_GLU_XYZ_OUT))
+        finally:
+            silent_remove(GLU_PDB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_PDB_OUT2, disable=DISABLE_REMOVE)
+            silent_remove(GLU_XYZ_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_XYZ_OUT2, disable=DISABLE_REMOVE)
+
+    def testXYZOnly(self):
+        # When checking output, ignore differences in version and time
+        try:
+            test_input = ["-c", XYZ_ONLY_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("Did not find the element type" in output)
+            self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_XYZ_ONLY_OUT))
+        finally:
+            silent_remove(GLU_XYZ_OUT, disable=DISABLE_REMOVE)
