@@ -279,7 +279,7 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
     if make_pdb_file:
         f_name = create_out_fname(cp2k_file, ext='.pdb')
         list_to_file(pdb_tpl_content[HEAD_CONTENT] + pdb_atoms_section + pdb_tpl_content[TAIL_CONTENT],
-                     f_name, list_format=PDB_FORMAT)
+                     f_name, list_format=PDB_FORMAT, print_message=False)
     if cfg[PRINT_XYZ_FLAG]:
         f_name = create_out_fname(cp2k_file, ext=cfg[XYZ_FILE_SUF])
         list_to_file(atoms_xyz, f_name, print_message=False)
