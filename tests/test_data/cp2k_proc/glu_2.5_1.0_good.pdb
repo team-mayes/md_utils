@@ -1,4 +1,4 @@
-REMARK 450 Created on 2016-12-30 14:17:48.696808 by md_utils.cp2k_proc version 0.15.0
+REMARK 450 Created on 2017-01-02 11:45:51.861496 by md_utils.cp2k_proc version 0.15.0
 REMARK 450 from template tests/test_data/cp2k_proc/glue_revised.pdb
 REMARK 450 and coordinates from tests/test_data/cp2k_proc/glu_2.5_1.0.out
 CRYST1 24.24938 24.24938 24.24938  90.00  90.00  90.00 P 1           1
@@ -31,8 +31,8 @@ ATOM     26  OE1 GLU P   1      11.350  11.075   8.312  1.00  0.00      P1   O
 ATOM     27  OE2 GLU P   1       9.450  10.643   9.377  1.00  0.00      P1   O
 ATOM     28  OH2 HYD S   2      10.755  10.479  11.502  1.00  0.00      O1   O
 ATOM     29  H1  HYD S   2      10.050  10.656  10.175  1.00  0.00      O1   H
-ATOM     30  H2  HYD S   2      10.141  10.326  12.237  1.00  0.00      O1   H
-ATOM     31  H3  HYD S   2      11.185  11.348  11.729  1.00  0.00      O1   H
+ATOM     30  H2  HYD S   2      10.121  10.328  12.273  1.00  0.00      O1   H
+ATOM     31  H3  HYD S   2      11.144  11.277  11.737  1.00  0.00      O1   H
 ATOM     32  OH2 TIP3S   3      17.059   3.901   5.157  1.00  0.00      W1   O
 ATOM     33  H1  TIP3S   3      18.032   4.169   4.995  1.00  0.00      W1   H
 ATOM     34  H2  TIP3S   3      16.637   4.547   5.861  1.00  0.00      W1   H

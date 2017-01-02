@@ -28,11 +28,14 @@ GOOD_GLU_XYZ_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.xyz')
 MULT_2PDB_INI = os.path.join(SUB_DATA_DIR, 'cp2k2pdb.ini')
 GLU_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075.pdb')
 GOOD_GLU_PDB_OUT = os.path.join(SUB_DATA_DIR, 'glu_3.0_1.075_good.pdb')
+GLU_PDB_OUT1 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.05-1.pdb')
 GLU_PDB_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.pdb')
 GOOD_GLU_PDB_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0_good.pdb')
+GLU_XYZ_OUT1 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.05-1.xyz')
 GLU_XYZ_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.xyz')
 
 MULT_2DATA_INI = os.path.join(SUB_DATA_DIR, 'cp2k2data_mult.ini')
+GLU_DATA_OUT1 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.05-1.data')
 GLU_DATA_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0.data')
 GOOD_GLU_DATA_OUT2 = os.path.join(SUB_DATA_DIR, 'glu_2.5_1.0_good.data')
 
@@ -118,11 +121,7 @@ class TestCP2KProc(unittest.TestCase):
         try:
             silent_remove(GLU_DATA_OUT)
             test_input = ["-c", MULT_2DATA_INI]
-            if logger.isEnabledFor(logging.DEBUG):
-                main(test_input)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("tests/test_data/cp2k_proc/glu_2.5_1.0.out energy: -283.342271788704181" in output)
-                self.assertTrue("tests/test_data/cp2k_proc/glu_3.0_1.075.out energy: -472.455097972129295" in output)
+            main(test_input)
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             diffs1 = diff_lines(GLU_DATA_OUT2, GOOD_GLU_DATA_OUT2)
             for diff_list in [diffs, diffs1]:
@@ -130,12 +129,18 @@ class TestCP2KProc(unittest.TestCase):
                 self.assertTrue("Created on " in diff_list[0])
         finally:
             silent_remove(GLU_DATA_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_DATA_OUT1, disable=DISABLE_REMOVE)
             silent_remove(GLU_DATA_OUT2, disable=DISABLE_REMOVE)
 
     def testMultFileToPDBXYZ(self):
         # When checking output, ignore differences in version and time
         try:
-            main(["-c", MULT_2PDB_INI])
+            test_input = ["-c", MULT_2PDB_INI]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue('"tests/test_data/cp2k_proc/glu_2.5_1.0.out",-283.341542,"False","False"' in output)
+                self.assertTrue('"tests/test_data/cp2k_proc/glu_2.5_1.05-1.out",-283.526959,"True","True"' in output)
             diffs = diff_lines(GLU_PDB_OUT, GOOD_GLU_PDB_OUT)
             diffs1 = diff_lines(GLU_PDB_OUT2, GOOD_GLU_PDB_OUT2)
             for diff_list in [diffs, diffs1]:
@@ -144,8 +149,10 @@ class TestCP2KProc(unittest.TestCase):
             self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_GLU_XYZ_OUT))
         finally:
             silent_remove(GLU_PDB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_PDB_OUT1, disable=DISABLE_REMOVE)
             silent_remove(GLU_PDB_OUT2, disable=DISABLE_REMOVE)
             silent_remove(GLU_XYZ_OUT, disable=DISABLE_REMOVE)
+            silent_remove(GLU_XYZ_OUT1, disable=DISABLE_REMOVE)
             silent_remove(GLU_XYZ_OUT2, disable=DISABLE_REMOVE)
 
     def testXYZOnly(self):
@@ -154,6 +161,9 @@ class TestCP2KProc(unittest.TestCase):
             test_input = ["-c", XYZ_ONLY_INI]
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue('"file_name","qmmm_energy","opt_complete","job_complete"\n'
+                                '"tests/test_data/cp2k_proc/glu_3.0_1.075.out",-472.455098,"NA","True"' in output)
             with capture_stderr(main, test_input) as output:
                 self.assertTrue("Did not find the element type" in output)
             self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_XYZ_ONLY_OUT))

@@ -10,6 +10,7 @@ import argparse
 import os
 import re
 import sys
+import numpy as np
 from datetime import datetime
 from md_utils.data2data import process_data_tpl
 
@@ -49,6 +50,10 @@ PRINT_XYZ_FLAG = 'print_xyz_files'
 
 COORD_PAT = re.compile(r".*MODULE FIST:  ATOMIC COORDINATES IN.*")
 ENERGY_PAT = re.compile(r".*ENERGY\| Total FORCE_EVAL \( QMMM \).*")
+OUTER_CONV_PAT = re.compile(r".*outer SCF loop converged.*")
+GEOM_OPT_RUN_PAT = re.compile(r".*Run type                                                        GEO_OPT.*")
+GEOM_OPT_COMPLETE_PAT = re.compile(r".*GEOMETRY OPTIMIZATION COMPLETED.*")
+REF_PAT = re.compile(r".*R E F E R E N C E S.*")
 NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
 BOX_PAT = re.compile(r".*xhi")
 
@@ -67,6 +72,10 @@ NUM_ATOMS = 'num_atoms'
 
 # For cp2k file processing
 CP2K_FILES = 'cp2k_file_list'
+FILE_NAME = 'file_name'
+QMMM_ENERGY = 'qmmm_energy'
+OPT_GEOM = 'opt_geom'
+COMPLETED_JOB = 'completed_job'
 
 
 def read_cfg(floc, cfg_proc=process_cfg):
@@ -243,7 +252,7 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
     else:
         make_pdb_file = True
 
-    qmmm_energy = None
+    result_dict = {FILE_NAME: cp2k_file, QMMM_ENERGY: np.inf, OPT_GEOM: 'NA', COMPLETED_JOB: False}
     atoms_xyz = None
     with open(cp2k_file) as f:
         if make_pdb_file:
@@ -258,20 +267,31 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
                                                                              cfg[DATA_TPL_FILE], cp2k_file)
         for line in f:
             line = line.strip()
-            if ENERGY_PAT.match(line):
-                qmmm_energy = line.split()[-1]
             if COORD_PAT.match(line):
                 # Now advance to first line of coordinates
                 for _ in range(3):
                     next(f)
                 data_atoms_section, pdb_atoms_section, atoms_xyz = process_coords(f, data_tpl_content, pdb_tpl_content,
                                                                                   cfg[PRINT_XYZ_FLAG], element_dict)
+            elif ENERGY_PAT.match(line):
+                # skip steps that take further from the min energy
+                qmmm_energy = float(line.split()[-1])
+                if qmmm_energy < result_dict[QMMM_ENERGY]:
+                    result_dict[QMMM_ENERGY] = qmmm_energy
+            elif GEOM_OPT_RUN_PAT.match(line):
+                # set to false because not optimized, overwriting "NA"
+                result_dict[OPT_GEOM] = False
+            elif GEOM_OPT_COMPLETE_PAT.match(line):
+                result_dict[OPT_GEOM] = True
+            elif REF_PAT.match(line):
+                result_dict[COMPLETED_JOB] = True
+                break
 
     # If we successfully returned the data_atoms_section, make new file
     if (make_data_file and len(data_atoms_section) == 0) or (make_pdb_file and len(pdb_atoms_section) == 0
                                                              ) or (cfg[PRINT_XYZ_FLAG] and len(atoms_xyz) == 0):
         raise InvalidDataError("Did not file atoms coordinates in file: {}".format(cp2k_file))
-    print("{} energy: {}".format(cp2k_file, qmmm_energy))
+    print('"{file_name}",{qmmm_energy:f},"{opt_geom}","{completed_job}"'.format(**result_dict))
     if make_data_file:
         f_name = create_out_fname(cp2k_file, ext='.data')
         list_to_file(data_tpl_content[HEAD_CONTENT] + data_atoms_section + data_tpl_content[TAIL_CONTENT],
@@ -308,6 +328,7 @@ def main(argv=None):
 
         element_dict = create_element_dict(ELEMENT_DICT_FILE, pdb_dict=False)
 
+        print('"file_name","qmmm_energy","opt_complete","job_complete"')
         for cp2k_file in cfg[CP2K_FILES]:
             process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element_dict)
 
