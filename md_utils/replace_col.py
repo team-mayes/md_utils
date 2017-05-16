@@ -122,16 +122,16 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Reads in a file containing a header with columns of data. Using '
-                                                 'specifications from a configuration file, it filters rows based '
-                                                 'on column min and/or max values, and prints a file of the filtered '
-                                                 'data.')
+                                                 'specifications from a configuration file, it changes values in rows '
+                                                 'based on column min and/or max values, and overwrites the original '
+                                                 'file.')
 
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),
                         default=DEF_CFG_FILE, type=read_cfg)
 
-    parser.add_argument("-d", "--delimiter", help="Delimiter separating columns in the FILE to be filtered. "
+    parser.add_argument("-d", "--delimiter", help="Delimiter separating columns in the FILE to be edited. "
                                                   "The default is: '{}'".format(DEF_DELIMITER),
                         default=DEF_DELIMITER)
     parser.add_argument("-b", "--base_dir", help="The starting point for a file search "
@@ -139,8 +139,6 @@ def parse_cmdline(argv):
                         default=os.getcwd())
     parser.add_argument("-f", "--src_file", help="The single file to read from (takes precedence "
                                                  "over base_dir)")
-    parser.add_argument('-o', "--overwrite", help='Overwrite existing target file',
-                        action='store_true')
 
     args = None
     try:
@@ -173,7 +171,7 @@ def process_file(data_file,  mcfg, delimiter=','):
                 raise InvalidDataError("Key '{}' found in configuration file but not in data file: "
                                        "{}".format(key, data_file))
 
-    filtered_vectors = []
+    edited_vectors = []
     for row in list_vectors:
         for col, max_val in col_index_dict[MAX_SEC].items():
             if row[col] > max_val:
@@ -181,10 +179,10 @@ def process_file(data_file,  mcfg, delimiter=','):
         for col, min_val in col_index_dict[MIN_SEC].items():
             if row[col] < min_val:
                 row[col] = min_val
-        filtered_vectors.append(row)
+        edited_vectors.append(row)
 
     f_name = create_out_fname(data_file, ext='.csv')
-    list_to_csv([headers] + filtered_vectors, f_name, delimiter=',')
+    list_to_csv([headers] + edited_vectors, f_name, delimiter=',')
 
 
 def main(argv=None):

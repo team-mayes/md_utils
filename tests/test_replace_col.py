@@ -26,12 +26,6 @@ FOLDERS = [FOLDER_A, FOLDER_B, FOLDER_C]
 DEF_INPUT = os.path.join(SUB_DATA_DIR, DEF_ARRAY_FILE)
 NON_FLOAT_INPUT = os.path.join(SUB_DATA_DIR, 'sum_2016-04-05_dru_san_ph4.5_short.csv')
 DEF_INI = os.path.join(SUB_DATA_DIR, DEF_CFG_FILE)
-INVALID_KEY_INI = os.path.join(SUB_DATA_DIR, "invalid_key.ini")
-INVALID_HEADER_INI = os.path.join(SUB_DATA_DIR, "no_such_header.ini")
-DUP_KEY_INI = os.path.join(SUB_DATA_DIR, "filter_col_dup_col.ini")
-NO_MIN_INI = os.path.join(SUB_DATA_DIR, "filter_col_no_min.ini")
-PARSE_ERROR_INI = os.path.join(SUB_DATA_DIR, "filter_col_parse_error.ini")
-NONFLOAT_KEY_INI = os.path.join(SUB_DATA_DIR, "filter_col_nonfloat.ini")
 
 TYPO_INI = os.path.join(SUB_DATA_DIR, "replace_col_typo.ini")
 TEST_BASE = "test_seed.csv"
@@ -62,7 +56,7 @@ def copy_input(f_name):
     print("Created file: {}".format(new_name))
 
 
-class TestFilterColFailWell(unittest.TestCase):
+class TestReplaceColFailWell(unittest.TestCase):
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
             # Error in looking for ini file
@@ -104,35 +98,8 @@ class TestFilterColFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("could not convert string" in output)
 
-    # def testInvalidKey(self):
-    #     test_input = ["-f", DEF_INPUT, "-c", INVALID_KEY_INI]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("Unexpected key" in output)
-    #
-    # def testInvalidHeader(self):
-    #     with capture_stderr(main, ["-f", DEF_INPUT, "-c", INVALID_HEADER_INI]) as output:
-    #         self.assertTrue("found in configuration file but not in data file" in output)
-    #
-    # def testNonfloatKeyValue(self):
-    #     test_input = ["-f", DEF_INPUT, "-c", NONFLOAT_KEY_INI]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("For section 'min_vals' key 'z', could not convert value '' to a float" in output)
-    #
-    # def testParseError(self):
-    #     # This input has a line with only "z" (no equals), resulting in a parsing error we will catch
-    #     test_input = ["-f", DEF_INPUT, "-c", PARSE_ERROR_INI]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("File contains parsing errors" in output)
-    #         self.assertTrue("'z" in output)
 
-
-class TestFilterCol(unittest.TestCase):
+class TestReplaceCol(unittest.TestCase):
     def testDefInp(self):
         # testing a single file
         try:
@@ -159,25 +126,3 @@ class TestFilterCol(unittest.TestCase):
             for folder in FOLDERS:
                 test_output = os.path.join(folder, TEMP_PREFIX + SEED_NAME)
                 silent_remove(test_output, disable=DISABLE_REMOVE)
-
-    # def testNoMinNonFloat(self):
-    #     # Tests both handling when no min section is specified and non-floats in the file to be analyzed
-    #     test_input = ["-f", NON_FLOAT_INPUT, "-c", NO_MIN_INI]
-    #     try:
-    #         main(test_input)
-    #         self.assertFalse(diff_lines(NON_FLOAT_OUT, GOOD_NON_FLOAT_OUT))
-    #     finally:
-    #         silent_remove(NON_FLOAT_OUT)
-    #
-    # def testDupKey(self):
-    #     # Checking what happens if the key is listed twice. Expect the program to use the last
-    #     # key value. In this case, it results in no rows that meet the criteria
-    #     test_input = ["-f", DEF_INPUT, "-c", DUP_KEY_INI]
-    #     try:
-    #         if logger.isEnabledFor(logging.DEBUG):
-    #             main(test_input)
-    #         with capture_stdout(main, test_input) as output:
-    #             self.assertTrue("Keeping 0 of 4 rows based on filtering criteria" in output)
-    #         self.assertFalse(diff_lines(CSV_OUT, GOOD_CSV_NONE_KEPT))
-    #     finally:
-    #         silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
