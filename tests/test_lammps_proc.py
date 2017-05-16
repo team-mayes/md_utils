@@ -107,6 +107,8 @@ COMBINE_CEC_ONLY_STEPS_INI = os.path.join(SUB_DATA_DIR, 'calc_cec_dist_restrict_
 COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_short_sum.csv')
 GOOD_COMBINE_CEC_ONLY_STEPS_OUT = os.path.join(SUB_DATA_DIR, '2.400_320_restrict_timestep_good.csv')
 
+HIJ_ARQ6_GLU2_INI = os.path.join(SUB_DATA_DIR, 'calc_hij_arq6.ini')
+
 good_long_out_msg = 'md_utils/tests/test_data/lammps_proc/glue_dump_long_gofrs.csv\nReached the maximum timesteps ' \
                     'per dumpfile (20). To increase this number, set a larger value for max_timesteps_per_dumpfile. ' \
                     'Continuing program.\nCompleted reading'
@@ -375,3 +377,16 @@ class TestLammpsProcData(unittest.TestCase):
             self.assertFalse(diff_lines(COMBINE_CEC_ONLY_STEPS_OUT, GOOD_COMBINE_CEC_ONLY_STEPS_OUT))
         finally:
             silent_remove(COMBINE_CEC_ONLY_STEPS_OUT, disable=DISABLE_REMOVE)
+
+    def testHIJArq6(self):
+        # Test calculating the Maupin form
+        try:
+            test_input = ["-c", HIJ_ARQ6_GLU2_INI, "-p"]
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            # because i've turned off printing, there should be no output
+            with capture_stdout(main, test_input) as output:
+                self.assertFalse(output)
+            self.assertFalse(diff_lines(HIJ_NEW_GLU2_OUT, GOOD_HIJ_NEW_GLU2_OUT))
+        finally:
+            silent_remove(HIJ_NEW_GLU2_OUT, disable=DISABLE_REMOVE)
