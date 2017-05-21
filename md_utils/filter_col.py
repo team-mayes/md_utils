@@ -31,6 +31,8 @@ MIN_SEC = 'min_vals'
 BIN_SEC = 'bin_settings'
 SUB_SECTIONS = [MAX_SEC, MIN_SEC, BIN_SEC]
 SECTIONS = [MAIN_SEC] + SUB_SECTIONS
+INDEX_FLAG = 'add_index'
+INDEX = 'index'
 
 # Defaults
 DEF_CFG_FILE = 'filter_col.ini'
@@ -38,7 +40,7 @@ DEF_ARRAY_FILE = 'column_data.csv'
 DEF_DELIMITER = ','
 FILTER_HEADERS = 'filter_col_names'
 
-DEF_CFG_VALS = {}
+DEF_CFG_VALS = {INDEX_FLAG: False}
 REQ_KEYS = {}
 
 BINS = 'bin_array'
@@ -217,6 +219,12 @@ def parse_cmdline(argv):
 def process_file(data_file,  mcfg, delimiter=','):
     list_vectors, headers = read_csv_to_list(data_file, delimiter=delimiter, header=True)
 
+    initial_row_num = len(list_vectors)
+    if mcfg[INDEX_FLAG]:
+        headers = [INDEX] + headers
+        for row_id in range(initial_row_num):
+            list_vectors[row_id] = [row_id] + list_vectors[row_id]
+
     col_index_dict = {}
     for section in SUB_SECTIONS:
         col_index_dict[section] = {}
@@ -253,7 +261,6 @@ def process_file(data_file,  mcfg, delimiter=','):
         col_index_dict[MIN_SEC][bin_col] = bin_min
         col_index_dict[MAX_SEC][bin_col] = bin_max
 
-    initial_row_num = len(list_vectors)
     filtered_vectors = []
     for row in list_vectors:
         keep_row = True
