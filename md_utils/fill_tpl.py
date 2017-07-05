@@ -160,7 +160,7 @@ def parse_cmdline(argv=None):
                                    "required either in the command line for configuration file."
                                    "".format(FILLED_TPL_FNAME))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

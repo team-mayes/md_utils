@@ -17,7 +17,7 @@ try:
     from ConfigParser import ConfigParser, NoSectionError, ParsingError
 except ImportError:
     # noinspection PyCompatibility
-    from configparser import ConfigParser, NoSectionError, ParsingError
+    from configparser import ConfigParser, NoSectionError, ParsingError, DuplicateOptionError
 
 __author__ = 'hbmayes'
 
@@ -202,12 +202,8 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-    except IOError as e:
-        warning(e)
-        parser.print_help()
-        return args, IO_ERROR
-    except (InvalidDataError, SystemExit) as e:
-        if e.message == 0:
+    except (InvalidDataError, IOError, DuplicateOptionError, SystemExit) as e:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()
@@ -347,6 +343,8 @@ def main(argv=None):
     except (ValueError, InvalidDataError) as e:
         warning("Problems reading data:", e)
         return INVALID_DATA
+    except SystemExit:
+        pass
 
     return GOOD_RET  # success
 

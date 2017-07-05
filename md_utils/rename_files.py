@@ -61,7 +61,7 @@ def parse_cmdline(argv):
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

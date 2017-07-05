@@ -126,7 +126,7 @@ def parse_cmdline(argv=None):
         if (args.file is None) and (args.list_file is None):
             raise InvalidDataError("Specify either a file or list of files to process.")
     except (KeyError, InvalidDataError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

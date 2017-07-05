@@ -367,7 +367,7 @@ def parse_cmdline(argv=None):
                 raise InvalidDataError("A bash driver output file name ('{}') is required when a name for a copy "
                                        "of this file is specified ('{}').".format(RESULT_FILE, RESULT_COPY))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

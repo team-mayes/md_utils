@@ -24,6 +24,7 @@ DEF_INI = os.path.join(SUB_DATA_DIR, DEF_CFG_FILE)
 INVALID_KEY_INI = os.path.join(SUB_DATA_DIR, "invalid_key.ini")
 INVALID_HEADER_INI = os.path.join(SUB_DATA_DIR, "no_such_header.ini")
 DUP_KEY_INI = os.path.join(SUB_DATA_DIR, "filter_col_dup_col.ini")
+NONE_KEPT_INI = os.path.join(SUB_DATA_DIR, "filter_col_keep_none.ini")
 NO_MIN_INI = os.path.join(SUB_DATA_DIR, "filter_col_no_min.ini")
 PARSE_ERROR_INI = os.path.join(SUB_DATA_DIR, "filter_col_parse_error.ini")
 NONFLOAT_KEY_INI = os.path.join(SUB_DATA_DIR, "filter_col_nonfloat.ini")
@@ -60,7 +61,7 @@ class TestFilterColFailWell(unittest.TestCase):
             self.assertTrue("Could not read file {}".format(DEF_CFG_FILE) in output)
 
     def testHelp(self):
-        test_input = ['-h']
+        test_input = ["-h"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -118,7 +119,7 @@ class TestFilterColFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("File contains parsing errors" in output)
+            self.assertTrue("contains parsing errors" in output)
             self.assertTrue("'z" in output)
 
     def testBinNegInt(self):
@@ -158,6 +159,18 @@ class TestFilterColFailWell(unittest.TestCase):
             self.assertTrue("Expected a comma-separated list of length 3 or 4 for section 'bin_settings' key 'cv'. "
                             "Read: 0.5,0.7,2,6,10" in output)
 
+    def testDupKey(self):
+        # Checking what happens if the key is listed twice. In Python 2, the program used the last
+        # key value, resulting in no rows that meet the criteria. In Python 3, the program throws an exception.
+        test_input = ["-f", DEF_INPUT, "-c", DUP_KEY_INI]
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+            with capture_stderr(main, test_input) as output:
+                self.assertTrue("already exists" in output)
+        finally:
+            silent_remove(CSV_OUT, disable=DISABLE_REMOVE)
+
 
 class TestFilterCol(unittest.TestCase):
     def testDefInp(self):
@@ -177,10 +190,10 @@ class TestFilterCol(unittest.TestCase):
         finally:
             silent_remove(NON_FLOAT_OUT)
 
-    def testDupKey(self):
-        # Checking what happens if the key is listed twice. Expect the program to use the last
-        # key value. In this case, it results in no rows that meet the criteria
-        test_input = ["-f", DEF_INPUT, "-c", DUP_KEY_INI]
+    def testNoRowsKept(self):
+        # In this case, it results in no rows that meet the criteria
+        test_input = ["-f", DEF_INPUT, "-c", NONE_KEPT_INI]
+        main(test_input)
         try:
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
