@@ -1,0 +1,70 @@
+Charm++: standalone mode (not using charmrun)
+Charm++> Running in Multicore mode:  28 threads
+Info: ABSOLUTE IMPRECISION IN VDWA TABLE ENERGY: 9.6778e-33 AT 11.9974
+Info: RELATIVE IMPRECISION IN VDWA TABLE ENERGY: 3.71539e-17 AT 11.9974
+Info: INCONSISTENCY IN VDWA TABLE ENERGY VS FORCE: 0.0040507 AT 0.251946
+Info: ABSOLUTE IMPRECISION IN VDWB TABLE ENERGY: 9.34011e-27 AT 11.9974
+Info: RELATIVE IMPRECISION IN VDWB TABLE ENERGY: 2.98256e-17 AT 11.9974
+TCL: Original numsteps 7500000 will be ignored.
+TCL: Running for 2500000 steps
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG            PRESSURE      GPRESSURE         VOLUME       PRESSAVG      GPRESSAVG
+
+ENERGY: 5000000      5031.7103     24067.6124     17470.5460       428.9976        -245592.3561      7253.0478         0.0000         0.0000     64115.1670        -127225.2751       302.1999   -191340.4420   -126792.8028       302.1999            307.7807       307.8429    950854.9192       307.7807       307.8429
+
+LDB: ============= START OF LOAD BALANCING ============== 24.5254
+LDB: ============== END OF LOAD BALANCING =============== 24.5256
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 24.5262
+LDB: ============= START OF LOAD BALANCING ============== 26.0767
+LDB: Partitioning computes with target load 0.000000
+LDB: Increased migratable compute count from 0 to 0
+LDB: Largest unpartitionable compute is 0.000000
+LDB: ============== END OF LOAD BALANCING =============== 26.0776
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 26.0794
+Info: Initial time: 28 CPUs 0.0197735 s/step 0.11443 days/ns 1257.02 MB memory
+LDB: ============= START OF LOAD BALANCING ============== 26.4751
+LDB: ============== END OF LOAD BALANCING =============== 26.4753
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 26.4768
+LDB: ============= START OF LOAD BALANCING ============== 28.0106
+LDB: TIME 28.011 LOAD: AVG 0.617531 MAX 0.717968  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1257.23 MB
+LDB: TIME 28.0112 LOAD: AVG 0.617531 MAX 0.717968  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 TorusLB MEM: 1257.25 MB
+LDB: ============== END OF LOAD BALANCING =============== 28.0119
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 28.0127
+Info: Initial time: 28 CPUs 0.0193116 s/step 0.111757 days/ns 1257.48 MB memory
+LDB: ============= START OF LOAD BALANCING ============== 29.8756
+LDB: TIME 29.876 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1257.71 MB
+LDB: TIME 29.8761 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1257.71 MB
+LDB: TIME 29.8762 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1257.71 MB
+LDB: ============== END OF LOAD BALANCING =============== 29.8769
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 29.8776
+Info: Initial time: 28 CPUs 0.0186277 s/step 0.107799 days/ns 1257.72 MB memory
+LDB: ============= START OF LOAD BALANCING ============== 31.8008
+LDB: TIME 31.8012 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1258.16 MB
+LDB: TIME 31.8014 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1258.16 MB
+LDB: TIME 31.8015 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1258.16 MB
+LDB: ============== END OF LOAD BALANCING =============== 31.8024
+Info: useSync: 0 useProxySync: 0
+LDB: =============== DONE WITH MIGRATION ================ 31.8032
+Info: Benchmark time: 28 CPUs 0.0191676 s/step 0.110924 days/ns 1258.16 MB memory
+Info: Benchmark time: 28 CPUs 0.0191501 s/step 0.110822 days/ns 1258.16 MB memory
+Info: Benchmark time: 28 CPUs 0.0189274 s/step 0.109534 days/ns 1258.18 MB memory
+Info: Benchmark time: 28 CPUs 0.0189185 s/step 0.109482 days/ns 1258.18 MB memory
+Info: Benchmark time: 28 CPUs 0.0186762 s/step 0.10808 days/ns 1258.4 MB memory
+Info: Benchmark time: 28 CPUs 0.018041 s/step 0.104404 days/ns 1258.4 MB memory
+ENERGY: 5001000      5084.6726     24078.1264     17413.9948       394.4608        -245245.0120      7168.0694         0.0000         0.0000     64277.6452        -126828.0426       302.9657   -191105.6878   -126404.9436       301.9068            105.1389        98.4723    953669.3987        -0.9287        -0.8972
+
+OPENING EXTENDED SYSTEM TRAJECTORY FILE
+ENERGY: 5002000      4971.7831     24044.5005     17478.3198       391.4228        -244683.8721      6875.3180         0.0000         0.0000     64050.3065        -126872.2214       301.8942   -190922.5278   -126439.1608       301.5687            322.9371       317.5091    953646.8975         1.9104         1.8282
+
+TIMING: 5002500  CPU: 47.3362, 0.0190925/step  Wall: 48.769, 0.0196206/step, 13.6118 hours remaining, 1261.160156 MB of memory in use.
+OPENING COORDINATE DCD FILE
+WRITING COORDINATES TO DCD FILE 8.1.dcd AT STEP 5002500
+The last position output (seq=5002500) takes 0.049 seconds, 1261.160 MB of memory in use
+ENERGY: 5003000      5091.1104     24010.6591     17462.8524       410.7505        -244551.6455      6782.6847         0.0000         0.0000     64285.5026        -126508.0858       303.0027   -190793.5884   -126076.1503       302.2333            120.2738       121.3982    954510.5405        -0.8192        -0.7687
+
+TIMING: 5004000  CPU: 76.394, 0.0193718/step  Wall: 78.6171, 0.0198987/step, 13.7964 hours remaining, 1265.082031 MB of memory in use.
+
