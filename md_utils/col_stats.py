@@ -195,6 +195,7 @@ def create_hist_plot(hist_dict, header, out_dir, data_file):
 
     # convert dict to list for creating bar chat
     bar_data = [[key, val] for key, val in hist_dict.items()]
+    bar_data.sort(key=itemgetter(0))
     bar_data.sort(key=itemgetter(1), reverse=True)
 
     # bar chart background style

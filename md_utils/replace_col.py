@@ -193,7 +193,6 @@ def main(argv=None):
 
     cfg = args.config
     try:
-
         if args.src_file is not None:
             process_file(args.src_file, cfg, delimiter=args.delimiter)
         else:

@@ -1252,6 +1252,7 @@ def process_pdb_tpl(tpl_loc):
                                   'REVDA', 'JRNL ', 'DBREF', 'SEQRE', 'HET  ', 'HETNA',
                                   'HETSY', 'FORMU', 'HELIX', 'SHEET', 'SSBON', 'LINK ',
                                   'CISPE', 'SITE ', ]:
+                # noinspection PyTypeChecker
                 tpl_data[HEAD_CONTENT].append(line)
 
             # atoms_content to contain everything but the xyz
@@ -1276,10 +1277,12 @@ def process_pdb_tpl(tpl_loc):
                 last_cols = line[PDB_Z_LAST_CHAR:]
 
                 line_struct = [line_head, atom_num, atom_type, res_type, mol_num, pdb_x, pdb_y, pdb_z, last_cols]
+                # noinspection PyTypeChecker
                 tpl_data[ATOMS_CONTENT].append(line_struct)
 
             # tail_content to contain everything after the 'Atoms' section
             else:
+                # noinspection PyTypeChecker
                 tpl_data[TAIL_CONTENT].append(line)
     tpl_data[NUM_ATOMS] = len(tpl_data[ATOMS_CONTENT])
     return tpl_data
