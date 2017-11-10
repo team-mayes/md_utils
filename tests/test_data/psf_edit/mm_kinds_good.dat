@@ -1,93 +1,51 @@
-    &MM_KIND CAY
-        RADIUS 0.76
-    &END MM_KIND
-    &MM_KIND OE2
-        RADIUS 0.66
-    &END MM_KIND
-    &MM_KIND OE1
-        RADIUS 0.66
-    &END MM_KIND
-    &MM_KIND CAT
-        RADIUS 0.76
-    &END MM_KIND
-    &MM_KIND HT3
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HNT
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HT1
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HA
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HG2
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HG1
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND NT
-        RADIUS 0.71
-    &END MM_KIND
     &MM_KIND C
         RADIUS 0.73
     &END MM_KIND
-    &MM_KIND CB
-        RADIUS 0.76
-    &END MM_KIND
-    &MM_KIND CA
-        RADIUS 0.76
-    &END MM_KIND
-    &MM_KIND CG
-        RADIUS 0.76
-    &END MM_KIND
-    &MM_KIND O
-        RADIUS 0.66
-    &END MM_KIND
-    &MM_KIND N
-        RADIUS 0.71
-    &END MM_KIND
-    &MM_KIND CY
+    &MM_KIND CC
         RADIUS 0.73
     &END MM_KIND
-    &MM_KIND CD
+    &MM_KIND CT1
         RADIUS 0.76
     &END MM_KIND
-    &MM_KIND OH2
-        RADIUS 1.20
+    &MM_KIND CT2
+        RADIUS 0.76
     &END MM_KIND
-    &MM_KIND H2
-        RADIUS 0.44
+    &MM_KIND CT2A
+        RADIUS 0.76
     &END MM_KIND
-    &MM_KIND H3
-        RADIUS 0.44
+    &MM_KIND CT3
+        RADIUS 0.76
     &END MM_KIND
-    &MM_KIND H1
-        RADIUS 0.44
-    &END MM_KIND
-    &MM_KIND HT2
+    &MM_KIND H
         RADIUS 0.31
     &END MM_KIND
-    &MM_KIND HY1
+    &MM_KIND HA2
         RADIUS 0.31
     &END MM_KIND
-    &MM_KIND HY2
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND HY3
-        RADIUS 0.31
-    &END MM_KIND
-    &MM_KIND OY
-        RADIUS 0.66
-    &END MM_KIND
-    &MM_KIND HN
+    &MM_KIND HA3
         RADIUS 0.31
     &END MM_KIND
     &MM_KIND HB1
         RADIUS 0.31
     &END MM_KIND
-    &MM_KIND HB2
-        RADIUS 0.31
+    &MM_KIND HT
+        RADIUS 0.44
+    &END MM_KIND
+    &MM_KIND HTH
+        RADIUS 0.44
+    &END MM_KIND
+    &MM_KIND NH1
+        RADIUS 0.71
+    &END MM_KIND
+    &MM_KIND O
+        RADIUS 0.66
+    &END MM_KIND
+    &MM_KIND OC
+        RADIUS 0.66
+    &END MM_KIND
+    &MM_KIND OT
+        RADIUS 1.20
+    &END MM_KIND
+    &MM_KIND OTH
+        RADIUS 1.20
     &END MM_KIND

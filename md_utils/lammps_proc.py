@@ -109,6 +109,7 @@ GOFR_OUTPUT_FLAGS = [CALC_HO_GOFR, CALC_OO_GOFR, CALC_HH_GOFR, CALC_OH_GOFR, CAL
 # Default max timesteps (1E12 written out to interpreted as int, not float)
 DEF_MAX_TIMESTEPS = 100000000000
 
+ARQ_TYPE = 'arq_type'
 GAMMA_NEW = 'new_gamma'
 LAMBDA_NEW = 'new_lambda'
 R0_DA_NEW = 'new_r0_da'
@@ -153,6 +154,7 @@ DEF_CFG_VALS = {DUMP_FILE_LIST: 'list.txt',
                 MAX_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 PRINT_TIMESTEPS: DEF_MAX_TIMESTEPS,
                 COMBINE_OUTPUT: False,
+                ARQ_TYPE: 2,
                 GAMMA_NEW: None, LAMBDA_NEW: None, R0_DA_NEW: None, R0SC_NEW: None, ALPHA_NEW: None,
                 A_DA_NEW: None, VIJ_NEW: None, EPS_NEW: None, C_DA_NEW: None,
                 EVB_SUM_FILE: None, ALIGN_COL: TIMESTEP, CALC_CEC_DIST: False, EVB_FILE_EXT: '.evb',
@@ -452,8 +454,8 @@ def read_cfg(floc, cfg_proc=process_cfg):
     if main_proc[CALC_HIJ_NEW]:
         for key in NEW_PARAMS:
             try:
-                main_proc[key] = float(main_proc[key])
-            except (TypeError, ValueError):
+                main_proc[key] = float(main_proc[key].split(',')[0])
+            except (TypeError, ValueError, AttributeError):
                 if main_proc[key] is None:
                     first_warn = "Missing input value for key '{}'. ".format(key)
                 else:
@@ -502,7 +504,7 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, IO_ERROR
     except (InvalidDataError, KeyError, NoSectionError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

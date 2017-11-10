@@ -1,4 +1,4 @@
-Created on 2016-12-25 14:46:15.843887 by md_utils.cp2k2data version 0.15.0 from template file tests/test_data/cp2k2data/glue_revised.data and cp2k output file tests/test_data/cp2k2data/glu_2.5_1.0.out
+Created on 2017-01-02 11:49:42.581140 by md_utils.cp2k_proc version 0.15.0 from template file tests/test_data/cp2k_proc/glue_revised.data and cp2k output file tests/test_data/cp2k_proc/glu_2.5_1.0.out
 
 1429  atoms
 961  bonds
@@ -68,8 +68,8 @@ Atoms
 27 1 17 -0.76 9.4505 10.643 9.3765 # OC, Raptor 6 (owned)
 28 2 3 -0.32 10.7545 10.479 11.5025 # OTH, OH
 29 2 4 0.44 10.0505 10.656 10.1755 # HTH, HO
-30 2 4 0.44 10.141156 10.326155 12.236907 # HTH, HO
-31 2 4 0.44 11.185314 11.34805 11.72904 # HTH, HO
+30 2 4 0.44 10.120554 10.327706 12.272578 # HTH, HO
+31 2 4 0.44 11.144408 11.27705 11.736544 # HTH, HO
 32 3 2 -0.82 17.0595 3.901 5.1575 # OT
 33 3 1 0.41 18.0315 4.169 4.9955 # HT
 34 3 1 0.41 16.6365 4.547 5.8605 # HT

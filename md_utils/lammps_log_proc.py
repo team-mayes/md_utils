@@ -88,7 +88,7 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, IO_ERROR
     except (KeyError, InvalidDataError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

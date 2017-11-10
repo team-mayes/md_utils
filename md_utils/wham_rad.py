@@ -21,7 +21,7 @@ __author__ = 'mayes'
 # logging.basicConfig(filename='fes_combo.log',level=logging.DEBUG)
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('wham_rad')
+logger = logging.getLogger(__name__)
 
 # Constants #
 
@@ -151,7 +151,7 @@ def parse_cmdline(argv):
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

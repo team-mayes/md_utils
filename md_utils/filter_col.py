@@ -17,7 +17,7 @@ try:
     from ConfigParser import ConfigParser, NoSectionError, ParsingError
 except ImportError:
     # noinspection PyCompatibility
-    from configparser import ConfigParser, NoSectionError, ParsingError
+    from configparser import ConfigParser, NoSectionError, ParsingError, DuplicateOptionError
 
 __author__ = 'hbmayes'
 
@@ -31,6 +31,8 @@ MIN_SEC = 'min_vals'
 BIN_SEC = 'bin_settings'
 SUB_SECTIONS = [MAX_SEC, MIN_SEC, BIN_SEC]
 SECTIONS = [MAIN_SEC] + SUB_SECTIONS
+INDEX_FLAG = 'add_index'
+INDEX = 'index'
 
 # Defaults
 DEF_CFG_FILE = 'filter_col.ini'
@@ -38,7 +40,7 @@ DEF_ARRAY_FILE = 'column_data.csv'
 DEF_DELIMITER = ','
 FILTER_HEADERS = 'filter_col_names'
 
-DEF_CFG_VALS = {}
+DEF_CFG_VALS = {INDEX_FLAG: False}
 REQ_KEYS = {}
 
 BINS = 'bin_array'
@@ -200,12 +202,8 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-    except IOError as e:
-        warning(e)
-        parser.print_help()
-        return args, IO_ERROR
-    except (InvalidDataError, SystemExit) as e:
-        if e.message == 0:
+    except (InvalidDataError, IOError, DuplicateOptionError, SystemExit) as e:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()
@@ -216,6 +214,12 @@ def parse_cmdline(argv):
 
 def process_file(data_file,  mcfg, delimiter=','):
     list_vectors, headers = read_csv_to_list(data_file, delimiter=delimiter, header=True)
+
+    initial_row_num = len(list_vectors)
+    if mcfg[INDEX_FLAG]:
+        headers = [INDEX] + headers
+        for row_id in range(initial_row_num):
+            list_vectors[row_id] = [row_id] + list_vectors[row_id]
 
     col_index_dict = {}
     for section in SUB_SECTIONS:
@@ -253,7 +257,6 @@ def process_file(data_file,  mcfg, delimiter=','):
         col_index_dict[MIN_SEC][bin_col] = bin_min
         col_index_dict[MAX_SEC][bin_col] = bin_max
 
-    initial_row_num = len(list_vectors)
     filtered_vectors = []
     for row in list_vectors:
         keep_row = True
@@ -340,6 +343,8 @@ def main(argv=None):
     except (ValueError, InvalidDataError) as e:
         warning("Problems reading data:", e)
         return INVALID_DATA
+    except SystemExit:
+        pass
 
     return GOOD_RET  # success
 

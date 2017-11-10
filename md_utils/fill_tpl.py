@@ -52,12 +52,6 @@ REQ_KEYS = {}
 
 def process_tpl_vals(raw_key_val_tuple_list):
     """
-    In case there are multiple (comma-separated) values, split on comma and strip. Do not convert to int or float;
-       that will be done later if needed for equations
-    The program creates the val_dict and multi_val_param_list (fed in empty)
-
-    @param raw_key_val_tuple_list: key-value dict read from configuration file
-    @return val_dict: a dictionary of values (strings); check for commas to indicate multiple parameters
     """
     val_dict = OrderedDict()
     for key, val in raw_key_val_tuple_list:
@@ -160,7 +154,7 @@ def parse_cmdline(argv=None):
                                    "required either in the command line for configuration file."
                                    "".format(FILLED_TPL_FNAME))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()

@@ -8,7 +8,7 @@ import logging
 
 __author__ = 'hmayes'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -180,8 +180,9 @@ class TestPerCol(unittest.TestCase):
         """
         This input file has tuples and lists that cannot be handled by np.loadtxt
         """
+        test_input = ["-f", MIXED_INPUT, "-n", "-d", ","]
         try:
-            with capture_stderr(main, ["-f", MIXED_INPUT, "-n", "-d", ","]) as output:
+            with capture_stderr(main, test_input) as output:
                 self.assertTrue("could not be converted to a float" in output)
                 self.assertFalse(diff_lines(MIXED_OUT, GOOD_MIXED_OUT))
         finally:

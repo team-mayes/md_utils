@@ -367,7 +367,7 @@ def parse_cmdline(argv=None):
                 raise InvalidDataError("A bash driver output file name ('{}') is required when a name for a copy "
                                        "of this file is specified ('{}').".format(RESULT_FILE, RESULT_COPY))
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
-        if e.message == 0:
+        if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
         warning(e)
         parser.print_help()
@@ -646,6 +646,7 @@ def main(argv=None):
             eval_eqs(cfg, tpl_dict)
             fill_save_tpl(cfg, tpl_str, tpl_dict, cfg[PAR_TPL], cfg[PAR_FILE_NAME], print_info=cfg[PRINT_INFO])
             trial_result = float(check_output([cfg[BASH_DRIVER], tpl_dict[NEW_FNAME]]).strip())
+            tpl_dict[RESID] = round(trial_result, cfg[NUM_PARAM_DECIMALS])
             if cfg[PAR_COPY_NAME] is not None or cfg[RESULT_COPY] is not None:
                 copy_par_result_file(cfg, tpl_dict)
             print("Result without optimizing parameters: {}".format(trial_result))
