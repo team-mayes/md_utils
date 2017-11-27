@@ -166,7 +166,7 @@ class TestData2Data(unittest.TestCase):
             main(["-c", SERCA_INI])
             self.assertFalse(diff_lines(SERCA_OUT, SERCA_GOOD_OUT))
         finally:
-            silent_remove(SERCA_OUT)
+            silent_remove(SERCA_OUT, disable=DISABLE_REMOVE)
 
     def testReordGluDeprot(self):
         """
@@ -184,11 +184,11 @@ class TestData2Data(unittest.TestCase):
             main(["-c", GLUE_GLUP_INI])
             self.assertFalse(diff_lines(GLUP_GLUE_ATOM_NUM_DICT, GLUP_GLUE_ATOM_NUM_DICT_GOOD))
             self.assertFalse(diff_lines(GLUP_GLUE_ATOM_TYPE_DICT, GLUP_GLUE_ATOM_TYPE_DICT_GOOD))
-            self.assertFalse(diff_lines(GLUP_AS_GLUE, GLUP_AS_GLUE_GOOD))
+            self.assertFalse(diff_lines(GLUP_AS_GLUE, GLUP_AS_GLUE_GOOD, delimiter=" "))
         finally:
-            silent_remove(GLUP_GLUE_ATOM_NUM_DICT)
-            silent_remove(GLUP_GLUE_ATOM_TYPE_DICT)
-            silent_remove(GLUP_AS_GLUE)
+            silent_remove(GLUP_GLUE_ATOM_NUM_DICT, disable=DISABLE_REMOVE)
+            silent_remove(GLUP_GLUE_ATOM_TYPE_DICT, disable=DISABLE_REMOVE)
+            silent_remove(GLUP_AS_GLUE, disable=DISABLE_REMOVE)
 
     def testAdjustAtom(self):
         try:
@@ -198,10 +198,10 @@ class TestData2Data(unittest.TestCase):
             self.assertFalse(diff_lines(GLU_ADJUST_OUT_1, GOOD_GLU_ADJUST_OUT_1))
             self.assertFalse(diff_lines(GLU_ADJUST_OUT_2, GOOD_GLU_ADJUST_OUT_2))
         finally:
-            silent_remove(GLU_ADJUST_OUT_NEG1)
-            silent_remove(GLU_ADJUST_OUT_0)
-            silent_remove(GLU_ADJUST_OUT_1)
-            silent_remove(GLU_ADJUST_OUT_2)
+            silent_remove(GLU_ADJUST_OUT_NEG1, disable=DISABLE_REMOVE)
+            silent_remove(GLU_ADJUST_OUT_0, disable=DISABLE_REMOVE)
+            silent_remove(GLU_ADJUST_OUT_1, disable=DISABLE_REMOVE)
+            silent_remove(GLU_ADJUST_OUT_2, disable=DISABLE_REMOVE)
 
     def testSetDist(self):
         try:

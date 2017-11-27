@@ -47,7 +47,7 @@ def find_atom_data(lammps_f, atom_ids):
             elif line.startswith(BOX_LINE):
                 try:
                     for coord_id in range(len(box_dim)):
-                        box_vals = map(float, next(lfh).strip().split())
+                        box_vals = list(map(float, next(lfh).strip().split()))
                         if len(box_vals) == 2:
                             box_dim[coord_id] = box_vals[1] - box_vals[0]
                 except (ValueError, KeyError) as e:

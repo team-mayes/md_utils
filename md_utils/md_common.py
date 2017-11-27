@@ -191,7 +191,7 @@ def pbc_calc_vector(a, b, box):
     @return: returns the vector a - b
     """
     vec = np.subtract(a, b)
-    return vec - box * np.asarray(map(round, vec / box))
+    return vec - np.multiply(box, np.asarray(list(map(round, vec / box))))
 
 
 def first_pbc_image(xyz_coords, box):
@@ -332,7 +332,7 @@ def file_rows_to_list(c_file):
     """
     with open(c_file) as f:
         row_list = [row.strip() for row in f.readlines()]
-        return filter(None, row_list)
+        return list(filter(None, row_list))
 
 
 def str_to_file(str_val, fname, mode='w', print_info=False):
@@ -1058,8 +1058,9 @@ def dequote(s):
     Make sure the pair of quotes match.
     If a matching pair of quotes is not found, return the string unchanged.
     """
-    if (s[0] == s[-1]) and s.startswith(("'", '"')):
-        return s[1:-1]
+    if isinstance(s, str) and len(s) > 0:
+        if (s[0] == s[-1]) and s.startswith(("'", '"')):
+            return s[1:-1]
     return s
 
 
@@ -1116,7 +1117,7 @@ def diff_lines(floc1, floc2, delimiter=","):
     output_neg = ""
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
-            diff = difflib.ndiff(file1.read().splitlines(), file2.read().splitlines())
+            diff = list(difflib.ndiff(file1.read().splitlines(), file2.read().splitlines()))
 
     for line in diff:
         if line.startswith('-') or line.startswith('+'):

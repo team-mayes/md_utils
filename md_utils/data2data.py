@@ -248,7 +248,7 @@ def process_data_tpl(cfg):
                 mol_num = int(split_line[1])
                 atom_type = int(split_line[2])
                 charge = float(split_line[3])
-                xyz_coords = map(float, split_line[4:7])
+                xyz_coords = list(map(float, split_line[4:7]))
                 # Read in CHARMM type info,
                 end = split_line[7:]
                 # end = ' '.join(split_line[7:])
@@ -354,12 +354,12 @@ def make_atom_dict(cfg, data_tpl_content, old_new_atom_num_dict, old_new_atom_ty
                 # Now that finished reading the file, Write dictionary if a name is given, and a dictionary was created
                 if (len(old_new_atom_num_dict) > 0) and (cfg[ATOM_NUM_DICT_FILE] is not None):
                     with open(cfg[ATOM_NUM_DICT_FILE], 'w') as d_file:
-                        for line in old_new_atom_num_dict.items():
+                        for line in sorted(old_new_atom_num_dict.items()):
                             d_file.write('%d,%d' % line + '\n')
                     print('Wrote atom number dictionary to {}.'.format(cfg[ATOM_NUM_DICT_FILE]))
                 if len(old_new_atom_type_dict) > 0 and (cfg[ATOM_TYPE_DICT_FILE] is not None):
                     with open(cfg[ATOM_TYPE_DICT_FILE], 'w') as d_file:
-                        for line in old_new_atom_type_dict.items():
+                        for line in sorted(old_new_atom_type_dict.items()):
                             d_file.write('%d,%d' % line + '\n')
                     print('Wrote atom type dictionary to {}.'.format(cfg[ATOM_TYPE_DICT_FILE]))
 
@@ -403,7 +403,8 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
                 try:
                     old_atom_type = int(split_line[2])
                     # Add in the xyz coordinates
-                    new_data_section[atom_id][4:7] = map(float, split_line[4:7])
+                    new_data_section[atom_id][4:7] = ["{:16.10f}".format(element) for element in
+                                                      list(map(float, split_line[4:7]))]
                 except (IndexError, ValueError):
                     raise InvalidDataError("In attempting to read {} atoms from file: {}\n  "
                                            "expected, but did not find, three ints followed by four floats on"
@@ -421,7 +422,8 @@ def process_data_file(atom_type_dict, data_file, data_tpl_content, new_data_sect
 
                 # and pbc ids, if they are there, before comments
                 try:
-                    new_data_section[atom_id][7] = ' '.join(map(int, split_line[8:10] + [new_data_section[atom_id][7]]))
+                    new_data_section[atom_id][7] = ' '.join(list(map(int, split_line[8:10] +
+                                                                     [new_data_section[atom_id][7]])))
                 except (ValueError, IndexError):
                     # if there is no pdb id info and/or comment info, no problem. Keep on.
                     pass

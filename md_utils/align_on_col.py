@@ -125,7 +125,7 @@ def process_files(comp_f_list, col_name, base_out_name, delimiter, sep_out_flag,
             headers = []
             all_dicts = defaultdict(dict)
         # separate on delimiter, strip any white space, and also get rid of empty entries
-        comp_files = filter(None, [c_file.strip() for c_file in line.split(delimiter)])
+        comp_files = list(filter(None, [c_file.strip() for c_file in line.split(delimiter)]))
 
         # get the common part of the name, if it exists; otherwise, give the name the line index
         for file_index, file_name in enumerate(comp_files):
@@ -139,7 +139,11 @@ def process_files(comp_f_list, col_name, base_out_name, delimiter, sep_out_flag,
             run_name = str(line_num) + "_"
 
         for c_file in comp_files:
-            new_dict = read_csv_to_dict(c_file, col_name)
+            try:
+                new_dict = read_csv_to_dict(c_file, col_name)
+            except IOError:
+                raise InvalidDataError("Did not find file: {}"
+                                       "".format(c_file))
             if dict_keys is None:
                 dict_keys = new_dict.keys()
             else:

@@ -55,8 +55,10 @@ class TestCalcPkaPortions(unittest.TestCase):
 class TestCalcPkaNoOutput(unittest.TestCase):
     # Test how program handles imperfect/incomplete options/data
     def testTooFewArg(self):
-        with capture_stderr(main, ["-d", PKA_DATA_DIR]) as output:
-            self.assertTrue("error: too few arguments" in output)
+        test_input = ["-d", PKA_DATA_DIR]
+        # main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("following arguments are required" in output)
 
     def testNoFile(self):
         with capture_stderr(main, [str(EXP_TEMP), "-f", "ghost.csv"]) as output:

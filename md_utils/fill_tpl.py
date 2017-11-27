@@ -87,8 +87,8 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
             try:
                 proc.update(cfg_proc(dict(config.items(MAIN_SEC)), DEF_CFG_VALS, REQ_KEYS))
             except InvalidDataError as e:
-                if 'Unexpected key' in e.message:
-                    raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
+                if 'Unexpected key' in e.args[0]:
+                    raise InvalidDataError(e.args[0] + " Does this belong \nin a template value section such as '[{}]'?"
                                                        "".format(TPL_VALS_SEC))
         elif section in [TPL_VALS_SEC, TPL_EQS_SEC]:
             val_ordered_dict = process_tpl_vals(config.items(section))
@@ -176,13 +176,13 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, print_
         filled_tpl_str = tpl_str.format(**tpl_vals_dict)
     except KeyError as e:
         raise KeyError("Key '{}' not found in the configuration but required for template file: {}"
-                       "".format(e.message, tpl_name))
+                       "".format(e.args[0], tpl_name))
 
     try:
         filled_fname_str = filled_tpl_name.format(**tpl_vals_dict)
     except KeyError as e:
         raise KeyError("Key '{}' not found in the configuration but required for filled template file name: {}"
-                       "".format(e.message, filled_tpl_name))
+                       "".format(e.args[0], filled_tpl_name))
 
     tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
     str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=print_info)

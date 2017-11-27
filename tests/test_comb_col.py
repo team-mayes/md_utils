@@ -80,7 +80,7 @@ class TestCombColFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("File contains parsing errors" in output)
+            self.assertTrue("parsing errors" in output)
             self.assertTrue("'col2" in output)
 
 

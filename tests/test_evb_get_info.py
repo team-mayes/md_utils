@@ -173,7 +173,7 @@ class TestEVBGetInfo(unittest.TestCase):
         try:
             main(["-c", CI_INI])
             self.assertFalse(diff_lines(DEF_CI_OUT1, GOOD_CI_OUT1))
-            self.assertEquals(1, len(diff_lines(DEF_CI_OUT2, BAD_CI_OUT2)))
+            self.assertEqual(1, len(diff_lines(DEF_CI_OUT2, BAD_CI_OUT2)))
             self.assertFalse(diff_lines(DEF_CI_OUT2, GOOD_CI_OUT2))
         finally:
             silent_remove(DEF_CI_OUT1, disable=DISABLE_REMOVE)

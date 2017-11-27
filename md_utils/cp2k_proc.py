@@ -5,7 +5,7 @@ Given a template data or pdb file, it will make new files with the xyz coordinat
 """
 
 from __future__ import print_function
-from __init__ import __version__
+from base import version
 import argparse
 import os
 import re
@@ -257,13 +257,13 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
     with open(cp2k_file) as f:
         if make_pdb_file:
             pdb_tpl_content[HEAD_CONTENT][0] = "REMARK 450 Created on {} by {} version {}" \
-                                               "".format(datetime.now(), __name__, __version__)
+                                               "".format(datetime.now(), __name__, version)
             pdb_tpl_content[HEAD_CONTENT][1] = "REMARK 450 from template {}".format(cfg[PDB_TPL_FILE])
             pdb_tpl_content[HEAD_CONTENT][2] = "REMARK 450 and coordinates from {}".format(cp2k_file)
 
         if make_data_file:
             data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
-                                                "cp2k output file {}".format(datetime.now(), __name__, __version__,
+                                                "cp2k output file {}".format(datetime.now(), __name__, version,
                                                                              cfg[DATA_TPL_FILE], cp2k_file)
         for line in f:
             line = line.strip()

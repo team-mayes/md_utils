@@ -232,7 +232,7 @@ class TestReadCsvDict(unittest.TestCase):
             test_dict = read_csv_dict(ELEM_DICT_FILE, one_to_one=False)
             self.assertFalse(test_dict)
         except ValueError as e:
-            self.assertTrue("invalid literal for int()" in e.message)
+            self.assertTrue("invalid literal for int()" in e.args[0])
 
     def testStringDictCheckDups(self):
         # Check that fails elegantly
@@ -240,7 +240,7 @@ class TestReadCsvDict(unittest.TestCase):
             test_dict = read_csv_dict(ELEM_DICT_FILE, ints=False, )
             self.assertFalse(test_dict)
         except InvalidDataError as e:
-            self.assertTrue("Did not find a 1:1 mapping" in e.message)
+            self.assertTrue("Did not find a 1:1 mapping" in e.args[0])
 
 
 class TestReadCsv(unittest.TestCase):
@@ -378,19 +378,19 @@ class TestConversions(unittest.TestCase):
         try:
             str_to_bool("hello there neighbor")
         except ValueError as e:
-            self.assertTrue("Cannot covert" in e.message)
+            self.assertTrue("Cannot covert" in e.args[0])
 
     def testIntList(self):
         int_str = '2,3,4'
         int_list = [2, 3, 4]
-        self.assertEquals(int_list, conv_raw_val(int_str, []))
+        self.assertEqual(int_list, conv_raw_val(int_str, []))
 
     def testNotIntMissFlag(self):
         non_int_str = 'a,b,c'
         try:
             conv_raw_val(non_int_str, [])
         except ValueError as e:
-            self.assertTrue("invalid literal for int()" in e.message)
+            self.assertTrue("invalid literal for int()" in e.args[0])
 
     def testNotIntList(self):
         non_int_str = 'a,b,c'

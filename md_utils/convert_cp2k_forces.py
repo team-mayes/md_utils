@@ -218,7 +218,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
                     if len(split_line) != 6:
                         raise InvalidDataError("Did not find six expected values (Atom Kind Element X Y Z)")
                     atom_num = int(split_line[0])
-                    xyz = np.asarray(map(float, split_line[3:])) * au_to_N
+                    xyz = np.asarray(list(map(float, split_line[3:]))) * au_to_N
                     # noinspection PyTypeChecker
                     to_print.append([atom_num] + xyz.tolist())
                 except (ValueError, InvalidDataError) as e:
@@ -237,7 +237,7 @@ def process_cp2k_force_file(f_file, out_dir, req_atom_num):
     try:
         check_atom_num(req_atom_num, last_line, f_file)
         split_line = qmmm_sum.split()
-        sums = np.asarray(map(float, split_line[4:])) * au_to_N
+        sums = np.asarray(list(map(float, split_line[4:]))) * au_to_N
         if len(sums) != 4:
             raise InvalidDataError("Did not find the expected four force values (x, y, z, total)")
         f_out = create_out_fname(f_file, prefix=OUT_FILE_PREFIX, base_dir=out_dir, ext='')
