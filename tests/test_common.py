@@ -223,8 +223,8 @@ class TestReadCsvDict(unittest.TestCase):
         test_elem = ' H'
         test_dict = read_csv_dict(ELEM_DICT_FILE, pdb_dict=True)
         self.assertTrue(test_type in test_dict)
-        self.assertEquals(test_elem, test_dict[test_type])
-        self.assertEquals(31, len(test_dict))
+        self.assertEqual(test_elem, test_dict[test_type])
+        self.assertEqual(31, len(test_dict))
 
     def testStringDictAsInt(self):
         # Check that fails elegantly by passing returning value error
@@ -331,24 +331,24 @@ class TestDiffLines(unittest.TestCase):
 
     def testDiff(self):
         diffs = diff_lines(DIFF_LINES_ONE_VAL_DIFF, DIFF_LINES_BASE_FILE)
-        self.assertEquals(len(diffs), 2)
+        self.assertEqual(len(diffs), 2)
 
     def testDiffColNum(self):
         diff_list_line = diff_lines(DIFF_LINES_MISS_VAL, DIFF_LINES_BASE_FILE)
-        self.assertEquals(len(diff_list_line), 2)
+        self.assertEqual(len(diff_list_line), 2)
 
     def testMissLine(self):
         diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, MISS_LINES_MISS_LINE)
-        self.assertEquals(len(diff_line_list), 1)
+        self.assertEqual(len(diff_line_list), 1)
         self.assertTrue("- 540010,1.04337066817119" in diff_line_list[0])
 
     def testDiffOrd(self):
         diff_line_list = diff_lines(IMPROP_SEC, IMPROP_SEC_ALT, delimiter=" ")
-        self.assertEquals(13, len(diff_line_list))
+        self.assertEqual(13, len(diff_line_list))
 
     def testDiffOneNan(self):
         diff_line_list = diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_ONE_NAN)
-        self.assertEquals(2, len(diff_line_list))
+        self.assertEqual(2, len(diff_line_list))
 
     def testDiffBothNanPrecDiff(self):
         # make there also be a precision difference so the entry-by-entry comparison will be made
