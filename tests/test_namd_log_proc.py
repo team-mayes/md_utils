@@ -66,7 +66,7 @@ class TestMainFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no lammps log data to process from" in output)
+            self.assertTrue("Found no log data to process from" in output)
 
     def testNoSuchFileInList(self):
         test_input = ["-l", GHOST_LOG_LIST]

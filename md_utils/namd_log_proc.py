@@ -23,7 +23,6 @@ except ImportError:
 
 __author__ = 'hmayes'
 
-
 # Constants #
 
 # For log file processing
@@ -45,6 +44,7 @@ PRESS = 'Press'
 
 LOG_FIELDNAMES = [FILE_NAME, TIMESTEP, E_DIHED]
 
+
 def parse_cmdline(argv):
     """
     Returns the parsed argument list and return code.
@@ -60,9 +60,9 @@ def parse_cmdline(argv):
                         default=None)
     parser.add_argument("-l", "--list_file", help="The a file with a list of log files to be processes.",
                         default=None)
-    parser.add_argument("-s", "--summary", help="Flag to collect summary data.",
+    parser.add_argument("-s", "--summary", help="Flag to collect energy data. Desired labels should follow",
                         action='store_true', default=False)
-    parser.add_argument("-t", "--timestep", help="Flag to collect data per time step.",
+    parser.add_argument("-p", "--perform", help="Flag to collect performance data.",
                         action='store_true', default=False)
     args = None
     try:
