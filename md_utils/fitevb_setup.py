@@ -18,7 +18,7 @@ try:
     from ConfigParser import ConfigParser
 except ImportError:
     # noinspection PyCompatibility
-    from configparser import ConfigParser
+    from configparser import ConfigParser, DuplicateOptionError
 
 __author__ = 'hmayes'
 
@@ -185,6 +185,9 @@ def parse_cmdline(argv):
         warning("Input data missing:", e)
         parser.print_help()
         return args, INPUT_ERROR
+    except DuplicateOptionError as e:
+        warning(e)
+        return args, INPUT_ERROR
     except SystemExit as e:
         if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
@@ -332,15 +335,16 @@ def process_raw_cfg(raw_cfg, args):
     else:
         cfgs[MAIN_SEC][PARAM_NUM] = 0
         cfgs[MAIN_SEC][RESID_IN_BEST] = False
+
     # Ensure all required info is present for specified sections.
     for section in cfgs:
         if section == MAIN_SEC:
+            cfgs[MAIN_SEC][SUM_HEAD_SUFFIX] = dequote(cfgs[MAIN_SEC][SUM_HEAD_SUFFIX])
             for param in cfgs[section]:
                 if param not in MAIN_SEC_DEF_CFG_VALS:
                     raise InvalidDataError("The configuration file contains parameter '{}' in section '{}'; expected "
                                            "only the following parameters for this section: {}"
                                            "".format(param, section, MAIN_SEC_DEF_CFG_VALS.keys()))
-            if len(cfgs[MAIN_SEC][SUM_HEAD_SUFFIX]) > 1:
                 cfgs[MAIN_SEC][param] = dequote(cfgs[MAIN_SEC][param])
             if cfgs[section][OUT_BASE_DIR] is None:
                 cfgs[section][OUT_BASE_DIR] = ""
@@ -468,19 +472,24 @@ def make_summary(cfg):
         write_csv(percent_diffs, f_out, headers, extrasaction="ignore")
 
         f_out = create_out_fname(summary_file, ext='.csv', base_dir=cfg[MAIN_SEC][OUT_BASE_DIR])
+        header_str = ','.join([dequote(header) for header in headers])
+        print(headers)
+        print(header_str)
         with open(f_out, 'w') as s_file:
             s_file.write(','.join(headers)+'\n')
-            np.savetxt(s_file, all_output, fmt='%8.6f', delimiter=',')
+        np.savetxt(f_out, all_output, fmt='%8.6f', delimiter=',')
+        print(header_str)
+        np.savetxt(f_out, all_output, fmt='%8.6f', delimiter=',', header=header_str, comments='')
         print('Wrote file: {}'.format(f_out))
 
         # in addition to csv (above), print format for gnuplot and np.loadtxt
-        with open(summary_file, 'w') as s_file:
-            np.savetxt(s_file, all_output, fmt='%12.6f')
+        # with open(summary_file, 'w') as s_file:
+        #     np.savetxt(s_file, all_output, fmt='%12.6f')
+        np.savetxt(summary_file, all_output, fmt='%12.6f')
         print("Wrote file: {}".format(summary_file))
     else:
         # have this as sep statement, because now printing a 1D array, handled differently than 2D array (newline=' ')
-        with open(summary_file, 'w') as s_file:
-            np.savetxt(s_file, latest_output, fmt='%12.6f', newline=' ')
+        np.savetxt(summary_file, latest_output, fmt='%12.6f', newline=' ')
         print("Wrote results from {} to new summary file {}".format(best_file, summary_file))
 
 

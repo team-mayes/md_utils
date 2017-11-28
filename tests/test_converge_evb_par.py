@@ -313,8 +313,8 @@ class TestMain(unittest.TestCase):
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Maximum number of function evaluations has been exceeded" in output)
             diffs = diff_lines(PAR_OUT, GOOD_PAR_OUT2)
-            self.assertEquals(len(diffs), 2)
-            self.assertEquals('- -0.000000    : constant Vii', diffs[0])
+            self.assertEqual(len(diffs), 2)
+            self.assertEqual('- -0.000000    : constant Vii', diffs[0])
         finally:
             silent_remove(PAR_OUT, disable=DISABLE_REMOVE)
             silent_remove(SCRIPT_OUT, disable=DISABLE_REMOVE)

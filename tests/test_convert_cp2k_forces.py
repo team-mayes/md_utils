@@ -106,7 +106,7 @@ class TestConvertCP2KFailWell(unittest.TestCase):
                 self.assertTrue("Could not read file" in output)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429         47     -0.215      0.156     -0.387      0.470" in output)
-            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
+            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1, delimiter=" "))
         finally:
             silent_remove(GLU_OUT1)
 
@@ -143,12 +143,13 @@ class TestConvertCP2KFailWell(unittest.TestCase):
 class TestConvertCP2K(unittest.TestCase):
     def testGoodAtomNumFile(self):
         test_input = ["-f", GLU_FILE, "-n", GLU_ATOM_NUM]
+        main(test_input)
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429         47     -0.215      0.156     -0.387      0.470" in output)
-            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
+            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1, delimiter=" "))
         finally:
             silent_remove(GLU_OUT1, disable=DISABLE_REMOVE)
 
@@ -160,9 +161,9 @@ class TestConvertCP2K(unittest.TestCase):
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429         47     -0.274     -0.728     -0.387      0.470" in output)
                 self.assertTrue("1429         53     -0.215      0.156      0.269      0.822" in output)
-            self.assertFalse(diff_lines(GLU_SUM, GLU_SUM))
-            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1))
-            self.assertFalse(diff_lines(GLU_OUT2, GOOD_GLU_OUT2))
+            self.assertFalse(diff_lines(GLU_SUM, GOOD_GLU_SUM))
+            self.assertFalse(diff_lines(GLU_OUT1, GOOD_GLU_OUT1, delimiter=" "))
+            self.assertFalse(diff_lines(GLU_OUT2, GOOD_GLU_OUT2, delimiter=" "))
         finally:
             silent_remove(GLU_SUM, disable=DISABLE_REMOVE)
             silent_remove(GLU_OUT1, disable=DISABLE_REMOVE)
@@ -175,7 +176,7 @@ class TestConvertCP2K(unittest.TestCase):
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429         44      0.065     -0.677     -0.401      0.789" in output)
-            self.assertFalse(diff_lines(GLU_2QM_OUT, GOOD_GLU_2QM_OUT))
+            self.assertFalse(diff_lines(GLU_2QM_OUT, GOOD_GLU_2QM_OUT, delimiter=" "))
         finally:
             silent_remove(GLU_2QM_OUT, disable=DISABLE_REMOVE)
 
@@ -186,6 +187,6 @@ class TestConvertCP2K(unittest.TestCase):
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("1429         44      0.065     -0.677     -0.401      0.789" in output)
-            self.assertFalse(diff_lines(GLU_2MM_AFTER_QM_OUT, GOOD_GLU_2QM_OUT))
+            self.assertFalse(diff_lines(GLU_2MM_AFTER_QM_OUT, GOOD_GLU_2QM_OUT, delimiter=" "))
         finally:
             silent_remove(GLU_2MM_AFTER_QM_OUT, disable=DISABLE_REMOVE)

@@ -198,7 +198,7 @@ def main(argv=None):
         else:
             found_files = find_files_by_dir(args.base_dir, cfg[FILE_PAT])
             # noinspection PyCompatibility
-            for f_dir, files in found_files.iteritems():
+            for f_dir, files in list(found_files.items()):
                 if not files:
                     warning("No files found for dir '{}'".format(f_dir))
                     continue

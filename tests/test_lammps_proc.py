@@ -158,7 +158,7 @@ class TestLammpsProcDataNoOutput(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Missing config val for key 'water_o_type'" in output)
+            self.assertTrue("Missing config val" in output)
         with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 

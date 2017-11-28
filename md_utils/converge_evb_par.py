@@ -184,7 +184,7 @@ def process_bin_max_min_vals(raw_key_val_tuple_list):
             raise InvalidDataError("Encountered error '{}' For key '{}' in section {}, read: {}.\n"
                                    "Expected 1 or 3 comma-separated floats for each variable (key): the max "
                                    "hop (step) size, \noptionally followed by the min value, max value that "
-                                   "should be obtained from hopping.".format(e.message, key, BASIN_HOP_MIN_MAX, val))
+                                   "should be obtained from hopping.".format(e.args[0], key, BASIN_HOP_MIN_MAX, val))
     return hop_dict, min_dict, max_dict
 
 
@@ -211,7 +211,7 @@ def process_max_min_vals(raw_key_val_tuple_list, default_penalty):
                                        "".format(key, val))
         except ValueError as e:
             raise InvalidDataError("Error in reading max or min value provided for key '{}': {}"
-                                   "".format(key, e.message))
+                                   "".format(key, e.args[0]))
     return val_dict
 
 
@@ -289,8 +289,8 @@ def read_cfg(f_loc, cfg_proc=process_cfg_conv):
             if proc[MAX_ITER] is not None:
                 proc[MAX_ITER] = int(proc[MAX_ITER])
         except InvalidDataError as e:
-            if 'Unexpected key' in e.message:
-                raise InvalidDataError(e.message + " Does this belong \nin a template value section such as '[{}]'?"
+            if 'Unexpected key' in e.args[0]:
+                raise InvalidDataError(e.args[0] + " Does this belong \nin a template value section such as '[{}]'?"
                                                    "".format(TPL_VALS_SEC))
         except ValueError as e:
             raise InvalidDataError(e)

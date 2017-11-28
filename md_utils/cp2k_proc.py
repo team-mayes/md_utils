@@ -5,13 +5,14 @@ Given a template data or pdb file, it will make new files with the xyz coordinat
 """
 
 from __future__ import print_function
-from __init__ import __version__
 import argparse
 import os
 import re
 import sys
 import numpy as np
 from datetime import datetime
+
+import md_utils
 from md_utils.data2data import process_data_tpl
 
 try:
@@ -48,10 +49,10 @@ PRINT_XYZ_FLAG = 'print_xyz_files'
 
 # data file info
 
-COORD_PAT = re.compile(r".*MODULE FIST:  ATOMIC COORDINATES IN.*")
+COORD_PAT = re.compile(r".*MODULE FIST: {2}ATOMIC COORDINATES IN.*")
 ENERGY_PAT = re.compile(r".*ENERGY\| Total FORCE_EVAL \( QMMM \).*")
 OUTER_CONV_PAT = re.compile(r".*outer SCF loop converged.*")
-GEOM_OPT_RUN_PAT = re.compile(r".*Run type                                                        GEO_OPT.*")
+GEOM_OPT_RUN_PAT = re.compile(r".*Run type {56}GEO_OPT.*")
 GEOM_OPT_COMPLETE_PAT = re.compile(r".*GEOMETRY OPTIMIZATION COMPLETED.*")
 REF_PAT = re.compile(r".*R E F E R E N C E S.*")
 NUM_ATOMS_PAT = re.compile(r"(\d+).*atoms$")
@@ -189,7 +190,7 @@ def process_coords(cp2k_file, data_tpl_content, pdb_tpl_content, print_xyz_flag,
                                        "".format(atom_num, num_atoms))
 
         atom_num = int(split_line[0])
-        xyz_coords = map(float, split_line[3:6])
+        xyz_coords = list(map(float, split_line[3:6]))
         if make_data_file:
             new_atoms[atom_count][4:7] = xyz_coords
         if make_pdb_file:
@@ -255,15 +256,19 @@ def process_cp2k_file(cfg, cp2k_file, data_tpl_content, pdb_tpl_content, element
     result_dict = {FILE_NAME: cp2k_file, QMMM_ENERGY: np.inf, OPT_GEOM: 'NA', COMPLETED_JOB: False}
     atoms_xyz = None
     with open(cp2k_file) as f:
+        pkg_version = md_utils.__version__
+        # print(temp1)
+        # pkg_version = pkg_resources.parse_version(md_utils.__version__)
         if make_pdb_file:
             pdb_tpl_content[HEAD_CONTENT][0] = "REMARK 450 Created on {} by {} version {}" \
-                                               "".format(datetime.now(), __name__, __version__)
+                                               "".format(datetime.now(), __name__, pkg_version)
             pdb_tpl_content[HEAD_CONTENT][1] = "REMARK 450 from template {}".format(cfg[PDB_TPL_FILE])
             pdb_tpl_content[HEAD_CONTENT][2] = "REMARK 450 and coordinates from {}".format(cp2k_file)
 
         if make_data_file:
             data_tpl_content[HEAD_CONTENT][0] = "Created on {} by {} version {} from template file {} and " \
-                                                "cp2k output file {}".format(datetime.now(), __name__, __version__,
+                                                "cp2k output file {}".format(datetime.now(), __name__,
+                                                                             pkg_version,
                                                                              cfg[DATA_TPL_FILE], cp2k_file)
         for line in f:
             line = line.strip()

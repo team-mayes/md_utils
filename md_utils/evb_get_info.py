@@ -367,7 +367,7 @@ def process_evb_file(evb_file, cfg):
                 result[section] = ene_total
                 section = None
             elif section == SEC_ENVIRON:
-                split_line = map(float, line.split())
+                split_line = list(map(float, line.split()))
                 result.update({E_VDW: split_line[0], E_COUL: split_line[1], E_BOND: split_line[2],
                                E_ANGL: split_line[3], E_DIHED: split_line[4], E_IMPRO: split_line[5],
                                E_LONG: split_line[6]})
@@ -416,7 +416,7 @@ def process_evb_file(evb_file, cfg):
                     else:
                         one_state = False
             elif section == SEC_EIGEN:
-                eigen_vector = map(float, line.split())
+                eigen_vector = list(map(float, line.split()))
                 eigen_sq = np.square(eigen_vector)
                 for state in prot_state_list:
                     if eigen_sq[state] > max_prot_ci_sq:
@@ -513,7 +513,7 @@ def process_evb_file(evb_file, cfg):
                         if max_prot_ci_sq > cfg[MIN_MAX_CI_SQ] and max_hyd_ci_sq > cfg[MIN_MAX_CI_SQ]:
                             subset_to_print[timestep] = result
     # Ordered dict back to list by keeping values only
-    return data_to_print.values(), subset_to_print.values(), prot_wat_to_print
+    return list(data_to_print.values()), list(subset_to_print.values()), prot_wat_to_print
 
 
 def process_evb_files(cfg, selected_fieldnames):
@@ -651,7 +651,7 @@ def find_rel_e(extracted_data, cfg, out_field_names, ref_energy_dict):
     write_csv(extracted_data, f_out, out_field_names, extrasaction="ignore",
               print_message=cfg[PRINT_PROGRESS], round_digits=ROUND_DIGITS)
     if len(ref_energy_dict) > 1:
-        print("Calculated total energy residual from {} files: {}".format(num_resid, tot_resid))
+        print("Calculated total energy residual from {} files: {}".format(num_resid, round(tot_resid, 6)))
 
 
 def main(argv=None):

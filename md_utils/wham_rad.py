@@ -179,7 +179,7 @@ def main(argv=None):
         found_files = find_files_by_dir(args.base_dir, args.pattern)
         logger.debug("Found '{}' dirs with files to process".format(len(found_files)))
         # noinspection PyCompatibility
-        for f_dir, files in found_files.iteritems():
+        for f_dir, files in found_files.items():
             if not files:
                 logger.warn("No files found for dir '{}'".format(f_dir))
                 continue

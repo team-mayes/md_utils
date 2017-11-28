@@ -36,7 +36,7 @@ class TestPressDups(unittest.TestCase):
                 {"a": 1.3, "b": 2.2, "c": 19.0}, {"a": 99, "b": 1.0, "c": -4.2},
                 {"a": -22, "b": 1.0, "c": -4.2}]
         avg = compress_dups(data, "a")
-        self.assertEquals(3, len(avg))
+        self.assertEqual(3, len(avg))
 
 
 class TestMainNoOutput(unittest.TestCase):

@@ -14,7 +14,7 @@ from md_utils.md_common import diff_lines, capture_stderr, capture_stdout, silen
 __author__ = 'hbmayes'
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -61,6 +61,12 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Found no log file names to process" in output)
 
+    # def testNoFilesInList(self):
+    #     test_input = ["-f", EMPTY_LOG_LIST]
+    #     if logger.isEnabledFor(logging.DEBUG):
+    #         main(test_input)
+    #     with capture_stderr(main, test_input) as output:
+    #         self.assertTrue("Found no lammps log data to process from" in output)
     def testNoFilesInList(self):
         test_input = ["-f", EMPTY_LOG_LIST]
         if logger.isEnabledFor(logging.DEBUG):
@@ -87,9 +93,9 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(LOG_OUT, disable=DISABLE_REMOVE)
 
-    def testLogList(self):
-        try:
-            main(["-l", LOG_LIST])
-            self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-        finally:
-            silent_remove(LOG_LIST_OUT)
+    # def testLogList(self):
+    #     try:
+    #         main(["-l", LOG_LIST])
+    #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
+    #     finally:
+    #         silent_remove(LOG_LIST_OUT)
