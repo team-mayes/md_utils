@@ -44,7 +44,7 @@ TEMP = 'Temp'
 PRESS = 'Press'
 PERFORMANCE = 'time/step'
 
-LOG_FIELDNAMES = [FILE_NAME, TIMESTEP, E_DIHED]
+LOG_FIELDNAMES = [FILE_NAME, TIMESTEP]
 
 
 def parse_cmdline(argv):
@@ -140,6 +140,10 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_performa
 
     result_list = []
     out_fname = create_out_fname(source_name, suffix='_sum', ext=".csv")
+    if print_sum_info:
+        LOG_FIELDNAMES.append(E_DIHED)
+    if print_performance_info:
+        LOG_FIELDNAMES.append(PERFORMANCE)
 
     for log_file in log_file_list:
         result_list += process_log(log_file, print_sum_info, print_performance_info)

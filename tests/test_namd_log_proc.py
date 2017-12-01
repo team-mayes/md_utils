@@ -16,7 +16,7 @@ __author__ = 'hbmayes'
 # logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-# DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 # File Locations #
 
