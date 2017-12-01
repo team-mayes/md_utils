@@ -33,6 +33,7 @@ FILE_NAME = 'filename'
 TIMESTEP = 'timestep'
 RUN_PAT = re.compile(r"^TCL: Running.*")
 ENERGY_PAT = re.compile(r"^ENERGY: .*")
+PERFORMANCE_PAT = re.compile(r"^TIMING: .*")
 
 E_BOND = 'E_bond'
 E_ANGL = 'E_angl'
@@ -41,6 +42,7 @@ E_IMPRO = 'E_impro'
 E_VDWL = 'E_vdwl'
 TEMP = 'Temp'
 PRESS = 'Press'
+PERFORMANCE = 'time/step'
 
 LOG_FIELDNAMES = [FILE_NAME, TIMESTEP, E_DIHED]
 
@@ -60,9 +62,9 @@ def parse_cmdline(argv):
                         default=None)
     parser.add_argument("-l", "--list_file", help="The a file with a list of log files to be processes.",
                         default=None)
-    parser.add_argument("-s", "--summary", help="Flag to collect energy data. Desired labels should follow",
+    parser.add_argument("-s", "--summary", help="Flag to collect Dihedral energy data. Other energy options pending",
                         action='store_true', default=False)
-    parser.add_argument("-p", "--perform", help="Flag to collect performance data.",
+    parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     args = None
     try:
@@ -81,8 +83,8 @@ def parse_cmdline(argv):
         if len(args.file_list) < 1:
             raise InvalidDataError("Found no log file names to process. Specify one or more files as specified in "
                                    "the help documentation ('-h').")
-        if not (args.summary or args.timestep):
-            raise InvalidDataError("Did not choose either to output summary data ('-s') or data per timestep ('-t'). "
+        if not (args.summary or args.performance):
+            raise InvalidDataError("Did not choose either to output summary data ('-s') or performance data ('-p'). "
                                    "No output will be produced.")
     except IOError as e:
         warning("Problems reading file:", e)
@@ -97,7 +99,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_log(log_file):
+def process_log(log_file, summary, performance):
     """
     Gather key info from log file
     @param log_file: name of log file
@@ -115,16 +117,21 @@ def process_log(log_file):
                 reading_data = True
                 result_dict[FILE_NAME] = file_root
             elif reading_data:
-                if ENERGY_PAT.match(line):
+                if summary and ENERGY_PAT.match(line):
                     s_line = line.split()
                     result_dict[TIMESTEP] = int(s_line[1])
                     result_dict[E_DIHED] = float(s_line[4])
+                    result_list.append(dict(result_dict))
+                elif performance and PERFORMANCE_PAT.match(line):
+                    s_line = line.split()
+                    result_dict[TIMESTEP] = int(s_line[1])
+                    result_dict[PERFORMANCE] = (s_line[4])
                     result_list.append(dict(result_dict))
 
     return result_list
 
 
-def process_log_files(source_name, log_file_list, print_sum_info, print_ts_info):
+def process_log_files(source_name, log_file_list, print_sum_info, print_performance_info):
     """
     Loops through all files and prints output
     @param source_name: the source name to use as the base for creating an outfile name
@@ -135,7 +142,7 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_ts_info)
     out_fname = create_out_fname(source_name, suffix='_sum', ext=".csv")
 
     for log_file in log_file_list:
-        result_list += process_log(log_file)
+        result_list += process_log(log_file, print_sum_info, print_performance_info)
 
     if len(result_list) == 0:
         warning("Found no log data to process from: {}".format(source_name))
@@ -151,7 +158,7 @@ def main(argv=None):
         return ret
 
     try:
-        process_log_files(args.source_name, args.file_list, args.summary, args.timestep)
+        process_log_files(args.source_name, args.file_list, args.summary, args.performance)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
