@@ -271,7 +271,7 @@ def process_psf(cfg, atom_num_dict, mol_num_dict, element_dict, radii_dict):
         # create CP2K input listing amino atom ids
         f_name = create_out_fname('amino_id.dat', base_dir=cfg[OUT_BASE_DIR])
         print_mode = "w"
-        for elem in qmmm_elem_id_dict:
+        for elem in sorted(qmmm_elem_id_dict):
             print_qm_kind(qmmm_elem_id_dict[elem], elem, f_name, mode=print_mode)
             print_mode = 'a'
         print_qm_links(ca_res_atom_id_dict, cb_res_atom_id_dict, f_name, mode=print_mode)
