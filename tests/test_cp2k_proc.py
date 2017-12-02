@@ -110,7 +110,7 @@ class TestCP2KProc(unittest.TestCase):
         try:
             main(["-c", ONE_2DATA_INI])
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
-            self.assertEquals(len(diffs), 2)
+            self.assertEqual(len(diffs), 2)
             self.assertTrue("Created on " in diffs[0])
             self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_GLU_XYZ_OUT))
         finally:
@@ -125,7 +125,7 @@ class TestCP2KProc(unittest.TestCase):
             diffs = diff_lines(GLU_DATA_OUT, GOOD_GLU_DATA_OUT)
             diffs1 = diff_lines(GLU_DATA_OUT2, GOOD_GLU_DATA_OUT2)
             for diff_list in [diffs, diffs1]:
-                self.assertEquals(len(diff_list), 2)
+                self.assertEqual(len(diff_list), 2)
                 self.assertTrue("Created on " in diff_list[0])
         finally:
             silent_remove(GLU_DATA_OUT, disable=DISABLE_REMOVE)
@@ -144,7 +144,7 @@ class TestCP2KProc(unittest.TestCase):
             diffs = diff_lines(GLU_PDB_OUT, GOOD_GLU_PDB_OUT)
             diffs1 = diff_lines(GLU_PDB_OUT2, GOOD_GLU_PDB_OUT2)
             for diff_list in [diffs, diffs1]:
-                self.assertEquals(len(diff_list), 2)
+                self.assertEqual(len(diff_list), 2)
                 self.assertTrue("Created on " in diff_list[0])
             self.assertFalse(diff_lines(GLU_XYZ_OUT, GOOD_GLU_XYZ_OUT))
         finally:

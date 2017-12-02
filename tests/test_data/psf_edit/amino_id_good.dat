@@ -1,8 +1,8 @@
-    &QM_KIND H
-        MM_INDEX 20 21 23 24
-    &END QM_KIND
     &QM_KIND C
         MM_INDEX 19 22 25
+    &END QM_KIND
+    &QM_KIND H
+        MM_INDEX 20 21 23 24
     &END QM_KIND
     &QM_KIND O
         MM_INDEX 26 27

@@ -1,3 +1,3 @@
-"file_name","num_atoms","force_x","force_y","force_z","total_force_kcal_per_mol"
-"0.750_20c_100ps_reorder_555260.dat",1429,-0.215215,0.155769,-0.387147,0.469538
-"1.000_20c_100ps_reorder_485050.dat",1429,-0.273569,-0.72756,0.268505,0.822355
+"file_name","num_atoms","qm_atoms","force_x","force_y","force_z","total_force_kcal_per_mol"
+"0.750_20c_100ps_reorder_555260.dat",1429,47,-0.215215,0.155769,-0.387147,0.469538
+"1.000_20c_100ps_reorder_485050.dat",1429,53,-0.273569,-0.72756,0.268505,0.822355

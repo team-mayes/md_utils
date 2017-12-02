@@ -321,7 +321,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                         s_line = line.split()
                         try:
                             # For the box sizes:
-                            s_line[0:2] = map(float, s_line[0:2])
+                            s_line[0:2] = list(map(float, s_line[0:2]))
                             if not found_box_size:
                                 found_box_size = True
                                 content[SEC_HEAD].append("")
@@ -445,7 +445,7 @@ def proc_data_file(cfg, data_file, atom_id_dict, type_dict):
                 try:
                     s_line[0] = int(s_line[0])
                     s_line[1] = int(s_line[1])
-                    atoms = map(int, s_line[2:min_col_num])
+                    atoms = list(map(int, s_line[2:min_col_num]))
                 except (ValueError, KeyError) as e:
                     raise InvalidDataError("Error {} reading line: {} \n  in section {} of file: {} "
                                            "".format(e, line, section, data_file))

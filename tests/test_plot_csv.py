@@ -1,7 +1,6 @@
 # coding=utf-8
 
 """
-Tests for wham_rad.
 """
 
 import unittest
@@ -14,6 +13,7 @@ __author__ = 'mayes'
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 CSV_DIR = os.path.join(DATA_DIR, 'plot_csv')
 CSV_FILE = os.path.join(CSV_DIR, 'identity.csv')
+PNG_FILE = os.path.join(CSV_DIR, 'identity.png')
 
 
 class TestMainNoOutput(unittest.TestCase):
@@ -27,5 +27,4 @@ class TestMain(unittest.TestCase):
             main(argv=[CSV_FILE])
             # self.assertFalse(diff_lines(HEAD_STD, HEAD_PRESS))
         finally:
-            # silent_remove(HEAD_PRESS)
-            pass
+            silent_remove(PNG_FILE)

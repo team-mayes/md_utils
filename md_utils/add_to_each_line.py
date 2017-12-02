@@ -36,7 +36,7 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = ThrowingArgumentParser(description='Reads in a file and adds a begging and/or end to each line. '
+    parser = ThrowingArgumentParser(description='Reads in a file and adds a beginning and/or end to each line. '
                                                 'The first argument must be the name of the file to be read.')
     # Below, it is a positional argument, that is required.
     parser.add_argument("file", help="The location of the file to be amended (required).", default=MISSING_FILE, )

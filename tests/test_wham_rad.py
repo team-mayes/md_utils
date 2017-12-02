@@ -98,7 +98,7 @@ class TestZeroPoint(unittest.TestCase):
 class TestMainForMessages(unittest.TestCase):
     def testNoArgs(self):
         with capture_stderr(main, []) as output:
-            self.assertTrue("too few arguments" in output)
+            self.assertTrue("arguments" in output)
         with capture_stdout(main, []) as output:
             self.assertTrue("Creates a radial correction value" in output)
 
