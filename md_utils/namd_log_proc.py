@@ -83,6 +83,9 @@ def parse_cmdline(argv):
         if len(args.file_list) < 1:
             raise InvalidDataError("Found no log file names to process. Specify one or more files as specified in "
                                    "the help documentation ('-h').")
+        if (args.summary and args.performance):
+            raise InvalidDataError("Script is not currently configured to accept both summary data ('-s') and "
+                                    "performance data ('-p'). Please select only one.")
         if not (args.summary or args.performance):
             raise InvalidDataError("Did not choose either to output summary data ('-s') or performance data ('-p'). "
                                    "No output will be produced.")
@@ -123,7 +126,7 @@ def process_log(log_file, summary, performance):
                     result_dict[E_DIHED] = float(s_line[4])
                     result_list.append(dict(result_dict))
                 elif performance and PERFORMANCE_PAT.match(line):
-                    s_line = line.split()
+                    s_line = line.replace("/"," ").split()
                     result_dict[TIMESTEP] = int(s_line[1])
                     result_dict[PERFORMANCE] = (s_line[4])
                     result_list.append(dict(result_dict))
@@ -139,11 +142,12 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_performa
     """
 
     result_list = []
-    out_fname = create_out_fname(source_name, suffix='_sum', ext=".csv")
     if print_sum_info:
         LOG_FIELDNAMES.append(E_DIHED)
+        out_fname = create_out_fname(source_name, suffix='_sum', ext=".csv")
     if print_performance_info:
         LOG_FIELDNAMES.append(PERFORMANCE)
+        out_fname = create_out_fname(source_name, suffix='_performance', ext=".csv")
 
     for log_file in log_file_list:
         result_list += process_log(log_file, print_sum_info, print_performance_info)
@@ -152,6 +156,7 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_performa
         warning("Found no log data to process from: {}".format(source_name))
     else:
         write_csv(result_list, out_fname, LOG_FIELDNAMES, extrasaction="ignore")
+        LOG_FIELDNAMES.pop()
 
 
 def main(argv=None):

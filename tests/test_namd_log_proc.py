@@ -24,7 +24,8 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 NAMD_LOG_DIR = os.path.join(DATA_DIR, 'namd_log_proc')
 
 LOG_PATH = os.path.join(NAMD_LOG_DIR, 'namd_short.log')
-LOG_OUT = os.path.join(NAMD_LOG_DIR, 'namd_short_sum.csv')
+LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'namd_short_sum.csv')
+LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'namd_short_performance.csv')
 GOOD_LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
 GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
 
@@ -70,11 +71,11 @@ class TestMainFailWell(unittest.TestCase):
     #         self.assertTrue("Found no lammps log data to process from" in output)
 
     def testNoSuchFileInList(self):
-        test_input = ["-l", GHOST_LOG_LIST]
+        test_input = ["-l", GHOST_LOG_LIST, "-p"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue(" No such file or directory" in output)
+            self.assertTrue("Problems reading file:" in output)
 
     def testNoOptionSelected(self):
         test_input = ["-f", LOG_PATH]
@@ -83,26 +84,34 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Did not choose either to" in output)
 
+    def testBothOptionsSelected(self):
+        test_input = ["-f", LOG_PATH, "-s", "-p"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Please select only one" in output)
+
+
 class TestMain(unittest.TestCase):
     def testLogFile(self):
         test_input = ["-f", LOG_PATH, "-s"]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT, GOOD_LOG_OUT_SUMMARY))
+            self.assertFalse(diff_lines(LOG_OUT_SUMMARY, GOOD_LOG_OUT_SUMMARY))
         finally:
-            silent_remove(LOG_OUT, disable=DISABLE_REMOVE)
+            silent_remove(LOG_OUT_SUMMARY, disable=DISABLE_REMOVE)
 
-    def testLogFile(self):
+    def testPerformanceLogFile(self):
         test_input = ["-f", LOG_PATH, "-p"]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT, GOOD_LOG_OUT_PERFORMANCE))
+            self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
         finally:
-            silent_remove(LOG_OUT, disable=DISABLE_REMOVE)
+            silent_remove(LOG_OUT_PERFORMANCE, disable=DISABLE_REMOVE)
 
-    # def testLogList(self):
-    #     try:
-    #         main(["-l", LOG_LIST])
-    #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-    #     finally:
-    #         silent_remove(LOG_LIST_OUT)
+            # def testLogList(self):
+            #     try:
+            #         main(["-l", LOG_LIST])
+            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
+            #     finally:
+            #         silent_remove(LOG_LIST_OUT)
