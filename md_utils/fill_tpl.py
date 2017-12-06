@@ -139,20 +139,33 @@ def parse_cmdline(argv=None):
     args = None
     try:
         args = parser.parse_args(argv)
-        if not os.path.isfile(args.config[TPL_FNAME]):
-            if args.config[TPL_FNAME] == DEF_TPL:
-                error_message = "Check input for the configuration key '{}'; " \
-                                "could not find the default template file: {}"
-            else:
-                error_message = "Could not find the template file specified with " \
-                                "the configuration key '{}': {}"
-            raise IOError(error_message.format(TPL_FNAME, args.config[TPL_FNAME]))
         if args.filled_tpl_name is not None:
             args.config[FILLED_TPL_FNAME] = args.filled_tpl_name
         if args.config[FILLED_TPL_FNAME] is None:
             raise InvalidDataError("Missing required key '{}', which can be specified in the "
                                    "required either in the command line for configuration file."
                                    "".format(FILLED_TPL_FNAME))
+        for var in [TPL_FNAME, FILLED_TPL_FNAME]:
+            try:
+                args.config[var] = [conv_num(x.strip()) for x in args.config[var].split(',')]
+            except AttributeError as e:
+                if 'NoneType' in e.args[0]:
+                    raise InvalidDataError("Error processing entry '{}' for variable '{}'".format(args.config[var],
+                                                                                                  var))
+        # After converting both variables to lists, make sure same length
+        if len(args.config[TPL_FNAME]) != len(args.config[FILLED_TPL_FNAME]):
+            raise InvalidDataError("The same number of comma-separated entries are required for keywords '{}' and "
+                                   "'{}'".format(TPL_FNAME, FILLED_TPL_FNAME))
+        for t_file in args.config[TPL_FNAME]:
+            if not os.path.isfile(t_file):
+                if t_file == DEF_TPL:
+                    error_message = "Check input for the configuration key '{}'; " \
+                                    "could not find the default template file: {}"
+                else:
+                    error_message = "Could not find the template file specified with " \
+                                    "the configuration key '{}': {}"
+                raise IOError(error_message.format(TPL_FNAME, args.config[TPL_FNAME]))
+
     except (KeyError, InvalidDataError, IOError, SystemExit) as e:
         if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
@@ -233,7 +246,8 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        make_tpl(cfg, cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
+        for tpl_name, filled_tpl_name in zip(cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME]):
+            make_tpl(cfg, tpl_name, filled_tpl_name)
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR

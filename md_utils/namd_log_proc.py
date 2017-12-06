@@ -62,7 +62,7 @@ def parse_cmdline(argv):
                         default=None)
     parser.add_argument("-l", "--list_file", help="The a file with a list of log files to be processes.",
                         default=None)
-    parser.add_argument("-s", "--summary", help="Flag to collect Dihedral energy data. Other energy options pending",
+    parser.add_argument("-s", "--summary", help="Flag to collect dihedral energy data. Other energy options pending",
                         action='store_true', default=False)
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
@@ -142,11 +142,12 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_performa
     """
 
     result_list = []
+    field_names = LOG_FIELDNAMES.copy()
     if print_sum_info:
-        LOG_FIELDNAMES.append(E_DIHED)
+        field_names += [E_DIHED]
         out_fname = create_out_fname(source_name, suffix='_sum', ext=".csv")
     if print_performance_info:
-        LOG_FIELDNAMES.append(PERFORMANCE)
+        field_names += [PERFORMANCE]
         out_fname = create_out_fname(source_name, suffix='_performance', ext=".csv")
 
     for log_file in log_file_list:
@@ -155,8 +156,7 @@ def process_log_files(source_name, log_file_list, print_sum_info, print_performa
     if len(result_list) == 0:
         warning("Found no log data to process from: {}".format(source_name))
     else:
-        write_csv(result_list, out_fname, LOG_FIELDNAMES, extrasaction="ignore")
-        LOG_FIELDNAMES.pop()
+        write_csv(result_list, out_fname, fieldnames=field_names, extrasaction="ignore")
 
 
 def main(argv=None):

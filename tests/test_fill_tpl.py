@@ -45,6 +45,14 @@ PAR_EQ_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par.ini')
 PAR_EQ_WRONG_ORDER_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_wrong_order.ini')
 PAR_EQ_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_missing_param.ini')
 
+PROD_GPU_JOB_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu_job.ini')
+PROD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'test.job')
+GOOD_PROD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_gpu_good.job')
+PROD_GPU_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu_inp.ini')
+PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
+GOOD_PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_gpu_good.inp')
+PROD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu.ini')
+
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
 MISSING_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_tpl.ini')
@@ -149,6 +157,8 @@ class TestMakeParFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue('Missing parameter value' in output)
 
+    # TODO: add test for different numbers of filled_tpl names and tpls
+
 
 class TestMain(unittest.TestCase):
     def testMakePar(self):
@@ -208,3 +218,31 @@ class TestMain(unittest.TestCase):
         finally:
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file, disable=DISABLE_REMOVE)
+
+    def testMakeGPUJob(self):
+        try:
+            silent_remove(PROD_GPU_JOB_OUT)
+            main(["-c", PROD_GPU_JOB_INI])
+            self.assertFalse(diff_lines(PROD_GPU_JOB_OUT, GOOD_PROD_GPU_JOB_OUT))
+        finally:
+            silent_remove(PROD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
+
+    def testMakeGPUInp(self):
+        try:
+            silent_remove(PROD_GPU_INP_OUT)
+            main(["-c", PROD_GPU_INP_INI])
+            self.assertFalse(diff_lines(PROD_GPU_INP_OUT, GOOD_PROD_GPU_INP_OUT))
+        finally:
+            silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
+
+    def testMakeGPUInpJob(self):
+        # Test processing two tpl files with one input; bit redundant with above, but not worried about it
+        try:
+            silent_remove(PROD_GPU_JOB_OUT)
+            silent_remove(PROD_GPU_INP_OUT)
+            main(["-c", PROD_GPU_JOB_INP_INI])
+            self.assertFalse(diff_lines(PROD_GPU_JOB_OUT, GOOD_PROD_GPU_JOB_OUT))
+            self.assertFalse(diff_lines(PROD_GPU_INP_OUT, GOOD_PROD_GPU_INP_OUT))
+        finally:
+            silent_remove(PROD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
