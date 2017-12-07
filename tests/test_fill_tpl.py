@@ -61,6 +61,7 @@ TPL_KEY_IN_MAIN_INI = os.path.join(SUB_DATA_DIR, 'tpl_key_in_main.ini')
 VAL_BEFORE_SECTION_INI = os.path.join(SUB_DATA_DIR, 'no_initial_section.ini')
 MISSING_MAIN_INI = os.path.join(SUB_DATA_DIR, 'missing_main.ini')
 EXTRA_SEC_INI = os.path.join(SUB_DATA_DIR, 'extra_section.ini')
+TPL_MISMATCH = os.path.join(SUB_DATA_DIR, 'tpl_mismatch.ini')
 
 
 class TestMakeParFailWell(unittest.TestCase):
@@ -157,7 +158,12 @@ class TestMakeParFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue('Missing parameter value' in output)
 
-    # TODO: add test for different numbers of filled_tpl names and tpls
+    def testMakeParTplNumberMismatch(self):
+        test_input = ["-c", TPL_MISMATCH]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue('The same number of' in output)
 
 
 class TestMain(unittest.TestCase):
