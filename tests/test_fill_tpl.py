@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -52,6 +52,11 @@ PROD_GPU_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu_inp.ini')
 PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
 GOOD_PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_gpu_good.inp')
 PROD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu.ini')
+PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'test.pbs')
+PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
+PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
+GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
+GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -252,3 +257,14 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PROD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
+
+    def testMakeCPUINPJOB(self):
+        try:
+            silent_remove(PROD_CPU_JOB_OUT)
+            silent_remove(PROD_CPU_INP_OUT)
+            main(["-c", PROD_CPU_JOB_INP_INI])
+            self.assertFalse(diff_lines(PROD_CPU_JOB_OUT, GOOD_PROD_CPU_JOB_OUT))
+            self.assertFalse(diff_lines(PROD_CPU_INP_OUT, GOOD_PROD_CPU_INP_OUT))
+        finally:
+            silent_remove(PROD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(PROD_CPU_INP_OUT, disable=DISABLE_REMOVE)

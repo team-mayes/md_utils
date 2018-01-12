@@ -8,6 +8,7 @@ set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
+firsttimestep      {first}
 restartfreq      10000;                # 500 steps = every 1ps
 dcdfreq           2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
@@ -118,5 +119,5 @@ langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
 # run
-numsteps          {last};              # maybe write out end in ns
-run                {run};              # maybe write out run in ns
+numsteps        {last:>10};            # maybe write out end in ns
+run               {run:>8};            # maybe write out run in ns
