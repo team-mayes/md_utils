@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name={name}
-#SBATCH -t {walltime}
+#SBATCH -t {walltime}:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
 #SBATCH --mail-type=ALL

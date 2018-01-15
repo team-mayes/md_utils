@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -52,6 +52,11 @@ PROD_GPU_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu_inp.ini')
 PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
 GOOD_PROD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_gpu_good.inp')
 PROD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_gpu.ini')
+PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'test.pbs')
+PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
+PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
+GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
+GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -61,6 +66,7 @@ TPL_KEY_IN_MAIN_INI = os.path.join(SUB_DATA_DIR, 'tpl_key_in_main.ini')
 VAL_BEFORE_SECTION_INI = os.path.join(SUB_DATA_DIR, 'no_initial_section.ini')
 MISSING_MAIN_INI = os.path.join(SUB_DATA_DIR, 'missing_main.ini')
 EXTRA_SEC_INI = os.path.join(SUB_DATA_DIR, 'extra_section.ini')
+TPL_MISMATCH = os.path.join(SUB_DATA_DIR, 'tpl_mismatch.ini')
 
 
 class TestMakeParFailWell(unittest.TestCase):
@@ -157,7 +163,12 @@ class TestMakeParFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue('Missing parameter value' in output)
 
-    # TODO: add test for different numbers of filled_tpl names and tpls
+    def testMakeParTplNumberMismatch(self):
+        test_input = ["-c", TPL_MISMATCH]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue('The same number of' in output)
 
 
 class TestMain(unittest.TestCase):
@@ -246,3 +257,14 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PROD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
+
+    def testMakeCPUINPJOB(self):
+        try:
+            silent_remove(PROD_CPU_JOB_OUT)
+            silent_remove(PROD_CPU_INP_OUT)
+            main(["-c", PROD_CPU_JOB_INP_INI])
+            self.assertFalse(diff_lines(PROD_CPU_JOB_OUT, GOOD_PROD_CPU_JOB_OUT))
+            self.assertFalse(diff_lines(PROD_CPU_INP_OUT, GOOD_PROD_CPU_INP_OUT))
+        finally:
+            silent_remove(PROD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(PROD_CPU_INP_OUT, disable=DISABLE_REMOVE)
