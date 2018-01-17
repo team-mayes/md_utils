@@ -42,6 +42,8 @@ class TestAddHeadTailNoOutput(unittest.TestCase):
 
     def testMissingFile(self):
         test_input = ["ghost.txt", "-e", ".txt"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("No such file or directory" in output)
 
@@ -84,4 +86,3 @@ class TestAddHeadTail(unittest.TestCase):
             self.assertFalse(diff_lines(NEW_OUT_PATH, BOTH_OUT_PATH))
         finally:
             silent_remove(NEW_OUT_PATH)
-
