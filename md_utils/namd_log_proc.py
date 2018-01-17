@@ -69,8 +69,6 @@ def parse_cmdline(argv):
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
-    parser.add_arguemnt("-a", "--average", help="Add average values to the end of the log file.", action='store_true',
-                        default=False)
 
     args = None
     try:
