@@ -35,7 +35,7 @@ RUN_PAT = re.compile(r"^TCL: Running.*")
 ENERGY_PAT = re.compile(r"^ENERGY: .*")
 PERFORMANCE_PAT = re.compile(r"^TIMING: .*")
 
-E_TOTAL = 'E_total'
+E_TOTAL = 'E_totalP'
 E_BOND = 'E_bond'
 E_ANGL = 'E_angl'
 E_DIHED = 'E_dihed'
@@ -65,7 +65,7 @@ def parse_cmdline(argv):
                         default=None)
     parser.add_argument("-d", "--dihedral", help="Flag to collect dihedral energy data.",
                         action='store_true', default=False)
-    parser.add_argument("-t", "--total", help="Flag to collect total energy data.", action='store_true', default=False)
+    parser.add_argument("-t", "--total", help="Flag to collect total potential energy data.", action='store_true', default=False)
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
@@ -88,11 +88,11 @@ def parse_cmdline(argv):
             raise InvalidDataError("Found no log file names to process. Specify one or more files as specified in "
                                    "the help documentation ('-h').")
         if ((args.dihedral or args.total) and args.performance):
-            raise InvalidDataError("Script is not currently configured to accept both dihedral data ('-s') and "
+            raise InvalidDataError("Script is not currently configured to accept both energy data ('-s' or '-t') and "
                                    "performance data ('-p'). Please select only one.")
         if not (args.dihedral or args.performance or args.total):
             raise InvalidDataError(
-                "Did not choose to output dihedral data ('-s'), total energy ('-t'), or performance data ('-p'). "
+                "Did not choose to output dihedral data ('-s'), total potential energy ('-t'), or performance data ('-p'). "
                 "No output will be produced.")
     except IOError as e:
         warning("Problems reading file:", e)
@@ -139,7 +139,7 @@ def process_log(log_file, dihedral, total, performance, step):
                     s_line = line.split()
                     result_dict[TIMESTEP] = int(s_line[1])
                     result_dict[E_DIHED] = float(s_line[4])
-                    result_dict[E_TOTAL] = float(s_line[11])
+                    result_dict[E_TOTAL] = float(s_line[13])
                     result_list.append(dict(result_dict))
                 elif dihedral and ENERGY_PAT.match(line):
                     s_line = line.split()
@@ -154,7 +154,7 @@ def process_log(log_file, dihedral, total, performance, step):
                 elif total and ENERGY_PAT.match(line):
                     s_line = line.split()
                     result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[E_TOTAL] = float(s_line[11])
+                    result_dict[E_TOTAL] = float(s_line[13])
                     result_list.append(dict(result_dict))
 
     return result_list
