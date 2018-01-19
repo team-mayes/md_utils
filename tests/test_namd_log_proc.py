@@ -24,10 +24,16 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 NAMD_LOG_DIR = os.path.join(DATA_DIR, 'namd_log_proc')
 
 LOG_PATH = os.path.join(NAMD_LOG_DIR, 'namd_short.log')
-LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'namd_short_sum.csv')
+LOG_OUT_DIHEDRAL = os.path.join(NAMD_LOG_DIR, 'namd_short_dihedral.csv')
 LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'namd_short_performance.csv')
-GOOD_LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
+LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
+LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'namd_short_energy.csv')
+LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
+GOOD_LOG_OUT_DIHEDRAL = os.path.join(NAMD_LOG_DIR, 'ts_dihedral_good.csv')
 GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
+GOOD_LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'ts_total_good.csv')
+GOOD_LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
+GOOD_LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'ts_step_good.csv')
 
 LOG_LIST = os.path.join(NAMD_LOG_DIR, 'log_list.txt')
 LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum.csv')
@@ -82,10 +88,10 @@ class TestMainFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Did not choose either to" in output)
+            self.assertTrue("Did not choose to" in output)
 
     def testBothOptionsSelected(self):
-        test_input = ["-f", LOG_PATH, "-s", "-p"]
+        test_input = ["-f", LOG_PATH, "-d", "-p"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -93,13 +99,13 @@ class TestMainFailWell(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
-    def testLogFile(self):
-        test_input = ["-f", LOG_PATH, "-s"]
+    def testDihedralLogFile(self):
+        test_input = ["-f", LOG_PATH, "-d"]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_SUMMARY, GOOD_LOG_OUT_SUMMARY))
+            self.assertFalse(diff_lines(LOG_OUT_DIHEDRAL, GOOD_LOG_OUT_DIHEDRAL))
         finally:
-            silent_remove(LOG_OUT_SUMMARY, disable=DISABLE_REMOVE)
+            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
 
     def testPerformanceLogFile(self):
         test_input = ["-f", LOG_PATH, "-p"]
@@ -108,6 +114,30 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
         finally:
             silent_remove(LOG_OUT_PERFORMANCE, disable=DISABLE_REMOVE)
+
+    def testTotalLogFile(self):
+        test_input = ["-f", LOG_PATH, "-t"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(LOG_OUT_TOTAL, GOOD_LOG_OUT_TOTAL))
+        finally:
+            silent_remove(LOG_OUT_TOTAL, disable=DISABLE_REMOVE)
+
+    def testBothLogFile(self):
+        test_input = ["-f", LOG_PATH, "-d", "-t"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(LOG_OUT_ENERGY, GOOD_LOG_OUT_ENERGY))
+        finally:
+            silent_remove(LOG_OUT_ENERGY, disable=DISABLE_REMOVE)
+
+    def testStepLogFile(self):
+        test_input = ["-f", LOG_PATH, "-t", "-s 5002000"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
+        finally:
+            silent_remove(LOG_OUT_STEP, disable=DISABLE_REMOVE)
 
             # def testLogList(self):
             #     try:

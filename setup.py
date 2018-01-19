@@ -58,6 +58,7 @@ setup(
                                       'lammps_log_proc = md_utils.lammps_log_proc:main',
                                       'lammps_proc = md_utils.lammps_proc:main',
                                       'md_init = md_utils.md_init:main',
+                                      'namd_log_proc = md_utils.namd_log_proc:main',
                                       'path_bin = md_utils.path_bin:main',
                                       'pdb_edit = md_utils.pdb_edit:main',
                                       'psf_edit = md_utils.psf_edit:main',
