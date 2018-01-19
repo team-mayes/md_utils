@@ -1,12 +1,8 @@
-#  TODO: the following line should generate this ini file
-;namd_scripts --type cpu --run 1 --name test --input_name 7.1 --first 1
-# cpu = production_cpu_pbs.tpl
-# run = integer,tpl value
-# input = input_name, tpl value
-# first = first, tpl value
+# TODO: the following line should generate this ini file
+;namd_scripts —type gpu —run 1 —name test —input 7.1
 [main]
-tpl_file = tests/test_data/fill_tpl/production_cpu_pbs.tpl, tests/test_data/fill_tpl/production_gpu_inp.tpl
-filled_tpl_name = {name}.pbs, {name}.inp
+tpl_file = tests/test_data/fill_tpl/production_gpu_job.tpl, tests/test_data/fill_tpl/production_gpu_inp.tpl
+filled_tpl_name = {name}.job, {name}.inp
 out_dir = tests/test_data/fill_tpl/
 # Important Notes for this configuration file:
 # 1) a [main] section is required
@@ -21,11 +17,11 @@ out_dir = tests/test_data/fill_tpl/
 [tpl_vals]
 name = test
 run = 500000
-first = 500000
+first = 0
 structure = test.psf
 coordinates = test.pdb
 input_name = 7.1
 output_name = test
 [tpl_equations]
-walltime = int({run}/500000*15)
+walltime = int({run}/500000*2)
 last = {first}+{run}
