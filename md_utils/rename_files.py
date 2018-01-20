@@ -13,7 +13,7 @@ import sys
 
 import re
 
-from md_utils.md_common import (GOOD_RET, INPUT_ERROR, warning)
+from md_utils.md_common import (GOOD_RET, INPUT_ERROR, warning, create_out_fname)
 
 __author__ = 'hmayes'
 
@@ -68,7 +68,7 @@ def parse_cmdline(argv):
 
     parser.add_argument('-e', "--ext", help="New extension for file name (replacement or add if new). By default, "
                                             "no change is made to the extension.",
-                                            default="")
+                        default=None)
 
     args = None
     try:
@@ -83,7 +83,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def rename_files_by_dir(tgt_dir, pattern, new_pattern, prefix, suffix, extension):
+def rename_files_by_dir(tgt_dir, pattern, new_pattern, prefix, suffix, ext):
     """
     Alternate filename matching
     :param tgt_dir: base file in which to search
@@ -91,7 +91,7 @@ def rename_files_by_dir(tgt_dir, pattern, new_pattern, prefix, suffix, extension
     :param new_pattern: string to replace the pattern string
     :param prefix: String to add to the beginning of the file name
     :param suffix: String to add to the end of the file name, before the extension.
-    :param extension: New extension for file name (replacement or add if new)
+    :param ext: New extension for file name (replacement or add if new)
     :return: an integer representing the number of files renamed
     """
     num_files_renamed = 0
@@ -100,7 +100,8 @@ def rename_files_by_dir(tgt_dir, pattern, new_pattern, prefix, suffix, extension
         for fname in files:
             if pat_match.match(fname):
                 old_name = os.path.abspath(os.path.join(root, fname))
-                new_name = os.path.abspath(os.path.join(root, prefix + fname.replace(pattern, new_pattern) + suffix))
+                new_name = create_out_fname(fname.replace(pattern, new_pattern), prefix=prefix, suffix=suffix,
+                                            base_dir=root, ext=ext)
                 os.rename(old_name, new_name)
                 num_files_renamed += 1
     return num_files_renamed

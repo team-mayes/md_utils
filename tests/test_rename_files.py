@@ -35,7 +35,7 @@ REPLACED_FILE_NAMES2 = ['has space.txt', 'has two spaces.txt', 'now_exclaim.txt'
 # noinspection SpellCheckingInspection
 REPLACED_FILE_NAMES_B = ['pre_hasspace.txt', 'pre_hastwospaces.txt', 'now!exclaim.txt']
 REPLACED_FILE_NAMES_S = ['has space.txt', 'has two spaces.txt', 'now_exclaim_yes.txt']
-REPLACED_FILE_NAMES_E = ['has space.txt', 'has two spaces.txt', 'now_exclaim_yes.dat']
+REPLACED_FILE_NAMES_E = ['has space.txt', 'has two spaces.txt', 'now_exclaim.dat']
 ALL_NEW_OLD_FILES = set(itertools.chain(TEST_FILE_NAMES, REPLACED_FILE_NAMES1, REPLACED_FILE_NAMES2,
                                         REPLACED_FILE_NAMES_B, REPLACED_FILE_NAMES_S, REPLACED_FILE_NAMES_E))
 
@@ -112,6 +112,26 @@ def run_main_then_reset(test_input):
     make_files(TEST_FILE_NAMES)
 
 
+def run_test_option(test_input, new_names_this_test, text_object):
+    # common instructions for multiple text options
+    clean_dir()
+    make_files(TEST_FILE_NAMES)
+    num_changed_files = len(set(TEST_FILE_NAMES) - set(new_names_this_test))
+    num_unchanged_files = len(TEST_FILE_NAMES) - num_changed_files
+    initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
+    expected_f_names = add_sub_dir(new_names_this_test, SUB_DATA_DIR)
+    try:
+        if logger.isEnabledFor(logging.DEBUG):
+            if logger.isEnabledFor(logging.DEBUG):
+                run_main_then_reset(test_input)
+        with capture_stdout(main, test_input) as output:
+            text_object.assertTrue("Found and renamed {} files".format(num_changed_files) in output)
+        text_object.assertEqual(count_files(initial_f_names), num_unchanged_files)
+        text_object.assertEqual(count_files(expected_f_names), len(expected_f_names))
+    finally:
+        clean_dir()
+
+
 class TestRename(unittest.TestCase):
     def testNoFilesRenamed(self):
         clean_dir()
@@ -122,85 +142,33 @@ class TestRename(unittest.TestCase):
             self.assertTrue("Found and renamed 0 files" in output)
 
     def testDefaultPatterns(self):
-        clean_dir()
-        make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR]
-        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES1, SUB_DATA_DIR)
-        try:
-            if logger.isEnabledFor(logging.DEBUG):
-                main(test_input)
-                # need to make again for capturing std out
-                make_files(TEST_FILE_NAMES)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("Found and renamed 2 files" in output)
-            self.assertTrue(count_files(initial_f_names), 2)
-            self.assertTrue(count_files(expected_f_names), 3)
-        finally:
-            for fname in ALL_NEW_OLD_FILES:
-                silent_remove(fname, disable=DISABLE_REMOVE)
+        new_names_this_test = REPLACED_FILE_NAMES1
+        run_test_option(test_input, new_names_this_test, self)
 
     def testAltPattern(self):
-        clean_dir()
-        make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR, "-p", "!", "-n", "_"]
-        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES2, SUB_DATA_DIR)
-        try:
-            if logger.isEnabledFor(logging.DEBUG):
-                run_main_then_reset(test_input)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("Found and renamed 1 files" in output)
-            self.assertTrue(count_files(initial_f_names), 1)
-            self.assertTrue(count_files(expected_f_names), 3)
-        finally:
-            clean_dir()
+        new_names_this_test = REPLACED_FILE_NAMES2
+        run_test_option(test_input, new_names_this_test, self)
 
     def testAddBegin(self):
         # test that prefix added to all 3 files
-        clean_dir()
-        make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR, "-b", "pre_"]
-        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES_B, SUB_DATA_DIR)
-        try:
-            if logger.isEnabledFor(logging.DEBUG):
-                run_main_then_reset(test_input)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("Found and renamed 2 files" in output)
-            self.assertTrue(count_files(initial_f_names), 2)
-            self.assertTrue(count_files(expected_f_names), 3)
-        finally:
-            for fname in ALL_NEW_OLD_FILES:
-                silent_remove(fname, disable=DISABLE_REMOVE)
+        new_names_this_test = REPLACED_FILE_NAMES_B
 
-    def testAddEnd(self):
-        clean_dir()
+        run_test_option(test_input, new_names_this_test, self)
+
+    def testAddSuffix(self):
         # test that prefix added to all 3 files
-        make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR, "-s", "_yes", "-p", "!", "-n", "_"]
-        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES_B, SUB_DATA_DIR)
-        try:
-            if logger.isEnabledFor(logging.DEBUG):
-                if logger.isEnabledFor(logging.DEBUG):
-                    run_main_then_reset(test_input)
-            with capture_stdout(main, test_input) as output:
-                self.assertTrue("Found and renamed 1 files" in output)
-            self.assertTrue(count_files(initial_f_names), 1)
-            temp = count_files(expected_f_names)
-            print(temp)
-            self.assertTrue(count_files(expected_f_names), 3)
-        finally:
-            for fname in ALL_NEW_OLD_FILES:
-                silent_remove(fname, disable=DISABLE_REMOVE)
+        new_names_this_test = REPLACED_FILE_NAMES_S
 
-                # parser.add_argument('-b', "--begin", help="String to add to the beginning of the file name. "
+        run_test_option(test_input, new_names_this_test, self)
 
-                # parser.add_argument('-s', "--suffix", help="String to add to the end of the file name, before the extension. "
-                #                                            "By default, nothing is added.",
-                #                     default="")
-                #
-                # parser.add_argument('-e', "--ext", help="New extension for file name (replacement or add if new). By default, "
-                #                                         "no change is made to the extension.",
-                #                     default="")
+    def testAddExt(self):
+        # test that prefix added to all 3 files
+        # replace next next 2 lines for this test. The rest is the same!
+        test_input = ["-d", SUB_DATA_DIR, "-e", ".dat", "-p", "!", "-n", "_"]
+        new_names_this_test = REPLACED_FILE_NAMES_E
+
+        run_test_option(test_input, new_names_this_test, self)
