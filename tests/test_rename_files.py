@@ -3,6 +3,7 @@
 """
 """
 import os
+import itertools
 import unittest
 
 import shutil
@@ -17,7 +18,6 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
-
 # Directories #
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
@@ -27,13 +27,17 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'rename_files')
 
 SMALL_FILE = os.path.join(SUB_DATA_DIR, 'small_file.txt')
 
-
 # test data #
 TEST_FILE_NAMES = ['has space.txt', 'has two spaces.txt', 'now!exclaim.txt']
+# noinspection SpellCheckingInspection
 REPLACED_FILE_NAMES1 = ['hasspace.txt', 'hastwospaces.txt', 'now!exclaim.txt']
 REPLACED_FILE_NAMES2 = ['has space.txt', 'has two spaces.txt', 'now_exclaim.txt']
-
-# REPLACED_FILE_NAMES3 = ['has_space.txt', 'has_two_spaces.txt', 'now!exclaim.txt']
+# noinspection SpellCheckingInspection
+REPLACED_FILE_NAMES_B = ['pre_hasspace.txt', 'pre_hastwospaces.txt', 'now!exclaim.txt']
+REPLACED_FILE_NAMES_S = ['has space.txt', 'has two spaces.txt', 'now_exclaim_yes.txt']
+REPLACED_FILE_NAMES_E = ['has space.txt', 'has two spaces.txt', 'now_exclaim_yes.dat']
+ALL_NEW_OLD_FILES = set(itertools.chain(TEST_FILE_NAMES, REPLACED_FILE_NAMES1, REPLACED_FILE_NAMES2,
+                                        REPLACED_FILE_NAMES_B, REPLACED_FILE_NAMES_S, REPLACED_FILE_NAMES_E))
 
 
 def make_files(fname_list):
@@ -72,6 +76,12 @@ def count_files(fname_list):
     return num_existing_files
 
 
+def clean_dir():
+    for fname in ALL_NEW_OLD_FILES:
+        file_loc = os.path.join(SUB_DATA_DIR, fname)
+        silent_remove(file_loc)
+
+
 class TestRenameNoOutput(unittest.TestCase):
     def testHelp(self):
         test_input = ['-h']
@@ -90,8 +100,21 @@ class TestRenameNoOutput(unittest.TestCase):
             self.assertTrue("unrecognized arguments" in output)
 
 
+def run_main_then_reset(test_input):
+    """
+    Reset test state after running debug version of test
+    :param test_input: test input params
+    :return:
+    """
+    main(test_input)
+    # need to make again for capturing std out
+    clean_dir()
+    make_files(TEST_FILE_NAMES)
+
+
 class TestRename(unittest.TestCase):
     def testNoFilesRenamed(self):
+        clean_dir()
         test_input = []
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
@@ -99,10 +122,11 @@ class TestRename(unittest.TestCase):
             self.assertTrue("Found and renamed 0 files" in output)
 
     def testDefaultPatterns(self):
+        clean_dir()
         make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR]
-        initial_fnames = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_fnames = add_sub_dir(REPLACED_FILE_NAMES1, SUB_DATA_DIR)
+        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
+        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES1, SUB_DATA_DIR)
         try:
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
@@ -110,26 +134,73 @@ class TestRename(unittest.TestCase):
                 make_files(TEST_FILE_NAMES)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 2 files" in output)
-            self.assertTrue(count_files(initial_fnames), 2)
-            self.assertTrue(count_files(expected_fnames), 3)
+            self.assertTrue(count_files(initial_f_names), 2)
+            self.assertTrue(count_files(expected_f_names), 3)
         finally:
-            for fname in expected_fnames:
+            for fname in ALL_NEW_OLD_FILES:
                 silent_remove(fname, disable=DISABLE_REMOVE)
 
     def testAltPattern(self):
+        clean_dir()
         make_files(TEST_FILE_NAMES)
         test_input = ["-d", SUB_DATA_DIR, "-p", "!", "-n", "_"]
-        initial_fnames = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_fnames = add_sub_dir(REPLACED_FILE_NAMES2, SUB_DATA_DIR)
+        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
+        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES2, SUB_DATA_DIR)
         try:
             if logger.isEnabledFor(logging.DEBUG):
-                main(test_input)
-                # need to make again for capturing std out
-                make_files(TEST_FILE_NAMES)
+                run_main_then_reset(test_input)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 1 files" in output)
-            self.assertTrue(count_files(initial_fnames), 1)
-            self.assertTrue(count_files(expected_fnames), 3)
+            self.assertTrue(count_files(initial_f_names), 1)
+            self.assertTrue(count_files(expected_f_names), 3)
         finally:
-            for fname in expected_fnames:
+            clean_dir()
+
+    def testAddBegin(self):
+        # test that prefix added to all 3 files
+        clean_dir()
+        make_files(TEST_FILE_NAMES)
+        test_input = ["-d", SUB_DATA_DIR, "-b", "pre_"]
+        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
+        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES_B, SUB_DATA_DIR)
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                run_main_then_reset(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Found and renamed 2 files" in output)
+            self.assertTrue(count_files(initial_f_names), 2)
+            self.assertTrue(count_files(expected_f_names), 3)
+        finally:
+            for fname in ALL_NEW_OLD_FILES:
                 silent_remove(fname, disable=DISABLE_REMOVE)
+
+    def testAddEnd(self):
+        clean_dir()
+        # test that prefix added to all 3 files
+        make_files(TEST_FILE_NAMES)
+        test_input = ["-d", SUB_DATA_DIR, "-s", "_yes", "-p", "!", "-n", "_"]
+        initial_f_names = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
+        expected_f_names = add_sub_dir(REPLACED_FILE_NAMES_B, SUB_DATA_DIR)
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                if logger.isEnabledFor(logging.DEBUG):
+                    run_main_then_reset(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Found and renamed 1 files" in output)
+            self.assertTrue(count_files(initial_f_names), 1)
+            temp = count_files(expected_f_names)
+            print(temp)
+            self.assertTrue(count_files(expected_f_names), 3)
+        finally:
+            for fname in ALL_NEW_OLD_FILES:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+
+                # parser.add_argument('-b', "--begin", help="String to add to the beginning of the file name. "
+
+                # parser.add_argument('-s', "--suffix", help="String to add to the end of the file name, before the extension. "
+                #                                            "By default, nothing is added.",
+                #                     default="")
+                #
+                # parser.add_argument('-e', "--ext", help="New extension for file name (replacement or add if new). By default, "
+                #                                         "no change is made to the extension.",
+                #                     default="")

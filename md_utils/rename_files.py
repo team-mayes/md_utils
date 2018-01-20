@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 DEF_FILE_PAT = ' '
 DEF_NEW_FILE_PAT = ''
 
+
 # Logic #
 
 
@@ -57,6 +58,18 @@ def parse_cmdline(argv):
                                                     "(defaults to '{}')".format(DEF_NEW_FILE_PAT),
                         default=DEF_NEW_FILE_PAT)
 
+    parser.add_argument('-b', "--begin", help="String to add to the beginning of the file name. "
+                                              "By default, nothing is added.",
+                        default="")
+
+    parser.add_argument('-s', "--suffix", help="String to add to the end of the file name, before the extension. "
+                                               "By default, nothing is added.",
+                        default="")
+
+    parser.add_argument('-e', "--ext", help="New extension for file name (replacement or add if new). By default, "
+                                            "no change is made to the extension.",
+                                            default="")
+
     args = None
     try:
         args = parser.parse_args(argv)
@@ -70,13 +83,16 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def rename_files_by_dir(tgt_dir, pattern, new_pattern):
+def rename_files_by_dir(tgt_dir, pattern, new_pattern, prefix, suffix, extension):
     """
     Alternate filename matching
-    @param tgt_dir: base file in which to search
-    @param pattern: string to replaced
-    @param new_pattern: string to replace the pattern string
-    @return: an integer representing the number of files renamed
+    :param tgt_dir: base file in which to search
+    :param pattern: string to replaced
+    :param new_pattern: string to replace the pattern string
+    :param prefix: String to add to the beginning of the file name
+    :param suffix: String to add to the end of the file name, before the extension.
+    :param extension: New extension for file name (replacement or add if new)
+    :return: an integer representing the number of files renamed
     """
     num_files_renamed = 0
     pat_match = re.compile(r".*" + re.escape(pattern) + r".*")
@@ -84,7 +100,7 @@ def rename_files_by_dir(tgt_dir, pattern, new_pattern):
         for fname in files:
             if pat_match.match(fname):
                 old_name = os.path.abspath(os.path.join(root, fname))
-                new_name = os.path.abspath(os.path.join(root, fname.replace(pattern, new_pattern)))
+                new_name = os.path.abspath(os.path.join(root, prefix + fname.replace(pattern, new_pattern) + suffix))
                 os.rename(old_name, new_name)
                 num_files_renamed += 1
     return num_files_renamed
@@ -100,7 +116,8 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    num_renamed_files = rename_files_by_dir(args.base_dir, args.pattern, args.new_pattern)
+    num_renamed_files = rename_files_by_dir(args.base_dir, args.pattern, args.new_pattern,
+                                            args.begin, args.suffix, args.ext)
     print("Found and renamed {} files".format(num_renamed_files))
     return GOOD_RET  # success
 

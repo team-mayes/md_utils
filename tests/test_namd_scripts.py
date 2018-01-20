@@ -88,7 +88,7 @@ class TestMainFailWell(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
-    def testLogFile(self):
+    def testCPU(self):
         test_input = []
         try:
             main(test_input)
