@@ -119,5 +119,5 @@ langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
 # run
-numsteps        {last:>10};            # maybe write out end in ns
-run               {run:>8};            # maybe write out run in ns
+numsteps        {last:>10};            # {endtime} ns
+run               {run:>8};            # {runtime} ns

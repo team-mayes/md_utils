@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name={name}
+#SBATCH --job-name={output_name}
 #SBATCH -t {walltime}:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
@@ -12,5 +12,5 @@ module load cuda
 
 cd $SLURM_SUBMIT_DIR
 nvidia-smi
-/home/jphillip/NAMD_binaries/NAMD_LATEST_Linux-x86_64-multicore-Bridges-CUDA/namd2 +idlepoll +p $SLURM_NPROCS +pemap 0-13+14 {name}.inp >& {name}.log
-transfer {name}
+/home/jphillip/NAMD_binaries/NAMD_LATEST_Linux-x86_64-multicore-Bridges-CUDA/namd2 +idlepoll +p $SLURM_NPROCS +pemap 0-13+14 {output_name}.inp >& {output_name}.log
+transfer {output_name}

@@ -21,13 +21,14 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 # File Locations #
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-NAMD_LOG_DIR = os.path.join(DATA_DIR, 'namd_log_proc')
+NAMD_LOG_DIR = os.path.join(DATA_DIR, 'namd_scripts')
 
 LOG_PATH = os.path.join(NAMD_LOG_DIR, 'namd_short.log')
 LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'namd_short_sum.csv')
 LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'namd_short_performance.csv')
 GOOD_LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
 GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
+DEF_TPL = os.path.join(NAMD_LOG_DIR, )
 
 LOG_LIST = os.path.join(NAMD_LOG_DIR, 'log_list.txt')
 LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum.csv')
@@ -89,7 +90,7 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
-        test_input = []
+        test_input = [-c DEF_TPL]
         try:
             main(test_input)
             # self.assertFalse(diff_lines(LOG_OUT_SUMMARY, GOOD_LOG_OUT_SUMMARY))

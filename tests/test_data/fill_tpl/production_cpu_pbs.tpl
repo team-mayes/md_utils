@@ -11,7 +11,7 @@
 #PBS -q fluxod
 
 #PBS -l walltime={walltime}:00:00
-#PBS -N {name}
+#PBS -N {output_name}
 ####  End PBS preamble
 ####  Commands follow this line
 
@@ -26,4 +26,4 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
 
-namd2 +p 12 {name}.inp >& {name}.log
+namd2 +p 12 {output_name}.inp >& {output_name}.log
