@@ -1,5 +1,5 @@
 structure          {structure}
-coordinates        ../step5_assembly.namd.pdb
+coordinates        {coordinates}
 
 set temp           303.15;
 
