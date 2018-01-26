@@ -57,7 +57,6 @@ PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
 PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
 GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
 GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
-
 AMD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_amd_gpu.ini')
 AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.job')
 AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.inp')
