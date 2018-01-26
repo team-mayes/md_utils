@@ -57,10 +57,12 @@ PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
 PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
 GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
 GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
-AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_good.job')
-AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.job')
+
+AMD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
+AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'test.job')
+AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
 GOOD_AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_good.inp')
-GOOD_AMD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'test.inp')
+GOOD_AMD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_good.job')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -278,9 +280,9 @@ class TestMain(unittest.TestCase):
         try:
             silent_remove(AMD_GPU_JOB_OUT)
             silent_remove(AMD_GPU_INP_OUT)
-            main(["-c", PROD_CPU_JOB_INP_INI])
-            self.assertFalse(diff_lines(PROD_CPU_JOB_OUT, GOOD_AMD_CPU_JOB_OUT))
-            self.assertFalse(diff_lines(PROD_CPU_INP_OUT, GOOD_AMD_GPU_INP_OUT))
+            main(["-c", AMD_CPU_JOB_INP_INI])
+            self.assertFalse(diff_lines(AMD_CPU_JOB_OUT, GOOD_AMD_CPU_JOB_OUT))
+            self.assertFalse(diff_lines(AMD_CPU_INP_OUT, GOOD_AMD_GPU_INP_OUT))
         finally:
-            silent_remove(PROD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
-            silent_remove(PROD_CPU_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(AMD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(AMD_CPU_INP_OUT, disable=DISABLE_REMOVE)
