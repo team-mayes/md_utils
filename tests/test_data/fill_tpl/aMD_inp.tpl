@@ -86,11 +86,8 @@ fullElectFrequency  1;                 # PME every step
 
 wrapWater           on;                # wrap water to central cell
 wrapAll             on;                # wrap other molecules too
-if { $boxtype == "hexa" } {
-wrapNearest         on;                # use for non-rectangular cells (wrap to the nearest image)
-} else {
 wrapNearest         off;               # use for non-rectangular cells (wrap to the nearest image)
-}
+
 
 # PME (for full-system periodic electrostatics)
 source checkfft.str
@@ -130,7 +127,7 @@ accelMDE {dihedral_energy}
 accelMDalpha {dihedral_alpha}
 accelMDTE {total_energy}
 accelMDTalpha {total_alpha}
-accelMDOutFreq {aMD_outfreq}
+accelMDOutFreq {amd_outfreq}
 
 # run
 run                7500000;
