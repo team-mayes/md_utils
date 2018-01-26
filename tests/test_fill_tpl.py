@@ -284,5 +284,5 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(AMD_GPU_JOB_OUT, GOOD_AMD_GPU_JOB_OUT))
             self.assertFalse(diff_lines(AMD_GPU_INP_OUT, GOOD_AMD_GPU_INP_OUT))
         finally:
-            silent_remove(AMD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
-            silent_remove(AMD_CPU_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(AMD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(AMD_GPU_INP_OUT, disable=DISABLE_REMOVE)

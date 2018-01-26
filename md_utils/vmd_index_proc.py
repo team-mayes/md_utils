@@ -168,7 +168,6 @@ def process_log(log_file, cfg):
     """
     result_list = []
     # file_root = get_fname_root(log_file)
-    i = 0
 
     with open(log_file) as l_file:
         result_dict = {}
@@ -177,9 +176,7 @@ def process_log(log_file, cfg):
             # result_dict[FILE_NAME] = file_root
             s_line = line.split()
             for index in s_line:
-                result_dict[i]
-                result_list.append(dict(result_dict))
-                i += 1
+                result_list.append(dict(index))
     print(result_list)
     exit(9)
     return result_list
