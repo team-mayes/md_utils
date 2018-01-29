@@ -5,7 +5,7 @@ set temp           303.15;
 
 outputname        {output_name};
 set inputname     aMD
-firsttimestep     2500000
+firsttimestep     {firststep}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
@@ -130,4 +130,4 @@ accelMDTalpha {total_alpha}
 accelMDOutFreq {amd_outfreq}
 
 # run
-run                7500000;
+run                {run:>7};
