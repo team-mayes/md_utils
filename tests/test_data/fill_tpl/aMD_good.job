@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=aMD.2
+#SBATCH --job-name=test
 #SBATCH -t 2:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28

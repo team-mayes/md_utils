@@ -26,4 +26,4 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
 
-namd2 +p 12 test.inp >& test.log
+namd2 +p 12 7.2.inp >& 7.2.log

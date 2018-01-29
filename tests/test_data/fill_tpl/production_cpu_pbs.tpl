@@ -11,7 +11,7 @@
 #PBS -q fluxod
 
 #PBS -l walltime={walltime}:00:00
-#PBS -N {output_name}
+#PBS -N {job_name}
 ####  End PBS preamble
 ####  Commands follow this line
 

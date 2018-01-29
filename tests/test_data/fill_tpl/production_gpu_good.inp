@@ -3,7 +3,7 @@ coordinates        test.pdb
 
 set temp           303.15
 
-outputname         test
+outputname         7.2
 set inputname      7.1
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)

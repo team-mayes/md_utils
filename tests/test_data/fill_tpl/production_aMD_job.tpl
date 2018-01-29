@@ -1,5 +1,5 @@
 !/bin/bash
-#SBATCH --job-name={output_name}
+#SBATCH --job-name={job_name}
 #SBATCH -t {walltime} 00:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
