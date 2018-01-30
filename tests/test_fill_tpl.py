@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-# logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
+#logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -57,11 +57,12 @@ PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, '7.2.inp')
 PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
 GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
 GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
-AMD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_amd_gpu.ini')
+
+AMD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_aMD_dual_gpu.ini')
 AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.job')
 AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.inp')
-GOOD_AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_good.inp')
-GOOD_AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_good.job')
+GOOD_AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dual_good.inp')
+GOOD_AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dual_good.job')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')

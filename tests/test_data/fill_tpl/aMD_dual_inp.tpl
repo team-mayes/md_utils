@@ -1,11 +1,11 @@
-structure          ../step5_assembly.xplor_ext.psf
-coordinates        ../step5_assembly.namd.pdb
+structure          {structure}
+coordinates        {coordinates}
 
 set temp           303.15;
 
-outputname        aMD.2;
+outputname        {output_name};
 set inputname     aMD
-firsttimestep     2500000
+firsttimestep     {firststep}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
@@ -123,11 +123,11 @@ langevinHydrogen       off;            # don't couple bath to hydrogens
 accelMD on
 accelMDdihe off
 accelMDdual on
-accelMDE 22825
-accelMDalpha 1053
-accelMDTE -217636
-accelMDTalpha 22813
-accelMDOutFreq 100
+accelMDE {dihedral_energy}
+accelMDalpha {dihedral_alpha}
+accelMDTE {total_energy}
+accelMDTalpha {total_alpha}
+accelMDOutFreq {amd_outfreq}
 
 # run
-run                7500000;
+run                {run:>7};            # {runtime} ns
