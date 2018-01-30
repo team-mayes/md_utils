@@ -43,7 +43,7 @@ E_IMPRO = 'E_impro'
 E_VDWL = 'E_vdwl'
 TEMP = 'Temp'
 PRESS = 'Press'
-PERFORMANCE = 'time/step'
+PERFORMANCE = 'time/ns'
 
 LOG_FIELDNAMES = [FILE_NAME, TIMESTEP]
 
@@ -149,7 +149,7 @@ def process_log(log_file, dihedral, total, performance, step):
                 elif performance and PERFORMANCE_PAT.match(line):
                     s_line = line.replace("/", " ").split()
                     result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[PERFORMANCE] = (s_line[4])
+                    result_dict[PERFORMANCE] = float(s_line[4])*500000/3600
                     result_list.append(dict(result_dict))
                 elif total and ENERGY_PAT.match(line):
                     s_line = line.split()

@@ -1,5 +1,5 @@
-"filename","timestep","E_total"
-"namd_short",5000000,-127225.2751
-"namd_short",5001000,-126828.0426
-"namd_short",5002000,-126872.2214
-"namd_short",5003000,-126508.0858
+"filename","timestep","E_totalP"
+"namd_short",5000000,-191340.442
+"namd_short",5001000,-191105.6878
+"namd_short",5002000,-190922.5278
+"namd_short",5003000,-190793.5884
