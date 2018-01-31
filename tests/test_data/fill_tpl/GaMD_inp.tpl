@@ -1,16 +1,16 @@
-structure          ../../inoc_xylose.psf
-coordinates        ../../inoc_xylose.1.pdb
+structure          {structure}
+coordinates        {coordinates}
 
 set temp           303.15;
 
-outputname         GaMD.2
-set inputname      GaMD
+outputname         {output_name}
+set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      10000000
-restartfreq      10000;                # 500 steps = every 1ps
-dcdfreq           2500;
+firsttimestep      {firststep};
+restartfreq        10000;              # 500 steps = every 1ps
+dcdfreq            2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
                                        # charmm dcd files. if yes, the dcd files will contain
                                        # unit cell information in the style of charmm DCD files.
@@ -122,14 +122,15 @@ langevinHydrogen       off;            # don't couple bath to hydrogens
 accelMD on
 accelMDdihe off
 accelMDdual on
-accelMDOutFreq 10
+accelMDOutFreq {MDOutFreq}
 accelMDG on
-accelMDGcMDPrepSteps 25000000
-accelMDGcMDSteps 50000000
-accelMDGEquiPrepSteps 25000000
-accelMDGEquiSteps 100000000
-accelMDGRestart on
-accelMDGRestartFile GaMD.gamd
+accelMDGcMDPrepSteps {MDGcMDPrepSteps}
+accelMDGcMDSteps {MDGcMDSteps}
+accelMDGEquiPrepSteps {MDGEquiPrepSteps}
+accelMDGEquiSteps {MDGEEquiSteps}
+accelMDGRestart {MDGRestart}
+accelMDGRestartFile {MDGRestartFile}
 
 # run
-run               10000000;             # 20 ns
+{run:>7};                               # {runtime} ns
+
