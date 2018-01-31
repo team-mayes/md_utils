@@ -282,7 +282,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PROD_CPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(PROD_CPU_INP_OUT, disable=DISABLE_REMOVE)
 
-    def testMakeAMDINPJOB(self):
+    def testMakeAmdDualInpJob(self):
         try:
             silent_remove(AMD_GPU_JOB_OUT)
             silent_remove(AMD_GPU_INP_OUT)
@@ -293,7 +293,7 @@ class TestMain(unittest.TestCase):
             silent_remove(AMD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(AMD_GPU_INP_OUT, disable=DISABLE_REMOVE)
 
-    def testMakeAMD_DIHED_INPJOB(self):
+    def testMakeAmdDihedInpJob(self):
         try:
             silent_remove(AMD_DIHED_GPU_JOB_OUT)
             silent_remove(AMD_DIHED_GPU_INP_OUT)
