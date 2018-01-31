@@ -57,12 +57,18 @@ PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, '7.2.inp')
 PROD_CPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_prod_cpu.ini')
 GOOD_PROD_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.inp')
 GOOD_PROD_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'production_cpu_good.pbs')
-
 AMD_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_aMD_dual_gpu.ini')
 AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.job')
 AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD.2.inp')
 GOOD_AMD_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dual_good.inp')
 GOOD_AMD_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dual_good.job')
+
+AMD_DIHED_GPU_JOB_INP_INI = os.path.join(SUB_DATA_DIR, 'make_aMD_dihed_gpu.ini')
+AMD_DIHED_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dihed.4.job')
+AMD_DIHED_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dihed.4.inp')
+GOOD_AMD_DIHED_GPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dihed_good.inp')
+GOOD_AMD_DIHED_GPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'aMD_dihed_good.job')
+
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -286,3 +292,14 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(AMD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(AMD_GPU_INP_OUT, disable=DISABLE_REMOVE)
+
+    def testMakeAMD_DIHED_INPJOB(self):
+        try:
+            silent_remove(AMD_DIHED_GPU_JOB_OUT)
+            silent_remove(AMD_DIHED_GPU_INP_OUT)
+            main(["-c", AMD_DIHED_GPU_JOB_INP_INI])
+            self.assertFalse(diff_lines(AMD_DIHED_GPU_JOB_OUT, GOOD_AMD_DIHED_GPU_JOB_OUT))
+            self.assertFalse(diff_lines(AMD_DIHED_GPU_INP_OUT, GOOD_AMD_DIHED_GPU_INP_OUT))
+        finally:
+            silent_remove(AMD_DIHED_GPU_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(AMD_DIHED_GPU_INP_OUT, disable=DISABLE_REMOVE)
