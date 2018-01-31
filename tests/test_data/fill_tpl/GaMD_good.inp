@@ -128,7 +128,7 @@ accelMDGcMDPrepSteps 25000000
 accelMDGcMDSteps 50000000
 accelMDGEquiPrepSteps 25000000
 accelMDGEquiSteps 100000000
-accelMDGRestart on
+accelMDGRestart on                      # on or off
 accelMDGRestartFile GaMD.gamd
 
 # run

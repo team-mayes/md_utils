@@ -122,14 +122,14 @@ langevinHydrogen       off;            # don't couple bath to hydrogens
 accelMD on
 accelMDdihe off
 accelMDdual on
-accelMDOutFreq {MDOutFreq}
+accelMDOutFreq {amd_outfreq}
 accelMDG on
-accelMDGcMDPrepSteps {MDGcMDPrepSteps}
-accelMDGcMDSteps {MDGcMDSteps}
-accelMDGEquiPrepSteps {MDGEquiPrepSteps}
-accelMDGEquiSteps {MDGEEquiSteps}
-accelMDGRestart {MDGRestart}
-accelMDGRestartFile {MDGRestartFile}
+accelMDGcMDPrepSteps {cmd_prepsteps}
+accelMDGcMDSteps {cmd_steps}
+accelMDGEquiPrepSteps {gamd_prepsteps}
+accelMDGEquiSteps {gamd_steps}
+accelMDGRestart {gamd_restart:<3}         # on or off
+accelMDGRestartFile {gamd_restartfile}
 
 # run
 {run:>7};                               # {runtime} ns
