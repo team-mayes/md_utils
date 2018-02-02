@@ -8,6 +8,7 @@ from __future__ import print_function
 import os
 import sys
 import argparse
+import re
 import numpy as np
 from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict, \
     print_qm_kind, create_element_dict, print_qm_links, list_to_csv
@@ -36,8 +37,10 @@ INVALID_DATA = 3
 MAIN_SEC = 'main'
 
 # Config keys
-FEP_FILE = 'FEP_file'
-FEP_NEW_FILE = 'new_FEP_name'
+FEP_FILE = 'fep_file'
+FEP_NEW_FILE = 'new_fep_name'
+OUT_BASE_DIR = 'output_directory'
+SHIFT = 'timestep_shift'
 
 # FEP file info
 FEP_LINE_TYPE_LAST_CHAR = 'FEP_line_type_last_char'
@@ -200,7 +203,7 @@ def process_FEP(cfg):
         f_name = create_out_fname(cfg[FEP_FILE], suffix="_new", base_dir=cfg[OUT_BASE_DIR])
     else:
         f_name = create_out_fname(cfg[FEP_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
-    print_FEP(FEP_data[HEAD_CONTENT], FEP_data[ATOMS_CONTENT], FEP_data[TAIL_CONTENT],
+    print_FEP(FEP_data[HEAD_CONTENT], FEP_data[TIME_CONTENT], FEP_data[TAIL_CONTENT],
               f_name, cfg[FEP_FORMAT])
 
 def main(argv=None):

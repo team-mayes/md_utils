@@ -66,7 +66,7 @@ class TestPDBEditMain(unittest.TestCase):
             main(["-c", DEF_INI])
             self.assertFalse(diff_lines(DEF_OUT, GOOD_FEP_OUT))
         finally:
-            silent_remove(DEF_OUT)
+            silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
     def testChangeMol(self):
         try:
