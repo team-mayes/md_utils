@@ -128,9 +128,8 @@ accelMDGcMDPrepSteps {cmd_prepsteps}
 accelMDGcMDSteps {cmd_steps}
 accelMDGEquiPrepSteps {gamd_prepsteps}
 accelMDGEquiSteps {gamd_steps}
-accelMDGRestart {gamd_restart:<3}         # on or off
+accelMDGRestart {gamd_restart:<3}                     # on or off
 accelMDGRestartFile {gamd_restartfile}
 
 # run
-{run:>7};                               # {runtime} ns
-
+run                {run:>7};             # {runtime} ns
