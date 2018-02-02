@@ -8,9 +8,9 @@ set inputname      GaMD
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      10000000
-restartfreq      10000;                # 500 steps = every 1ps
-dcdfreq           2500;
+firsttimestep      2500000;
+restartfreq        10000;              # 500 steps = every 1ps
+dcdfreq            2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
                                        # charmm dcd files. if yes, the dcd files will contain
                                        # unit cell information in the style of charmm DCD files.
@@ -132,4 +132,4 @@ accelMDGRestart on                      # on or off
 accelMDGRestartFile GaMD.gamd
 
 # run
-run               10000000;             # 20 ns
+run                7500000;             # 15 ns
