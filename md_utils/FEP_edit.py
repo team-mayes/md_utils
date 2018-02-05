@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 """
-Edit a FEP file to provide missing data
+Edit a FEP file to correct timestep data and remove statements falsely indicating new windows
 """
 
 from __future__ import print_function
@@ -20,9 +20,7 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 
-
 __author__ = 'hmayes'
-
 
 # Error Codes
 # The good status code
@@ -81,6 +79,7 @@ HEAD_CONTENT = 'head_content'
 TIME_CONTENT = 'time_content'
 TAIL_CONTENT = 'tail_content'
 RUN_PAT = re.compile(r"^#START.*")
+
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
     """
@@ -185,7 +184,7 @@ def process_FEP(cfg):
             elif line_head == 'FepEnergy:':
 
                 if shifting_timesteps:
-                    timestep = int(line[cfg[FEP_LINE_TYPE_LAST_CHAR]:cfg[FEP_TIMESTEP_LAST_CHAR]])+ cfg[SHIFT]
+                    timestep = int(line[cfg[FEP_LINE_TYPE_LAST_CHAR]:cfg[FEP_TIMESTEP_LAST_CHAR]]) + cfg[SHIFT]
                 else:
                     timestep = int(line[cfg[FEP_LINE_TYPE_LAST_CHAR]:cfg[FEP_TIMESTEP_LAST_CHAR]])
                 if int(timestep) == 1000000:
@@ -205,7 +204,7 @@ def process_FEP(cfg):
                 time_content.append(line_struct)
 
 
-            # tail_content to contain everything after the 'Atoms' section
+                # tail_content to contain everything after the 'Atoms' section
 
     FEP_data[TIME_CONTENT] = time_content
 
@@ -215,6 +214,7 @@ def process_FEP(cfg):
         f_name = create_out_fname(cfg[FEP_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
     print_FEP(FEP_data[HEAD_CONTENT], FEP_data[TIME_CONTENT], FEP_data[TAIL_CONTENT],
               f_name, cfg[FEP_FORMAT], cfg[COMMENT_FORMAT])
+
 
 def main(argv=None):
     # Read input
