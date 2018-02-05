@@ -54,12 +54,14 @@ FEP_DEAVG_LAST_CHAR = 'FEP_z_last_char'
 FEP_TEMP_LAST_CHAR = 'FEP_last_temp_char'
 FEP_DG_LAST_CHAR = 'FEP_last_element_char'
 FEP_FORMAT = 'FEP_print_format'
+COMMENT_FORMAT = 'Comment_print_format'
 
 # Defaults
 DEF_CFG_FILE = 'FEP_edit.ini'
 DEF_CFG_VALS = {OUT_BASE_DIR: None,
                 FEP_NEW_FILE: None,
                 FEP_FORMAT: '{:10s} {:>6}{:>16}{:>15}{:>15}{:>15}{:>15}{:>15}{:>15}{:>15}',
+                COMMENT_FORMAT: '{}',
                 FEP_LINE_TYPE_LAST_CHAR: 10,
                 FEP_TIMESTEP_LAST_CHAR: 18,
                 FEP_ELEC0_LAST_CHAR: 33,
@@ -130,7 +132,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def FEP_atoms_to_file(FEP_format, list_val, fname, mode='w'):
+def FEP_atoms_to_file(FEP_format, comment_format, list_val, fname, mode='w'):
     """
     Writes the list of sequences to the given file in the specified format for a PDB
 
@@ -141,12 +143,15 @@ def FEP_atoms_to_file(FEP_format, list_val, fname, mode='w'):
     """
     with open(fname, mode) as w_file:
         for line in list_val:
-            w_file.write(FEP_format.format(*line) + '\n')
+            if line[0][0] == '#':
+                w_file.write(comment_format.format(*line) + '\n')
+            else:
+                w_file.write(FEP_format.format(*line) + '\n')
 
 
-def print_FEP(head_data, FEP_data, tail_data, file_name, file_format):
+def print_FEP(head_data, FEP_data, tail_data, file_name, file_format, comment_format):
     list_to_file(head_data, file_name)
-    FEP_atoms_to_file(file_format, FEP_data, file_name, mode='a')
+    FEP_atoms_to_file(file_format, comment_format, FEP_data, file_name, mode='a')
     list_to_file(tail_data, file_name, mode='a', print_message=False)
 
 
@@ -171,8 +176,7 @@ def process_FEP(cfg):
                 switch = False
                 shifting_timesteps = True
             elif not switch and line_head[0] == '#':
-                line_struct = [line, '', '', '', '', '', '',
-                               '', '', '']
+                line_struct = [line]
                 time_content.append(line_struct)
                 if RUN_PAT.match(line_head):
                     switch = True
@@ -210,7 +214,7 @@ def process_FEP(cfg):
     else:
         f_name = create_out_fname(cfg[FEP_NEW_FILE], base_dir=cfg[OUT_BASE_DIR])
     print_FEP(FEP_data[HEAD_CONTENT], FEP_data[TIME_CONTENT], FEP_data[TAIL_CONTENT],
-              f_name, cfg[FEP_FORMAT])
+              f_name, cfg[FEP_FORMAT], cfg[COMMENT_FORMAT])
 
 def main(argv=None):
     # Read input
