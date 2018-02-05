@@ -16,7 +16,7 @@ SUB_DATA_DIR = os.path.join(DATA_DIR, 'FEP_edit')
 
 DEF_INI = os.path.join(SUB_DATA_DIR, 'FEP_edit.ini')
 # noinspection PyUnresolvedReferences
-DEF_OUT = os.path.join(SUB_DATA_DIR, 'new.fepout')
+DEF_OUT = os.path.join(SUB_DATA_DIR, 'short_new.fepout')
 GOOD_FEP_OUT = os.path.join(SUB_DATA_DIR, 'short_good.fepout')
 GOOD_MOL_CHANGE_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_mol_change_good.pdb')
 GOOD_MOL_CHANGE_RENUM_OUT = os.path.join(SUB_DATA_DIR, 'glue_autopsf_short_mol_change_renum_good.pdb')

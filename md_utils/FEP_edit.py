@@ -59,9 +59,9 @@ FEP_FORMAT = 'FEP_print_format'
 DEF_CFG_FILE = 'FEP_edit.ini'
 DEF_CFG_VALS = {OUT_BASE_DIR: None,
                 FEP_NEW_FILE: None,
-                FEP_FORMAT: '{:10s} {:>6}{:>16f}{:>15f}{:>15f}    {:>15f}{:>15f}{:>15f}{:>15f}{:>15f}',
+                FEP_FORMAT: '{:10s} {:>6}{:>16}{:>15}{:>15}{:>15}{:>15}{:>15}{:>15}{:>15}',
                 FEP_LINE_TYPE_LAST_CHAR: 10,
-                FEP_TIMESTEP_LAST_CHAR: 17,
+                FEP_TIMESTEP_LAST_CHAR: 18,
                 FEP_ELEC0_LAST_CHAR: 33,
                 FEP_ELEC1_LAST_CHAR: 48,
                 FEP_VDW0_LAST_CHAR: 63,
@@ -78,7 +78,7 @@ REQ_KEYS = {FEP_FILE: str,
 HEAD_CONTENT = 'head_content'
 TIME_CONTENT = 'time_content'
 TAIL_CONTENT = 'tail_content'
-RUN_PAT = re.compile(r"^START.*")
+RUN_PAT = re.compile(r"^#START.*")
 
 def read_cfg(f_loc, cfg_proc=process_cfg):
     """
@@ -144,9 +144,9 @@ def FEP_atoms_to_file(FEP_format, list_val, fname, mode='w'):
             w_file.write(FEP_format.format(*line) + '\n')
 
 
-def print_FEP(head_data, atoms_data, tail_data, file_name, file_format):
+def print_FEP(head_data, FEP_data, tail_data, file_name, file_format):
     list_to_file(head_data, file_name)
-    FEP_atoms_to_file(file_format, atoms_data, file_name, mode='a')
+    FEP_atoms_to_file(file_format, FEP_data, file_name, mode='a')
     list_to_file(tail_data, file_name, mode='a', print_message=False)
 
 
@@ -155,7 +155,9 @@ def process_FEP(cfg):
     FEP_data = {HEAD_CONTENT: [], TIME_CONTENT: [], TAIL_CONTENT: []}
 
     with open(FEP_loc) as f:
-        atoms_content = []
+        time_content = []
+        shifting_timesteps = False
+        switch = False
 
         for line in f:
             line = line.strip()
@@ -165,39 +167,43 @@ def process_FEP(cfg):
             line_head = line[:cfg[FEP_LINE_TYPE_LAST_CHAR]]
             # head_content to contain Everything before 'Atoms' section
             # also capture the number of atoms
-            if line_head[0] == '#':
-                FEP_data[HEAD_CONTENT].append(line)
-                if RUN_PAT.match(line):
+            if switch and line_head[0:4] == '#NEW':
+                switch = False
+                shifting_timesteps = True
+            elif not switch and line_head[0] == '#':
+                line_struct = [line, '', '', '', '', '', '',
+                               '', '', '']
+                time_content.append(line_struct)
+                if RUN_PAT.match(line_head):
                     switch = True
 
             # atoms_content to contain everything but the xyz
-            elif line_head == 'FepEnergy:  ':
+            elif line_head == 'FepEnergy:':
 
-                timestep = line[cfg[FEP_TIMESTEP_LAST_CHAR]:cfg[FEP_ELEC0_LAST_CHAR]]
-                elec0 = line[cfg[FEP_ELEC0_LAST_CHAR]:cfg[FEP_ELEC1_LAST_CHAR]]
                 if shifting_timesteps:
-                    elec1 = int(line[cfg[FEP_ELEC1_LAST_CHAR]:cfg[FEP_VDW0_LAST_CHAR]])+SHIFT
-                    if elec1 == 10000000:
-                        shifting_timesteps = False
+                    timestep = int(line[cfg[FEP_LINE_TYPE_LAST_CHAR]:cfg[FEP_TIMESTEP_LAST_CHAR]])+ cfg[SHIFT]
                 else:
-                    elec1 = int(line[cfg[FEP_ELEC1_LAST_CHAR]:cfg[FEP_VDW0_LAST_CHAR]])
-                vdw0 = float(line[cfg[FEP_VDW0_LAST_CHAR]:cfg[FEP_VDW1_LAST_CHAR]])
-                vdw1 = float(line[cfg[FEP_VDW1_LAST_CHAR]:cfg[FEP_DE_LAST_CHAR]])
-                dE = float(line[cfg[FEP_DE_LAST_CHAR]:cfg[FEP_DEAVG_LAST_CHAR]])
-                dEavg = line[cfg[FEP_DEAVG_LAST_CHAR]:cfg[FEP_TEMP_LAST_CHAR]]
-                temp = line[cfg[FEP_TEMP_LAST_CHAR]:cfg[FEP_DG_LAST_CHAR]]
-                dG = line[cfg[FEP_DG_LAST_CHAR]:]
-                if switch:
-                    shifting_timesteps = True
+                    timestep = int(line[cfg[FEP_LINE_TYPE_LAST_CHAR]:cfg[FEP_TIMESTEP_LAST_CHAR]])
+                if int(timestep) == 1000000:
+                    shifting_timesteps = False
                     switch = False
+                elec0 = (line[cfg[FEP_TIMESTEP_LAST_CHAR]:cfg[FEP_ELEC0_LAST_CHAR]])
+                elec1 = (line[cfg[FEP_ELEC0_LAST_CHAR]:cfg[FEP_ELEC1_LAST_CHAR]])
+                vdw0 = (line[cfg[FEP_ELEC1_LAST_CHAR]:cfg[FEP_VDW0_LAST_CHAR]])
+                vdw1 = (line[cfg[FEP_VDW0_LAST_CHAR]:cfg[FEP_VDW1_LAST_CHAR]])
+                dE = (line[cfg[FEP_VDW1_LAST_CHAR]:cfg[FEP_DE_LAST_CHAR]])
+                dEavg = (line[cfg[FEP_DE_LAST_CHAR]:cfg[FEP_DEAVG_LAST_CHAR]])
+                temp = (line[cfg[FEP_DEAVG_LAST_CHAR]:cfg[FEP_TEMP_LAST_CHAR]])
+                dG = (line[cfg[FEP_TEMP_LAST_CHAR]:cfg[FEP_DG_LAST_CHAR]])
 
                 line_struct = [line_head, timestep, elec0, elec1, vdw0, vdw1, dE,
                                dEavg, temp, dG]
-                atoms_content.append(line_struct)
+                time_content.append(line_struct)
+
 
             # tail_content to contain everything after the 'Atoms' section
-            else:
-                FEP_data[TAIL_CONTENT].append(line)
+
+    FEP_data[TIME_CONTENT] = time_content
 
     if cfg[FEP_NEW_FILE] is None:
         f_name = create_out_fname(cfg[FEP_FILE], suffix="_new", base_dir=cfg[OUT_BASE_DIR])
