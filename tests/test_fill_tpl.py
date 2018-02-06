@@ -15,7 +15,6 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 __author__ = 'hmayes'
 
-
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'fill_tpl')
 
@@ -79,7 +78,6 @@ ALCHEMY_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'win1_eq.inp')
 GOOD_ALCHEMY_CPU_INP_OUT = os.path.join(SUB_DATA_DIR, 'alchemy_eq_good.inp')
 GOOD_ALCHEMY_CPU_JOB_OUT = os.path.join(SUB_DATA_DIR, 'alchemy_eq_good.pbs')
 
-
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
 MISSING_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_tpl.ini')
@@ -101,7 +99,6 @@ class TestMakeParFailWell(unittest.TestCase):
             self.assertFalse(output)
         with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
-
 
     def testMissingDefaultTpl(self):
         test_input = ["-c", MISSING_DEF_TPL_INI]

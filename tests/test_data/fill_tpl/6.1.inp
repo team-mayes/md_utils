@@ -4,10 +4,6 @@ coordinates        ../step5_assembly.namd.pdb
 set temp           303.15;
 set outputname        6.1;
 
-# read system values written by CHARMM (need to convert uppercases to lowercases)
-exec tr "\[:upper:\]" "\[:lower:\]" < ../step5_assembly.str | sed -e "s/ =//g" > step5_assembly.namd.str
-source             step5_assembly.namd.str
-
 temperature        $temp;
 
 outputName         6.1; # base name for output from this run
@@ -76,12 +72,12 @@ switchdist          10.0;              # cutoff - 2.
                                        # correspondence in charmm:
                                        # (cutnb,ctofnb,ctonnb = pairlistdist,cutoff,switchdist)
 pairlistdist        16.0;              # stores the all the pairs with in the distance it should be larger
-                                       # than cutoff( + 2.) 
+                                       # than cutoff( + 2.)
 stepspercycle       20;                # 20 redo pairlists every ten steps
-pairlistsPerCycle    2;                # 2 is the default 
+pairlistsPerCycle    2;                # 2 is the default
                                        # cycle represents the number of steps between atom reassignments
                                        # this means every 20/2=10 steps the pairlist will be updated
-                          
+
 # Integrator Parameters
 timestep            1.0;               # fs/step
 rigidBonds          all;               # Bound constraint all bonds involving H are fixed in length
@@ -94,20 +90,13 @@ reassignFreq        500;               # reassignFreq:  use this to reassign vel
 reassignTemp        $temp;
 
 # Periodic Boundary conditions. Need this since for a start...
-if { $boxtype == "hexa" } {
-   set b [expr {$a / 2 * sqrt(3)}]
-   set d [expr {$a / 2}]
-   set wrapnearst on
-   exec python ../checkfft.py $a $a $c > checkfft.str
-} else {
-   set wrapnearst off
-   set d 0.0
-   exec python ../checkfft.py $a $b $c > checkfft.str
-}
+set wrapnearst off
+set d 0.0
 
-cellBasisVector1     $a   0.0   0.0;   # vector to the next image
-cellBasisVector2     $d    $b   0.0;
-cellBasisVector3    0.0   0.0    $c;
+
+cellBasisVector1     60   0.0   0.0;   # vector to the next image
+cellBasisVector2    0.0    60   0.0;
+cellBasisVector3    0.0   0.0    60;
 cellOrigin          0.0   0.0 $zcen;   # the *center* of the cell
 
 wrapWater            on;               # wrap water to central cell
@@ -115,17 +104,14 @@ wrapAll              on;               # wrap other molecules too
 wrapNearest $wrapnearst;               # use for non-rectangular cells (wrap to the nearest image)
 
 # PME (for full-system periodic electrostatics)
-source checkfft.str
 PME                yes;
 PMEInterpOrder       6;                # interpolation order (spline order 6 in charmm)
-PMEGridSizeX     $fftx;                # should be close to the cell size 
-PMEGridSizeY     $ffty;                # corresponds to the charmm input fftx/y/z
-PMEGridSizeZ     $fftz;
+PMEGridSpacing     1.0;                # recommended default
 
 # Pressure and volume control
 useGroupPressure       yes;            # use a hydrogen-group based pseudo-molecular viral to calcualte pressure and
                                        # has less fluctuation, is needed for rigid bonds (rigidBonds/SHAKE)
-useFlexibleCell        yes;            # yes for anisotropic system like membrane 
+useFlexibleCell        yes;            # yes for anisotropic system like membrane
 useConstantRatio       yes;            # keeps the ratio of the unit cell in the x-y plane constant A=B
 
 langevin                on
@@ -133,21 +119,6 @@ langevinDamping         1.0
 langevinTemp            $temp
 langevinHydrogen        off
 
-# planar restraint
-colvars on
-exec sed -e "s/Constant \$fc/Constant 5/g" -e "s/\$bb/10.0/g" -e "s/\$sc/5.0/g" membrane_lipid_restraint.namd.col > restraints/$outputname.col
-colvarsConfig restraints/$outputname.col
-
-# dihedral restraint
-extraBonds yes
-exec sed -e "s/\$FC/500/g" restraints/dihe.txt > restraints/$outputname.dihe
-extraBondsFile restraints/$outputname.dihe
-
-## carbohydrate chair restraint 
-#exec sed -e "s/\$FC/500/g" restraints/carbohydrate\_restraint.dat > restraints/$outputname\_carb.dihe
-#extraBondsFile restraints/$outputname\_carb.dihe
-
 minimize 10000
 
-numsteps 90000000
 run 25000
