@@ -1,29 +1,19 @@
 #!/bin/bash
 ####  PBS preamble
 
-# mail
-# when to send mail b = begins e = ends a = abort
-#PBS -m ea
-# join output with error
+#PBS -m bea
 #PBS -j oe
 
-# how much of the computer are we using? computers processors, memory and time, ppn = processors per node
-# mem is shared by all processors, pmem is per processor
-#PBS -l nodes=1:ppn=1,pmem=1gb
-# 15 seconds 15:00:00 hours 15:00:00:00 days, 15:00 is minimum amount you should ask for
+#PBS -l nodes=1:ppn=12,pmem=2gb
 #PBS -V
 
-# account name
 #PBS -A hbmayes_fluxod
-# should match suffix
 #PBS -q fluxod
 
-#PBS -l walltime=24:00:00
-#PBS -N sugar_win1
+#PBS -l walltime={walltime}:00:00
+#PBS -N {job_name}
 ####  End PBS preamble
 ####  Commands follow this line
-
-# This script requires no modules loaded
 
 # print this file listing the computers that were used
 if [ -e "$PBS_NODEFILE" ] ; then
@@ -35,6 +25,5 @@ fi
 if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
-echo "Running from $(pwd)"
 
-namd2 {job_name}.inp >& {output_name}.log
+namd2 +p 12 {output_name}.inp >& {output_name}.log

@@ -123,16 +123,16 @@ langevinHydrogen       off;            # don't couple bath to hydrogens
 source                  ../../common/fep.tcl
 
 alch                    on
-alchType                {alch_type}
+alchType                FEP
 alchFile                {alch_file}
-alchCol                 {alch_col}
+alchCol                 B
 alchOutFile             {alch_out_file}
-alchOutFreq             {alch_out_freq}
+alchOutFreq             10
 
-alchVdwLambdaEnd        {alch_vdw_lambda_end}
-alchElecLambdaStart     {alch_elec_lambda_start}
-alchVdWShiftCoeff       {alch_vdw_shift_coeff}
-alchDecouple            {alch_decouple}
+alchVdwLambdaEnd        1.0
+alchElecLambdaStart     0.5
+alchVdWShiftCoeff       6.0
+alchDecouple            yes
 
 alchEquilSteps          {alch_equil_steps}
 set numSteps            {set_num_steps}
