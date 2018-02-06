@@ -137,8 +137,8 @@ alchDecouple            yes
 alchEquilSteps          {alch_equil_steps}
 set numSteps            {set_num_steps}
 
-alchLambda              {alch_lambda}
+alchLambda              {alch_lambda}            # window: {window}
 alchLambda2             {alch_lambda2}
 
 # run
-run                {run:>7};               # {runtime} ns
+run                {run:>7};            # {runtime} ns

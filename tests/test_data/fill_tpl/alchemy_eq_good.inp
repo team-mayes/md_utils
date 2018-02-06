@@ -137,8 +137,8 @@ alchDecouple            yes
 alchEquilSteps          500000
 set numSteps            500000
 
-alchLambda              0.0
+alchLambda              0.0            # window: 1
 alchLambda2             0.0625
 
 # run
-run                 500000;               # 1 ns
+run                 500000;            # 1 ns
