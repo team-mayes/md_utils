@@ -6,7 +6,7 @@ temperature        $temp
 
 outputname         win1_eq
 set inputname      ../glucose_equilibrated
-#firsttimestep     500000;
+firsttimestep      0;
 #binCoordinates    $inputname.coor;    # cannot use binary coordinates as the topology has changed (dual)
 #binVelocities     $inputname.vel;     #  cannot use binary coordinates as the topology has changed (dual)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
@@ -141,4 +141,4 @@ alchLambda              0.0
 alchLambda2             0.0625
 
 # run
-run                7500000;               # 15 ns
+run                 500000;               # 1 ns

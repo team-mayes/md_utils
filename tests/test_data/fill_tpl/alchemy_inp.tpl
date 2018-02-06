@@ -6,7 +6,7 @@ temperature        $temp
 
 outputname         {output_name}
 set inputname      {input_name}
-#firsttimestep     500000;
+firsttimestep      {first};
 #binCoordinates    $inputname.coor;    # cannot use binary coordinates as the topology has changed (dual)
 #binVelocities     $inputname.vel;     #  cannot use binary coordinates as the topology has changed (dual)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
