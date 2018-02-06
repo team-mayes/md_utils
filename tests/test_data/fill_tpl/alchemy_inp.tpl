@@ -1,11 +1,11 @@
-structure          ../glucose_dual.psf
-coordinates        ../glucose_dual.pdb
+structure          {structure}
+coordinates        {coordinates}
 
 set temp           303.15;
 temperature        $temp
 
-outputname         win1_eq
-set inputname      ../glucose_equilibrated
+outputname         {output_name}
+set inputname      {input_name}
 #firsttimestep     500000;
 #binCoordinates    $inputname.coor;    # cannot use binary coordinates as the topology has changed (dual)
 #binVelocities     $inputname.vel;     #  cannot use binary coordinates as the topology has changed (dual)
@@ -123,22 +123,22 @@ langevinHydrogen       off;            # don't couple bath to hydrogens
 source                  ../../common/fep.tcl
 
 alch                    on
-alchType                FEP
-alchFile                ../glucose_dual.pdb
-alchCol                 B
-alchOutFile             win1_eq.fepout
-alchOutFreq             10
+alchType                {alch_type}
+alchFile                {alch_file}
+alchCol                 {alch_col}
+alchOutFile             {alch_out_file}
+alchOutFreq             {alch_out_freq}
 
-alchVdwLambdaEnd        1.0
-alchElecLambdaStart     0.5
-alchVdWShiftCoeff       6.0
-alchDecouple            yes
+alchVdwLambdaEnd        {alch_vdw_lambda_end}
+alchElecLambdaStart     {alch_elec_lambda_start}
+alchVdWShiftCoeff       {alch_vdw_shift_coeff}
+alchDecouple            {alch_decouple}
 
-alchEquilSteps          500000
-set numSteps            500000
+alchEquilSteps          {alch_equil_steps}
+set numSteps            {set_num_steps}
 
-alchLambda              0.0
-alchLambda2             0.0625
+alchLambda              {alch_lambda}
+alchLambda2             {alch_lambda2}
 
 # run
-run                7500000;               # 15 ns
+run                {run:>7};               # {runtime} ns
