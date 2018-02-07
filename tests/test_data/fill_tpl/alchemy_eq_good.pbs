@@ -10,8 +10,8 @@
 #PBS -A hbmayes_fluxod
 #PBS -q fluxod
 
-#PBS -l walltime={walltime}:00:00
-#PBS -N {job_name}
+#PBS -l walltime=2:00:00
+#PBS -N alchemy_eq
 ####  End PBS preamble
 ####  Commands follow this line
 
@@ -26,4 +26,4 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
 
-namd2 +p 12 {output_name}.inp >& {output_name}.log
+namd2 +p 12 win1_eq.inp >& win1_eq.log

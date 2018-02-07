@@ -50,6 +50,7 @@ setup(
                                       'evb_chk_get_info = md_utils.evb_chk_get_info:main',
                                       'evb_get_info = md_utils.evb_get_info:main',
                                       'evbdump2data = md_utils.evbdump2data:main',
+                                      'FEP_edit = md_utils.FEP_edit:main',
                                       'filter_col = md_utils.filter_col:main',
                                       'fes_combo = md_utils.fes_combo:main',
                                       'fill_tpl = md_utils.fill_tpl:main',

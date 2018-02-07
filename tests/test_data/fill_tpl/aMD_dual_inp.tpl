@@ -1,16 +1,16 @@
 structure          {structure}
 coordinates        {coordinates}
 
-set temp           303.15
+set temp           303.15;
 
 outputname         {output_name}
 set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      {first}
-restartfreq      10000;                # 500 steps = every 1ps
-dcdfreq           2500;
+firsttimestep      {firststep}
+restartfreq        10000;              # 500 steps = every 1ps
+dcdfreq            2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
                                        # charmm dcd files. if yes, the dcd files will contain
                                        # unit cell information in the style of charmm DCD files.
@@ -24,7 +24,7 @@ outputTiming      1500;                # The number of timesteps between each ti
 # Force-Field Parameters
 paraTypeCharmm     on;                 # We're using charmm type parameter file(s)
                                        # multiple definitions may be used but only one file per definition
-parameters          toppar/par_all36_prot.prm
+parameters          toppar/par_all36m_prot.prm
 parameters          toppar/par_all36_na.prm
 parameters          toppar/par_all36_carb.prm
 parameters          toppar/par_all36_lipid.prm
@@ -71,7 +71,7 @@ switchdist          10.0;              # cutoff - 2.
                                        # cutoff - where you stop accounting for nonbond interactions.
                                        # correspondence in charmm:
                                        # (cutnb,ctofnb,ctonnb = pairlistdist,cutoff,switchdist)
-pairlistdist        16.0;              # stores the all the pairs with in the distance it should be larger
+pairlistdist        14.0;              # stores the all the pairs with in the distance it should be larger
                                        # than cutoff( + 2.)
 stepspercycle       20;                # 20 redo pairlists every ten steps
 pairlistsPerCycle    2;                # 2 is the default
@@ -87,6 +87,7 @@ fullElectFrequency  1;                 # PME every step
 wrapWater           on;                # wrap water to central cell
 wrapAll             on;                # wrap other molecules too
 wrapNearest         off;               # use for non-rectangular cells (wrap to the nearest image)
+
 
 # PME (for full-system periodic electrostatics)
 source checkfft.str
@@ -118,6 +119,15 @@ langevinDamping        1.0;            # damping coefficient of 1/ps (keep low)
 langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
+# Accelerated Molecular Dynamics (aMD)
+accelMD on
+accelMDdihe off
+accelMDdual on
+accelMDE {dihedral_energy}
+accelMDalpha {dihedral_alpha}
+accelMDTE {total_energy}
+accelMDTalpha {total_alpha}
+accelMDOutFreq {amd_outfreq}
+
 # run
-numsteps        {last:>10};            # maybe write out end in ns
-run               {run:>8};            # maybe write out run in ns
+run                {run:>7};            # {runtime} ns

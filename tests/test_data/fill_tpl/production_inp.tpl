@@ -1,14 +1,14 @@
-structure          test.psf
-coordinates        test.pdb
+structure          {structure}
+coordinates        {coordinates}
 
 set temp           303.15
 
-outputname         7.2
-set inputname      7.1
+outputname         {output_name}
+set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      500000
+firsttimestep      {firststep}
 restartfreq      10000;                # 500 steps = every 1ps
 dcdfreq           2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
@@ -119,5 +119,5 @@ langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
 # run
-numsteps           1000000;            # 2 ns
-run                 500000;            # 1 ns
+numsteps        {last:>10};            # {endtime} ns
+run               {run:>8};            # {runtime} ns

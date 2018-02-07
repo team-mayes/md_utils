@@ -1,16 +1,16 @@
-structure          test.psf
-coordinates        test.pdb
+structure          {structure}
+coordinates        {coordinates}
 
-set temp           303.15
+set temp           303.15;
 
-outputname         7.2
-set inputname      7.1
+outputname         {output_name}
+set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      500000
-restartfreq      10000;                # 500 steps = every 1ps
-dcdfreq           2500;
+firsttimestep      {firststep};
+restartfreq        10000;              # 500 steps = every 1ps
+dcdfreq            2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
                                        # charmm dcd files. if yes, the dcd files will contain
                                        # unit cell information in the style of charmm DCD files.
@@ -24,32 +24,32 @@ outputTiming      1500;                # The number of timesteps between each ti
 # Force-Field Parameters
 paraTypeCharmm     on;                 # We're using charmm type parameter file(s)
                                        # multiple definitions may be used but only one file per definition
-parameters          toppar/par_all36_prot.prm
-parameters          toppar/par_all36_na.prm
-parameters          toppar/par_all36_carb.prm
-parameters          toppar/par_all36_lipid.prm
-parameters          toppar/par_all36_cgenff.prm
-parameters          toppar/toppar_all36_prot_retinol.str
-parameters          toppar/toppar_all36_na_rna_modified.str
-parameters          toppar/toppar_all36_carb_glycopeptide.str
-parameters          toppar/toppar_all36_prot_fluoro_alkanes.str
-parameters          toppar/toppar_all36_prot_na_combined.str
-parameters          toppar/toppar_all36_prot_heme.str
-parameters          toppar/toppar_all36_lipid_bacterial.str
-parameters          toppar/toppar_all36_lipid_miscellaneous.str
-parameters          toppar/toppar_all36_lipid_cholesterol.str
-parameters          toppar/toppar_all36_lipid_yeast.str
-parameters          toppar/toppar_all36_lipid_sphingo.str
-parameters          toppar/toppar_all36_lipid_inositol.str
-parameters          toppar/toppar_all36_lipid_cardiolipin.str
-parameters          toppar/toppar_all36_lipid_detergent.str
-parameters          toppar/toppar_all36_lipid_lps.str
-parameters          toppar/toppar_water_ions.str
-parameters          toppar/toppar_dum_noble_gases.str
-parameters          toppar/toppar_all36_na_nad_ppi.str
-parameters          toppar/toppar_all36_carb_glycolipid.str
-parameters          toppar/toppar_all36_carb_imlab.str
-source step5_assembly.namd.str
+parameters          ../toppar/par_all36m_prot.prm
+parameters          ../toppar/par_all36_na.prm
+parameters          ../toppar/par_all36_carb.prm
+parameters          ../toppar/par_all36_lipid.prm
+parameters          ../toppar/par_all36_cgenff.prm
+parameters          ../toppar/toppar_all36_prot_retinol.str
+parameters          ../toppar/toppar_all36_na_rna_modified.str
+parameters          ../toppar/toppar_all36_carb_glycopeptide.str
+parameters          ../toppar/toppar_all36_prot_fluoro_alkanes.str
+parameters          ../toppar/toppar_all36_prot_na_combined.str
+parameters          ../toppar/toppar_all36_prot_heme.str
+parameters          ../toppar/toppar_all36_lipid_bacterial.str
+parameters          ../toppar/toppar_all36_lipid_miscellaneous.str
+parameters          ../toppar/toppar_all36_lipid_cholesterol.str
+parameters          ../toppar/toppar_all36_lipid_yeast.str
+parameters          ../toppar/toppar_all36_lipid_sphingo.str
+parameters          ../toppar/toppar_all36_lipid_inositol.str
+parameters          ../toppar/toppar_all36_lipid_cardiolipin.str
+parameters          ../toppar/toppar_all36_lipid_detergent.str
+parameters          ../toppar/toppar_all36_lipid_lps.str
+parameters          ../toppar/toppar_water_ions.str
+parameters          ../toppar/toppar_dum_noble_gases.str
+parameters          ../toppar/toppar_all36_na_nad_ppi.str
+parameters          ../toppar/toppar_all36_carb_glycolipid.str
+parameters          ../toppar/toppar_all36_carb_imlab.str
+source ../common/step5_assembly.namd.str
 
 # These are specified by CHARMM
 exclude             scaled1-4          # non-bonded exclusion policy to use "none,1-2,1-3,1-4,or scaled1-4"
@@ -89,7 +89,7 @@ wrapAll             on;                # wrap other molecules too
 wrapNearest         off;               # use for non-rectangular cells (wrap to the nearest image)
 
 # PME (for full-system periodic electrostatics)
-source checkfft.str
+source ../common/checkfft.str
 
 PME                yes;
 PMEInterpOrder       6;                # interpolation order (spline order 6 in charmm)
@@ -118,6 +118,18 @@ langevinDamping        1.0;            # damping coefficient of 1/ps (keep low)
 langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
+# Accelerated Molecular Dynamics (aMD)
+accelMD on
+accelMDdihe off
+accelMDdual on
+accelMDOutFreq {amd_outfreq}
+accelMDG on
+accelMDGcMDPrepSteps {cmd_prepsteps}
+accelMDGcMDSteps {cmd_steps}
+accelMDGEquiPrepSteps {gamd_prepsteps}
+accelMDGEquiSteps {gamd_steps}
+accelMDGRestart {gamd_restart:<3}                     # on or off
+accelMDGRestartFile {gamd_restartfile}
+
 # run
-numsteps           1000000;            # 2 ns
-run                 500000;            # 1 ns
+run                {run:>7};             # {runtime} ns

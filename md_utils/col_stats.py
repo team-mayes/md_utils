@@ -31,7 +31,7 @@ __author__ = 'hmayes'
 
 # Defaults
 DEF_ARRAY_FILE = 'qm_box_sizes.txt'
-DEF_DELIMITER = ' '
+DEF_DELIMITER = ','
 TOL = 0.0001
 
 
