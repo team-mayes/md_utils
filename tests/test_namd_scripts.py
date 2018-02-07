@@ -5,11 +5,11 @@ Tests for md_utils script
 """
 
 import logging
-import unittest
 import os
+import unittest
 
+from md_utils.md_common import capture_stderr, capture_stdout, silent_remove
 from md_utils.namd_scripts import main
-from md_utils.md_common import diff_lines, capture_stderr, capture_stdout, silent_remove
 
 __author__ = 'hbmayes'
 
@@ -36,6 +36,9 @@ GOOD_LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum_good.csv')
 
 EMPTY_LOG_LIST = os.path.join(NAMD_LOG_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(NAMD_LOG_DIR, 'ghost_log_list.txt')
+
+
+# /home/cmayes/code/python/lab/md_utils/tests/test_data/fill_tpl/make_prod_gpu_inp.ini
 
 
 # Tests
@@ -106,7 +109,7 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
-        test_input = [-c DEF_TPL]
+        test_input = ["-c", "DEF_TPL"]
         try:
             main(test_input)
             # self.assertFalse(diff_lines(LOG_OUT_SUMMARY, GOOD_LOG_OUT_SUMMARY))

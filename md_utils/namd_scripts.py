@@ -4,14 +4,14 @@ This program sets up scripts for running NAMD
 """
 
 from __future__ import print_function
+
 import argparse
-import os
-from collections import OrderedDict
 import sys
+from collections import OrderedDict
+
+from md_utils.fill_tpl import TPL_VALS_SEC, OUT_DIR, make_tpl
 from md_utils.md_common import (InvalidDataError, warning,
-                                create_out_fname, read_csv_to_list,
-                                list_to_csv, IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
-from md_utils.fill_tpl import TPL_VALS_SEC, TPL_EQS_SEC, OUT_DIR
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
 
 try:
     # noinspection PyCompatibility
@@ -67,6 +67,15 @@ def validate_args(args):
     if not os.path.isfile(args.config_tpl):
         raise InvalidDataError("Input error: could not find the specified "
                                "'config_tpl' file '{}'.".format(args.config_tpl))
+
+    if args.file_out_name is None:
+        # If more allowed TYPES are added, more default specs will be needed.
+        if args.type is OTHER:
+            raise InvalidDataError("User must specify a 'file_out_name' when the run 'type' is '{}'".format(OTHER))
+        if args.type is GPU:
+            args.file_out_name = DEF_GPU_OUT_FILE
+        else:
+            args.file_out_name = DEF_CPU_OUT_FILE
 
     # args.config
     int_var_dict = {FIRST: args.first, RUN: args.run}
@@ -197,7 +206,7 @@ def main(argv=None):
         print("cfg: {}, {}".format(type(cfg), cfg))
         print("tpl_name: {}, {}".format(type(tpl_name), tpl_name))
         print("filled_tpl_name: {}, {}".format(type(filled_tpl_name), filled_tpl_name))
-        # make_tpl(cfg, tpl_name, filled_tpl_name)
+        make_tpl(cfg, tpl_name, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
