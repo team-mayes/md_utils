@@ -5,6 +5,7 @@ This program sets up scripts for running NAMD
 
 from __future__ import print_function
 import argparse
+import os
 from collections import OrderedDict
 import sys
 from md_utils.md_common import (InvalidDataError, warning,
@@ -27,6 +28,7 @@ CPU = "cpu"
 GPU = "gpu"
 OTHER = 'other'
 TYPES = [CPU, GPU, OTHER]
+OUT_FILE = 'output_file_name'
 
 RUN = "run"
 NAME = 'name'
@@ -51,11 +53,8 @@ def validate_args(args):
     :param args:
     :return:
     """
-    # TODO: File exists
-    # TODO: create out_dir if does not yet exist
 
     tpl_vals = OrderedDict()
-    # tpl_vals = {}
 
     if args.config_tpl is None:
         # If more allowed TYPES are added, more default specs will be needed.
@@ -65,6 +64,9 @@ def validate_args(args):
             args.config_tpl = DEF_GPU_TPL_FILE
         else:
             args.config_tpl = DEF_CPU_TPL_FILE
+    if not os.path.isfile(args.config_tpl):
+        raise InvalidDataError("Input error: could not find the specified "
+                               "'config_tpl' file '{}'.".format(args.config_tpl))
 
     # args.config
     int_var_dict = {FIRST: args.first, RUN: args.run}
@@ -73,15 +75,36 @@ def validate_args(args):
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(variable_name))
         tpl_vals[variable_name] = req_pos_int
 
-    cfg = {OUT_DIR: args.out_dir, TPL_VALS_SEC: tpl_vals}
+    if args.file_out_name:
+        file_out_name = args.file_out_name
+    elif args.type == CPU:
+        file_out_name = DEF_CPU_OUT_FILE
+    elif args.type == GPU:
+        file_out_name = DEF_GPU_OUT_FILE
+    else:
+        # only other option is that use selected OTHER but didn't give a name of a file
+        if args.type == OTHER:
+            raise InvalidDataError("Input error: a 'file_out_name' must be specified when "
+                                   "the run type is '{}'.".format(OTHER))
+        # we covered all the cases here now, so the next sentence is not actually required...
+        raise InvalidDataError("Input error: a 'file_out_name' must be specified.")
+
+    out_dir = args.out_dir
+    if out_dir:
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+    else:
+        out_dir = os.path.dirname(args.config_tpl)
+
+    cfg = {OUT_DIR: out_dir, TPL_VALS_SEC: tpl_vals, OUT_FILE: file_out_name}
     args.config = cfg
-        # fill_tpl_ordered_dict.update
-            #
-            # val_ordered_dict = process_tpl_vals(config.items(section))
-            # if section == TPL_EQS_SEC:
-            #     # just keep the names, so we know special processing is required
-            #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
-            # proc[TPL_VALS].update(val_ordered_dict)
+    # fill_tpl_ordered_dict.update
+        #
+        # val_ordered_dict = process_tpl_vals(config.items(section))
+        # if section == TPL_EQS_SEC:
+        #     # just keep the names, so we know special processing is required
+        #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
+        # proc[TPL_VALS].update(val_ordered_dict)
 
 
 def parse_cmdline(argv):

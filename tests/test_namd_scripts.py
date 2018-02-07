@@ -86,6 +86,22 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Found no log file names to process" in output)
 
+    def testNoConfigFile(self):
+        # test error re config file
+        test_input = ["-t", 'other', '-o', "ghost.txt"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("User must specify" in output)
+
+    def testNoOutFileOther(self):
+        # test error re config file
+        test_input = ["-t", 'other', '-c', "make_prod_cpu.tpl"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("must be specified" in output)
+
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
