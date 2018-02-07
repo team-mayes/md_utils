@@ -9,6 +9,8 @@ import argparse
 import sys
 from collections import OrderedDict
 
+import os
+
 from md_utils.fill_tpl import TPL_VALS_SEC, OUT_DIR, make_tpl
 from md_utils.md_common import (InvalidDataError, warning,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
