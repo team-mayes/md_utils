@@ -17,7 +17,7 @@ import csv
 import sys
 import time
 from matplotlib.pyplot import show, xlabel, xlim, ylabel, ylim, axes, plot, subplot2grid
-from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, create_out_fname
+from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, create_out_fname, warning
 
 try:
     # noinspection PyCompatibility
@@ -100,6 +100,10 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
+        files = [args.top, args.egindices, args.igindices]
+        for file in files:
+            if not os.path.isfile(file):
+                raise IOError("Could not find specified file: {}".format(file))
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
