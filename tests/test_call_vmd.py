@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-Tests for add_to_each_line.py.
+Tests for call_vmd.py.
 """
 import os
 import unittest
@@ -17,20 +17,14 @@ logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-HEAD_TAIL_DATA_DIR = os.path.join(DATA_DIR, 'small_tests')
+VMD_DIR = os.path.join(DATA_DIR, 'call_vmd')
 
-INPUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input.txt')
-# noinspection PyUnresolvedReferences
-
-DEF_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input_amend.txt')
-# noinspection PyUnresolvedReferences
-NEW_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_input_new.txt')
-PREFIX_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_prefixed.txt')
-SUFFIX_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_suffix.txt')
-BOTH_OUT_PATH = os.path.join(HEAD_TAIL_DATA_DIR, 'add_head_tail_prefix_suffix.txt')
+PSF = os.path.join(VMD_DIR, "open_xylose.psf")
+PDB = os.path.join(VMD_DIR, "open_xylose.pdb")
+TCL_SCRIPT = os.path.join(VMD_DIR, "prot.tcl")
 
 
-class TestAddHeadTailNoOutput(unittest.TestCase):
+class TestFailWell(unittest.TestCase):
     def testNoArgs(self):
         test_input = []
         if logger.isEnabledFor(logging.DEBUG):
@@ -46,7 +40,7 @@ class TestAddHeadTailNoOutput(unittest.TestCase):
             self.assertTrue("No such file or directory" in output)
 
 
-class TestAddHeadTail(unittest.TestCase):
+class TestMain(unittest.TestCase):
     # These will show example usage
     def testAddNothing(self):
         # this first test does not really doing anything, and warns the user

@@ -108,8 +108,8 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Creates a new version of a FEP file. Atoms will be numbered '
-                                                 'starting from one. Options include renumbering molecules.')
+    parser = argparse.ArgumentParser(
+        description='Creates a new version of a FEP file. Currently the only option is to renumber timesteps')
     parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
                                                "The default file name is {}, located in the "
                                                "base directory where the program as run.".format(DEF_CFG_FILE),

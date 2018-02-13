@@ -62,6 +62,7 @@ setup(
                                       'namd_log_proc = md_utils.namd_log_proc:main',
                                       'path_bin = md_utils.path_bin:main',
                                       'pdb_edit = md_utils.pdb_edit:main',
+                                      'plot_PCA = md_utils.plot_PCA:main',
                                       'psf_edit = md_utils.psf_edit:main',
                                       'press_dups = md_utils.press_dups:main',
                                       'proc_plumed_cv = md_utils.proc_plumed_cv:main',
