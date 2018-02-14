@@ -8,6 +8,7 @@ import mdtraj as md
 from glob import glob
 import csv
 import sys
+import warnings
 from matplotlib.pyplot import axes
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
 
@@ -67,23 +68,27 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
-    parser.add_argument("-t", "--traj", help="Trajectory file or files for analysis.",
+    parser.add_argument("-t", "--traj", help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" are permitted',
                         default=DEF_TRAJ)
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
     parser.add_argument("-e", "--egindices", help="File with the EG indices.",
                         default=DEF_EG_FILE)
     parser.add_argument("-i", "--igindices", help="File with the IG indices.", default=DEF_IG_FILE)
-    parser.add_argument("-n", "--name", help="Name for the saved plot", default=DEF_NAME)
+    parser.add_argument("-n", "--name", help="Name for the saved plot. Default name is {}".format(DEF_NAME), default=DEF_NAME)
     parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.", default=None)
+    parser.add_argument("-l", "--log_file", help="Text file containing logged distances to plot.", default=None)
+    parser.add_argument("-w", "--write_dist", help="Flag to log distances as a csv file rather than generate plot. Useful when dealing with large trajectories or limited memory.", action='store_true', default=False)
 
     args = None
     try:
         args = parser.parse_args(argv)
-        files = [args.top, args.egindices, args.igindices]
-        for file in files:
-            if not os.path.isfile(file):
-                raise IOError("Could not find specified file: {}".format(file))
+        # If a log file is read in, trajectory information is not required
+        if not args.log_file:
+            files = [args.top, args.egindices, args.igindices]
+            for file in files:
+                if not os.path.isfile(file):
+                    raise IOError("Could not find specified file: {}".format(file))
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -96,25 +101,53 @@ def parse_cmdline(argv):
         return args, INPUT_ERROR
     return args, GOOD_RET
 
-def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None):
+def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, log_file=None, write=False):
 
-    trajfile = glob(traj)
-    t = md.load(trajfile, top=topfile)
+    if log_file:
+        print("Reading data from log file: {}.".format(log_file))
+        with open(log_file, newline='\n') as file:
+            rows = csv.reader(file, delimiter=',', quotechar='|')
+            ind_list = []
+            for row in rows:
+                ind_list.append(row)
+            indices = np.array(ind_list, float)
+            EGdistance = np.empty([int(indices.size/2)])
+            IGdistance = np.empty([int(indices.size/2)])
+            for i in range(0,int(indices.shape[0]/2),1):
+                EGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i, :]
+                IGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i+1, :]
 
-    EGdistance = com_distance(t, eg_file)
-    IGdistance = com_distance(t, ig_file)
-    mplt.plot_free_energy(EGdistance, IGdistance, avoid_zero_count=False, kT=2.479, cmap="winter", cbar_label=None,
-                          cbar=False)
+    else:
+        #TODO: Restructure to more easily change to a different CV
+        print("Reading data from trajectory: {}.".format(traj))
+        trajfile = glob(traj)
+        t = md.load(trajfile, top=topfile)
 
-    ax = axes()
-    ax.set_xlim(7.5, 15)
-    ax.set_ylim(7, 17)
-    ax.set_xlabel("EG Distance (A)")
-    ax.set_ylabel("IG Distance (A)")
+        EGdistance = com_distance(t, eg_file)
+        IGdistance = com_distance(t, ig_file)
 
-    save_figure(plot_name, out_dir)
-    print("Wrote file: {}".format(plot_name))
-    matplotlib.pyplot.close("all")
+    if write:
+        csv_name = out_dir + '/' + plot_name + '.csv'
+        with open(csv_name, 'a') as csvfile:
+            dist_writer = csv.writer(csvfile, delimiter=',')
+            dist_writer.writerow(EGdistance)
+            dist_writer.writerow(IGdistance)
+    else:
+        ax = axes()
+        ax.set_xlim(7.5, 15)
+        ax.set_ylim(7, 17)
+        ax.set_xlabel("EG Distance (A)")
+        ax.set_ylabel("IG Distance (A)")
+
+        # Suppress the error associated with a larger display window than is sampled
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            mplt.plot_free_energy(EGdistance, IGdistance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter", cbar_label=None,
+                                  cbar=False)
+
+        save_figure(plot_name, out_dir)
+        print("Wrote file: {}".format(plot_name + '.png'))
+        matplotlib.pyplot.close("all")
 
 def main(argv=None):
     # Read input
@@ -124,7 +157,7 @@ def main(argv=None):
         return ret
 
     try:
-        plot_trajectories(args.traj, args.top, args.egindices, args.igindices, args.name, args.outdir)
+        plot_trajectories(args.traj, args.top, args.egindices, args.igindices, args.name, args.outdir, args.log_file, args.write_dist)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
