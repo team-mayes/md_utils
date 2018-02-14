@@ -13,6 +13,7 @@ import re
 
 from md_utils.md_common import (InvalidDataError, warning, file_rows_to_list, IO_ERROR, GOOD_RET, INPUT_ERROR,
                                 INVALID_DATA, get_fname_root, create_out_fname, write_csv)
+from md_utils.col_stats import main as col_stats
 
 try:
     # noinspection PyCompatibility
@@ -69,6 +70,7 @@ def parse_cmdline(argv):
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
+    parser.add_argument("--stats", help="Flag to automatically generate statistics from the data.", action='store_true', default=False)
 
     args = None
     try:
@@ -160,7 +162,7 @@ def process_log(log_file, dihedral, total, performance, step):
     return result_list
 
 
-def process_log_files(source_name, log_file_list, print_dihedral_info, print_total_info, print_performance_info, step):
+def process_log_files(source_name, log_file_list, print_dihedral_info, print_total_info, print_performance_info, step, stats):
     """
     Loops through all files and prints output
     @param source_name: the source name to use as the base for creating an outfile name
@@ -189,6 +191,8 @@ def process_log_files(source_name, log_file_list, print_dihedral_info, print_tot
         warning("Found no log data to process from: {}".format(source_name))
     else:
         write_csv(result_list, out_fname, fieldnames=field_names, extrasaction="ignore")
+    if stats:
+        col_stats(["-n", "-f", out_fname])
 
 
 def main(argv=None):
@@ -199,7 +203,7 @@ def main(argv=None):
         return ret
 
     try:
-        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.performance, args.step)
+        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.performance, args.step, args.stats)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
