@@ -1,23 +1,15 @@
 from __future__ import print_function
-from pyemma.coordinates import source
 import numpy as np
 import os
-import pyemma.coordinates as coor
-import pyemma.msm as msm
 import pyemma.plots as mplt
 import argparse
 import matplotlib.pyplot
 import mdtraj as md
-import json
-import jsonpickle
-import warnings
 from glob import glob
-import math
 import csv
 import sys
-import time
-from matplotlib.pyplot import show, xlabel, xlim, ylabel, ylim, axes, plot, subplot2grid
-from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, create_out_fname, warning
+from matplotlib.pyplot import axes
+from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
 
 try:
     # noinspection PyCompatibility
@@ -26,25 +18,13 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser, NoSectionError
 
-# Fixes issue with decoding jsonpickle object
-import jsonpickle.ext.numpy as jsonpickle_numpy
-
-# TRAJ = '/Users/xadams/XylE/InwardOccluded_glucose/namd/trial1/6.6.coor'
-# TOP = '/Users/xadams/XylE/InwardOccluded_glucose/inoc_glucose.psf'
-# TRAJ_GLOB = ''
-IG_FILE = 'IG_indices_in.txt'
-EG_FILE = 'EG_indices_in.txt'
-
 DEF_IG_FILE = 'IG_indices.txt'
 DEF_EG_FILE = 'EG_indices.txt'
 DEF_TRAJ = '*dcd'
 DEF_TOP = '../*psf'
 DEF_NAME = 'PCA.png'
 
-jsonpickle_numpy.register_handlers()
-
 matplotlib.rcParams.update({'font.size': 12})
-
 
 def save_figure(name, out_dir=None):
     # change these if wanted
@@ -115,11 +95,6 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, INPUT_ERROR
     return args, GOOD_RET
-### Choose input data here. Trajectories and corresponding topology file.
-# start = time.time()
-# Alex's happy trajectory files
-# trajfile = glob('/Users/xadams/XylE/Protonated_xylose/namd/plots/*dcd')
-# topfile = '/Users/xadams/XylE/Protonated_xylose/step5_assembly.xplor_ext.psf'
 
 def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None):
 
@@ -128,24 +103,8 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None):
 
     EGdistance = com_distance(t, eg_file)
     IGdistance = com_distance(t, ig_file)
-    # mplt.plot_free_energy(EGdistance, IGdistance, avoid_zero_count=False, kT=2.479, cmap="winter", cbar_label="Free energy (kcal/mol)")
     mplt.plot_free_energy(EGdistance, IGdistance, avoid_zero_count=False, kT=2.479, cmap="winter", cbar_label=None,
                           cbar=False)
-
-    # trajfile = glob('/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd')
-    # topfile = '/Users/xadams/XylE/InwardOpen_deprotonated/step5_assembly.xplor_ext.psf'
-    #
-    # t = md.load(trajfile, top=topfile)
-    # EGdistance = com_distance(t, 'EG_indices_in.txt')
-    # IGdistance = com_distance(t, 'IG_indices_in.txt')
-    # mplt.plot_free_energy(EGdistance, IGdistance, avoid_zero_count=False, kT=2.479, cmap="winter", cbar_label="Free energy (kcal/mol)")
-
-
-    # subplot2grid((2,1),(0,0))
-    # plot(EGdistance)
-    # subplot2grid((2,1),(1,0))
-    # plot(IGdistance)
-    # show()
 
     ax = axes()
     ax.set_xlim(7.5, 15)
@@ -153,10 +112,8 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None):
     ax.set_xlabel("EG Distance (A)")
     ax.set_ylabel("IG Distance (A)")
 
-    # i_name = create_out_fname(plot_name, ext='.png')
     save_figure(plot_name, out_dir)
     print("Wrote file: {}".format(plot_name))
-    # print("Took ", time.time()-start, "seconds to execute.")
     matplotlib.pyplot.close("all")
 
 def main(argv=None):
