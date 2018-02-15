@@ -11,9 +11,9 @@ from collections import OrderedDict
 
 import os
 
-from md_utils.fill_tpl import TPL_VALS_SEC, OUT_DIR, make_tpl
+from md_utils.fill_tpl import TPL_VALS_SEC, OUT_DIR, make_tpl, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
-                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
 
 try:
     # noinspection PyCompatibility
@@ -86,6 +86,8 @@ def validate_args(args):
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(variable_name))
         tpl_vals[variable_name] = req_pos_int
 
+    tpl_vals[NAME] = args.name
+
     if args.file_out_name:
         file_out_name = args.file_out_name
     elif args.type == CPU:
@@ -107,7 +109,7 @@ def validate_args(args):
     else:
         out_dir = os.path.dirname(args.config_tpl)
 
-    cfg = {OUT_DIR: out_dir, TPL_VALS_SEC: tpl_vals, OUT_FILE: file_out_name}
+    cfg = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
     args.config = cfg
     # fill_tpl_ordered_dict.update
         #
@@ -208,7 +210,7 @@ def main(argv=None):
         print("cfg: {}, {}".format(type(cfg), cfg))
         print("tpl_name: {}, {}".format(type(tpl_name), tpl_name))
         print("filled_tpl_name: {}, {}".format(type(filled_tpl_name), filled_tpl_name))
-        make_tpl(cfg, tpl_name, filled_tpl_name)
+        fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

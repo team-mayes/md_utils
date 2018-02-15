@@ -70,7 +70,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testNegInteger(self):
-        test_input = ["-r", "-4", ]
+        test_input = ["-r", "-4", "-c", "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -83,13 +83,6 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("invalid choice" in output)
 
-    def testNoSpecifiedFile(self):
-        test_input = []
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no log file names to process" in output)
-
     def testNoConfigFile(self):
         # test error re config file
         test_input = ["-t", 'other', '-o', "ghost.txt"]
@@ -100,11 +93,11 @@ class TestMainFailWell(unittest.TestCase):
 
     def testNoOutFileOther(self):
         # test error re config file
-        test_input = ["-t", 'other', '-c', "make_prod_cpu.tpl"]
+        test_input = ["-t", 'other', '-c', "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("must be specified" in output)
+            self.assertTrue("must specify" in output)
 
 
 class TestMain(unittest.TestCase):

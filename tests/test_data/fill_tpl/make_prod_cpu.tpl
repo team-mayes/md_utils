@@ -16,7 +16,7 @@ out_dir = tests/test_data/fill_tpl/
 #    equation after its inputs.
 # 4) Multiple values and equations may be listed for any keys. In that case, the program will create multiple output
 #    files. If a static 'filled_tpl_name' is provided, the file will be overwritten, leaving only one filled file at
-#    the end. The 'filled_tpl_name' can include keys (i.e. filled_tpl_name = {key1}.txt), so if multiple values are
+#    the end. The 'filled_tpl_name' can include keys (i.e. filled_tpl_name = {{key1}}.txt), so if multiple values are
 #    listed for key1 (i.e. key1 = A,B,C), multiple output files will be created (A.txt, B.txt, C.txt)."
 [tpl_vals]
 name = test
