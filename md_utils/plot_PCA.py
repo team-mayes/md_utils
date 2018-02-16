@@ -105,17 +105,36 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
 
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
-        with open(log_file, newline='\n') as file:
-            rows = csv.reader(file, delimiter=',', quotechar='|')
-            ind_list = []
-            for row in rows:
-                ind_list.append(row)
-            indices = np.array(ind_list, float)
-            EGdistance = np.empty([int(indices.size/2)])
-            IGdistance = np.empty([int(indices.size/2)])
-            for i in range(0,int(indices.shape[0]/2),1):
-                EGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i, :]
-                IGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i+1, :]
+        EG_list = []
+        IG_list = []
+        logging = 'eg'
+        log = open(log_file)
+        data = log.readlines()
+        for row in data:
+            s_data = row.split(sep=',')
+            if logging=='eg':
+                for i in s_data:
+                    EG_list.append(i)
+                logging = 'ig'
+            else:
+                for i in s_data:
+                    IG_list.append(i)
+                logging = 'eg'
+        log.close()
+        EGdistance = np.array(EG_list,float)
+        IGdistance = np.array(IG_list,float)
+
+        # with open(log_file, newline='\n') as file:
+        #     rows = csv.reader(file, delimiter=',', quotechar='|')
+        #     ind_list = []
+        #     for row in rows:
+        #         ind_list.append(row)
+        #     indices = np.array(ind_list, float)
+        #     EGdistance = np.empty([int(indices.size/2)])
+        #     IGdistance = np.empty([int(indices.size/2)])
+        #     for i in range(0,int(indices.shape[0]/2),1):
+        #         EGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i, :]
+        #         IGdistance[int(i*indices.shape[1]):int((i+1)*indices.shape[1])] = indices[2*i+1, :]
 
     else:
         #TODO: Restructure to more easily change to a different CV
@@ -127,7 +146,11 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
         IGdistance = com_distance(t, ig_file)
 
     if write:
-        csv_name = out_dir + '/' + plot_name + '.csv'
+        if out_dir == None:
+            csv_dir = './'
+        else:
+            csv_dir = out_dir
+        csv_name = csv_dir + '/' + plot_name + '.csv'
         with open(csv_name, 'a') as csvfile:
             dist_writer = csv.writer(csvfile, delimiter=',')
             dist_writer.writerow(EGdistance)
