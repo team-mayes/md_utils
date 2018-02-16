@@ -3,13 +3,13 @@ import numpy as np
 import os
 import pyemma.plots as mplt
 import argparse
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 import mdtraj as md
 from glob import glob
 import csv
 import sys
 import warnings
-from matplotlib.pyplot import axes
+plt.switch_backend('agg')
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
 
 try:
@@ -25,7 +25,7 @@ DEF_TRAJ = '*dcd'
 DEF_TOP = '../*psf'
 DEF_NAME = 'PCA.png'
 
-matplotlib.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 12})
 
 def save_figure(name, out_dir=None):
     # change these if wanted
@@ -33,7 +33,7 @@ def save_figure(name, out_dir=None):
         fig_dir = './'
     else:
         fig_dir = out_dir
-    matplotlib.pyplot.savefig(fig_dir + '/' + name, bbox_inches='tight')
+    plt.savefig(fig_dir + '/' + name, bbox_inches='tight')
 
 
 def com_distance(traj, indexfile):
@@ -156,7 +156,7 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
             dist_writer.writerow(EGdistance)
             dist_writer.writerow(IGdistance)
     else:
-        ax = axes()
+        ax = plt.axes()
         ax.set_xlim(7.5, 15)
         ax.set_ylim(7, 17)
         ax.set_xlabel("EG Distance (A)")
@@ -170,7 +170,7 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
 
         save_figure(plot_name, out_dir)
         print("Wrote file: {}".format(plot_name + '.png'))
-        matplotlib.pyplot.close("all")
+        plt.close("all")
 
 def main(argv=None):
     # Read input
