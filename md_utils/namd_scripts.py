@@ -6,12 +6,11 @@ This program sets up scripts for running NAMD
 from __future__ import print_function
 
 import argparse
+import os
 import sys
 from collections import OrderedDict
 
-import os
-
-from md_utils.fill_tpl import TPL_VALS_SEC, OUT_DIR, make_tpl, TPL_VALS, fill_save_tpl
+from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
 
@@ -202,14 +201,6 @@ def main(argv=None):
     tpl_name = args.config_tpl
     filled_tpl_name = args.file_out_name
     try:
-        # cfg = {dict} {'parameter_values': OrderedDict([('voo_b', [0.0]), ('vii_0', [-300.0]),
-        # ('vii_type_d', ['OH1']), ('vii_type_a', ['OW']), ('vii_b', [-0.5]), ('vii_lb', [1.0]), ('vii_b_da', [2.5]),
-        # ('vii_cut', [5.0])]), 'calculated_parameter_names': OrderedDict(), 'tpl_fil
-        #     filled_tpl_name = {str} 'evb_test.par'
-        # tpl_name = {str} 'tests/test_data/fill_tpl/evb_par.tpl'
-        print("cfg: {}, {}".format(type(cfg), cfg))
-        print("tpl_name: {}, {}".format(type(tpl_name), tpl_name))
-        print("filled_tpl_name: {}, {}".format(type(filled_tpl_name), filled_tpl_name))
         fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)
