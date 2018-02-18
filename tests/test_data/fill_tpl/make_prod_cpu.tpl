@@ -1,5 +1,5 @@
 #  TODO: the following line should generate this ini file
-;namd_scripts --type cpu --run 1 --name test --input_name 7.1 --first 1
+;namd_scripts --type cpu --run {run} --name test --input_name 7.1 --first {first}
 # cpu = production_cpu_pbs.tpl
 # run = integer,tpl value
 # input = input_name, tpl value
