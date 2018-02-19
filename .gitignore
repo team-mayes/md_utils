@@ -85,3 +85,7 @@ tests/test_data/cp2k_files/REF_15_2_502000
 tests/test_data/converge_evb_par/conv_evb_test.ini
 reproduced_tpl.pdb
 tests/test_data/plot_csv/identity.png
+tests/test_data/fill_tpl/make_prod_cpu.ini
+
+# VirtualEnv dir
+venv/

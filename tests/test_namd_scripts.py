@@ -8,7 +8,7 @@ import logging
 import os
 import unittest
 
-from md_utils.md_common import capture_stderr, capture_stdout, silent_remove
+from md_utils.md_common import capture_stderr, capture_stdout, silent_remove, diff_lines
 from md_utils.namd_scripts import main
 
 __author__ = 'hbmayes'
@@ -21,21 +21,11 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 # File Locations #
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-NAMD_LOG_DIR = os.path.join(DATA_DIR, 'namd_scripts')
+TPL_TEST_DATA = os.path.join(DATA_DIR, 'fill_tpl')
+BASIC_CPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_cpu.tpl")
+BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu.ini")
+BASIC_CPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_cpu_good.ini")
 
-LOG_PATH = os.path.join(NAMD_LOG_DIR, 'namd_short.log')
-LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'namd_short_sum.csv')
-LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'namd_short_performance.csv')
-GOOD_LOG_OUT_SUMMARY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
-GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
-DEF_TPL = os.path.join(NAMD_LOG_DIR, )
-
-LOG_LIST = os.path.join(NAMD_LOG_DIR, 'log_list.txt')
-LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum.csv')
-GOOD_LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum_good.csv')
-
-EMPTY_LOG_LIST = os.path.join(NAMD_LOG_DIR, 'empty_log_list.txt')
-GHOST_LOG_LIST = os.path.join(NAMD_LOG_DIR, 'ghost_log_list.txt')
 
 
 # /home/cmayes/code/python/lab/md_utils/tests/test_data/fill_tpl/make_prod_gpu_inp.ini
@@ -70,7 +60,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testNegInteger(self):
-        test_input = ["-r", "-4", ]
+        test_input = ["-r", "-4", "-c", "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -83,13 +73,6 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("invalid choice" in output)
 
-    def testNoSpecifiedFile(self):
-        test_input = []
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no log file names to process" in output)
-
     def testNoConfigFile(self):
         # test error re config file
         test_input = ["-t", 'other', '-o', "ghost.txt"]
@@ -100,18 +83,18 @@ class TestMainFailWell(unittest.TestCase):
 
     def testNoOutFileOther(self):
         # test error re config file
-        test_input = ["-t", 'other', '-c', "make_prod_cpu.tpl"]
+        test_input = ["-t", 'other', '-c', "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("must be specified" in output)
+            self.assertTrue("must specify" in output)
 
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
-        test_input = ["-c", "DEF_TPL"]
+        test_input = ["-c", BASIC_CPU_TPL]
         try:
             main(test_input)
-            # self.assertFalse(diff_lines(LOG_OUT_SUMMARY, GOOD_LOG_OUT_SUMMARY))
+            diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD)
         finally:
-            silent_remove(LOG_OUT_SUMMARY, disable=DISABLE_REMOVE)
+            silent_remove(BASIC_CPU_RESULT)
