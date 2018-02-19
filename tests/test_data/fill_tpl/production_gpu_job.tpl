@@ -3,7 +3,7 @@
 #SBATCH -t {walltime}:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=END,FAIL
 #SBATCH --gres=gpu:k80:4
 set echo
 set -x
