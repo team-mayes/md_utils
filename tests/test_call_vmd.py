@@ -9,8 +9,7 @@ import logging
 from md_utils.call_vmd import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
-
-__author__ = 'hmayes'
+__author__ = 'adams'
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -19,9 +18,20 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 VMD_DIR = os.path.join(DATA_DIR, 'call_vmd')
 
+OUT_DIR = os.path.join('test_data', 'call_vmd')
 PSF = os.path.join(VMD_DIR, "open_xylose.psf")
 PDB = os.path.join(VMD_DIR, "open_xylose.pdb")
 TCL_SCRIPT = os.path.join(VMD_DIR, "prot.tcl")
+PROT_OUT = os.path.join(VMD_DIR, "output.pdb")
+GOOD_PROT_OUT = os.path.join(VMD_DIR, "prot_good.pdb")
+DCD_UNBOUND = os.path.join(VMD_DIR, 'short_unbound.dcd')
+DCD_BOUND = os.path.join(VMD_DIR, 'short_bound.dcd')
+DCD_TOP = os.path.join(VMD_DIR, 'step5_assembly.xplor_ext.psf')
+SUGAR_SCRIPT = os.path.join(VMD_DIR, 'sugar_check.tcl')
+UNBOUND_OUT = os.path.join(VMD_DIR, 'output')
+BOUND_OUT = os.path.join(VMD_DIR, 'output')
+GOOD_UNBOUND_OUT = os.path.join(VMD_DIR, 'unbound_good.txt')
+GOOD_BOUND_OUT = os.path.join(VMD_DIR, 'bound_good.txt')
 
 
 class TestFailWell(unittest.TestCase):
@@ -32,50 +42,54 @@ class TestFailWell(unittest.TestCase):
         with capture_stdout(main, test_input) as output:
             self.assertTrue("arguments:" in output)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("required" in output)
+            self.assertTrue("Found no" in output)
 
     def testMissingFile(self):
-        test_input = ["ghost.txt", "-e", ".txt"]
+        test_input = ["-t", "ghost.txt", "-s", "ghost.tcl"]
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("No such file or directory" in output)
+            self.assertTrue("Could not find" in output)
 
 
 class TestMain(unittest.TestCase):
     # These will show example usage
-    def testAddNothing(self):
-        # this first test does not really doing anything, and warns the user
+    def testProtTcl(self):
+        test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR]
         try:
-            with capture_stderr(main, [INPUT_PATH]) as output:
-                self.assertTrue("Return file will be the same as the input" in output)
-            self.assertFalse(diff_lines(INPUT_PATH, DEF_OUT_PATH))
+            main(test_input)
+            os.path.isfile(PROT_OUT)
+            self.assertFalse(diff_lines(PROT_OUT, GOOD_PROT_OUT))
         finally:
-            silent_remove(DEF_OUT_PATH, DISABLE_REMOVE)
+            silent_remove(PROT_OUT, DISABLE_REMOVE)
 
-    def testAddHead(self):
+    def testArgText(self):
+        test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR, "-a", 'arg']
         try:
-            main([INPUT_PATH, "-b", "../"])
-            self.assertFalse(diff_lines(DEF_OUT_PATH, PREFIX_OUT_PATH))
+            main(test_input)
+            self.assertFalse(diff_lines(PROT_OUT, GOOD_PROT_OUT))
         finally:
-            silent_remove(DEF_OUT_PATH)
+            silent_remove(PROT_OUT, DISABLE_REMOVE)
 
-    def testAddTail(self):
+    def testArgList(self):
+        test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR, "-a", ['arg1', 'arg2']]
         try:
-            main([INPUT_PATH, "-e", ".txt"])
-            self.assertFalse(diff_lines(DEF_OUT_PATH, SUFFIX_OUT_PATH))
+            main(test_input)
+            self.assertFalse(diff_lines(PROT_OUT, GOOD_PROT_OUT))
         finally:
-            silent_remove(DEF_OUT_PATH)
+            silent_remove(PROT_OUT, DISABLE_REMOVE)
 
-    def testAddBoth(self):
+    def testCheckSugarBound(self):
+        test_input = ["-t", DCD_BOUND, "-p", DCD_TOP, "-s", SUGAR_SCRIPT, "-o", VMD_DIR]
         try:
-            main([INPUT_PATH, "-b", "../", "-e", ".txt"])
-            self.assertFalse(diff_lines(DEF_OUT_PATH, BOTH_OUT_PATH))
+            main(test_input)
+            self.assertFalse(diff_lines(BOUND_OUT, GOOD_BOUND_OUT))
         finally:
-            silent_remove(DEF_OUT_PATH)
+            silent_remove(BOUND_OUT, disable=DISABLE_REMOVE)
 
-    def testSpecifyOutfile(self):
+    def testCheckSugarUnbound(self):
+        test_input = ["-t", DCD_UNBOUND, "-p", DCD_TOP, "-s", SUGAR_SCRIPT, "-o", VMD_DIR]
         try:
-            main([INPUT_PATH, "-b", "../", "-e", ".txt", "-n", NEW_OUT_PATH])
-            self.assertFalse(diff_lines(NEW_OUT_PATH, BOTH_OUT_PATH))
+            main(test_input)
+            self.assertFalse(diff_lines(UNBOUND_OUT, GOOD_UNBOUND_OUT))
         finally:
-            silent_remove(NEW_OUT_PATH)
+            silent_remove(UNBOUND_OUT, disable=DISABLE_REMOVE)
 
