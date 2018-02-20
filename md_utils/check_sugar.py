@@ -7,7 +7,7 @@ import sys
 from md_utils.call_vmd import call_vmd
 from md_utils.md_common import warning, GOOD_RET, InvalidDataError, INPUT_ERROR, IO_ERROR, INVALID_DATA
 
-CHECK_SUGAR = '/Users/xadams/PycharmProjects/md_utils/tests/test_data/call_vmd/sugar_check.tcl'
+DEF_CHECK_SUGAR = '~/md_utils/tests/test_data/call_vmd/sugar_check.tcl'
 DEF_FREQ = '100'
 DEF_TOP_FILE = '../step5_assembly.xplor_ext.psf'
 DEF_DIR = './'
@@ -49,6 +49,7 @@ def parse_cmdline(argv):
     parser.add_argument("-o", "--outdir",
                         help="Output directory. Default is current directory. Relative path must begin with './'",
                         default=DEF_DIR)
+    parser.add_argument("-s", "--script", help="Location of the sugar_check tcl script.", default=DEF_CHECK_SUGAR)
     parser.add_argument("-a", "--args", help="Additional arguments, required by some tcl scripts.", default=DEF_FREQ)
     parser.add_argument("-k", "--keep",
                         help="Flag to retain distance measurement file. "
@@ -89,7 +90,7 @@ def main(argv=None):
     # Read and execute sugar_check script
     file_path = (args.outdir + '/' + args.name)
     try:
-        call_vmd(args.top, args.traj, CHECK_SUGAR, file_path, args.args)
+        call_vmd(args.top, args.traj, args.script, file_path, args.args)
         read_output(file_path, args.keep)
     except IOError as e:
         warning("Problems reading file:", e)
