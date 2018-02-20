@@ -1,22 +1,34 @@
-import subprocess
-import argparse
-from md_utils.FEP_edit import read_cfg
-from md_utils.md_common import warning, GOOD_RET, InvalidDataError, INPUT_ERROR, IO_ERROR
+# This script accepts a topology file and trajectory to check if
+# a sugar remains bound over the course of the simulation using call_vmd to execute check_sugar.tcl
 import os
+import argparse
+import csv
+import sys
+from md_utils.call_vmd import call_vmd
+from md_utils.md_common import warning, GOOD_RET, InvalidDataError, INPUT_ERROR, IO_ERROR, INVALID_DATA
 
+CHECK_SUGAR = '/Users/xadams/PycharmProjects/md_utils/tests/test_data/check_sugar/sugar_check.tcl'
+DEF_FREQ = '100'
 DEF_TOP_FILE = '../step5_assembly.xplor_ext.psf'
-DEF_NAME = 'output'
 DEF_DIR = './'
+DEF_NAME = 'check.txt'
 
 
-# DEF_CFG_FILE = 'vmd.ini'
+def read_output(dist_file, keep):
+    bound = True
+    with open(dist_file, newline='') as file:
+        rows = csv.reader(file)
+        for row in rows:
+            if float(row[0]) > 20:
+                bound = False
+                keep = True
 
-def call_vmd(psf, pdb, script, name, args):
-    subprocess.call(["vmd", "-e", script, "-dispdev", "text", psf, pdb, "-args", name, " ".join(args)])
-
-
-def call_catdcd(traj, number):
-    subprocess.call(["catdcd -num", traj])
+    if bound:
+        print("Sugar is bound in all frames of the trajectory.")
+    elif not bound:
+        print("Sugar is unbound in the trajectory.")
+    if not keep:
+        os.remove(dist_file)
 
 
 def parse_cmdline(argv):
@@ -28,30 +40,29 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Calls VMD to execute a tcl script.')
+    parser = argparse.ArgumentParser(
+        description='Calls VMD to execute sugar_check.tcl and returns whether or not the sugar remains bound.')
     parser.add_argument("-t", "--traj", help="Trajectory file for analysis.")
     parser.add_argument("-p", "--top", help="Topology file for analysis.The default is {}.".format(DEF_TOP_FILE),
                         default=DEF_TOP_FILE)
-    parser.add_argument("-s", "--script", help="Tcl script to run through VMD")
     parser.add_argument("-n", "--name", help="Name of output file. Default is {}.".format(DEF_NAME), default=DEF_NAME)
     parser.add_argument("-o", "--outdir",
                         help="Output directory. Default is current directory. Relative path must begin with './'",
                         default=DEF_DIR)
-    parser.add_argument("-a", "--args", help="Additional arguments, required by some tcl scripts.", default=[])
-    # parser.add_argument("-c", "--config", help="The location of the configuration file in ini format. "
-    #                                            "The default file name is {}, located in the "
-    #                                            "base directory where the program as run.".format(DEF_CFG_FILE),
-    #                     default=DEF_CFG_FILE, type=read_cfg)
+    parser.add_argument("-a", "--args", help="Additional arguments, required by some tcl scripts.", default=DEF_FREQ)
+    parser.add_argument("-k", "--keep",
+                        help="Flag to retain distance measurement file. "
+                             "Default is to delete if bound and retain for further analysis if unbound.",
+                        action='store_true', default=False)
+
     args = None
     try:
         args = parser.parse_args(argv)
         if not args.traj:
             raise InvalidDataError("Found no trajectory file to process. Specify a trajectory file as specified in "
                                    "the help documentation ('-h').")
-        elif not args.script:
-            raise InvalidDataError("Found no tcl script to apply. Specify a tcl file as specified in "
-                                   "the help documentation ('-h').")
-        for file in [args.top, args.traj, args.script]:
+
+        for file in [args.top, args.traj]:
             if not os.path.isfile(file):
                 raise IOError("Could not find specified file: {}".format(file))
 
@@ -75,12 +86,11 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    # cfg = args.config
-
-    # Read and execute VMD scripts
+    # Read and execute sugar_check script
     file_path = (args.outdir + '/' + args.name)
     try:
-        call_vmd(args.top, args.traj, args.script, file_path, args.args)
+        call_vmd(args.top, args.traj, CHECK_SUGAR, file_path, args.args)
+        read_output(file_path, args.keep)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
