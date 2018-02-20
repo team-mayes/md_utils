@@ -7,7 +7,7 @@ import sys
 from md_utils.call_vmd import call_vmd
 from md_utils.md_common import warning, GOOD_RET, InvalidDataError, INPUT_ERROR, IO_ERROR, INVALID_DATA
 
-CHECK_SUGAR = '/Users/xadams/PycharmProjects/md_utils/tests/test_data/check_sugar/sugar_check.tcl'
+CHECK_SUGAR = '/Users/xadams/PycharmProjects/md_utils/tests/test_data/call_vmd/sugar_check.tcl'
 DEF_FREQ = '100'
 DEF_TOP_FILE = '../step5_assembly.xplor_ext.psf'
 DEF_DIR = './'
