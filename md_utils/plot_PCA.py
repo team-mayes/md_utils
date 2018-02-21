@@ -115,6 +115,7 @@ def parse_cmdline(argv):
 def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, log_file=None, write=False):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
+        traj = []
         EG_list = []
         IG_list = []
         logging = 'eg'
@@ -123,7 +124,9 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
         # a sad sad double for-loop of sadness. I don't know any better!
         for row in data:
             s_data = row.split(sep=',')
-            if logging == 'eg':
+            if s_data[0][0] == '#':
+                traj.append(s_data[0].rstrip("\n"))
+            elif logging == 'eg':
                 for i in s_data:
                     EG_list.append(i)
                 logging = 'ig'
@@ -143,6 +146,7 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
 
         EG_distance = com_distance(t, eg_file)
         IG_distance = com_distance(t, ig_file)
+        del t
 
     if write:
         if out_dir is None:
@@ -152,6 +156,11 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
         csv_name = csv_dir + '/' + plot_name + '.csv'
         with open(csv_name, 'a') as csvfile:
             dist_writer = csv.writer(csvfile, delimiter=',')
+            csvfile.write("#")
+            print(traj)
+            print(''.join(traj))
+            csvfile.write(''.join(traj))
+            csvfile.write('\n')
             dist_writer.writerow(EG_distance)
             dist_writer.writerow(IG_distance)
     else:

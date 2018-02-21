@@ -109,6 +109,7 @@ class TestMain(unittest.TestCase):
     def testCombineData(self):
         test_input = ["-n", NAME, "-o", PCA_DIR, "-l", GOOD_APPEND_FILE, "-w"]
         try:
+            silent_remove(DIST_FILE)
             main(test_input)
             self.assertFalse(diff_lines(DIST_FILE, GOOD_COMBINED_FILE))
         finally:
