@@ -24,7 +24,7 @@ except ImportError:
 DEF_IG_FILE = 'IG_indices.txt'
 DEF_EG_FILE = 'EG_indices.txt'
 DEF_TRAJ = '*dcd'
-DEF_TOP = '../*psf'
+DEF_TOP = '../step5_assembly.xplor_ext.psf'
 DEF_NAME = 'PCA.png'
 
 plt.rcParams.update({'font.size': 12})
