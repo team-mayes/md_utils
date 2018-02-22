@@ -32,7 +32,7 @@ SEC_TIMESTEP = 'timestep'
 # For evb processing and output
 FILE_NAME = 'filename'
 TIMESTEP = 'timestep'
-RUN_PAT = re.compile(r"^TCL: Running.*")
+RUN_PAT = re.compile(r"^ETITLE:.*")
 ENERGY_PAT = re.compile(r"^ENERGY: .*")
 PERFORMANCE_PAT = re.compile(r"^TIMING: .*")
 
