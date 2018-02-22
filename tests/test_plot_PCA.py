@@ -90,24 +90,24 @@ class TestMain(unittest.TestCase):
 
     def testReadDistances(self):
         silent_remove(PNG_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-l", GOOD_DIST_FILE]
+        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_DIST_FILE]
         try:
             main(test_input)
-            os.path.isfile(PNG_FILE)
+            self.assertTrue(os.path.isfile(PNG_FILE))
         finally:
             silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
 
     def testReadAppend(self):
         silent_remove(PNG_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-l", GOOD_APPEND_FILE]
+        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_APPEND_FILE]
         try:
             main(test_input)
-            os.path.isfile(PNG_FILE)
+            self.assertTrue(os.path.isfile(PNG_FILE))
         finally:
             silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
 
     def testCombineData(self):
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-l", GOOD_APPEND_FILE, "-w"]
+        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_APPEND_FILE, "-w"]
         try:
             silent_remove(DIST_FILE)
             main(test_input)
@@ -115,9 +115,9 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
 
-            # This unit test is for designed exclusively for use on maitake to examine the actual plot
-            # def testPlotContents(self):
-            #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
-            # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, ]
-            #     main(test_input)
-            #     os.path.isfile(PNG_FILE)
+    # # This unit test is for designed exclusively for use on maitake to examine the actual plot
+    # def testPlotContents(self):
+    #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
+    # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, ]
+    #     main(test_input)
+    #     self.assertTrue(os.path.isfile(PNG_FILE))

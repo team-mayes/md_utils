@@ -9,7 +9,7 @@ from glob import glob
 import csv
 import sys
 import warnings
-from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
+from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, file_rows_to_list
 
 # This line allows for plotting on PSC Bridges
 plt.switch_backend('agg')
@@ -73,8 +73,9 @@ def parse_cmdline(argv):
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
     parser.add_argument("-t", "--traj",
-                        help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" are permitted',
+                        help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" are permitted but must be written as a string',
                         default=DEF_TRAJ)
+    parser.add_argument("-l", "--list", help="List of trajectory files to process. Use this option instead of glob if memory is a concern.", default=None)
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
     parser.add_argument("-e", "--egindices", help="File with the EG indices.",
@@ -84,7 +85,7 @@ def parse_cmdline(argv):
                         default=DEF_NAME)
     parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.",
                         default=None)
-    parser.add_argument("-l", "--log_file", help="Text file containing logged distances to plot.", default=None)
+    parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=None)
     parser.add_argument("-w", "--write_dist",
                         help="Flag to log distances as a csv file rather than generate plot. "
                              "Useful when dealing with large trajectories or limited memory.",
@@ -93,8 +94,19 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
+        args.traj_list = []
         # If a log file is read in, trajectory information is not required
-        if not args.log_file:
+        if args.file:
+            args.traj_list.append("None")
+        else:
+            if args.list:
+                args.traj_list += file_rows_to_list(args.list)
+            else:
+                args.traj_list.append(args.traj)
+            if len(args.traj_list) < 1:
+                raise InvalidDataError(
+                    "Found no traj file names to process. Specify one or more files as specified in "
+                    "the help documentation ('-h').")
             files = [args.top, args.egindices, args.igindices]
             for file in files:
                 if not os.path.isfile(file):
@@ -190,7 +202,8 @@ def main(argv=None):
         return ret
 
     try:
-        plot_trajectories(args.traj, args.top, args.egindices, args.igindices, args.name, args.outdir, args.log_file,
+        for file in args.traj_list:
+            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.outdir, args.file,
                           args.write_dist)
     except IOError as e:
         warning("Problems reading file:", e)
