@@ -75,10 +75,12 @@ def parse_cmdline(argv):
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
     parser.add_argument("-t", "--traj",
-                        help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" are permitted but must be written as a string',
+                        help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" '
+                             'are permitted but must be written as a string',
                         default=DEF_TRAJ)
     parser.add_argument("-l", "--list",
-                        help="List of trajectory files to process. Use this option instead of glob if memory is a concern.",
+                        help="List of trajectory files to process. Use this option instead of glob "
+                             "if memory is a concern.",
                         default=None)
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
@@ -210,7 +212,8 @@ def main(argv=None):
 
     try:
         for file in args.traj_list:
-            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.stride, args.outdir, args.file,
+            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.stride, args.outdir,
+                              args.file,
                               args.write_dist)
     except IOError as e:
         warning("Problems reading file:", e)

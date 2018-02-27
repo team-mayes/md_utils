@@ -50,11 +50,13 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("not find specified file" in output)
 
     def testNegativeStride(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-s", '-2']
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR,
+                      "-s", '-2']
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("must be > 1" in output)
+
 
 class TestMain(unittest.TestCase):
     def testWithInwardData(self):
@@ -86,7 +88,8 @@ class TestMain(unittest.TestCase):
 
     def testStride(self):
         silent_remove(DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w", "-s", "2"]
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w",
+                      "-s", "2"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(DIST_FILE, GOOD_STRIDE_FILE))
@@ -131,9 +134,9 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
 
-    # # This unit test is for designed exclusively for use on maitake to examine the actual plot
-    # def testPlotContents(self):
-    #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
-    # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, ]
-    #     main(test_input)
-    #     self.assertTrue(os.path.isfile(PNG_FILE))
+            # # This unit test is for designed exclusively for use on maitake to examine the actual plot
+            # def testPlotContents(self):
+            #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
+            # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, ]
+            #     main(test_input)
+            #     self.assertTrue(os.path.isfile(PNG_FILE))
