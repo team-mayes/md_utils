@@ -29,6 +29,7 @@ DIST_FILE = os.path.join(PCA_DIR, 'test.csv')
 GOOD_DIST_FILE = os.path.join(PCA_DIR, 'dist_good.csv')
 GOOD_APPEND_FILE = os.path.join(PCA_DIR, 'dist_append_good.csv')
 GOOD_COMBINED_FILE = os.path.join(PCA_DIR, 'dist_combined_good.csv')
+GOOD_STRIDE_FILE = os.path.join(PCA_DIR, 'dist_stride_good.csv')
 
 
 class TestMainFailWell(unittest.TestCase):
@@ -80,6 +81,15 @@ class TestMain(unittest.TestCase):
         try:
             main(test_input)
             self.assertFalse(diff_lines(DIST_FILE, GOOD_DIST_FILE))
+        finally:
+            silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+
+    def testStride(self):
+        silent_remove(DIST_FILE)
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w", "-s", "2"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(DIST_FILE, GOOD_STRIDE_FILE))
         finally:
             silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
 

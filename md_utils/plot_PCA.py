@@ -178,8 +178,6 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_di
         with open(csv_name, 'a') as csvfile:
             dist_writer = csv.writer(csvfile, delimiter=',')
             csvfile.write("#")
-            print(traj)
-            print(''.join(traj))
             csvfile.write(''.join(traj))
             csvfile.write('\n')
             dist_writer.writerow(EG_distance)
