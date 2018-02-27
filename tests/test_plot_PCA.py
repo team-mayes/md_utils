@@ -48,6 +48,12 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("not find specified file" in output)
 
+    def testNegativeStride(self):
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-s", '-2']
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("must be > 1" in output)
 
 class TestMain(unittest.TestCase):
     def testWithInwardData(self):

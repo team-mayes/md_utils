@@ -9,7 +9,8 @@ from glob import glob
 import csv
 import sys
 import warnings
-from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, file_rows_to_list
+from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
+    file_rows_to_list
 
 # This line allows for plotting on PSC Bridges
 plt.switch_backend('agg')
@@ -26,6 +27,7 @@ DEF_EG_FILE = 'EG_indices.txt'
 DEF_TRAJ = '*dcd'
 DEF_TOP = '../step5_assembly.xplor_ext.psf'
 DEF_NAME = 'PCA.png'
+DEF_STRIDE = 1
 
 plt.rcParams.update({'font.size': 12})
 
@@ -75,7 +77,9 @@ def parse_cmdline(argv):
     parser.add_argument("-t", "--traj",
                         help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" are permitted but must be written as a string',
                         default=DEF_TRAJ)
-    parser.add_argument("-l", "--list", help="List of trajectory files to process. Use this option instead of glob if memory is a concern.", default=None)
+    parser.add_argument("-l", "--list",
+                        help="List of trajectory files to process. Use this option instead of glob if memory is a concern.",
+                        default=None)
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
     parser.add_argument("-e", "--egindices", help="File with the EG indices.",
@@ -90,6 +94,9 @@ def parse_cmdline(argv):
                         help="Flag to log distances as a csv file rather than generate plot. "
                              "Useful when dealing with large trajectories or limited memory.",
                         action='store_true', default=False)
+    parser.add_argument("-s", "--stride",
+                        help="Frequency with which to read in frames from trajectory files. Default is {}.".format(
+                            DEF_STRIDE), type=int, default=DEF_STRIDE)
 
     args = None
     try:
@@ -111,6 +118,8 @@ def parse_cmdline(argv):
             for file in files:
                 if not os.path.isfile(file):
                     raise IOError("Could not find specified file: {}".format(file))
+        if args.stride < 1:
+            raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(args.stride))
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -124,7 +133,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, log_file=None, write=False):
+def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_dir=None, log_file=None, write=False):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -154,7 +163,7 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, out_dir=None, 
         # TODO: Restructure to more easily change to a different CV
         print("Reading data from trajectory: {}.".format(traj))
         trajfile = glob(traj)
-        t = md.load(trajfile, top=topfile)
+        t = md.load(trajfile, top=topfile, stride=stride)
 
         EG_distance = com_distance(t, eg_file)
         IG_distance = com_distance(t, ig_file)
@@ -203,8 +212,8 @@ def main(argv=None):
 
     try:
         for file in args.traj_list:
-            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.outdir, args.file,
-                          args.write_dist)
+            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.stride, args.outdir, args.file,
+                              args.write_dist)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
