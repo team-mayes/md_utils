@@ -26,7 +26,7 @@ DEF_IG_FILE = 'IG_indices.txt'
 DEF_EG_FILE = 'EG_indices.txt'
 DEF_TRAJ = '*dcd'
 DEF_TOP = '../step5_assembly.xplor_ext.psf'
-DEF_NAME = 'PCA.png'
+DEF_NAME = 'PCA'
 DEF_STRIDE = 1
 
 plt.rcParams.update({'font.size': 12})
