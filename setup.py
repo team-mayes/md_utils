@@ -37,7 +37,7 @@ setup(
                                       'align_on_col = md_utils.align_on_col:main',
                                       'calc_pka = md_utils.calc_pka:main',
                                       'calc_split_avg = md_utils.calc_split_avg:main',
-                                      'call_vmd = md_utils.check_sugar:main',
+                                      'call_vmd = md_utils.call_vmd:main',
                                       'check_sugar = md_utils.check_sugar:main',
                                       'col_stats = md_utils.col_stats:main',
                                       'comb_col = md_utils.comb_col:main',
