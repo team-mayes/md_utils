@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=Protx_dihed4
-#SBATCH -t 30:00:00
+#SBATCH -t 2:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
 #SBATCH --mail-type=ALL
