@@ -130,4 +130,4 @@ langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
 # run
-run                 500000;            # 1.0 ns
+run                 500000;            # 1 ns

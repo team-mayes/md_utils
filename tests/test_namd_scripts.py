@@ -60,7 +60,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testNegInteger(self):
-        test_input = ["-r", "-4", "-c", "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
+        test_input = ["-r", "-4", "-c", BASIC_CPU_TPL]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -83,7 +83,7 @@ class TestMainFailWell(unittest.TestCase):
 
     def testNoOutFileOther(self):
         # test error re config file
-        test_input = ["-t", 'other', '-c', "tests/test_data/fill_tpl/make_prod_cpu.tpl"]
+        test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -92,7 +92,7 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
-        test_input = ["-c", BASIC_CPU_TPL]
+        test_input = ['-c', BASIC_CPU_TPL]
         try:
             main(test_input)
             diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD)
