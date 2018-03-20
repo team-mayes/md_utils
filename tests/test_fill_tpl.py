@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-#logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
+logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 

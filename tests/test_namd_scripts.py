@@ -23,7 +23,7 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 TPL_TEST_DATA = os.path.join(DATA_DIR, 'fill_tpl')
 BASIC_CPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_cpu.tpl")
-BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu.ini")
+BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu_namd_scripts.ini")
 BASIC_CPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_cpu_good.ini")
 
 
@@ -92,9 +92,9 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testCPU(self):
-        test_input = ['-c', BASIC_CPU_TPL]
+        test_input = ['-c', BASIC_CPU_TPL, '-o', BASIC_CPU_RESULT]
         try:
             main(test_input)
             diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD)
         finally:
-            silent_remove(BASIC_CPU_RESULT)
+            silent_remove(BASIC_CPU_RESULT, disable=DISABLE_REMOVE)
