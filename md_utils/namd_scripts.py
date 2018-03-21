@@ -29,11 +29,11 @@ CPU = "cpu"
 GPU = "gpu"
 OTHER = 'other'
 TYPES = [CPU, GPU, OTHER]
-OUT_FILE = 'output_file_name'
+OUT_FILE = 'output_name'
 
-RUN = "run"
+RUN = "runtime"
 NAME = 'name'
-INPUT_NAME = 'input_name'
+INPUT_NAME = "input_name"
 FIRST = 'first'
 
 # Defaults
@@ -45,7 +45,7 @@ DEF_GPU_OUT_FILE = 'make_prod_gpu.ini'
 DEF_RUN = 1
 DEF_FIRST = 1
 DEF_NAME = 'test'
-DEF_INPUT_NAME = 1
+DEF_INPUT_NAME = 'input'
 
 
 def validate_args(args):
