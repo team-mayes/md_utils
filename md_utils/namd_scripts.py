@@ -49,6 +49,7 @@ DEF_NAME = 'test'
 DEF_INPUT_NAME = 'input'
 DEF_OUTPUT = 'output'
 
+
 def validate_args(args):
     """
     Check the expected arguments for valid input
@@ -114,12 +115,12 @@ def validate_args(args):
     cfg = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
     args.config = cfg
     # fill_tpl_ordered_dict.update
-        #
-        # val_ordered_dict = process_tpl_vals(config.items(section))
-        # if section == TPL_EQS_SEC:
-        #     # just keep the names, so we know special processing is required
-        #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
-        # proc[TPL_VALS].update(val_ordered_dict)
+    #
+    # val_ordered_dict = process_tpl_vals(config.items(section))
+    # if section == TPL_EQS_SEC:
+    #     # just keep the names, so we know special processing is required
+    #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
+    # proc[TPL_VALS].update(val_ordered_dict)
 
 
 def parse_cmdline(argv):
