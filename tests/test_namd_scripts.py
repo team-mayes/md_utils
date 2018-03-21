@@ -13,8 +13,8 @@ from md_utils.namd_scripts import main
 
 __author__ = 'hbmayes'
 
-# logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -26,6 +26,9 @@ BASIC_CPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_cpu.tpl")
 BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu_namd_scripts.ini")
 BASIC_CPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_cpu_good.ini")
 
+BASIC_GPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_gpu.tpl")
+BASIC_GPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_gpu_name_scripts.ini")
+BASIC_GPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_gpu_good.ini")
 
 
 # /home/cmayes/code/python/lab/md_utils/tests/test_data/fill_tpl/make_prod_gpu_inp.ini
@@ -98,3 +101,12 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD))
         finally:
             silent_remove(BASIC_CPU_RESULT, disable=DISABLE_REMOVE)
+
+    def testGPU(self):
+        test_input = ['-c', BASIC_GPU_TPL, '-o', BASIC_GPU_RESULT]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(BASIC_GPU_RESULT, BASIC_GPU_RESULT_GOOD))
+        finally:
+            silent_remove(BASIC_GPU_RESULT, disable=DISABLE_REMOVE)
+
