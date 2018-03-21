@@ -13,8 +13,8 @@ from md_utils.namd_scripts import main
 
 __author__ = 'hbmayes'
 
-logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -64,7 +64,7 @@ class TestMainFailWell(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("integer value for 'run' must be > 1" in output)
+            self.assertTrue("integer value for 'runtime' must be > 1" in output)
 
     def testDisallowedType(self):
         test_input = ["-t", "ghost", ]
@@ -95,6 +95,6 @@ class TestMain(unittest.TestCase):
         test_input = ['-c', BASIC_CPU_TPL, '-o', BASIC_CPU_RESULT]
         try:
             main(test_input)
-            diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD)
+            self.assertFalse(diff_lines(BASIC_CPU_RESULT, BASIC_CPU_RESULT_GOOD))
         finally:
             silent_remove(BASIC_CPU_RESULT, disable=DISABLE_REMOVE)

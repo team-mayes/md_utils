@@ -29,12 +29,13 @@ CPU = "cpu"
 GPU = "gpu"
 OTHER = 'other'
 TYPES = [CPU, GPU, OTHER]
-OUT_FILE = 'output_name'
+OUT_FILE = 'file_out_name'
 
 RUN = "runtime"
 NAME = 'name'
-INPUT_NAME = "input_name"
+INPUT_NAME = 'input_name'
 FIRST = 'first'
+OUTPUT = 'output_name'
 
 # Defaults
 DEF_TYPE = CPU
@@ -46,7 +47,7 @@ DEF_RUN = 1
 DEF_FIRST = 1
 DEF_NAME = 'test'
 DEF_INPUT_NAME = 'input'
-
+DEF_OUTPUT = 'output'
 
 def validate_args(args):
     """
@@ -86,6 +87,8 @@ def validate_args(args):
         tpl_vals[variable_name] = req_pos_int
 
     tpl_vals[NAME] = args.name
+    tpl_vals[INPUT_NAME] = args.input_name
+    tpl_vals[OUTPUT] = args.output_name
 
     if args.file_out_name:
         file_out_name = args.file_out_name
@@ -169,6 +172,7 @@ def parse_cmdline(argv):
                                                       "the job type is {}.'".format(DEF_CPU_OUT_FILE, CPU,
                                                                                     DEF_GPU_OUT_FILE, GPU, OTHER),
                         default=None)
+    parser.add_argument("--output_name", help="Name for the NAMD output", default=DEF_OUTPUT)
     parser.add_argument("-r", "--run", help="Value for created template: run length (integer; "
                                             "default is {}.".format(DEF_RUN),
                         type=int, default=DEF_RUN)
@@ -201,6 +205,7 @@ def main(argv=None):
     tpl_name = args.config_tpl
     filled_tpl_name = args.file_out_name
     try:
+        print(cfg)
         fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)

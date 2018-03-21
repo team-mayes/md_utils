@@ -9,7 +9,7 @@ first = {first}
 structure = test.psf
 coordinates = test.pdb
 input_name = {input_name}
-output_name = {{output_name}}
+output_name = {output_name}
 [tpl_equations]
 walltime = int({runtime}*15)
 run = {{runtime}}*500000
