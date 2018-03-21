@@ -5,8 +5,8 @@ out_dir = tests/test_data/fill_tpl/
 [tpl_vals]
 job_name = {name}
 runtime = {runtime}
-structure = test.psf
-coordinates = test.pdb
+structure = {structure}
+coordinates = {coordinates}
 input_name = {input_name}
 output_name = {output_name}
 [tpl_equations]

@@ -31,11 +31,13 @@ OTHER = 'other'
 TYPES = [CPU, GPU, OTHER]
 OUT_FILE = 'file_out_name'
 
-RUN = "runtime"
-NAME = 'name'
+RUN = 'runtime'
+JOB_NAME = 'name'
 INPUT_NAME = 'input_name'
 FIRST = 'first'
 OUTPUT = 'output_name'
+STRUCTURE = 'structure'
+COORDINATES = 'coordinates'
 
 # Defaults
 DEF_TYPE = CPU
@@ -45,9 +47,11 @@ DEF_CPU_OUT_FILE = 'make_prod_cpu.ini'
 DEF_GPU_OUT_FILE = 'make_prod_gpu.ini'
 DEF_RUN = 1
 DEF_FIRST = 1
-DEF_NAME = 'test'
+DEF_JOB_NAME = 'test'
 DEF_INPUT_NAME = 'input'
 DEF_OUTPUT = 'output'
+DEF_STRUCTURE = 'test.psf'
+DEF_COORDINATES = 'test.pdb'
 
 
 def validate_args(args):
@@ -87,9 +91,11 @@ def validate_args(args):
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(variable_name))
         tpl_vals[variable_name] = req_pos_int
 
-    tpl_vals[NAME] = args.name
+    tpl_vals[JOB_NAME] = args.job_name
     tpl_vals[INPUT_NAME] = args.input_name
     tpl_vals[OUTPUT] = args.output_name
+    tpl_vals[STRUCTURE] = args.structure
+    tpl_vals[COORDINATES] = args.coordinates
 
     if args.file_out_name:
         file_out_name = args.file_out_name
@@ -161,9 +167,9 @@ def parse_cmdline(argv):
                                                    "Default is {}.".format(DEF_INPUT_NAME),
                         default=DEF_INPUT_NAME)
 
-    parser.add_argument("-n", "--name", help="Value for created template: name. "
-                                             "Default is {}.".format(DEF_NAME),
-                        default=DEF_NAME)
+    parser.add_argument("-n", "--job_name", help="Value for created template: name. "
+                                             "Default is {}.".format(DEF_JOB_NAME),
+                        default=DEF_JOB_NAME)
 
     parser.add_argument("-o", "--file_out_name", help="The name of the configuration file to be created. "
                                                       "By default, the program will create a file named {} "
@@ -177,6 +183,13 @@ def parse_cmdline(argv):
     parser.add_argument("-r", "--run", help="Value for created template: run length (integer; "
                                             "default is {}.".format(DEF_RUN),
                         type=int, default=DEF_RUN)
+
+    parser.add_argument("-s", "--structure", help="Name of the structure file; " 
+                                                  "default is {}.".format(DEF_STRUCTURE),
+                        default=DEF_STRUCTURE)
+    parser.add_argument("-co", "--coordinates", help="Name of the coordinates file; "
+                                                     "default is {}.".format(DEF_COORDINATES),
+                        default=DEF_COORDINATES)
 
     args = None
     try:
