@@ -9,7 +9,7 @@ from md_utils.fill_tpl import main, FILLED_TPL_FNAME
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 import logging
 
-#logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
+# logging.basicConfig(level=logging.DEBUG) # uncomment this for debug mode
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -249,7 +249,6 @@ class TestMain(unittest.TestCase):
         finally:
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file, disable=DISABLE_REMOVE)
-
 
     def testMakeGPUInpJob(self):
         # Test processing two tpl files with one input; bit redundant with above, but not worried about it
