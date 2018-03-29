@@ -188,8 +188,8 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_di
         ax = plt.axes()
         ax.set_xlim(7.5, 15)
         ax.set_ylim(7, 17)
-        ax.set_xlabel("EG Distance (A)")
-        ax.set_ylabel("IG Distance (A)")
+        ax.set_xlabel("EG Distance ($\AA$)")
+        ax.set_ylabel("IG Distance ($\AA$)")
 
         # Suppress the error associated with a larger display window than is sampled
         with warnings.catch_warnings():
