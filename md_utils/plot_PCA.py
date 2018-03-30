@@ -177,6 +177,10 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_di
         else:
             csv_dir = out_dir
         csv_name = csv_dir + '/' + plot_name + '.csv'
+        if os.path.isfile(csv_name):
+            print("Appended file: ", csv_name)
+        else:
+            print("Wrote file: ", csv_name)
         with open(csv_name, 'a') as csvfile:
             dist_writer = csv.writer(csvfile, delimiter=',')
             csvfile.write("#")
