@@ -142,7 +142,7 @@ def process_log(log_file, dihedral, total, performance, step):
                     result_dict[TIMESTEP] = float(s_line[5])
                     # result_list.append(dict(result_dict))
                 elif ETOT_PAT.match(line):
-                    print(s_line)
+                    s_line = line.split()
                     result_dict[E_TOTAL] = float(s_line[2])
                     result_list.append(dict(result_dict))
 

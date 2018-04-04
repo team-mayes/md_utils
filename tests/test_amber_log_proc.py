@@ -47,75 +47,75 @@ LOG_PATH = os.path.join(NAMD_LOG_DIR, '03_prod.out')
 
 # Tests
 
-class TestMainFailWell(unittest.TestCase):
-    def testHelp(self):
-        test_input = ['-h']
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertFalse(output)
-        with capture_stdout(main, test_input) as output:
-            self.assertTrue("optional arguments" in output)
-
-    def testNoSuchFile(self):
-        test_input = ["-f", "ghost", ]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Could not find specified log file" in output)
-
-    def testNoSpecifiedFile(self):
-        test_input = []
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no log file names to process" in output)
-
-    # def testNoFilesInList(self):
-    #     test_input = ["-f", EMPTY_LOG_LIST]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("Found no lammps log data to process from" in output)
-
-    def testNoSuchFileInList(self):
-        test_input = ["-l", GHOST_LOG_LIST, "-p"]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Problems reading file:" in output)
-
-    def testNoOptionSelected(self):
-        test_input = ["-f", LOG_PATH]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Did not choose to" in output)
-
-    def testBothOptionsSelected(self):
-        test_input = ["-f", LOG_PATH, "-d", "-p"]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Please select only one" in output)
+# class TestMainFailWell(unittest.TestCase):
+#     def testHelp(self):
+#         test_input = ['-h']
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertFalse(output)
+#         with capture_stdout(main, test_input) as output:
+#             self.assertTrue("optional arguments" in output)
+#
+#     def testNoSuchFile(self):
+#         test_input = ["-f", "ghost", ]
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Could not find specified log file" in output)
+#
+#     def testNoSpecifiedFile(self):
+#         test_input = []
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Found no log file names to process" in output)
+#
+#     # def testNoFilesInList(self):
+#     #     test_input = ["-f", EMPTY_LOG_LIST]
+#     #     if logger.isEnabledFor(logging.DEBUG):
+#     #         main(test_input)
+#     #     with capture_stderr(main, test_input) as output:
+#     #         self.assertTrue("Found no lammps log data to process from" in output)
+#
+#     def testNoSuchFileInList(self):
+#         test_input = ["-l", GHOST_LOG_LIST, "-p"]
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Problems reading file:" in output)
+#
+#     def testNoOptionSelected(self):
+#         test_input = ["-f", LOG_PATH]
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Did not choose to" in output)
+#
+#     def testBothOptionsSelected(self):
+#         test_input = ["-f", LOG_PATH, "-d", "-p"]
+#         if logger.isEnabledFor(logging.DEBUG):
+#             main(test_input)
+#         with capture_stderr(main, test_input) as output:
+#             self.assertTrue("Please select only one" in output)
 
 
 class TestMain(unittest.TestCase):
-    def testDihedralLogFile(self):
-        test_input = ["-f", LOG_PATH, "-d"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_DIHEDRAL, GOOD_LOG_OUT_DIHEDRAL))
-        finally:
-            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
-
-    def testPerformanceLogFile(self):
-        test_input = ["-f", LOG_PATH, "-p"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
-        finally:
-            silent_remove(LOG_OUT_PERFORMANCE, disable=DISABLE_REMOVE)
+    # def testDihedralLogFile(self):
+    #     test_input = ["-f", LOG_PATH, "-d"]
+    #     try:
+    #         main(test_input)
+    #         self.assertFalse(diff_lines(LOG_OUT_DIHEDRAL, GOOD_LOG_OUT_DIHEDRAL))
+    #     finally:
+    #         silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
+    #
+    # def testPerformanceLogFile(self):
+    #     test_input = ["-f", LOG_PATH, "-p"]
+    #     try:
+    #         main(test_input)
+    #         self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
+    #     finally:
+    #         silent_remove(LOG_OUT_PERFORMANCE, disable=DISABLE_REMOVE)
 
     def testTotalLogFile(self):
         test_input = ["-f", LOG_PATH, "-t"]
@@ -126,42 +126,42 @@ class TestMain(unittest.TestCase):
         # finally:
         #     silent_remove(LOG_OUT_TOTAL, disable=DISABLE_REMOVE)
 
-    def testBothLogFile(self):
-        test_input = ["-f", LOG_PATH, "-d", "-t"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_ENERGY, GOOD_LOG_OUT_ENERGY))
-        finally:
-            silent_remove(LOG_OUT_ENERGY, disable=DISABLE_REMOVE)
-
-    def testStepLogFile(self):
-
-        test_input = ["-f", LOG_PATH, "-t", "-s", "5002000"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
-        finally:
-            silent_remove(LOG_OUT_STEP, disable=DISABLE_REMOVE)
-
-            # def testLogList(self):
-            #     try:
-            #         main(["-l", LOG_LIST])
-            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-            #     finally:
-            #         silent_remove(LOG_LIST_OUT)
-
-    def testStats(self):
-        test_input = ["-f", LOG_PATH, "-d", "--stats"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(STATS_OUT, GOOD_STATS))
-        finally:
-            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
-            silent_remove(STATS_OUT, disable=DISABLE_REMOVE)
-
-            # def testLogList(self):
-            #     try:
-            #         main(["-l", LOG_LIST])
-            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-            #     finally:
-            #         silent_remove(LOG_LIST_OUT)
+    # def testBothLogFile(self):
+    #     test_input = ["-f", LOG_PATH, "-d", "-t"]
+    #     try:
+    #         main(test_input)
+    #         self.assertFalse(diff_lines(LOG_OUT_ENERGY, GOOD_LOG_OUT_ENERGY))
+    #     finally:
+    #         silent_remove(LOG_OUT_ENERGY, disable=DISABLE_REMOVE)
+    #
+    # def testStepLogFile(self):
+    #
+    #     test_input = ["-f", LOG_PATH, "-t", "-s", "5002000"]
+    #     try:
+    #         main(test_input)
+    #         self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
+    #     finally:
+    #         silent_remove(LOG_OUT_STEP, disable=DISABLE_REMOVE)
+    #
+    #         # def testLogList(self):
+    #         #     try:
+    #         #         main(["-l", LOG_LIST])
+    #         #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
+    #         #     finally:
+    #         #         silent_remove(LOG_LIST_OUT)
+    #
+    # def testStats(self):
+    #     test_input = ["-f", LOG_PATH, "-d", "--stats"]
+    #     try:
+    #         main(test_input)
+    #         self.assertFalse(diff_lines(STATS_OUT, GOOD_STATS))
+    #     finally:
+    #         silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
+    #         silent_remove(STATS_OUT, disable=DISABLE_REMOVE)
+    #
+    #         # def testLogList(self):
+    #         #     try:
+    #         #         main(["-l", LOG_LIST])
+    #         #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
+    #         #     finally:
+    #         #         silent_remove(LOG_LIST_OUT)
