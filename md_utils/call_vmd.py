@@ -12,7 +12,7 @@ DEF_DIR = './'
 # DEF_CFG_FILE = 'vmd.ini'
 
 def call_vmd(psf, pdb, script, name, args):
-    subprocess.call(["vmd", "-e", script, "-dispdev", "text", psf, pdb, "-args", name, "".join(args)])
+    subprocess.call(["vmd", psf, pdb, "-dispdev", "text", "-e", script, "-args", name, "".join(args)])
 
 
 def call_catdcd(traj, number):

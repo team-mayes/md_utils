@@ -11,8 +11,6 @@ DEF_CHECK_SUGAR = '~/md_utils/tests/test_data/call_vmd/sugar_check.tcl'
 DEF_FREQ = '100'
 DEF_TOP_FILE = '../step5_assembly.xplor_ext.psf'
 DEF_DIR = './'
-DEF_NAME = 'check.txt'
-
 
 def read_output(dist_file, keep):
     bound = True
@@ -45,7 +43,7 @@ def parse_cmdline(argv):
     parser.add_argument("-t", "--traj", help="Trajectory file for analysis.")
     parser.add_argument("-p", "--top", help="Topology file for analysis.The default is {}.".format(DEF_TOP_FILE),
                         default=DEF_TOP_FILE)
-    parser.add_argument("-n", "--name", help="Name of output file. Default is {}.".format(DEF_NAME), default=DEF_NAME)
+    parser.add_argument("-n", "--name", help="Name of output file. Default is the base filename.", default=None)
     parser.add_argument("-o", "--outdir",
                         help="Output directory. Default is current directory. Relative path must begin with './'",
                         default=DEF_DIR)
@@ -88,7 +86,10 @@ def main(argv=None):
         return ret
 
     # Read and execute sugar_check script
-    file_path = (args.outdir + '/' + args.name)
+    if args.name:
+        file_path = (args.outdir + '/' + args.name)
+    else:
+        file_path = (args.outdir + '/' + os.path.splitext(os.path.basename(args.traj))[0] + '.txt')
     try:
         call_vmd(args.top, args.traj, args.script, file_path, args.args)
         read_output(file_path, args.keep)
