@@ -34,7 +34,7 @@ plt.rcParams.update({'font.size': 12})
 
 
 def save_figure(name, out_dir=None):
-    # change these if wanted
+    # change these if desired
     if out_dir is None:
         fig_dir = './'
     else:
@@ -44,20 +44,14 @@ def save_figure(name, out_dir=None):
 
 def com_distance(traj, indexfile):
     # this function accepts a trajectory and a file with two rows of
-    # 0 indexed indices to compute the center of mass for
+    # 0 indexed indices to compute the center of mass for 2 groups
     with open(indexfile, newline='') as file:
         rows = csv.reader(file, delimiter=' ', quotechar='|')
         ind_list = []
         for row in rows:
             ind_list.append(row)
-    # print(ind_list,ind_list[0],ind_list[1])
-    # indices = np.array(ind_list, int)
-    # fronthalf = indices[0, :]
-    # backhalf = indices[1, :]
-    index1=np.array(ind_list[0], int)
-    index2=np.array(ind_list[1], int)
-    fronthalf = index1
-    backhalf = index2
+    fronthalf = np.array(ind_list[0], int)
+    backhalf = np.array(ind_list[1], int)
     traj1 = traj.atom_slice(fronthalf)
     traj2 = traj.atom_slice(backhalf)
     com1 = md.compute_center_of_mass(traj1)
