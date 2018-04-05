@@ -24,6 +24,7 @@ except ImportError:
 
 DEF_IG_FILE = 'IG_indices.txt'
 DEF_EG_FILE = 'EG_indices.txt'
+DEF_COM_FILE = 'sugar_protein_indices.txt'
 DEF_TRAJ = '*dcd'
 DEF_TOP = '../step5_assembly.xplor_ext.psf'
 DEF_NAME = 'PCA'
@@ -49,9 +50,14 @@ def com_distance(traj, indexfile):
         ind_list = []
         for row in rows:
             ind_list.append(row)
-    indices = np.array(ind_list, int)
-    fronthalf = indices[0, :]
-    backhalf = indices[1, :]
+    # print(ind_list,ind_list[0],ind_list[1])
+    # indices = np.array(ind_list, int)
+    # fronthalf = indices[0, :]
+    # backhalf = indices[1, :]
+    index1=np.array(ind_list[0], int)
+    index2=np.array(ind_list[1], int)
+    fronthalf = index1
+    backhalf = index2
     traj1 = traj.atom_slice(fronthalf)
     traj2 = traj.atom_slice(backhalf)
     com1 = md.compute_center_of_mass(traj1)
@@ -84,9 +90,7 @@ def parse_cmdline(argv):
                         default=None)
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
-    parser.add_argument("-e", "--egindices", help="File with the EG indices.",
-                        default=DEF_EG_FILE)
-    parser.add_argument("-i", "--igindices", help="File with the IG indices.", default=DEF_IG_FILE)
+    parser.add_argument("-i", "--indices", help="Separate files with the EG and IG indices.", default=None, nargs='+')
     parser.add_argument("-n", "--name", help="Name for the saved plot. Default name is {}".format(DEF_NAME),
                         default=DEF_NAME)
     parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.",
@@ -99,11 +103,14 @@ def parse_cmdline(argv):
     parser.add_argument("-s", "--stride",
                         help="Frequency with which to read in frames from trajectory files. Default is {}.".format(
                             DEF_STRIDE), type=int, default=DEF_STRIDE)
+    parser.add_argument("-c", "--com", help="Flag to switch to a 1D CoM plot instead of a 2D PCA plot.",
+                        action='store_true', default=False)
 
     args = None
     try:
         args = parser.parse_args(argv)
         args.traj_list = []
+        args.index_list = []
         # If a log file is read in, trajectory information is not required
         if args.file:
             args.traj_list.append("None")
@@ -116,10 +123,21 @@ def parse_cmdline(argv):
                 raise InvalidDataError(
                     "Found no traj file names to process. Specify one or more files as specified in "
                     "the help documentation ('-h').")
-            files = [args.top, args.egindices, args.igindices]
-            for file in files:
-                if not os.path.isfile(file):
-                    raise IOError("Could not find specified file: {}".format(file))
+            if not os.path.isfile(args.top):
+                raise IOError("Could not find specified file: {}".format(args.top))
+            # Process index information
+            if not args.indices and not args.com:
+                args.index_list.append(DEF_EG_FILE)
+                args.index_list.append(DEF_IG_FILE)
+            if not args.indices and args.com:
+                args.index_list.append(DEF_COM_FILE)
+            else:
+                for index in args.indices:
+                    args.index_list.append(index)
+            for index in args.index_list:
+                if not os.path.isfile(index):
+                    raise IOError("Could not find specified index file: {}".format(index))
+        # Check for stride error
         if args.stride < 1:
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(args.stride))
     except IOError as e:
@@ -135,31 +153,46 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_dir=None, log_file=None, write=False):
+def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
-        EG_list = []
-        IG_list = []
-        logging = 'eg'
-        log = open(log_file)
-        data = log.readlines()
-        # a sad sad double for-loop of sadness. I don't know any better!
-        for row in data:
-            s_data = row.split(sep=',')
-            if s_data[0][0] == '#':
-                traj.append(s_data[0].rstrip("\n"))
-            elif logging == 'eg':
-                for i in s_data:
-                    EG_list.append(i)
-                logging = 'ig'
-            else:
-                for i in s_data:
-                    IG_list.append(i)
-                logging = 'eg'
-        log.close()
-        EG_distance = np.array(EG_list, float)
-        IG_distance = np.array(IG_list, float)
+        if com:
+            COM_list = []
+            log = open(log_file)
+            data = log.readlines()
+            # a sad sad double for-loop of sadness. I don't know any better!
+            for row in data:
+                s_data = row.split(sep=',')
+                if s_data[0][0] == '#':
+                    traj.append(s_data[0].rstrip("\n"))
+                else:
+                    for i in s_data:
+                        COM_list.append(i)
+            log.close()
+            COM_distance = np.array(COM_list, float)
+        else:
+            EG_list = []
+            IG_list = []
+            logging = 'eg'
+            log = open(log_file)
+            data = log.readlines()
+            # a sad sad double for-loop of sadness. I don't know any better!
+            for row in data:
+                s_data = row.split(sep=',')
+                if s_data[0][0] == '#':
+                    traj.append(s_data[0].rstrip("\n"))
+                elif logging == 'eg':
+                    for i in s_data:
+                        EG_list.append(i)
+                    logging = 'ig'
+                else:
+                    for i in s_data:
+                        IG_list.append(i)
+                    logging = 'eg'
+            log.close()
+            EG_distance = np.array(EG_list, float)
+            IG_distance = np.array(IG_list, float)
 
     else:
         # TODO: Restructure to more easily change to a different CV
@@ -167,8 +200,14 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_di
         trajfile = glob(traj)
         t = md.load(trajfile, top=topfile, stride=stride)
 
-        EG_distance = com_distance(t, eg_file)
-        IG_distance = com_distance(t, ig_file)
+        if com:
+            COM_distance = com_distance(t, indices[0])
+        else:
+            # TODO: Add some resiliency to the eg/ig file determination
+            eg_file = indices[0]
+            ig_file = indices[1]
+            EG_distance = com_distance(t, eg_file)
+            IG_distance = com_distance(t, ig_file)
         del t
 
     if write:
@@ -186,22 +225,31 @@ def plot_trajectories(traj, topfile, eg_file, ig_file, plot_name, stride, out_di
             csvfile.write("#")
             csvfile.write(''.join(traj))
             csvfile.write('\n')
-            dist_writer.writerow(EG_distance)
-            dist_writer.writerow(IG_distance)
+            if com:
+                dist_writer.writerow(COM_distance)
+            else:
+                dist_writer.writerow(EG_distance)
+                dist_writer.writerow(IG_distance)
     else:
         ax = plt.axes()
-        ax.set_xlim(7.5, 15)
-        ax.set_ylim(7, 17)
-        ax.set_xlabel("EG Distance ($\AA$)")
-        ax.set_ylabel("IG Distance ($\AA$)")
+        if com:
+            xlabel = "Frame"
+            ylabel = "CoM Distance ($\AA$)"
+            plt.plot(COM_distance)
+        else:
+            ax.set_xlim(7.5, 15)
+            ax.set_ylim(7, 17)
+            xlabel = "EG Distance ($\AA$)"
+            ylabel = "IG Distance ($\AA$)"
 
-        # Suppress the error associated with a larger display window than is sampled
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter",
-                                  cbar_label=None,
-                                  cbar=False)
-
+            # Suppress the error associated with a larger display window than is sampled
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter",
+                                      cbar_label=None,
+                                      cbar=False)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         save_figure(plot_name, out_dir)
         print("Wrote file: {}".format(plot_name + '.png'))
         plt.close("all")
@@ -216,9 +264,8 @@ def main(argv=None):
 
     try:
         for file in args.traj_list:
-            plot_trajectories(file, args.top, args.egindices, args.igindices, args.name, args.stride, args.outdir,
-                              args.file,
-                              args.write_dist)
+            plot_trajectories(file, args.top, args.index_list, args.name, args.stride, args.outdir,
+                              args.file, args.write_dist, args.com)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

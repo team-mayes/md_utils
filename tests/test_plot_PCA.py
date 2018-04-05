@@ -11,7 +11,7 @@ from md_utils.plot_PCA import main
 
 __author__ = 'adams'
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -22,6 +22,7 @@ TRAJ_FILE = os.path.join(PCA_DIR, 'short.dcd')
 TOP_FILE = os.path.join(PCA_DIR, 'step5_assembly.xplor_ext.psf')
 IG_FILE = os.path.join(PCA_DIR, 'IG_indices.txt')
 EG_FILE = os.path.join(PCA_DIR, 'EG_indices.txt')
+COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
 NAME = 'test'
 PNG_FILE = os.path.join(PCA_DIR, 'test.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
@@ -50,7 +51,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("not find specified file" in output)
 
     def testNegativeStride(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR,
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR,
                       "-s", '-2']
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
@@ -59,9 +60,9 @@ class TestMainFailWell(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
-    def testWithInwardData(self):
+    def testWithProtxData(self):
         silent_remove(PNG_FILE)
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR]
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR]
         try:
             main(test_input)
             os.path.isfile(PNG_FILE)
@@ -70,7 +71,7 @@ class TestMain(unittest.TestCase):
 
     def testGlob(self):
         silent_remove(PNG_FILE)
-        test_input = ["-t", TRAJ_GLOB, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR]
+        test_input = ["-t", TRAJ_GLOB, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR]
         try:
             main(test_input)
             os.path.isfile(PNG_FILE)
@@ -79,7 +80,7 @@ class TestMain(unittest.TestCase):
 
     def testWriteDistances(self):
         silent_remove(DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(DIST_FILE, GOOD_DIST_FILE))
@@ -88,7 +89,7 @@ class TestMain(unittest.TestCase):
 
     def testStride(self):
         silent_remove(DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w",
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w",
                       "-s", "2"]
         try:
             main(test_input)
@@ -98,7 +99,7 @@ class TestMain(unittest.TestCase):
 
     def testAppendDistances(self):
         silent_remove(DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
         try:
             # The append happens in place, so the base file must first be generated
             main(test_input)
@@ -133,6 +134,13 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(DIST_FILE, GOOD_COMBINED_FILE))
         finally:
             silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+
+    def testCoMPlot(self):
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "-o", PCA_DIR, "-c"]
+        try:
+            main(test_input)
+        finally:
+            silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
 
             # # This unit test is for designed exclusively for use on maitake to examine the actual plot
             # def testPlotContents(self):
