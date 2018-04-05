@@ -233,6 +233,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
     else:
         ax = plt.axes()
         if com:
+            ax.set_ylim(0, 20)
             xlabel = "Frame"
             ylabel = "CoM Distance ($\AA$)"
             plt.plot(COM_distance)
