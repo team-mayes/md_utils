@@ -11,13 +11,14 @@ DEF_CHECK_SUGAR = '~/md_utils/tests/test_data/call_vmd/sugar_check.tcl'
 DEF_FREQ = '100'
 DEF_TOP_FILE = '../step5_assembly.xplor_ext.psf'
 DEF_DIR = './'
+BOUND_LIMIT = 10
 
 def read_output(dist_file, keep):
     bound = True
     with open(dist_file, newline='') as file:
         rows = csv.reader(file)
         for row in rows:
-            if float(row[0]) > 20:
+            if float(row[0]) > BOUND_LIMIT:
                 bound = False
                 keep = True
 
