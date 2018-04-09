@@ -121,11 +121,10 @@ def parse_cmdline(argv):
             if not os.path.isfile(args.top):
                 raise IOError("Could not find specified file: {}".format(args.top))
             # Process index information
-            if args.indices==None and not args.com:
-                print("Adding default 2D PCA index files")
+            if args.indices == None and not args.com:
                 args.index_list.append(DEF_EG_FILE)
                 args.index_list.append(DEF_IG_FILE)
-            elif args.indices==None and args.com:
+            elif args.indices == None and args.com:
                 args.index_list.append(DEF_COM_FILE)
             else:
                 for index in args.indices:
@@ -229,22 +228,19 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
     else:
         figure, ax = plt.subplots()
         if com:
-            # ax.set_ylim(0, 20)
-            # dummy = np.ones([COM_distance.size], float)
-            dummy = np.linspace(min(COM_distance),max(COM_distance),COM_distance.size)
+            ax.set_ylim(0, 20)
+            dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
             density = gaussian_kde(COM_distance)
             density.covariance_factor = lambda: .25
             density._compute_covariance()
             ydummy = density(dummy)
             xlabel = "Timestep"
             ylabel = "CoM Distance ($\AA$)"
-            # mplt.plot_free_energy(COM_distance, dummy, ax=ax, kT=2.479, cmap="winter",
-            #                       cbar_label=None,
-            #                       cbar=False)
             plt.plot(COM_distance)
-            # plt.plot(dummy-dummy[0], COM_distance)
             ax2 = ax.twiny()
-            ax2.plot(ydummy,dummy,antialiased=True,linewidth=2)
+            ax.set_xlim(0)
+            ax2.set_xlim(0, 1)
+            ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
             ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
             # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
         else:
