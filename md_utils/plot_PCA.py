@@ -9,6 +9,7 @@ from glob import glob
 import csv
 import sys
 import warnings
+from scipy.stats import gaussian_kde
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
 
@@ -120,10 +121,11 @@ def parse_cmdline(argv):
             if not os.path.isfile(args.top):
                 raise IOError("Could not find specified file: {}".format(args.top))
             # Process index information
-            if not args.indices and not args.com:
+            if args.indices==None and not args.com:
+                print("Adding default 2D PCA index files")
                 args.index_list.append(DEF_EG_FILE)
                 args.index_list.append(DEF_IG_FILE)
-            if not args.indices and args.com:
+            elif args.indices==None and args.com:
                 args.index_list.append(DEF_COM_FILE)
             else:
                 for index in args.indices:
@@ -225,12 +227,26 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 dist_writer.writerow(EG_distance)
                 dist_writer.writerow(IG_distance)
     else:
-        ax = plt.axes()
+        figure, ax = plt.subplots()
         if com:
-            ax.set_ylim(0, 20)
-            xlabel = "Frame"
+            # ax.set_ylim(0, 20)
+            # dummy = np.ones([COM_distance.size], float)
+            dummy = np.linspace(min(COM_distance),max(COM_distance),COM_distance.size)
+            density = gaussian_kde(COM_distance)
+            density.covariance_factor = lambda: .25
+            density._compute_covariance()
+            ydummy = density(dummy)
+            xlabel = "Timestep"
             ylabel = "CoM Distance ($\AA$)"
+            # mplt.plot_free_energy(COM_distance, dummy, ax=ax, kT=2.479, cmap="winter",
+            #                       cbar_label=None,
+            #                       cbar=False)
             plt.plot(COM_distance)
+            # plt.plot(dummy-dummy[0], COM_distance)
+            ax2 = ax.twiny()
+            ax2.plot(ydummy,dummy,antialiased=True,linewidth=2)
+            ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
+            # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
         else:
             ax.set_xlim(7.5, 15)
             ax.set_ylim(7, 17)
