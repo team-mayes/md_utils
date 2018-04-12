@@ -208,7 +208,10 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             csv_dir = './'
         else:
             csv_dir = out_dir
-        csv_name = csv_dir + '/' + plot_name + '.csv'
+        if com:
+            csv_name = csv_dir + '/' + plot_name + '_com' + '.csv'
+        else:
+            csv_name = csv_dir + '/' + plot_name + '_2D', '.csv'
         if os.path.isfile(csv_name):
             print("Appended file: ", csv_name)
         else:
@@ -256,7 +259,7 @@ def main(argv=None):
         if not args.write_dist:
             figure, ax = plt.subplots()
             if args.com:
-                ax.set_ylim(0, 20)
+                ax.set_ylim(0, 10)
                 ax2 = ax.twiny()
 
                 ax2.set_xlim(0, 1)
