@@ -23,6 +23,8 @@ TOP_FILE = os.path.join(PCA_DIR, 'step5_assembly.xplor_ext.psf')
 IG_FILE = os.path.join(PCA_DIR, 'IG_indices.txt')
 EG_FILE = os.path.join(PCA_DIR, 'EG_indices.txt')
 COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
+PROD_CSV = os.path.join(PCA_DIR, 'production.csv')
+AMD_CSV = os.path.join(PCA_DIR, 'aMD10.csv')
 NAME = 'test'
 PNG_FILE = os.path.join(PCA_DIR, 'test.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
@@ -137,6 +139,24 @@ class TestMain(unittest.TestCase):
 
     def testCoMPlot(self):
         test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "-o", PCA_DIR, "-c"]
+        try:
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_FILE))
+        finally:
+            silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
+
+    def testReadCOM(self):
+        silent_remove(PNG_FILE)
+        test_input = ["-n", NAME, "-o", PCA_DIR, "-c", "-f", PROD_CSV]
+        try:
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_FILE))
+        finally:
+            silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
+
+    def testMultipleFiles(self):
+        silent_remove(PNG_FILE)
+        test_input = ["-n", NAME, "-o", PCA_DIR, "-c", "-f", PROD_CSV, AMD_CSV]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_FILE))

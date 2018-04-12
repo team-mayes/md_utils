@@ -90,7 +90,7 @@ def parse_cmdline(argv):
                         default=DEF_NAME)
     parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.",
                         default=None)
-    parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=None)
+    parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=[], nargs='+')
     parser.add_argument("-w", "--write_dist",
                         help="Flag to log distances as a csv file rather than generate plot. "
                              "Useful when dealing with large trajectories or limited memory.",
@@ -107,9 +107,7 @@ def parse_cmdline(argv):
         args.traj_list = []
         args.index_list = []
         # If a log file is read in, trajectory information is not required
-        if args.file:
-            args.traj_list.append("None")
-        else:
+        if not args.file:
             if args.list:
                 args.traj_list += file_rows_to_list(args.list)
             else:
@@ -148,7 +146,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False):
+def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False, ax=None, ax2=None):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -226,40 +224,25 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 dist_writer.writerow(EG_distance)
                 dist_writer.writerow(IG_distance)
     else:
-        figure, ax = plt.subplots()
         if com:
-            ax.set_ylim(0, 20)
             dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
             density = gaussian_kde(COM_distance)
             density.covariance_factor = lambda: .25
             density._compute_covariance()
             ydummy = density(dummy)
-            xlabel = "Timestep"
-            ylabel = "CoM Distance ($\AA$)"
-            plt.plot(COM_distance)
-            ax2 = ax.twiny()
-            ax.set_xlim(0)
-            ax2.set_xlim(0, 1)
+            ax.plot(COM_distance)
             ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
             ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
             # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
         else:
-            ax.set_xlim(7.5, 15)
-            ax.set_ylim(7, 17)
-            xlabel = "EG Distance ($\AA$)"
-            ylabel = "IG Distance ($\AA$)"
-
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        save_figure(plot_name, out_dir)
-        print("Wrote file: {}".format(plot_name + '.png'))
-        plt.close("all")
+
+
 
 
 def main(argv=None):
@@ -270,9 +253,37 @@ def main(argv=None):
         return ret
 
     try:
-        for file in args.traj_list:
-            plot_trajectories(file, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              args.file, args.write_dist, args.com)
+        if not args.write_dist:
+            figure, ax = plt.subplots()
+            if args.com:
+                ax.set_ylim(0, 20)
+                ax2 = ax.twiny()
+
+                ax2.set_xlim(0, 1)
+                xlabel = "Timestep"
+                ylabel = "CoM Distance ($\AA$)"
+            else:
+                ax.set_xlim(7.5, 15)
+                ax.set_ylim(7, 17)
+                xlabel = "EG Distance ($\AA$)"
+                ylabel = "IG Distance ($\AA$)"
+                ax2 = None
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+        else:
+            ax, ax2 = None, None
+        for traj in args.traj_list:
+            plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
+                              args.file, args.write_dist, args.com, ax, ax2)
+        for file in args.file:
+            plot_trajectories(args.traj, args.top, args.index_list, args.name, args.stride, args.outdir,
+                              file, args.write_dist, args.com, ax, ax2)
+        if not args.write_dist:
+            if args.com:
+                ax.set_xlim(0)
+            save_figure(args.name, args.outdir)
+            print("Wrote file: {}".format(args.name + '.png'))
+            plt.close("all")
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
