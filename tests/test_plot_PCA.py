@@ -28,7 +28,7 @@ AMD_CSV = os.path.join(PCA_DIR, 'aMD10.csv')
 NAME = 'test'
 PNG_FILE = os.path.join(PCA_DIR, 'test.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
-DIST_FILE = os.path.join(PCA_DIR, 'test.csv')
+PCA_DIST_FILE = os.path.join(PCA_DIR, 'test_2D.csv')
 GOOD_DIST_FILE = os.path.join(PCA_DIR, 'dist_good.csv')
 GOOD_APPEND_FILE = os.path.join(PCA_DIR, 'dist_append_good.csv')
 GOOD_COMBINED_FILE = os.path.join(PCA_DIR, 'dist_combined_good.csv')
@@ -81,34 +81,34 @@ class TestMain(unittest.TestCase):
             silent_remove(PNG_FILE, disable=DISABLE_REMOVE)
 
     def testWriteDistances(self):
-        silent_remove(DIST_FILE)
+        silent_remove(PCA_DIST_FILE)
         test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(DIST_FILE, GOOD_DIST_FILE))
+            self.assertFalse(diff_lines(PCA_DIST_FILE, GOOD_DIST_FILE))
         finally:
-            silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+            silent_remove(PCA_DIST_FILE, disable=DISABLE_REMOVE)
 
     def testStride(self):
-        silent_remove(DIST_FILE)
+        silent_remove(PCA_DIST_FILE)
         test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w",
                       "-s", "2"]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(DIST_FILE, GOOD_STRIDE_FILE))
+            self.assertFalse(diff_lines(PCA_DIST_FILE, GOOD_STRIDE_FILE))
         finally:
-            silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+            silent_remove(PCA_DIST_FILE, disable=DISABLE_REMOVE)
 
     def testAppendDistances(self):
-        silent_remove(DIST_FILE)
+        silent_remove(PCA_DIST_FILE)
         test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
         try:
             # The append happens in place, so the base file must first be generated
             main(test_input)
             main(test_input)
-            self.assertFalse(diff_lines(DIST_FILE, GOOD_APPEND_FILE))
+            self.assertFalse(diff_lines(PCA_DIST_FILE, GOOD_APPEND_FILE))
         finally:
-            silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+            silent_remove(PCA_DIST_FILE, disable=DISABLE_REMOVE)
 
     def testReadDistances(self):
         silent_remove(PNG_FILE)
@@ -131,11 +131,11 @@ class TestMain(unittest.TestCase):
     def testCombineData(self):
         test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_APPEND_FILE, "-w"]
         try:
-            silent_remove(DIST_FILE)
+            silent_remove(PCA_DIST_FILE)
             main(test_input)
-            self.assertFalse(diff_lines(DIST_FILE, GOOD_COMBINED_FILE))
+            self.assertFalse(diff_lines(PCA_DIST_FILE, GOOD_COMBINED_FILE))
         finally:
-            silent_remove(DIST_FILE, disable=DISABLE_REMOVE)
+            silent_remove(PCA_DIST_FILE, disable=DISABLE_REMOVE)
 
     def testCoMPlot(self):
         test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "-o", PCA_DIR, "-c"]

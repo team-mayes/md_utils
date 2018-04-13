@@ -211,7 +211,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         if com:
             csv_name = csv_dir + '/' + plot_name + '_com' + '.csv'
         else:
-            csv_name = csv_dir + '/' + plot_name + '_2D', '.csv'
+            csv_name = csv_dir + '/' + plot_name + '_2D' + '.csv'
         if os.path.isfile(csv_name):
             print("Appended file: ", csv_name)
         else:
@@ -233,7 +233,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             density.covariance_factor = lambda: .25
             density._compute_covariance()
             ydummy = density(dummy)
-            ax.plot(COM_distance)
+            ax.plot(COM_distance, label=log_file)
+            ax.legend()
             ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
             ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
             # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
@@ -259,7 +260,7 @@ def main(argv=None):
         if not args.write_dist:
             figure, ax = plt.subplots()
             if args.com:
-                ax.set_ylim(0, 10)
+                ax.set_ylim(0, 15)
                 ax2 = ax.twiny()
 
                 ax2.set_xlim(0, 1)
