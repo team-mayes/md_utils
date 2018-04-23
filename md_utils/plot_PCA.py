@@ -146,7 +146,8 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False, ax=None, ax2=None):
+def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
+                      ax=None, ax2=None):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -234,7 +235,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             density._compute_covariance()
             ydummy = density(dummy)
             ax.plot(COM_distance, label=log_file)
-            ax.legend()
+            # ax.legend()
             ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
             ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
             # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
@@ -245,8 +246,6 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
-
-
 
 
 def main(argv=None):
@@ -260,7 +259,7 @@ def main(argv=None):
         if not args.write_dist:
             figure, ax = plt.subplots()
             if args.com:
-                ax.set_ylim(0, 15)
+                ax.set_ylim(0, 20)
                 ax2 = ax.twiny()
 
                 ax2.set_xlim(0, 1)
