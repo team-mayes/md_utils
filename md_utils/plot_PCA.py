@@ -147,7 +147,7 @@ def parse_cmdline(argv):
 
 
 def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
-                      ax=None, ax2=None):
+                      ax=None):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -229,16 +229,18 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 dist_writer.writerow(IG_distance)
     else:
         if com:
-            dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
-            density = gaussian_kde(COM_distance)
-            density.covariance_factor = lambda: .25
-            density._compute_covariance()
-            ydummy = density(dummy)
             ax.plot(COM_distance, label=log_file)
-            # ax.legend()
-            ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
-            ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
-            # plt.hist(COM_distance, normed=1, facecolor='blue', alpha=0.5, orientation='horizontal')
+            # Comment these lines back in to plot a histogram for line graphs
+            #####################
+            # dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
+            # density = gaussian_kde(COM_distance)
+            # density.covariance_factor = lambda: .25
+            # density._compute_covariance()
+            # ydummy = density(dummy)
+            # ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
+            # ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
+            ####################
+
         else:
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
@@ -260,9 +262,12 @@ def main(argv=None):
             figure, ax = plt.subplots()
             if args.com:
                 ax.set_ylim(0, 20)
-                ax2 = ax.twiny()
-
-                ax2.set_xlim(0, 1)
+                # Comment these lines in to include histograms
+                # Must also pass both axes in to plot_trajectories as an array?
+                ##########
+                # ax2 = ax.twiny()
+                # ax2.set_xlim(0, 1)
+                ##########
                 xlabel = "Timestep"
                 ylabel = "CoM Distance ($\AA$)"
             else:
@@ -277,10 +282,10 @@ def main(argv=None):
             ax, ax2 = None, None
         for traj in args.traj_list:
             plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              args.file, args.write_dist, args.com, ax, ax2)
+                              args.file, args.write_dist, args.com, ax)
         for file in args.file:
             plot_trajectories(args.traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              file, args.write_dist, args.com, ax, ax2)
+                              file, args.write_dist, args.com, ax)
         if not args.write_dist:
             if args.com:
                 ax.set_xlim(0)
