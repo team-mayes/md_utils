@@ -127,6 +127,9 @@ def parse_cmdline(argv):
             else:
                 for index in args.indices:
                     args.index_list.append(index)
+                if "IG" in args.index_list[0]:
+                    print("Detected index file {} as IG index. Swapping now.".format(args.index_list[0]))
+                    args.index_list[0],args.index_list[1] = args.index_list[1],args.index_list[0]
             for index in args.index_list:
                 if not os.path.isfile(index):
                     raise IOError("Could not find specified index file: {}".format(index))
@@ -197,7 +200,6 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         if com:
             COM_distance = com_distance(t, indices[0])
         else:
-            # TODO: Add some resiliency to the eg/ig file determination
             eg_file = indices[0]
             ig_file = indices[1]
             EG_distance = com_distance(t, eg_file)
@@ -289,7 +291,11 @@ def main(argv=None):
         if not args.write_dist:
             if args.com:
                 ax.set_xlim(0)
-            save_figure(args.name, args.outdir)
+            if args.com:
+                name = args.name + '_com'
+            else:
+                name = args.name + '_2D'
+            save_figure(name, args.outdir)
             print("Wrote file: {}".format(args.name + '.png'))
             plt.close("all")
     except IOError as e:
