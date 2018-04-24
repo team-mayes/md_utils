@@ -4,12 +4,12 @@ import os
 import pyemma.plots as mplt
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import mdtraj as md
 from glob import glob
 import csv
 import sys
 import warnings
-from scipy.stats import gaussian_kde
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
 
@@ -129,7 +129,7 @@ def parse_cmdline(argv):
                     args.index_list.append(index)
                 if "IG" in args.index_list[0]:
                     print("Detected index file {} as IG index. Swapping now.".format(args.index_list[0]))
-                    args.index_list[0],args.index_list[1] = args.index_list[1],args.index_list[0]
+                    args.index_list[0], args.index_list[1] = args.index_list[1], args.index_list[0]
             for index in args.index_list:
                 if not os.path.isfile(index):
                     raise IOError("Could not find specified index file: {}".format(index))
@@ -231,7 +231,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 dist_writer.writerow(IG_distance)
     else:
         if com:
-            ax.plot(COM_distance, label=log_file)
+            ax[0].plot(COM_distance, label=log_file)
             # Comment these lines back in to plot a histogram for line graphs
             #####################
             # dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
@@ -247,9 +247,12 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax, kT=2.479, cmap="winter",
+                mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax[0], kT=2.479,
+                                      cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
+                ax[1].plot(EG_distance)
+                ax[2].plot(IG_distance)
 
 
 def main(argv=None):
@@ -261,27 +264,37 @@ def main(argv=None):
 
     try:
         if not args.write_dist:
-            figure, ax = plt.subplots()
             if args.com:
-                ax.set_ylim(0, 20)
+                fig, ax0 = plt.subplots()
+                ax0.set_ylim(0, 20)
+
                 # Comment these lines in to include histograms
                 # Must also pass both axes in to plot_trajectories as an array?
                 ##########
                 # ax2 = ax.twiny()
                 # ax2.set_xlim(0, 1)
                 ##########
-                xlabel = "Timestep"
-                ylabel = "CoM Distance ($\AA$)"
+                ax0.set_xlabel = "Timestep"
+                ax0.set_ylabel = "CoM Distance ($\AA$)"
+                ax = [ax0]
             else:
-                ax.set_xlim(7.5, 15)
-                ax.set_ylim(7, 17)
-                xlabel = "EG Distance ($\AA$)"
-                ylabel = "IG Distance ($\AA$)"
-                ax2 = None
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
+                fig = plt.figure()
+                gs = gridspec.GridSpec(2, 2, width_ratios=[2,1])
+                ax0 = fig.add_subplot(gs[:, 0])
+                ax1 = fig.add_subplot(gs[0, 1])
+                ax2 = fig.add_subplot(gs[1, 1])
+                ax0.set_xlim(7.5, 15)
+                ax0.set_ylim(7, 17)
+                ax0.set(xlabel="EG Distance ($\AA$)", ylabel="IG Distance ($\AA$)")
+                ax1.set_ylim(0, 20)
+                ax1.set(ylabel="EG Distance ($\AA$)")
+                ax2.set_ylim(0, 20)
+                ax2.set(xlabel="Timestep", ylabel="IG Distance ($\AA$)")
+                fig.tight_layout()
+
+                ax = [ax0, ax1, ax2]
         else:
-            ax, ax2 = None, None
+            ax = []
         for traj in args.traj_list:
             plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
                               args.file, args.write_dist, args.com, ax)
@@ -290,13 +303,14 @@ def main(argv=None):
                               file, args.write_dist, args.com, ax)
         if not args.write_dist:
             if args.com:
-                ax.set_xlim(0)
+                # This is declared here so as not to break the axis with the histogram
+                ax0.set_xlim(0)
             if args.com:
                 name = args.name + '_com'
             else:
                 name = args.name + '_2D'
             save_figure(name, args.outdir)
-            print("Wrote file: {}".format(args.name + '.png'))
+            print("Wrote file: {}".format(name + '.png'))
             plt.close("all")
     except IOError as e:
         warning("Problems reading file:", e)
