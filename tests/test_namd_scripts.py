@@ -25,13 +25,13 @@ TPL_TEST_DATA = os.path.join(DATA_DIR, 'fill_tpl')
 BASIC_CPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_cpu.tpl")
 BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu_namd_scripts.ini")
 BASIC_CPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_cpu_good.ini")
-RESTART_PREFIX = os.path.join(TPL_TEST_DATA, "7.2")
+RESTART_PREFIX = os.path.join(TPL_TEST_DATA, "8.2")
 RESTART_RESTART_PREFIX = os.path.join(TPL_TEST_DATA, "7.3.2")
-RESTART_INP_OUT = os.path.join(TPL_TEST_DATA, "7.2.2.inp")
-RESTART_JOB_OUT = os.path.join(TPL_TEST_DATA, "7.2.2.job")
+RESTART_INP_OUT = os.path.join(TPL_TEST_DATA, "8.2.2.inp")
+RESTART_JOB_OUT = os.path.join(TPL_TEST_DATA, "8.2.2.job")
 RESTART_RESTART_INP_OUT = os.path.join(TPL_TEST_DATA, "7.3.3.inp")
 RESTART_RESTART_JOB_OUT = os.path.join(TPL_TEST_DATA, "7.3.3.job")
-XSC_FILE = os.path.join(TPL_TEST_DATA, "7.1.xsc")
+XSC_FILE = os.path.join(TPL_TEST_DATA, "8.1.xsc")
 
 BASIC_GPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_gpu.tpl")
 BASIC_GPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_gpu_name_scripts.ini")
@@ -117,17 +117,17 @@ class TestMain(unittest.TestCase):
         try:
             main(test_input)
             self.assertFalse(diff_lines(RESTART_INP_OUT, GOOD_RESTART_INP))
-            # self.assertFalse(diff_lines(RESTART_JOB_OUT,GOOD_RESTART_JOB))
+            self.assertFalse(diff_lines(RESTART_JOB_OUT, GOOD_RESTART_JOB))
         finally:
             silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
-            # silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESTART_JOB_OUT, disable=DISABLE_REMOVE)
 
     def testRestartofRestart(self):
         test_input = ['--restart', RESTART_RESTART_PREFIX]
         try:
             main(test_input)
             self.assertFalse(diff_lines(RESTART_RESTART_INP_OUT, GOOD_RESTART_RESTART_INP))
-            # self.assertFalse(diff_lines(RESTART_RESTART_JOB_OUT,GOOD_RESTART_RESTART_JOB))
+            self.assertFalse(diff_lines(RESTART_RESTART_JOB_OUT, GOOD_RESTART_RESTART_JOB))
         finally:
             silent_remove(RESTART_RESTART_INP_OUT, disable=DISABLE_REMOVE)
-            # silent_remove(RESTART_RESTART_JOB_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESTART_RESTART_JOB_OUT, disable=DISABLE_REMOVE)

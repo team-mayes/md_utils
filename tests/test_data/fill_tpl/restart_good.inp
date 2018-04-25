@@ -13,8 +13,8 @@ proc get_first_ts { xscfile } {
     return $ts
 }
 
-outputname         7.2.2
-set inputname      7.2.restart
+outputname         8.2.2
+set inputname      8.2.restart
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)

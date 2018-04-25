@@ -55,15 +55,20 @@ DEF_COORDINATES = 'test.pdb'
 # Restart Patterns
 OUT_PAT = re.compile(r"^outputname.*")
 IN_PAT = re.compile(r"^set inputname.*")
-RUN_PAT = re.compile(r"^run         .*")
+RUN_PAT = re.compile(r"^run.*")
 NUM_PAT = re.compile(r"^numsteps.*")
 XSC_PAT = re.compile(r"^.*0 0 0.*")
+JOB_PAT = re.compile(r"^.*--job-name.*")
+SUBMIT_PAT = re.compile(r"^.*namd2.*")
 
+
+# Local variable warnings are due to my taking shortcuts by
+# knowing how NAMD input scripts and job files are structured
 
 def make_restart(file, xsc_file):
-    # TODO: Grep out coordinates, structure, first,
     # alternatively will make the same file with modified output, input, first, numsteps
     inp_file = file + '.inp'
+    job_file = file + '.job'
     s_file = file.split(".")
     if len(s_file) < 3:
         restart_file = file + '.2.'
@@ -72,10 +77,12 @@ def make_restart(file, xsc_file):
         restart_file = ''
         for part in s_file:
             restart_file += part + '.'
-    restart_file = restart_file + 'inp'
+    restart_inp = restart_file + 'inp'
+    restart_job = restart_file + 'job'
 
+    # process and write a restart inp file
     with open(inp_file, "rt") as fin:
-        with open(restart_file, "w") as fout:
+        with open(restart_inp, "w") as fout:
             for line in fin:
                 if OUT_PAT.match(line):
                     s_line = line.split()
@@ -107,6 +114,28 @@ def make_restart(file, xsc_file):
                     ns = str(int(num_step / 500000))
                     output = 'numsteps           ' + str(num_step) + ';            # ' + ns + ' ns'
                     fout.write(output)
+                else:
+                    fout.write(line)
+
+    # process and write a restart job file
+    # TODO: Make intelligent judgement about modifying the time requested
+    with open(job_file, "rt") as fin:
+        with open(restart_job, "w") as fout:
+            for line in fin:
+                if JOB_PAT.match(line):
+                    line = line.rstrip()
+                    # Restart train could potentially get out of hand,
+                    # but I'm depending on not failing too many consecutive times
+                    fout.write(line + '_restart\n')
+                elif SUBMIT_PAT.match(line):
+                    s_line = line.split()
+                    for element in s_line:
+                        if '.inp' in element:
+                            old_inp = element
+                        elif '.log' in element:
+                            old_log = element
+                    line = line.replace(old_inp, new_out + '.inp')
+                    fout.write(line.replace(old_log, new_out + '.log'))
                 else:
                     fout.write(line)
 
@@ -243,7 +272,7 @@ def parse_cmdline(argv):
     parser.add_argument("-co", "--coordinates", help="Name of the coordinates file; "
                                                      "default is {}.".format(DEF_COORDINATES),
                         default=DEF_COORDINATES)
-    parser.add_argument("--restart",
+    parser.add_argument("-re", "--restart",
                         help="Flag to generate a restart inp and job file from a provided job prefix. "
                              "This option preempts all other options.", default=None)
     parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is current directory.", default=None)
