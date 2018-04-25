@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import re
 import sys
 from collections import OrderedDict
 
@@ -34,7 +35,6 @@ OUT_FILE = 'file_out_name'
 RUN = 'runtime'
 JOB_NAME = 'name'
 INPUT_NAME = 'input_name'
-FIRST = 'first'
 OUTPUT = 'output_name'
 STRUCTURE = 'structure'
 COORDINATES = 'coordinates'
@@ -45,13 +45,70 @@ DEF_CPU_TPL_FILE = 'make_prod_cpu.tpl'
 DEF_GPU_TPL_FILE = 'make_prod_gpu.tpl'
 DEF_CPU_OUT_FILE = 'make_prod_cpu.ini'
 DEF_GPU_OUT_FILE = 'make_prod_gpu.ini'
-DEF_RUN = 1
-DEF_FIRST = 1
+DEF_RUN = 2
 DEF_JOB_NAME = 'test'
 DEF_INPUT_NAME = 'input'
 DEF_OUTPUT = 'output'
 DEF_STRUCTURE = 'test.psf'
 DEF_COORDINATES = 'test.pdb'
+
+# Restart Patterns
+OUT_PAT = re.compile(r"^outputname.*")
+IN_PAT = re.compile(r"^set inputname.*")
+RUN_PAT = re.compile(r"^run         .*")
+NUM_PAT = re.compile(r"^numsteps.*")
+XSC_PAT = re.compile(r"^.*0 0 0.*")
+
+
+def make_restart(file, xsc_file):
+    # TODO: Grep out coordinates, structure, first,
+    # alternatively will make the same file with modified output, input, first, numsteps
+    inp_file = file + '.inp'
+    s_file = file.split(".")
+    if len(s_file) < 3:
+        restart_file = file + '.2.'
+    else:
+        s_file[2] = str(1 + int(s_file[2]))
+        restart_file = ''
+        for part in s_file:
+            restart_file += part + '.'
+    restart_file = restart_file + 'inp'
+
+    with open(inp_file, "rt") as fin:
+        with open(restart_file, "w") as fout:
+            for line in fin:
+                if OUT_PAT.match(line):
+                    s_line = line.split()
+                    outputname = s_line[1]
+                    s_out = outputname.split(".")
+                    if len(s_out) < 3:
+                        new_out = outputname + '.2'
+                    else:
+                        new_out = s_out[0] + '.' + s_out[1] + '.' + str((int(s_out[2]) + 1))
+                    fout.write(line.replace(outputname, new_out))
+                elif IN_PAT.match(line):
+                    s_line = line.split()
+                    inputname = s_line[2]
+                    new_in = outputname + '.restart'
+                    fout.write(line.replace(inputname, new_in))
+                elif RUN_PAT.match(line):
+                    if xsc_file:
+                        inputname = xsc_file
+                    else:
+                        inputname += '.xsc'
+                    with open(inputname, "rt") as xin:
+                        for x_line in xin:
+                            if XSC_PAT.match(x_line):
+                                s_x_line = x_line.split()
+                                start_step = int(s_x_line[0])
+                    s_line = line.split()
+                    run_step = int(s_line[1].split(";")[0])
+                    num_step = start_step + run_step
+                    ns = str(int(num_step / 500000))
+                    output = 'numsteps           ' + str(num_step) + ';            # ' + ns + ' ns'
+                    fout.write(output)
+                else:
+                    fout.write(line)
 
 
 def validate_args(args):
@@ -85,7 +142,7 @@ def validate_args(args):
             args.file_out_name = DEF_CPU_OUT_FILE
 
     # args.config
-    int_var_dict = {FIRST: args.first, RUN: args.run}
+    int_var_dict = {RUN: args.run}
     for variable_name, req_pos_int in int_var_dict.items():
         if req_pos_int < 1:
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(variable_name))
@@ -159,16 +216,12 @@ def parse_cmdline(argv):
                                                 "directory.",
                         default=None)
 
-    parser.add_argument("-f", "--first", help="Value for created template: first (integer). "
-                                              "Default is {}.".format(DEF_FIRST),
-                        type=int, default=DEF_FIRST)
-
     parser.add_argument("-i", "--input_name", help="Value for created template: input_name. "
                                                    "Default is {}.".format(DEF_INPUT_NAME),
                         default=DEF_INPUT_NAME)
 
     parser.add_argument("-n", "--job_name", help="Value for created template: name. "
-                                             "Default is {}.".format(DEF_JOB_NAME),
+                                                 "Default is {}.".format(DEF_JOB_NAME),
                         default=DEF_JOB_NAME)
 
     parser.add_argument("-o", "--file_out_name", help="The name of the configuration file to be created. "
@@ -184,17 +237,22 @@ def parse_cmdline(argv):
                                             "default is {}.".format(DEF_RUN),
                         type=int, default=DEF_RUN)
 
-    parser.add_argument("-s", "--structure", help="Name of the structure file; " 
+    parser.add_argument("-s", "--structure", help="Name of the structure file; "
                                                   "default is {}.".format(DEF_STRUCTURE),
                         default=DEF_STRUCTURE)
     parser.add_argument("-co", "--coordinates", help="Name of the coordinates file; "
                                                      "default is {}.".format(DEF_COORDINATES),
                         default=DEF_COORDINATES)
+    parser.add_argument("--restart",
+                        help="Flag to generate a restart inp and job file from a provided job prefix. "
+                             "This option preempts all other options.", default=None)
+    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is current directory.", default=None)
 
     args = None
     try:
         args = parser.parse_args(argv)
-        validate_args(args)
+        if not args.restart:
+            validate_args(args)
     except IOError as e:
         warning(e)
         parser.print_help()
@@ -215,12 +273,14 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    cfg = args.config
-    tpl_name = args.config_tpl
-    filled_tpl_name = args.file_out_name
     try:
-        print(cfg)
-        fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
+        if args.restart:
+            make_restart(args.restart, args.xsc)
+        else:
+            cfg = args.config
+            tpl_name = args.config_tpl
+            filled_tpl_name = args.file_out_name
+            fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

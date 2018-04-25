@@ -13,8 +13,8 @@ from md_utils.namd_scripts import main
 
 __author__ = 'hbmayes'
 
-#logging.basicConfig(level=logging.DEBUG)
-#logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
@@ -25,10 +25,21 @@ TPL_TEST_DATA = os.path.join(DATA_DIR, 'fill_tpl')
 BASIC_CPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_cpu.tpl")
 BASIC_CPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_cpu_namd_scripts.ini")
 BASIC_CPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_cpu_good.ini")
+RESTART_PREFIX = os.path.join(TPL_TEST_DATA, "7.2")
+RESTART_RESTART_PREFIX = os.path.join(TPL_TEST_DATA, "7.3.2")
+RESTART_INP_OUT = os.path.join(TPL_TEST_DATA, "7.2.2.inp")
+RESTART_JOB_OUT = os.path.join(TPL_TEST_DATA, "7.2.2.job")
+RESTART_RESTART_INP_OUT = os.path.join(TPL_TEST_DATA, "7.3.3.inp")
+RESTART_RESTART_JOB_OUT = os.path.join(TPL_TEST_DATA, "7.3.3.job")
+XSC_FILE = os.path.join(TPL_TEST_DATA, "7.1.xsc")
 
 BASIC_GPU_TPL = os.path.join(TPL_TEST_DATA, "make_prod_gpu.tpl")
 BASIC_GPU_RESULT = os.path.join(TPL_TEST_DATA, "make_prod_gpu_name_scripts.ini")
 BASIC_GPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_gpu_good.ini")
+GOOD_RESTART_INP = os.path.join(TPL_TEST_DATA, "restart_good.inp")
+GOOD_RESTART_JOB = os.path.join(TPL_TEST_DATA, "restart_good.job")
+GOOD_RESTART_RESTART_INP = os.path.join(TPL_TEST_DATA, "restart_restart_good.inp")
+GOOD_RESTART_RESTART_JOB = os.path.join(TPL_TEST_DATA, "restart_restart_good.job")
 
 
 # /home/cmayes/code/python/lab/md_utils/tests/test_data/fill_tpl/make_prod_gpu_inp.ini
@@ -50,17 +61,8 @@ class TestMainFailWell(unittest.TestCase):
         test_input = ["-c", "ghost", ]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
-        # with capture_stderr(main, test_input) as output:
-        #     self.assertTrue("Could not find specified log file" in output)
-
-    def testNotInteger(self):
-        test_input = ["-f", "four", ]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("invalid int" in output)
-        with capture_stdout(main, test_input) as output:
-            self.assertTrue("optional arguments" in output)
+            # with capture_stderr(main, test_input) as output:
+            #     self.assertTrue("Could not find specified log file" in output)
 
     def testNegInteger(self):
         test_input = ["-r", "-4", "-c", BASIC_CPU_TPL]
@@ -110,3 +112,22 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(BASIC_GPU_RESULT, disable=DISABLE_REMOVE)
 
+    def testRestart(self):
+        test_input = ['--restart', RESTART_PREFIX, '-x', XSC_FILE]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(RESTART_INP_OUT, GOOD_RESTART_INP))
+            # self.assertFalse(diff_lines(RESTART_JOB_OUT,GOOD_RESTART_JOB))
+        finally:
+            silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
+            # silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
+
+    def testRestartofRestart(self):
+        test_input = ['--restart', RESTART_RESTART_PREFIX]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(RESTART_RESTART_INP_OUT, GOOD_RESTART_RESTART_INP))
+            # self.assertFalse(diff_lines(RESTART_RESTART_JOB_OUT,GOOD_RESTART_RESTART_JOB))
+        finally:
+            silent_remove(RESTART_RESTART_INP_OUT, disable=DISABLE_REMOVE)
+            # silent_remove(RESTART_RESTART_JOB_OUT, disable=DISABLE_REMOVE)
