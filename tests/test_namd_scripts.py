@@ -94,6 +94,8 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("must specify" in output)
 
+    # TODO: Add usability tests for recently added "restart" feature
+
 
 class TestMain(unittest.TestCase):
     def testCPU(self):

@@ -73,6 +73,7 @@ def parse_cmdline(argv):
     if argv is None:
         argv = sys.argv[1:]
 
+    # TODO: Consider reading in some arguments from a config file
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
     parser.add_argument("-t", "--traj",
@@ -119,10 +120,10 @@ def parse_cmdline(argv):
             if not os.path.isfile(args.top):
                 raise IOError("Could not find specified file: {}".format(args.top))
             # Process index information
-            if args.indices == None and not args.com:
+            if args.indices is None and not args.com:
                 args.index_list.append(DEF_EG_FILE)
                 args.index_list.append(DEF_IG_FILE)
-            elif args.indices == None and args.com:
+            elif args.indices is None and args.com:
                 args.index_list.append(DEF_COM_FILE)
             else:
                 for index in args.indices:
@@ -268,6 +269,7 @@ def main(argv=None):
                 fig, ax0 = plt.subplots()
                 ax0.set_ylim(0, 20)
 
+                # TODO: Make compact options for switching histograms and line subplots on and off
                 # Comment these lines in to include histograms
                 # Must also pass both axes in to plot_trajectories as an array?
                 ##########
@@ -279,7 +281,7 @@ def main(argv=None):
                 ax = [ax0]
             else:
                 fig = plt.figure()
-                gs = gridspec.GridSpec(2, 2, width_ratios=[2,1])
+                gs = gridspec.GridSpec(2, 2, width_ratios=[2, 1])
                 ax0 = fig.add_subplot(gs[:, 0])
                 ax1 = fig.add_subplot(gs[0, 1])
                 ax2 = fig.add_subplot(gs[1, 1])

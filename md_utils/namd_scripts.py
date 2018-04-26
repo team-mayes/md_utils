@@ -66,7 +66,6 @@ SUBMIT_PAT = re.compile(r"^.*namd2.*")
 # knowing how NAMD input scripts and job files are structured
 
 def make_restart(file, xsc_file):
-    # alternatively will make the same file with modified output, input, first, numsteps
     inp_file = file + '.inp'
     job_file = file + '.job'
     s_file = file.split(".")
