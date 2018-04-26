@@ -5,6 +5,7 @@ import pyemma.plots as mplt
 import argparse
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from scipy.stats import gaussian_kde
 import mdtraj as md
 from glob import glob
 import csv
@@ -13,8 +14,11 @@ import warnings
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
 
-# This line allows for plotting on PSC Bridges
+# This line switches to a non-Gui backend, allowing plotting on PSC Bridges
 plt.switch_backend('agg')
+
+HISTOGRAMS = False
+LINE_GRAPHS = False
 
 try:
     # noinspection PyCompatibility
@@ -233,16 +237,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
     else:
         if com:
             ax[0].plot(COM_distance, label=log_file)
-            # Comment these lines back in to plot a histogram for line graphs
-            #####################
-            # dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
-            # density = gaussian_kde(COM_distance)
-            # density.covariance_factor = lambda: .25
-            # density._compute_covariance()
-            # ydummy = density(dummy)
-            # ax2.plot(ydummy, dummy, antialiased=True, linewidth=2)
-            # ax2.fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
-            ####################
+            if HISTOGRAMS:
+                dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
+                density = gaussian_kde(COM_distance)
+                density.covariance_factor = lambda: .25
+                density._compute_covariance()
+                ydummy = density(dummy)
+                ax[1].plot(ydummy, dummy, antialiased=True, linewidth=2)
+                ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
         else:
             # Suppress the error associated with a larger display window than is sampled
@@ -252,8 +254,9 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                                       cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
-                ax[1].plot(EG_distance)
-                ax[2].plot(IG_distance)
+                if LINE_GRAPHS:
+                    ax[1].plot(EG_distance)
+                    ax[2].plot(IG_distance)
 
 
 def main(argv=None):
@@ -268,33 +271,33 @@ def main(argv=None):
             if args.com:
                 fig, ax0 = plt.subplots()
                 ax0.set_ylim(0, 20)
-
-                # TODO: Make compact options for switching histograms and line subplots on and off
-                # Comment these lines in to include histograms
-                # Must also pass both axes in to plot_trajectories as an array?
-                ##########
-                # ax2 = ax.twiny()
-                # ax2.set_xlim(0, 1)
-                ##########
                 ax0.set_xlabel = "Timestep"
                 ax0.set_ylabel = "CoM Distance ($\AA$)"
                 ax = [ax0]
+                if HISTOGRAMS:
+                    ax1 = ax0.twiny()
+                    ax1.set_xlim(0, 1)
+                    ax.append(ax1)
+
             else:
-                fig = plt.figure()
-                gs = gridspec.GridSpec(2, 2, width_ratios=[2, 1])
-                ax0 = fig.add_subplot(gs[:, 0])
-                ax1 = fig.add_subplot(gs[0, 1])
-                ax2 = fig.add_subplot(gs[1, 1])
+                fig, ax0 = plt.subplots()
+                ax = [ax0]
+                if LINE_GRAPHS:
+                    fig = plt.figure()
+                    gs = gridspec.GridSpec(2, 2, width_ratios=[2, 1])
+                    ax0 = fig.add_subplot(gs[:, 0])
+                    ax1 = fig.add_subplot(gs[0, 1])
+                    ax2 = fig.add_subplot(gs[1, 1])
+                    ax1.set_ylim(0, 20)
+                    ax1.set(ylabel="EG Distance ($\AA$)")
+                    ax2.set_ylim(0, 20)
+                    ax2.set(xlabel="Timestep", ylabel="IG Distance ($\AA$)")
+                    fig.tight_layout()
+                    ax = [ax0, ax1, ax2]
                 ax0.set_xlim(7.5, 15)
                 ax0.set_ylim(7, 17)
                 ax0.set(xlabel="EG Distance ($\AA$)", ylabel="IG Distance ($\AA$)")
-                ax1.set_ylim(0, 20)
-                ax1.set(ylabel="EG Distance ($\AA$)")
-                ax2.set_ylim(0, 20)
-                ax2.set(xlabel="Timestep", ylabel="IG Distance ($\AA$)")
-                fig.tight_layout()
 
-                ax = [ax0, ax1, ax2]
         else:
             ax = []
         for traj in args.traj_list:
