@@ -11,7 +11,7 @@ from md_utils.plot_PCA import main
 
 __author__ = 'adams'
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -25,10 +25,12 @@ EG_FILE = os.path.join(PCA_DIR, 'EG_indices.txt')
 COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
 PROD_CSV = os.path.join(PCA_DIR, 'production.csv')
 AMD_CSV = os.path.join(PCA_DIR, 'aMD10.csv')
+ORIENTATION_LOG = os.path.join(PCA_DIR, 'orientation.log')
 NAME = 'test'
 CFG_FILE = os.path.join(PCA_DIR, 'plot_pca.ini')
 PNG_2D_FILE = os.path.join(PCA_DIR, 'test_2D.png')
 PNG_1D_FILE = os.path.join(PCA_DIR, 'test_com.png')
+PNG_QUAT_FILE = os.path.join(PCA_DIR, 'test_quat.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
 PCA_DIST_FILE = os.path.join(PCA_DIR, 'test_2D.csv')
 GOOD_DIST_FILE = os.path.join(PCA_DIR, 'dist_good.csv')
@@ -55,7 +57,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("not find specified file" in output)
 
     def testNegativeStride(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR,
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR,
                       "-s", '-2']
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
@@ -63,18 +65,38 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("must be > 1" in output)
 
     def testSwapIndices(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, EG_FILE, "-n", NAME, "-o", PCA_DIR]
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, EG_FILE, "-n", NAME, "--outdir", PCA_DIR]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stdout(main, test_input) as output:
             self.assertTrue("Detected" in output)
             silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
+    def testBothFlags(self):
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-c", "-f", PROD_CSV, "-o"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Cannot flag both" in output)
+
+    def testOrientationTraj(self):
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR, "-o"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("not currently configured" in output)
+
+    def testOrientationWrite(self):
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-o", "-w"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("write orientation data" in output)
 
 class TestMain(unittest.TestCase):
     def testWithProtxData(self):
         silent_remove(PNG_2D_FILE)
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR]
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
         try:
             main(test_input)
             os.path.isfile(PNG_2D_FILE)
@@ -83,7 +105,7 @@ class TestMain(unittest.TestCase):
 
     def testGlob(self):
         silent_remove(PNG_2D_FILE)
-        test_input = ["-t", TRAJ_GLOB, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR]
+        test_input = ["-t", TRAJ_GLOB, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
         try:
             main(test_input)
             os.path.isfile(PNG_2D_FILE)
@@ -92,7 +114,7 @@ class TestMain(unittest.TestCase):
 
     def testWriteDistances(self):
         silent_remove(PCA_DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR, "-w"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(PCA_DIST_FILE, GOOD_DIST_FILE))
@@ -101,7 +123,7 @@ class TestMain(unittest.TestCase):
 
     def testStride(self):
         silent_remove(PCA_DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w",
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR, "-w",
                       "-s", "2"]
         try:
             main(test_input)
@@ -111,7 +133,7 @@ class TestMain(unittest.TestCase):
 
     def testAppendDistances(self):
         silent_remove(PCA_DIST_FILE)
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "-o", PCA_DIR, "-w"]
+        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR, "-w"]
         try:
             # The append happens in place, so the base file must first be generated
             main(test_input)
@@ -122,7 +144,7 @@ class TestMain(unittest.TestCase):
 
     def testReadDistances(self):
         silent_remove(PNG_2D_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_DIST_FILE]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_DIST_FILE]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_2D_FILE))
@@ -131,7 +153,7 @@ class TestMain(unittest.TestCase):
 
     def testReadAppend(self):
         silent_remove(PNG_2D_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_APPEND_FILE]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_APPEND_FILE]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_2D_FILE))
@@ -139,7 +161,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
     def testCombineData(self):
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-f", GOOD_APPEND_FILE, "-w"]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_APPEND_FILE, "-w"]
         try:
             silent_remove(PCA_DIST_FILE)
             main(test_input)
@@ -148,7 +170,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PCA_DIST_FILE, disable=DISABLE_REMOVE)
 
     def testCoMPlot(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "-o", PCA_DIR, "-c"]
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "--outdir", PCA_DIR, "-c"]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_1D_FILE))
@@ -157,7 +179,7 @@ class TestMain(unittest.TestCase):
 
     def testReadCOM(self):
         silent_remove(PNG_1D_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-c", "-f", PROD_CSV]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-c", "-f", PROD_CSV]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_1D_FILE))
@@ -166,7 +188,7 @@ class TestMain(unittest.TestCase):
 
     def testMultipleFiles(self):
         silent_remove(PNG_1D_FILE)
-        test_input = ["-n", NAME, "-o", PCA_DIR, "-c", "-f", PROD_CSV, AMD_CSV]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-c", "-f", PROD_CSV, AMD_CSV]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_1D_FILE))
@@ -174,7 +196,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PNG_1D_FILE, disable=DISABLE_REMOVE)
 
     def testIniFile(self):
-        test_input = ["--config", CFG_FILE, "--traj", TRAJ_FILE, "-o", PCA_DIR]
+        test_input = ["--config", CFG_FILE, "--traj", TRAJ_FILE, "--outdir", PCA_DIR]
         try:
             silent_remove(PNG_2D_FILE)
             main(test_input)
@@ -182,9 +204,18 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
+    def testOrientationPlot(self):
+        test_input = ["-o", "-n", NAME, "--outdir", PCA_DIR, "-f", ORIENTATION_LOG]
+        try:
+            silent_remove(PNG_QUAT_FILE)
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_QUAT_FILE))
+        finally:
+            silent_remove(PNG_QUAT_FILE, disable=DISABLE_REMOVE)
+
             # # This unit test is for designed exclusively for use on maitake to examine the actual plot
             # def testPlotContents(self):
             #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
-            # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "-o", PCA_DIR, ]
+            # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "--outdir", PCA_DIR, ]
             #     main(test_input)
             #     self.assertTrue(os.path.isfile(PNG_2D_FILE))

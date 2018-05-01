@@ -38,15 +38,15 @@ except ImportError:
 DEF_IG_FILE = 'IG_indices.txt'
 DEF_EG_FILE = 'EG_indices.txt'
 DEF_COM_FILE = 'sugar_protein_indices.txt'
-DEF_TRAJ = '*dcd'
 DEF_TOP = '../step5_assembly.xplor_ext.psf'
 DEF_NAME = 'PCA'
 DEF_STRIDE = 1
 DEF_CFG_FILE = "plot_pca.ini"
+DEF_QUAT_FILE = "orientation.log"
 
 MAIN_SEC = 'main'
 TPL_VALS_SEC = 'tpl_vals'
-VALID_SEC_NAMES = [MAIN_SEC,TPL_VALS_SEC]
+VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC]
 TPL_VALS = 'parameter_values'
 
 plt.rcParams.update({'font.size': 12})
@@ -134,13 +134,12 @@ def parse_cmdline(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    # TODO: Consider reading in some arguments from a config file
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
     parser.add_argument("-t", "--traj",
                         help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" '
                              'are permitted but must be written as a string',
-                        default=DEF_TRAJ)
+                        default=None)
     parser.add_argument("-l", "--list",
                         help="List of trajectory files to process. Use this option instead of glob "
                              "if memory is a concern.",
@@ -152,7 +151,7 @@ def parse_cmdline(argv=None):
                                              "Default name is the input file name with _com or _2D "
                                              "depending on whether a 1 or 2D plot is generated",
                         default=None)
-    parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.",
+    parser.add_argument("--outdir", help="Directory to save the figure to, default is current directory.",
                         default=None)
     parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=[], nargs='+')
     parser.add_argument("-w", "--write_dist",
@@ -167,14 +166,33 @@ def parse_cmdline(argv=None):
     parser.add_argument("--config",
                         help="Filename to pass arguments to plot_PCA as a config file. Default is {}".format(
                             DEF_CFG_FILE), default=DEF_CFG_FILE, type=read_cfg)
+    parser.add_argument("-o", "--orientation",
+                        help="Flag to switch to plot quaternion orientations of 2 or more protein domains. "
+                             "If no file is provided (-f), will use default of {}".format(DEF_QUAT_FILE),
+                        action='store_true', default=False)
 
     args = None
     # TODO: detect if name already has an extension (typically done for appending file, then don't add another one)
     # TODO: have default be to use the name of the csv file to name the png file
+    # TODO: if index files don't exist, automatically generate them
+    # TODO: If worthwhile, add capability to read in quat trajectories or write out files
     try:
         args = parser.parse_args(argv)
         args.traj_list = []
         args.index_list = []
+        if args.orientation and args.com:
+            raise InvalidDataError(
+                "Cannot flag both for 1D CoM plot (-c) and quaternion orientation (-o).")
+        elif args.orientation and args.traj:
+            raise InvalidDataError(
+                "plot_PCA is not currently configured to extract orientation data from trajectories."
+            )
+        elif args.orientation and args.write_dist:
+            raise InvalidDataError(
+                "plot_PCA is not currently configured to write orientation data to a file."
+            )
+        elif args.orientation and bool(args.file) is False:
+            args.file.append(DEF_QUAT_FILE)
         if args.config is not None:
             if args.name is None and args.config['filled_tpl_name']:
                 args.name = args.config['filled_tpl_name']
@@ -187,7 +205,7 @@ def parse_cmdline(argv=None):
         if not args.file:
             if args.list:
                 if args.name is None:
-                    args.name = os.path.splitext(args.traj_list)[0]
+                    args.name = os.path.splitext(args.list)[0]
                 args.traj_list += file_rows_to_list(args.list)
             else:
                 args.traj_list.append(args.traj)
@@ -234,7 +252,7 @@ def parse_cmdline(argv=None):
 
 
 def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
-                      ax=None):
+                      orient=False, ax=None):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -252,6 +270,18 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                         COM_list.append(i)
             log.close()
             COM_distance = np.array(COM_list, float)
+
+        elif orient:
+            q1_6_angles = []
+            q7_12_angles = []
+
+            with open(log_file, "rt") as fin:
+                for line in fin:
+                    if line != '\n' and line[0] != '#':
+                        s_line = line.split()
+                        q1_6, q7_12 = 2 * np.arccos(float(s_line[2])), 2 * np.arccos(float(s_line[11]))
+                        q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
+
         else:
             EG_list = []
             IG_list = []
@@ -325,6 +355,10 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 ax[1].plot(ydummy, dummy, antialiased=True, linewidth=2)
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
+        elif orient:
+            ax[0].plot(q1_6_angles, label='q1_6')
+            ax[0].plot(q7_12_angles, label='q7_12')
+
         else:
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
@@ -358,6 +392,12 @@ def main(argv=None):
                     ax1.set_xlim(0, 1)
                     ax.append(ax1)
 
+            elif args.orientation:
+                fig, ax0 = plt.subplots()
+                ax0.set_xlabel = "Timestep"
+                ax0.set_ylabel = "Angle (degrees)"
+                ax = [ax0]
+
             else:
                 fig, ax0 = plt.subplots()
                 ax = [ax0]
@@ -381,16 +421,18 @@ def main(argv=None):
             ax = []
         for traj in args.traj_list:
             plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              args.file, args.write_dist, args.com, ax)
+                              args.file, args.write_dist, args.com, args.orientation, ax)
         for file in args.file:
             plot_trajectories(args.traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              file, args.write_dist, args.com, ax)
+                              file, args.write_dist, args.com, args.orientation, ax)
         if not args.write_dist:
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
                 ax0.set_xlim(0)
             if args.com:
                 name = args.name + '_com'
+            elif args.orientation:
+                name = args.name + '_quat'
             else:
                 name = args.name + '_2D'
             save_figure(name, args.outdir)
