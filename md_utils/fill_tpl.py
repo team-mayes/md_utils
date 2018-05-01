@@ -68,6 +68,9 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         value is missing.
     :return: A dict of the processed configuration file's data.
     """
+    if f_loc == 'plot_pca.ini' and not os.path.isfile(f_loc):
+        return None
+
     config = ConfigParser()
     try:
         good_files = config.read(f_loc)

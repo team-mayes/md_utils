@@ -11,8 +11,16 @@ from glob import glob
 import csv
 import sys
 import warnings
+from md_utils.fill_tpl import read_cfg
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
+
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, MissingSectionHeaderError
 
 # This line switches to a non-Gui backend, allowing plotting on PSC Bridges
 plt.switch_backend('agg')
@@ -34,6 +42,12 @@ DEF_TRAJ = '*dcd'
 DEF_TOP = '../step5_assembly.xplor_ext.psf'
 DEF_NAME = 'PCA'
 DEF_STRIDE = 1
+DEF_CFG_FILE = "plot_pca.ini"
+
+MAIN_SEC = 'main'
+TPL_VALS_SEC = 'tpl_vals'
+VALID_SEC_NAMES = [MAIN_SEC,TPL_VALS_SEC]
+TPL_VALS = 'parameter_values'
 
 plt.rcParams.update({'font.size': 12})
 
@@ -45,6 +59,49 @@ def save_figure(name, out_dir=None):
     else:
         fig_dir = out_dir
     plt.savefig(fig_dir + '/' + name, bbox_inches='tight')
+
+
+# For unknown reasons my modified version doesn't work, may revisit later so it isn't
+# shoehorned into the existing read_cfg as is the current setup
+# def read_cfg(f_loc):
+#     print("Welcome to read_cfg")
+#     print("Log file is {}".format(f_loc))
+#     """
+#     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
+#
+#     :param f_loc: The location of the file to read.
+#     :param cfg_proc: The processor to use for the raw configuration values.  Uses default values when the raw
+#         value is missing.
+#     :return: A dict of the processed configuration file's data.
+#     """
+#     config = ConfigParser()
+#     try:
+#         good_files = config.read(f_loc)
+#     except MissingSectionHeaderError:
+#         raise InvalidDataError(MISSING_SEC_HEADER_ERR_MSG.format(f_loc))
+#     if not good_files:
+#         if not f_loc == DEF_CFG_FILE:
+#             print('Could not read file {}'.format(f_loc))
+#         return None
+#
+#     # Start with empty template value dictionaries to be filled
+#     proc = {}
+#
+#     if MAIN_SEC not in config.sections():
+#         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
+#
+#     for section in config.sections():
+#         if section == MAIN_SEC:
+#             try:
+#                 proc.update(process_cfg(dict(config.items(MAIN_SEC))))
+#             except InvalidDataError as e:
+#                 if 'Unexpected key' in e.args[0]:
+#                     raise InvalidDataError(e.args[0] + " Does this belong \nin a different template value section?")
+#         else:
+#             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
+#                                    "".format(section, VALID_SEC_NAMES))
+#
+#     return proc
 
 
 def com_distance(traj, indexfile):
@@ -69,7 +126,7 @@ def com_distance(traj, indexfile):
     return distance
 
 
-def parse_cmdline(argv):
+def parse_cmdline(argv=None):
     """
     Returns the parsed argument list and return code.
     `argv` is a list of arguments, or `None` for ``sys.argv[1:]``.
@@ -91,8 +148,10 @@ def parse_cmdline(argv):
     parser.add_argument("-p", "--top", help="Topology file for the given trajectory files.",
                         default=DEF_TOP)
     parser.add_argument("-i", "--indices", help="Separate files with the EG and IG indices.", default=None, nargs='+')
-    parser.add_argument("-n", "--name", help="Name for the saved plot. Default name is {}".format(DEF_NAME),
-                        default=DEF_NAME)
+    parser.add_argument("-n", "--name", help="Name for the saved plot. "
+                                             "Default name is the input file name with _com or _2D "
+                                             "depending on whether a 1 or 2D plot is generated",
+                        default=None)
     parser.add_argument("-o", "--outdir", help="Directory to save the figure to, default is current directory.",
                         default=None)
     parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=[], nargs='+')
@@ -105,18 +164,35 @@ def parse_cmdline(argv):
                             DEF_STRIDE), type=int, default=DEF_STRIDE)
     parser.add_argument("-c", "--com", help="Flag to switch to a 1D CoM plot instead of a 2D PCA plot.",
                         action='store_true', default=False)
+    parser.add_argument("--config",
+                        help="Filename to pass arguments to plot_PCA as a config file. Default is {}".format(
+                            DEF_CFG_FILE), default=DEF_CFG_FILE, type=read_cfg)
 
     args = None
+    # TODO: detect if name already has an extension (typically done for appending file, then don't add another one)
+    # TODO: have default be to use the name of the csv file to name the png file
     try:
         args = parser.parse_args(argv)
         args.traj_list = []
         args.index_list = []
+        if args.config is not None:
+            if args.name is None and args.config['filled_tpl_name']:
+                args.name = args.config['filled_tpl_name']
+            if args.indices is None and bool(args.config['parameter_values']['indices']) is True:
+                for index in args.config['parameter_values']['indices']:
+                    args.index_list.append(index)
+            if args.top is DEF_TOP and bool(args.config['parameter_values']['top']) is True:
+                args.top = args.config['parameter_values']['top'][0]
         # If a log file is read in, trajectory information is not required
         if not args.file:
             if args.list:
+                if args.name is None:
+                    args.name = os.path.splitext(args.traj_list)[0]
                 args.traj_list += file_rows_to_list(args.list)
             else:
                 args.traj_list.append(args.traj)
+                if args.name is None:
+                    args.name = os.path.splitext(args.traj)[0]
             if len(args.traj_list) < 1:
                 raise InvalidDataError(
                     "Found no traj file names to process. Specify one or more files as specified in "
@@ -124,20 +200,23 @@ def parse_cmdline(argv):
             if not os.path.isfile(args.top):
                 raise IOError("Could not find specified file: {}".format(args.top))
             # Process index information
-            if args.indices is None and not args.com:
-                args.index_list.append(DEF_EG_FILE)
-                args.index_list.append(DEF_IG_FILE)
-            elif args.indices is None and args.com:
-                args.index_list.append(DEF_COM_FILE)
-            else:
-                for index in args.indices:
-                    args.index_list.append(index)
-                if "IG" in args.index_list[0]:
-                    print("Detected index file {} as IG index. Swapping now.".format(args.index_list[0]))
-                    args.index_list[0], args.index_list[1] = args.index_list[1], args.index_list[0]
+            if bool(args.index_list) is False:
+                if args.indices is None and not args.com:
+                    args.index_list.append(DEF_EG_FILE)
+                    args.index_list.append(DEF_IG_FILE)
+                elif args.indices is None and args.com:
+                    args.index_list.append(DEF_COM_FILE)
+                else:
+                    for index in args.indices:
+                        args.index_list.append(index)
+                    if "IG" in args.index_list[0]:
+                        print("Detected index file {} as IG index. Swapping now.".format(args.index_list[0]))
+                        args.index_list[0], args.index_list[1] = args.index_list[1], args.index_list[0]
             for index in args.index_list:
                 if not os.path.isfile(index):
                     raise IOError("Could not find specified index file: {}".format(index))
+        if args.name is None:
+            args.name = os.path.splitext(args.file)
         # Check for stride error
         if args.stride < 1:
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(args.stride))
@@ -296,7 +375,7 @@ def main(argv=None):
                     ax = [ax0, ax1, ax2]
                 ax0.set_xlim(7.5, 15)
                 ax0.set_ylim(7, 17)
-                ax0.set(xlabel="EG Distance ($\AA$)", ylabel="IG Distance ($\AA$)")
+                ax0.set(xlabel="Extracellular Gate Distance ($\AA$)", ylabel="Intracellular Gate Distance ($\AA$)")
 
         else:
             ax = []

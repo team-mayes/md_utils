@@ -137,6 +137,8 @@ def make_restart(file, xsc_file):
                     fout.write(line.replace(old_log, new_out + '.log'))
                 else:
                     fout.write(line)
+    print("Wrote file: {}".format(restart_inp))
+    print("Wrote file: {}".format(restart_job))
 
 
 def validate_args(args):

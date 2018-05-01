@@ -26,6 +26,7 @@ COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
 PROD_CSV = os.path.join(PCA_DIR, 'production.csv')
 AMD_CSV = os.path.join(PCA_DIR, 'aMD10.csv')
 NAME = 'test'
+CFG_FILE = os.path.join(PCA_DIR, 'plot_pca.ini')
 PNG_2D_FILE = os.path.join(PCA_DIR, 'test_2D.png')
 PNG_1D_FILE = os.path.join(PCA_DIR, 'test_com.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
@@ -171,6 +172,15 @@ class TestMain(unittest.TestCase):
             self.assertTrue(os.path.isfile(PNG_1D_FILE))
         finally:
             silent_remove(PNG_1D_FILE, disable=DISABLE_REMOVE)
+
+    def testIniFile(self):
+        test_input = ["--config", CFG_FILE, "--traj", TRAJ_FILE, "-o", PCA_DIR]
+        try:
+            silent_remove(PNG_2D_FILE)
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_2D_FILE))
+        finally:
+            silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
             # # This unit test is for designed exclusively for use on maitake to examine the actual plot
             # def testPlotContents(self):
