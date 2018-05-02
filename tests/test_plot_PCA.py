@@ -11,7 +11,7 @@ from md_utils.plot_PCA import main
 
 __author__ = 'adams'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -80,7 +80,8 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("Cannot flag both" in output)
 
     def testOrientationTraj(self):
-        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR, "-o"]
+        test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR,
+                      "-o"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
@@ -92,6 +93,7 @@ class TestMainFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("write orientation data" in output)
+
 
 class TestMain(unittest.TestCase):
     def testWithProtxData(self):

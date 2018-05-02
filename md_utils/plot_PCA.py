@@ -279,7 +279,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 for line in fin:
                     if line != '\n' and line[0] != '#':
                         s_line = line.split()
-                        q1_6, q7_12 = 2 * np.arccos(float(s_line[2])), 2 * np.arccos(float(s_line[11]))
+                        q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
+                            float(s_line[11])) / np.pi
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
         else:
@@ -356,8 +357,9 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
         elif orient:
-            ax[0].plot(q1_6_angles, label='q1_6')
-            ax[0].plot(q7_12_angles, label='q7_12')
+            ax[0].plot(q1_6_angles, label='N (static)-domain')
+            ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            plt.legend()
 
         else:
             # Suppress the error associated with a larger display window than is sampled
@@ -394,8 +396,7 @@ def main(argv=None):
 
             elif args.orientation:
                 fig, ax0 = plt.subplots()
-                ax0.set_xlabel = "Timestep"
-                ax0.set_ylabel = "Angle (degrees)"
+                ax0.set(xlabel="Timestep", ylabel="Angle (degrees)")
                 ax = [ax0]
 
             else:
