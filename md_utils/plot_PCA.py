@@ -156,7 +156,8 @@ def parse_cmdline(argv=None):
     parser.add_argument("-f", "--file", help="Text file containing logged distances to plot.", default=[], nargs='+')
     parser.add_argument("-w", "--write_dist",
                         help="Flag to log distances as a csv file rather than generate plot. "
-                             "Useful when dealing with large trajectories or limited memory.",
+                             "Useful when dealing with large trajectories or limited memory. "
+                             "Default is True for reading from trajectory files.",
                         action='store_true', default=False)
     parser.add_argument("-s", "--stride",
                         help="Frequency with which to read in frames from trajectory files. Default is {}.".format(
@@ -180,6 +181,7 @@ def parse_cmdline(argv=None):
         args = parser.parse_args(argv)
         args.traj_list = []
         args.index_list = []
+        args.write_intermediate = False
         if args.orientation and args.com:
             raise InvalidDataError(
                 "Cannot flag both for 1D CoM plot (-c) and quaternion orientation (-o).")
@@ -208,6 +210,8 @@ def parse_cmdline(argv=None):
                     args.name = os.path.splitext(args.list)[0]
                 args.traj_list += file_rows_to_list(args.list)
             else:
+                # TODO: If given a list and not -w, make intermediate file and then read file to make plot
+                args.write_intermediate = True
                 args.traj_list.append(args.traj)
                 if args.name is None:
                     args.name = os.path.splitext(args.traj)[0]
@@ -215,6 +219,9 @@ def parse_cmdline(argv=None):
                 raise InvalidDataError(
                     "Found no traj file names to process. Specify one or more files as specified in "
                     "the help documentation ('-h').")
+            for traj in args.traj_list:
+                if not os.path.isfile(traj):
+                    raise IOError("Could not find specified file: {}".format(traj))
             if not os.path.isfile(args.top):
                 raise IOError("Could not find specified file: {}".format(args.top))
             # Process index information
@@ -252,7 +259,7 @@ def parse_cmdline(argv=None):
 
 
 def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
-                      orient=False, ax=None):
+                      orient=False, write_intermediate=False, ax=None):
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -321,7 +328,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             IG_distance = com_distance(t, ig_file)
         del t
 
-    if write:
+    if write or write_intermediate:
         if out_dir is None:
             csv_dir = './'
         else:
@@ -344,7 +351,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             else:
                 dist_writer.writerow(EG_distance)
                 dist_writer.writerow(IG_distance)
-    else:
+    elif not write:
         if com:
             ax[0].plot(COM_distance, label=log_file)
             if HISTOGRAMS:
@@ -422,10 +429,10 @@ def main(argv=None):
             ax = []
         for traj in args.traj_list:
             plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              args.file, args.write_dist, args.com, args.orientation, ax)
+                              args.file, args.write_dist, args.com, args.orientation, args.write_intermediate, ax)
         for file in args.file:
             plot_trajectories(args.traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              file, args.write_dist, args.com, args.orientation, ax)
+                              file, args.write_dist, args.com, args.orientation, args.write_intermediate, ax)
         if not args.write_dist:
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
