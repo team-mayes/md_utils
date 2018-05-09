@@ -61,49 +61,6 @@ def save_figure(name, out_dir=None):
     plt.savefig(fig_dir + '/' + name, bbox_inches='tight')
 
 
-# For unknown reasons my modified version doesn't work, may revisit later so it isn't
-# shoehorned into the existing read_cfg as is the current setup
-# def read_cfg(f_loc):
-#     print("Welcome to read_cfg")
-#     print("Log file is {}".format(f_loc))
-#     """
-#     Reads the given configuration file, returning a dict with the converted values supplemented by default values.
-#
-#     :param f_loc: The location of the file to read.
-#     :param cfg_proc: The processor to use for the raw configuration values.  Uses default values when the raw
-#         value is missing.
-#     :return: A dict of the processed configuration file's data.
-#     """
-#     config = ConfigParser()
-#     try:
-#         good_files = config.read(f_loc)
-#     except MissingSectionHeaderError:
-#         raise InvalidDataError(MISSING_SEC_HEADER_ERR_MSG.format(f_loc))
-#     if not good_files:
-#         if not f_loc == DEF_CFG_FILE:
-#             print('Could not read file {}'.format(f_loc))
-#         return None
-#
-#     # Start with empty template value dictionaries to be filled
-#     proc = {}
-#
-#     if MAIN_SEC not in config.sections():
-#         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
-#
-#     for section in config.sections():
-#         if section == MAIN_SEC:
-#             try:
-#                 proc.update(process_cfg(dict(config.items(MAIN_SEC))))
-#             except InvalidDataError as e:
-#                 if 'Unexpected key' in e.args[0]:
-#                     raise InvalidDataError(e.args[0] + " Does this belong \nin a different template value section?")
-#         else:
-#             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
-#                                    "".format(section, VALID_SEC_NAMES))
-#
-#     return proc
-
-
 def com_distance(traj, indexfile):
     # this function accepts a trajectory and a file with two rows of
     # 0 indexed indices to compute the center of mass for 2 groups
@@ -174,7 +131,6 @@ def parse_cmdline(argv=None):
 
     args = None
     # TODO: detect if name already has an extension (typically done for appending file, then don't add another one)
-    # TODO: have default be to use the name of the csv file to name the png file
     # TODO: if index files don't exist, automatically generate them
     # TODO: If worthwhile, add capability to read in quat trajectories or write out files
     try:
@@ -208,12 +164,12 @@ def parse_cmdline(argv=None):
             args.write_dist = True
             if args.list:
                 if args.name is None:
-                    args.name = os.path.splitext(args.list)[0]
+                    args.name = os.path.splitext(args.list)[0].split('/')[-1]
                 args.traj_list += file_rows_to_list(args.list)
             else:
                 args.traj_list.append(args.traj)
                 if args.name is None:
-                    args.name = os.path.splitext(args.traj)[0]
+                    args.name = os.path.splitext(args.traj)[0].split('/')[-1]
             if len(args.traj_list) < 1:
                 raise InvalidDataError(
                     "Found no traj file names to process. Specify one or more files as specified in "
@@ -240,7 +196,10 @@ def parse_cmdline(argv=None):
                 if not os.path.isfile(index):
                     raise IOError("Could not find specified index file: {}".format(index))
         if args.name is None:
-            args.name = os.path.splitext(args.file)
+            args.name = os.path.splitext(args.file[0])[0].split('/')[-1]
+        elif os.path.splitext(args.name)[1] != '':
+            print("Removing extension")
+            args.name = args.name.split(".")[:-1][0]
         # Check for stride error
         if args.stride < 1:
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(args.stride))
@@ -436,12 +395,10 @@ def main(argv=None):
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
                 ax0.set_xlim(0)
-            if args.com:
-                name = args.name + '_com'
-            elif args.orientation:
+            if args.orientation:
                 name = args.name + '_quat'
             else:
-                name = args.name + '_2D'
+                name = args.name
             save_figure(name, args.outdir)
             print("Wrote file: {}".format(name + '.png'))
             plt.close("all")

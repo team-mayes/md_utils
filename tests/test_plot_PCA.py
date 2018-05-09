@@ -26,6 +26,7 @@ COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
 PROD_CSV = os.path.join(PCA_DIR, 'production.csv')
 AMD_CSV = os.path.join(PCA_DIR, 'aMD10.csv')
 ORIENTATION_LOG = os.path.join(PCA_DIR, 'orientation.log')
+QUAT_FILE_DEF_NAME = os.path.join(PCA_DIR, 'orientation_quat.png')
 NAME = 'test'
 CFG_FILE = os.path.join(PCA_DIR, 'plot_pca.ini')
 PNG_2D_FILE = os.path.join(PCA_DIR, 'test_2D.png')
@@ -40,8 +41,9 @@ GOOD_COMBINED_FILE = os.path.join(PCA_DIR, 'dist_combined_good.csv')
 GOOD_STRIDE_FILE = os.path.join(PCA_DIR, 'dist_stride_good.csv')
 GOOD_COM_FILE = os.path.join(PCA_DIR, 'com_good.csv')
 BAD_LIST = os.path.join(PCA_DIR, 'bad_list.txt')
+BAD_NAME = 'test.csv'
 
-# TODO: Add test for list?
+
 class TestMainFailWell(unittest.TestCase):
     def testHelp(self):
         test_input = ['-h']
@@ -74,17 +76,6 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("must be > 1" in output)
 
-    # Noticably increases total test time and checks for a condition that does not fail, merely corrects an error
-    # and informs the user
-    # def testSwapIndices(self):
-    #     test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", IG_FILE, EG_FILE, "-n", NAME, "--outdir", PCA_DIR]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stdout(main, test_input) as output:
-    #         self.assertTrue("Detected" in output)
-    #         silent_remove(PCA_DIST_OUT, disable=DISABLE_REMOVE)
-    #         silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
-
     def testBothFlags(self):
         test_input = ["-n", NAME, "--outdir", PCA_DIR, "-c", "-f", PROD_CSV, "-o"]
         if logger.isEnabledFor(logging.DEBUG):
@@ -99,6 +90,14 @@ class TestMainFailWell(unittest.TestCase):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("not currently configured" in output)
+
+    def testBadName(self):
+        test_input = ["-n", BAD_NAME, "--outdir", PCA_DIR, "-f", GOOD_DIST_FILE]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stdout(main, test_input) as output:
+            self.assertTrue("Removing extension" in output)
+        silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
 # This catches an error that is no longer relevant
 #     def testOrientationWrite(self):
@@ -120,16 +119,6 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PCA_DIST_OUT, disable=DISABLE_REMOVE)
             # silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
-
-    # Presently, glob does not seem like a useful feature to be testing for
-    # def testGlob(self):
-    #     silent_remove(PNG_2D_FILE)
-    #     test_input = ["-t", TRAJ_GLOB, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
-    #     try:
-    #         main(test_input)
-    #         os.path.isfile(PNG_2D_FILE)
-    #     finally:
-    #         silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
     def testWriteDistances(self):
         test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
@@ -238,9 +227,11 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PNG_QUAT_FILE, disable=DISABLE_REMOVE)
 
-            # # This unit test is for designed exclusively for use on maitake to examine the actual plot
-            # def testPlotContents(self):
-            #     test_input = ["-t", "/Users/xadams/XylE/InwardOpen_deprotonated/namd/7.2.dcd",
-            # "-p", TOP_FILE, "-i", IG_FILE, "-e", EG_FILE, "-n", NAME, "--outdir", PCA_DIR, ]
-            #     main(test_input)
-            #     self.assertTrue(os.path.isfile(PNG_2D_FILE))
+    def testNoName(self):
+        test_input = ["-o", "--outdir", PCA_DIR, "-f", ORIENTATION_LOG]
+        try:
+            silent_remove(QUAT_FILE_DEF_NAME)
+            main(test_input)
+            self.assertTrue(os.path.isfile(QUAT_FILE_DEF_NAME))
+        finally:
+            silent_remove(QUAT_FILE_DEF_NAME, disable=DISABLE_REMOVE)
