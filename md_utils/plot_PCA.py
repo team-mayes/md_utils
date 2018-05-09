@@ -11,6 +11,7 @@ from glob import glob
 import csv
 import sys
 import warnings
+import copy as copy
 from md_utils.fill_tpl import read_cfg
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
@@ -27,6 +28,7 @@ plt.switch_backend('agg')
 
 HISTOGRAMS = False
 LINE_GRAPHS = False
+DELTA_PHI = True
 
 try:
     # noinspection PyCompatibility
@@ -60,6 +62,14 @@ def save_figure(name, out_dir=None):
         fig_dir = out_dir
     plt.savefig(fig_dir + '/' + name, bbox_inches='tight')
 
+def unit_vector(vector):
+    return vector / np.linalg.norm(vector)
+
+
+def angle_between(v1, v2):
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)) * 180 / np.pi
 
 def com_distance(traj, indexfile):
     # this function accepts a trajectory and a file with two rows of
@@ -130,7 +140,6 @@ def parse_cmdline(argv=None):
                         action='store_true', default=False)
 
     args = None
-    # TODO: detect if name already has an extension (typically done for appending file, then don't add another one)
     # TODO: if index files don't exist, automatically generate them
     # TODO: If worthwhile, add capability to read in quat trajectories or write out files
     try:
@@ -239,6 +248,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         elif orient:
             q1_6_angles = []
             q7_12_angles = []
+            delta1_6_angles = []
+            delta7_12_angles = []
 
             with open(log_file, "rt") as fin:
                 for line in fin:
@@ -246,6 +257,19 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                         s_line = line.split()
                         q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
                             float(s_line[11])) / np.pi
+                        if DELTA_PHI:
+                            v1_6_new = np.array([s_line[4], s_line[6], s_line[8]],float)
+                            v7_12_new = np.array([s_line[13], s_line[15], s_line[17]],float)
+                            if bool(delta1_6_angles):
+                                delta1_6 = angle_between(v1_6_new,v1_6_old)
+                                delta7_12 = angle_between(v7_12_new,v7_12_old)
+                            else:
+                                delta1_6=0
+                                delta7_12=0
+                            v1_6_old = copy.copy(v1_6_new)
+                            v7_12_old = copy.copy(v7_12_new)
+                            delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
+
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
         else:
@@ -324,6 +348,9 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         elif orient:
             ax[0].plot(q1_6_angles, label='N (static)-domain')
             ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            if DELTA_PHI:
+                ax[1].plot(delta1_6_angles, label='N (static)-domain')
+                ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
             plt.legend()
 
         else:
@@ -360,9 +387,13 @@ def main(argv=None):
                     ax.append(ax1)
 
             elif args.orientation:
-                fig, ax0 = plt.subplots()
-                ax0.set(xlabel="Timestep", ylabel="Angle (degrees)")
+                ax0 = plt.subplot(212)
+                ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
                 ax = [ax0]
+                if DELTA_PHI:
+                    ax1 = plt.subplot(211, sharex=ax0)
+                    ax1.set(ylabel="$\Delta$$\phi$ (degrees)")
+                    ax.append(ax1)
 
             else:
                 fig, ax0 = plt.subplots()
