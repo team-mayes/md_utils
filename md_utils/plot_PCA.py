@@ -62,6 +62,7 @@ def save_figure(name, out_dir=None):
         fig_dir = out_dir
     plt.savefig(fig_dir + '/' + name, bbox_inches='tight')
 
+
 def unit_vector(vector):
     return vector / np.linalg.norm(vector)
 
@@ -71,25 +72,20 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)) * 180 / np.pi
 
-def com_distance(traj, indexfile):
+
+def com_distance(traj, group1, group2):
     # this function accepts a trajectory and a file with two rows of
     # 0 indexed indices to compute the center of mass for 2 groups
-    with open(indexfile, newline='') as file:
-        rows = csv.reader(file, delimiter=' ', quotechar='|')
-        ind_list = []
-        for row in rows:
-            ind_list.append(row)
-    fronthalf = np.array(ind_list[0], int)
-    backhalf = np.array(ind_list[1], int)
-    traj1 = traj.atom_slice(fronthalf)
-    traj2 = traj.atom_slice(backhalf)
+
+    traj1 = traj.atom_slice(group1)
+    traj2 = traj.atom_slice(group2)
     com1 = md.compute_center_of_mass(traj1)
     com2 = md.compute_center_of_mass(traj2)
 
     n = com1.shape[0]
     distance = np.empty([n], float)
     for i in range(0, n):
-        distance[i] = abs(np.linalg.norm(com1[i, :] - com2[i, :])) * 10
+        distance[i] = abs(np.linalg.norm(com1[i, :] - com2[i, :])) * 10  # convert from nm to Angstroms
     return distance
 
 
@@ -258,14 +254,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                         q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
                             float(s_line[11])) / np.pi
                         if DELTA_PHI:
-                            v1_6_new = np.array([s_line[4], s_line[6], s_line[8]],float)
-                            v7_12_new = np.array([s_line[13], s_line[15], s_line[17]],float)
+                            v1_6_new = np.array([s_line[4], s_line[6], s_line[8]], float)
+                            v7_12_new = np.array([s_line[13], s_line[15], s_line[17]], float)
                             if bool(delta1_6_angles):
-                                delta1_6 = angle_between(v1_6_new,v1_6_old)
-                                delta7_12 = angle_between(v7_12_new,v7_12_old)
+                                delta1_6 = angle_between(v1_6_new, v1_6_old)
+                                delta7_12 = angle_between(v7_12_new, v7_12_old)
                             else:
-                                delta1_6=0
-                                delta7_12=0
+                                delta1_6 = 0
+                                delta7_12 = 0
                             v1_6_old = copy.copy(v1_6_new)
                             v7_12_old = copy.copy(v7_12_new)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
@@ -298,16 +294,35 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
     else:
         # TODO: Restructure to more easily change to a different CV
         print("Reading data from trajectory: {}.".format(traj))
+
+        ind_list = []
+        for indexfile in indices:
+            with open(indexfile, newline='') as file:
+                rows = csv.reader(file, delimiter=' ', quotechar='|')
+                for row in rows:
+                    ind_list.append(row)
+        # compress to 1D list. Would love to hear an alternative way to do this
+        atom_indices = np.array([j for i in ind_list for j in i], int)
+
         trajfile = glob(traj)
-        t = md.load(trajfile, top=topfile, stride=stride)
+        t = md.load(trajfile, top=topfile, stride=stride, atom_indices=atom_indices)
 
         if com:
-            COM_distance = com_distance(t, indices[0])
+            group_indices = np.linspace(0, atom_indices.size - 1, atom_indices.size)
+            group1 = group_indices[0:len(ind_list[0])].astype(int)
+            group2 = group_indices[len(ind_list[0]):].astype(int)
+            COM_distance = com_distance(t, group1, group2)
         else:
-            eg_file = indices[0]
-            ig_file = indices[1]
-            EG_distance = com_distance(t, eg_file)
-            IG_distance = com_distance(t, ig_file)
+            # don't look at it, it's hideous
+            group_indices = np.linspace(0, atom_indices.size - 1, atom_indices.size)
+            group1 = group_indices[0:len(ind_list[0])].astype(int)
+            group2 = group_indices[len(ind_list[0]):len(ind_list[0]) + len(ind_list[1])].astype(int)
+            group3 = group_indices[
+                     len(ind_list[0]) + len(ind_list[1]):len(ind_list[0]) + len(ind_list[1]) + len(ind_list[2])].astype(
+                int)
+            group4 = group_indices[len(ind_list[0]) + len(ind_list[1]) + len(ind_list[2]):].astype(int)
+            EG_distance = com_distance(t, group1, group2)
+            IG_distance = com_distance(t, group3, group4)
         del t
 
     if write:
@@ -395,7 +410,7 @@ def main(argv=None):
                     ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
                     ax1 = plt.subplot(211, sharex=ax0)
                     ax1.set(ylabel="$\Delta$$\phi$ (degrees)")
-                    ax1.set_ylim(0,60)
+                    ax1.set_ylim(0, 60)
                     ax = [ax0, ax1]
 
             else:

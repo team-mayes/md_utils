@@ -114,6 +114,7 @@ class TestMain(unittest.TestCase):
         test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
         try:
             # silent_remove(PNG_2D_FILE)
+            silent_remove(PCA_DIST_OUT)
             main(test_input)
             self.assertFalse(diff_lines(PCA_DIST_OUT, GOOD_DIST_FILE))
             # self.assertTrue(os.path.isfile(PNG_2D_FILE))
@@ -182,6 +183,7 @@ class TestMain(unittest.TestCase):
     def testCoMPlot(self):
         test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "--outdir", PCA_DIR, "-c"]
         try:
+            silent_remove(COM_DIST_OUT)
             main(test_input)
             self.assertFalse(diff_lines(COM_DIST_OUT, GOOD_COM_FILE))
             # self.assertTrue(os.path.isfile(PNG_1D_FILE))
