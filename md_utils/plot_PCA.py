@@ -387,13 +387,16 @@ def main(argv=None):
                     ax.append(ax1)
 
             elif args.orientation:
-                ax0 = plt.subplot(212)
+                fig, ax0 = plt.subplots()
                 ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
                 ax = [ax0]
                 if DELTA_PHI:
+                    ax0 = plt.subplot(212)
+                    ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
                     ax1 = plt.subplot(211, sharex=ax0)
                     ax1.set(ylabel="$\Delta$$\phi$ (degrees)")
-                    ax.append(ax1)
+                    ax1.set_ylim(0,60)
+                    ax = [ax0, ax1]
 
             else:
                 fig, ax0 = plt.subplots()

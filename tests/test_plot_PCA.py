@@ -11,7 +11,7 @@ from md_utils.plot_PCA import main
 
 __author__ = 'adams'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -29,8 +29,9 @@ ORIENTATION_LOG = os.path.join(PCA_DIR, 'orientation.log')
 QUAT_FILE_DEF_NAME = os.path.join(PCA_DIR, 'orientation_quat.png')
 NAME = 'test'
 CFG_FILE = os.path.join(PCA_DIR, 'plot_pca.ini')
-PNG_2D_FILE = os.path.join(PCA_DIR, 'test_2D.png')
-PNG_1D_FILE = os.path.join(PCA_DIR, 'test_com.png')
+# These PNG names are currently degenerate but weren't always and may not be someday
+PNG_2D_FILE = os.path.join(PCA_DIR, 'test.png')
+PNG_1D_FILE = os.path.join(PCA_DIR, 'test.png')
 PNG_QUAT_FILE = os.path.join(PCA_DIR, 'test_quat.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
 PCA_DIST_OUT = os.path.join(PCA_DIR, 'test_2D.csv')
