@@ -28,7 +28,7 @@ plt.switch_backend('agg')
 
 HISTOGRAMS = False
 LINE_GRAPHS = False
-DELTA_PHI = True
+DELTA_PHI = False
 
 try:
     # noinspection PyCompatibility
@@ -361,8 +361,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
         elif orient:
-            ax[0].plot(q1_6_angles, label='N (static)-domain')
-            ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            # ax[0].plot(q1_6_angles, label='N (static)-domain')
+            # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
+                                      cmap="summer",
+                                      cbar_label=None,
+                                      cbar=False)
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
@@ -403,7 +409,9 @@ def main(argv=None):
 
             elif args.orientation:
                 fig, ax0 = plt.subplots()
-                ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
+                # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
+                # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
+                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
