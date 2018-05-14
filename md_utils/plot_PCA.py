@@ -363,16 +363,16 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         elif orient:
             # ax[0].plot(q1_6_angles, label='N (static)-domain')
             # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            # plt.legend()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
-                                      cmap="summer",
+                                      cmap="Reds",
                                       cbar_label=None,
-                                      cbar=False)
+                                      cbar=True)
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
-            plt.legend()
 
         else:
             # Suppress the error associated with a larger display window than is sampled
