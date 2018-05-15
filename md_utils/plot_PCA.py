@@ -28,7 +28,7 @@ plt.switch_backend('agg')
 
 HISTOGRAMS = False
 LINE_GRAPHS = False
-DELTA_PHI = False
+DELTA_PHI = True
 
 try:
     # noinspection PyCompatibility
@@ -248,22 +248,17 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             delta7_12_angles = []
 
             with open(log_file, "rt") as fin:
+                U = np.array([0.9647, 0.2503, 0.0815]) # Referenced Unbiased opening rotation axis
                 for line in fin:
                     if line != '\n' and line[0] != '#':
                         s_line = line.split()
                         q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
                             float(s_line[11])) / np.pi
                         if DELTA_PHI:
-                            v1_6_new = np.array([s_line[4], s_line[6], s_line[8]], float)
-                            v7_12_new = np.array([s_line[13], s_line[15], s_line[17]], float)
-                            if bool(delta1_6_angles):
-                                delta1_6 = angle_between(v1_6_new, v1_6_old)
-                                delta7_12 = angle_between(v7_12_new, v7_12_old)
-                            else:
-                                delta1_6 = 0
-                                delta7_12 = 0
-                            v1_6_old = copy.copy(v1_6_new)
-                            v7_12_old = copy.copy(v7_12_new)
+                            v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
+                            v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
+                            delta1_6 = angle_between(v1_6, U)
+                            delta7_12 = angle_between(v7_12, U)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
 
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
@@ -361,15 +356,15 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
         elif orient:
-            # ax[0].plot(q1_6_angles, label='N (static)-domain')
-            # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
-            # plt.legend()
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
-                                      cmap="Reds",
-                                      cbar_label=None,
-                                      cbar=True)
+            ax[0].plot(q1_6_angles, label='N (static)-domain')
+            ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            plt.legend()
+            # with warnings.catch_warnings():
+            #     warnings.simplefilter("ignore")
+            #     mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
+            #                           cmap="Reds",
+            #                           cbar_label=None,
+            #                           cbar=True)
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
@@ -410,8 +405,8 @@ def main(argv=None):
             elif args.orientation:
                 fig, ax0 = plt.subplots()
                 # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
-                # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
-                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
+                ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
+                # ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
