@@ -260,6 +260,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                             delta1_6 = angle_between(v1_6, U)
                             delta7_12 = angle_between(v7_12, U)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
+                            if delta1_6 > 150:
+                                q1_6 *= -1
+                            elif delta1_6 > 30:
+                                q1_6 = 0
+                            if delta7_12 > 150:
+                                q7_12 *= -1
+                            elif delta7_12 > 30:
+                                q7_12 = 0
 
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
@@ -368,6 +376,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
+                ax[1].axhline(y=150,linestyle='--')
+                ax[1].axhline(y=30,linestyle='--')
                 ax[1].legend()
 
 
