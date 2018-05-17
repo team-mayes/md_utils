@@ -230,16 +230,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             COM_list = []
             log = open(log_file)
             data = log.readlines()
-            # a sad sad double for-loop of sadness. I don't know any better!
             for row in data:
                 s_data = row.split(sep=',')
                 if s_data[0][0] == '#':
                     traj.append(s_data[0].rstrip("\n"))
                 else:
-                    for i in s_data:
-                        COM_list.append(i)
+                    COM_list.append(s_data)
             log.close()
-            COM_distance = np.array(COM_list, float)
+            COM_distance = np.concatenate([np.array(i,float) for i in COM_list])
 
         elif orient:
             q1_6_angles = []
@@ -277,22 +275,19 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             logging = 'eg'
             log = open(log_file)
             data = log.readlines()
-            # a sad sad double for-loop of sadness. I don't know any better!
             for row in data:
                 s_data = row.split(sep=',')
                 if s_data[0][0] == '#':
                     traj.append(s_data[0].rstrip("\n"))
                 elif logging == 'eg':
-                    for i in s_data:
-                        EG_list.append(i)
+                    EG_list.append(s_data)
                     logging = 'ig'
                 else:
-                    for i in s_data:
-                        IG_list.append(i)
+                    IG_list.append(s_data)
                     logging = 'eg'
             log.close()
-            EG_distance = np.array(EG_list, float)
-            IG_distance = np.array(IG_list, float)
+            EG_distance = np.concatenate([np.array(i,float) for i in EG_list])
+            IG_distance = np.concatenate([np.array(i,float) for i in IG_list])
 
     else:
         # TODO: Restructure to more easily change to a different CV
