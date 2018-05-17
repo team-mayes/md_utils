@@ -228,16 +228,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         traj = []
         if com:
             COM_list = []
-            log = open(log_file)
-            data = log.readlines()
-            for row in data:
-                s_data = row.split(sep=',')
-                if s_data[0][0] == '#':
-                    traj.append(s_data[0].rstrip("\n"))
-                else:
-                    COM_list.append(s_data)
-            log.close()
-            COM_distance = np.concatenate([np.array(i,float) for i in COM_list])
+            with open(log_file, "rt") as fin:
+                for row in fin:
+                    s_data = row.split(sep=',')
+                    if s_data[0][0] == '#':
+                        traj.append(s_data[0].rstrip("\n"))
+                    else:
+                        COM_list.append(s_data)
+            COM_distance = np.concatenate([np.array(i, float) for i in COM_list])
 
         elif orient:
             q1_6_angles = []
@@ -246,7 +244,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             delta7_12_angles = []
 
             with open(log_file, "rt") as fin:
-                U = np.array([0.9647, 0.2503, 0.0815]) # Referenced Unbiased opening rotation axis
+                U = np.array([0.9647, 0.2503, 0.0815])  # Referenced Unbiased opening rotation axis
                 for line in fin:
                     if line != '\n' and line[0] != '#':
                         s_line = line.split()
@@ -273,21 +271,19 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             EG_list = []
             IG_list = []
             logging = 'eg'
-            log = open(log_file)
-            data = log.readlines()
-            for row in data:
-                s_data = row.split(sep=',')
-                if s_data[0][0] == '#':
-                    traj.append(s_data[0].rstrip("\n"))
-                elif logging == 'eg':
-                    EG_list.append(s_data)
-                    logging = 'ig'
-                else:
-                    IG_list.append(s_data)
-                    logging = 'eg'
-            log.close()
-            EG_distance = np.concatenate([np.array(i,float) for i in EG_list])
-            IG_distance = np.concatenate([np.array(i,float) for i in IG_list])
+            with open(log_file, "rt") as fin:
+                for row in fin:
+                    s_data = row.split(sep=',')
+                    if s_data[0][0] == '#':
+                        traj.append(s_data[0].rstrip("\n"))
+                    elif logging == 'eg':
+                        EG_list.append(s_data)
+                        logging = 'ig'
+                    else:
+                        IG_list.append(s_data)
+                        logging = 'eg'
+            EG_distance = np.concatenate([np.array(i, float) for i in EG_list])
+            IG_distance = np.concatenate([np.array(i, float) for i in IG_list])
 
     else:
         # TODO: Restructure to more easily change to a different CV
@@ -371,8 +367,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
-                ax[1].axhline(y=150,linestyle='--')
-                ax[1].axhline(y=30,linestyle='--')
+                ax[1].axhline(y=150, linestyle='--')
+                ax[1].axhline(y=30, linestyle='--')
                 ax[1].legend()
 
 
