@@ -11,7 +11,6 @@ from glob import glob
 import csv
 import sys
 import warnings
-import copy as copy
 from md_utils.fill_tpl import read_cfg
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning, \
     file_rows_to_list
@@ -223,6 +222,7 @@ def parse_cmdline(argv=None):
 
 def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
                       orient=False, ax=None):
+    # TODO: have plot_trajectories accept a "read_data" function rather than having to shoehorn it in
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
@@ -256,14 +256,14 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                             delta1_6 = angle_between(v1_6, U)
                             delta7_12 = angle_between(v7_12, U)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
-                            if delta1_6 > 150:
+                            if delta1_6 > 90:
                                 q1_6 *= -1
-                            elif delta1_6 > 30:
-                                q1_6 = 0
-                            if delta7_12 > 150:
+                            # elif delta1_6 > 30:
+                            #     q1_6 = 0
+                            if delta7_12 > 90:
                                 q7_12 *= -1
-                            elif delta7_12 > 30:
-                                q7_12 = 0
+                            # elif delta7_12 > 30:
+                            #     q7_12 = 0
 
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
