@@ -44,6 +44,7 @@ DEF_NAME = 'PCA'
 DEF_STRIDE = 1
 DEF_CFG_FILE = "plot_pca.ini"
 DEF_QUAT_FILE = "orientation.log"
+ROTATION_AXIS = np.array([0.9647, 0.2503, 0.0815])  # Referenced Unbiased opening rotation axis
 
 MAIN_SEC = 'main'
 TPL_VALS_SEC = 'tpl_vals'
@@ -220,13 +221,12 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, log_file=None, write=False, com=False,
-                      orient=False, ax=None):
+def proc_trajectories(args, traj, log_file=None, ax=None):
     # TODO: have plot_trajectories accept a "read_data" function rather than having to shoehorn it in
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
         traj = []
-        if com:
+        if args.com:
             COM_list = []
             with open(log_file, "rt") as fin:
                 for row in fin:
@@ -237,14 +237,13 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                         COM_list.append(s_data)
             COM_distance = np.concatenate([np.array(i, float) for i in COM_list])
 
-        elif orient:
+        elif args.orientation:
             q1_6_angles = []
             q7_12_angles = []
             delta1_6_angles = []
             delta7_12_angles = []
 
             with open(log_file, "rt") as fin:
-                U = np.array([0.9647, 0.2503, 0.0815])  # Referenced Unbiased opening rotation axis
                 for line in fin:
                     if line != '\n' and line[0] != '#':
                         s_line = line.split()
@@ -253,8 +252,8 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                         if DELTA_PHI:
                             v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
                             v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
-                            delta1_6 = angle_between(v1_6, U)
-                            delta7_12 = angle_between(v7_12, U)
+                            delta1_6 = angle_between(v1_6, ROTATION_AXIS)
+                            delta7_12 = angle_between(v7_12, ROTATION_AXIS)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
                             if delta1_6 > 90:
                                 q1_6 *= -1
@@ -290,7 +289,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         print("Reading data from trajectory: {}.".format(traj))
 
         ind_list = []
-        for indexfile in indices:
+        for indexfile in args.index_list:
             with open(indexfile, newline='') as file:
                 rows = csv.reader(file, delimiter=' ', quotechar='|')
                 for row in rows:
@@ -299,9 +298,9 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
         atom_indices = np.array([j for i in ind_list for j in i], int)
 
         trajfile = glob(traj)
-        t = md.load(trajfile, top=topfile, stride=stride, atom_indices=atom_indices)
+        t = md.load(trajfile, top=args.top, stride=args.stride, atom_indices=atom_indices)
 
-        if com:
+        if args.com:
             group_indices = np.linspace(0, atom_indices.size - 1, atom_indices.size)
             group1 = group_indices[0:len(ind_list[0])].astype(int)
             group2 = group_indices[len(ind_list[0]):].astype(int)
@@ -319,15 +318,15 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             IG_distance = com_distance(t, group3, group4)
         del t
 
-    if write:
-        if out_dir is None:
+    if args.write_dist:
+        if args.outdir is None:
             csv_dir = './'
         else:
-            csv_dir = out_dir
-        if com:
-            csv_name = csv_dir + '/' + plot_name + '_com' + '.csv'
+            csv_dir = args.outdir
+        if args.com:
+            csv_name = csv_dir + '/' + args.name + '_com' + '.csv'
         else:
-            csv_name = csv_dir + '/' + plot_name + '_2D' + '.csv'
+            csv_name = csv_dir + '/' + args.name + '_2D' + '.csv'
         if os.path.isfile(csv_name):
             print("Appended file: ", csv_name)
         else:
@@ -337,13 +336,13 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
             csvfile.write("#")
             csvfile.write(''.join(traj))
             csvfile.write('\n')
-            if com:
+            if args.com:
                 dist_writer.writerow(COM_distance)
             else:
                 dist_writer.writerow(EG_distance)
                 dist_writer.writerow(IG_distance)
-    elif not write:
-        if com:
+    elif not args.write_dist:
+        if args.com:
             ax[0].plot(COM_distance, label=log_file)
             if HISTOGRAMS:
                 dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
@@ -354,7 +353,7 @@ def plot_trajectories(traj, topfile, indices, plot_name, stride, out_dir=None, l
                 ax[1].plot(ydummy, dummy, antialiased=True, linewidth=2)
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
-        elif orient:
+        elif args.orientation:
             ax[0].plot(q1_6_angles, label='N (static)-domain')
             ax[0].plot(q7_12_angles, label='C (mobile)-domain')
             ax[0].legend()
@@ -441,11 +440,9 @@ def main(argv=None):
         else:
             ax = []
         for traj in args.traj_list:
-            plot_trajectories(traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              args.file, args.write_dist, args.com, args.orientation, ax)
+            proc_trajectories(args, traj, args.file, ax)
         for file in args.file:
-            plot_trajectories(args.traj, args.top, args.index_list, args.name, args.stride, args.outdir,
-                              file, args.write_dist, args.com, args.orientation, ax)
+            proc_trajectories(args, args.traj, file, ax)
         if not args.write_dist:
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
