@@ -362,7 +362,7 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
                 mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
                                       cmap="winter",
                                       cbar_label=None,
-                                      cbar=True)
+                                      cbar=False)
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
@@ -409,7 +409,7 @@ def main(argv=None):
                 fig, ax0 = plt.subplots()
                 # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
                 # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
-                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
+                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)",xlim=(-12,5),ylim=(-5,12))
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
