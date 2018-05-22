@@ -255,14 +255,16 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
                         delta7_12 = angle_between(v7_12, ROTATION_AXIS)
                         if DELTA_PHI:
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
-                        if delta1_6 > 90:
+
+                        if delta1_6 > 50 or delta1_6< 130:
+                            q1_6 = 0
+                        elif delta1_6 > 90:
                             q1_6 *= -1
-                        # elif delta1_6 > 30:
-                        #     q1_6 = 0
-                        if delta7_12 > 90:
+                        if delta7_12 > 50 or delta1_6 < 130:
+                            q7_12 = 0
+                        elif delta7_12 > 90:
                             q7_12 *= -1
-                        # elif delta7_12 > 30:
-                        #     q7_12 = 0
+                        
 
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
