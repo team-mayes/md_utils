@@ -249,20 +249,20 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
                         s_line = line.split()
                         q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
                             float(s_line[11])) / np.pi
+                        v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
+                        v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
+                        delta1_6 = angle_between(v1_6, ROTATION_AXIS)
+                        delta7_12 = angle_between(v7_12, ROTATION_AXIS)
                         if DELTA_PHI:
-                            v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
-                            v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
-                            delta1_6 = angle_between(v1_6, ROTATION_AXIS)
-                            delta7_12 = angle_between(v7_12, ROTATION_AXIS)
                             delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
-                            if delta1_6 > 90:
-                                q1_6 *= -1
-                            # elif delta1_6 > 30:
-                            #     q1_6 = 0
-                            if delta7_12 > 90:
-                                q7_12 *= -1
-                            # elif delta7_12 > 30:
-                            #     q7_12 = 0
+                        if delta1_6 > 90:
+                            q1_6 *= -1
+                        # elif delta1_6 > 30:
+                        #     q1_6 = 0
+                        if delta7_12 > 90:
+                            q7_12 *= -1
+                        # elif delta7_12 > 30:
+                        #     q7_12 = 0
 
                         q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
@@ -360,7 +360,7 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
-                                      cmap="Reds",
+                                      cmap="winter",
                                       cbar_label=None,
                                       cbar=True)
             if DELTA_PHI:
@@ -408,8 +408,8 @@ def main(argv=None):
             elif args.orientation:
                 fig, ax0 = plt.subplots()
                 # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
-                ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
-                # ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
+                # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
+                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)")
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
