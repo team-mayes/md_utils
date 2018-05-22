@@ -27,7 +27,7 @@ plt.switch_backend('agg')
 
 HISTOGRAMS = False
 LINE_GRAPHS = False
-DELTA_PHI = True
+DELTA_PHI = False
 
 try:
     # noinspection PyCompatibility
@@ -354,15 +354,15 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
                 ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
 
         elif args.orientation:
-            ax[0].plot(q1_6_angles, label='N (static)-domain')
-            ax[0].plot(q7_12_angles, label='C (mobile)-domain')
-            ax[0].legend()
-            # with warnings.catch_warnings():
-            #     warnings.simplefilter("ignore")
-            #     mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
-            #                           cmap="Reds",
-            #                           cbar_label=None,
-            #                           cbar=True)
+            # ax[0].plot(q1_6_angles, label='N (static)-domain')
+            # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+            # ax[0].legend()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
+                                      cmap="Reds",
+                                      cbar_label=None,
+                                      cbar=True)
             if DELTA_PHI:
                 ax[1].plot(delta1_6_angles, label='N (static)-domain')
                 ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
@@ -391,6 +391,7 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
+    # TODO: Figure out if I should move this to the parse_cmdline function
     try:
         if not args.write_dist:
             if args.com:
