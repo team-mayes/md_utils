@@ -170,16 +170,6 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
 
-# This test cannot be performed the way the script is now configured to write files
-    # def testCombineData(self):
-    #     test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_APPEND_FILE]
-    #     try:
-    #         silent_remove(PCA_DIST_OUT)
-    #         main(test_input)
-    #         self.assertFalse(diff_lines(PCA_DIST_OUT, GOOD_COMBINED_FILE))
-    #     finally:
-    #         silent_remove(PCA_DIST_OUT, disable=DISABLE_REMOVE)
-
     def testCoMPlot(self):
         test_input = ["--traj", TRAJ_FILE, "--top", TOP_FILE, "-i", COM_FILE, "-n", NAME, "--outdir", PCA_DIR, "-c"]
         try:

@@ -76,18 +76,79 @@ def angle_between(v1, v2):
 def com_distance(traj, group1, group2):
     # this function accepts a trajectory and a file with two rows of
     # 0 indexed indices to compute the center of mass for 2 groups
+    distances = []
+    for set1,set2 in zip(group1,group2):
+        com1 = md.compute_center_of_mass(traj.atom_slice(set1))
+        com2 = md.compute_center_of_mass(traj.atom_slice(set2))
 
-    traj1 = traj.atom_slice(group1)
-    traj2 = traj.atom_slice(group2)
-    com1 = md.compute_center_of_mass(traj1)
-    com2 = md.compute_center_of_mass(traj2)
+        n = com1.shape[0]
+        distance = np.empty([n], float)
+        for i in range(0, n):
+            distance[i] = abs(np.linalg.norm(com1[i, :] - com2[i, :])) * 10  # convert from nm to Angstroms
+        distances.append(distance)
 
-    n = com1.shape[0]
-    distance = np.empty([n], float)
-    for i in range(0, n):
-        distance[i] = abs(np.linalg.norm(com1[i, :] - com2[i, :])) * 10  # convert from nm to Angstroms
-    return distance
+    return distances
 
+
+def read_com(log_file):
+    print("Reading data from log file: {}.".format(log_file))
+    COM_list = []
+    with open(log_file, "rt") as fin:
+        for row in fin:
+            s_data = row.split(sep=',')
+            if not s_data[0][0] == '#':
+                COM_list.append(s_data)
+    return np.concatenate([np.array(i, float) for i in COM_list])
+
+
+def read_orient(log_file):
+    q1_6_angles = []
+    q7_12_angles = []
+    delta1_6_angles = []
+    delta7_12_angles = []
+
+    with open(log_file, "rt") as fin:
+        for line in fin:
+            if line != '\n' and line[0] != '#':
+                s_line = line.split()
+                q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
+                    float(s_line[11])) / np.pi
+                v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
+                v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
+                delta1_6 = angle_between(v1_6, ROTATION_AXIS)
+                delta7_12 = angle_between(v7_12, ROTATION_AXIS)
+                if DELTA_PHI:
+                    delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
+                if delta1_6 > 90:
+                    q1_6 *= -1
+                # elif delta1_6 > 30:
+                #     q1_6 = 0
+                if delta7_12 > 90:
+                    q7_12 *= -1
+                # elif delta7_12 > 30:
+                #     q7_12 = 0
+
+                q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
+
+    return [q1_6_angles, q7_12_angles, delta1_6_angles, delta7_12_angles]
+
+def read_EG_IG(log_file):
+    EG_list = []
+    IG_list = []
+    logging = 'eg'
+    with open(log_file, "rt") as fin:
+        for row in fin:
+            s_data = row.split(sep=',')
+            if not s_data[0][0] == '#' and logging == 'eg':
+                EG_list.append(s_data)
+                logging = 'ig'
+            elif not s_data[0][0] == '#' and logging == 'ig':
+                IG_list.append(s_data)
+                logging = 'eg'
+    EG_distance = np.concatenate([np.array(i, float) for i in EG_list])
+    IG_distance = np.concatenate([np.array(i, float) for i in IG_list])
+
+    return [EG_distance,IG_distance]
 
 def parse_cmdline(argv=None):
     """
@@ -221,74 +282,17 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def proc_trajectories(args, traj, log_file=None, ax=None):
+def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance, read_func=None, write_func=None, plot_func=None):
     # TODO: have plot_trajectories accept a "read_data" function rather than having to shoehorn it in
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
-        traj = []
-        if args.com:
-            COM_list = []
-            with open(log_file, "rt") as fin:
-                for row in fin:
-                    s_data = row.split(sep=',')
-                    if s_data[0][0] == '#':
-                        traj.append(s_data[0].rstrip("\n"))
-                    else:
-                        COM_list.append(s_data)
-            COM_distance = np.concatenate([np.array(i, float) for i in COM_list])
-
-        elif args.orientation:
-            q1_6_angles = []
-            q7_12_angles = []
-            delta1_6_angles = []
-            delta7_12_angles = []
-
-            with open(log_file, "rt") as fin:
-                for line in fin:
-                    if line != '\n' and line[0] != '#':
-                        s_line = line.split()
-                        q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
-                            float(s_line[11])) / np.pi
-                        v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
-                        v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
-                        delta1_6 = angle_between(v1_6, ROTATION_AXIS)
-                        delta7_12 = angle_between(v7_12, ROTATION_AXIS)
-                        if DELTA_PHI:
-                            delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
-                        if delta1_6 > 90:
-                            q1_6 *= -1
-                        # elif delta1_6 > 30:
-                        #     q1_6 = 0
-                        if delta7_12 > 90:
-                            q7_12 *= -1
-                        # elif delta7_12 > 30:
-                        #     q7_12 = 0
-
-                        q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
-
-        else:
-            EG_list = []
-            IG_list = []
-            logging = 'eg'
-            with open(log_file, "rt") as fin:
-                for row in fin:
-                    s_data = row.split(sep=',')
-                    if s_data[0][0] == '#':
-                        traj.append(s_data[0].rstrip("\n"))
-                    elif logging == 'eg':
-                        EG_list.append(s_data)
-                        logging = 'ig'
-                    else:
-                        IG_list.append(s_data)
-                        logging = 'eg'
-            EG_distance = np.concatenate([np.array(i, float) for i in EG_list])
-            IG_distance = np.concatenate([np.array(i, float) for i in IG_list])
-
+        data = read_func(log_file)
     else:
         # TODO: Restructure to more easily change to a different CV
         print("Reading data from trajectory: {}.".format(traj))
 
         ind_list = []
+        data = np.empty([2],float)
         for indexfile in args.index_list:
             with open(indexfile, newline='') as file:
                 rows = csv.reader(file, delimiter=' ', quotechar='|')
@@ -304,7 +308,7 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
             group_indices = np.linspace(0, atom_indices.size - 1, atom_indices.size)
             group1 = group_indices[0:len(ind_list[0])].astype(int)
             group2 = group_indices[len(ind_list[0]):].astype(int)
-            COM_distance = com_distance(t, group1, group2)
+            data = traj_func(t, [group1], [group2])
         else:
             # don't look at it, it's hideous
             group_indices = np.linspace(0, atom_indices.size - 1, atom_indices.size)
@@ -314,8 +318,7 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
                      len(ind_list[0]) + len(ind_list[1]):len(ind_list[0]) + len(ind_list[1]) + len(ind_list[2])].astype(
                 int)
             group4 = group_indices[len(ind_list[0]) + len(ind_list[1]) + len(ind_list[2]):].astype(int)
-            EG_distance = com_distance(t, group1, group2)
-            IG_distance = com_distance(t, group3, group4)
+            data = traj_func(t, [group1, group3], [group2, group4])
         del t
 
     if args.write_dist:
@@ -337,16 +340,16 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
             csvfile.write(''.join(traj))
             csvfile.write('\n')
             if args.com:
-                dist_writer.writerow(COM_distance)
+                dist_writer.writerow(data[0])
             else:
-                dist_writer.writerow(EG_distance)
-                dist_writer.writerow(IG_distance)
+                dist_writer.writerow(data[0])
+                dist_writer.writerow(data[1])
     elif not args.write_dist:
         if args.com:
-            ax[0].plot(COM_distance, label=log_file)
+            ax[0].plot(data[0], label=log_file)
             if HISTOGRAMS:
-                dummy = np.linspace(min(COM_distance), max(COM_distance), COM_distance.size)
-                density = gaussian_kde(COM_distance)
+                dummy = np.linspace(min(data[0]), max(data[0]), data[0].size)
+                density = gaussian_kde(data[0])
                 density.covariance_factor = lambda: .25
                 density._compute_covariance()
                 ydummy = density(dummy)
@@ -359,13 +362,13 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
             # ax[0].legend()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                mplt.plot_free_energy(q1_6_angles, q7_12_angles, avoid_zero_count=False, ax=ax[0], kT=2.479,
+                mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
                                       cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
             if DELTA_PHI:
-                ax[1].plot(delta1_6_angles, label='N (static)-domain')
-                ax[1].plot(delta7_12_angles, label='C (mobile)-domain')
+                ax[1].plot(data[2], label='N (static)-domain')
+                ax[1].plot(data[3], label='C (mobile)-domain')
                 ax[1].axhline(y=150, linestyle='--')
                 ax[1].axhline(y=30, linestyle='--')
                 ax[1].legend()
@@ -375,13 +378,13 @@ def proc_trajectories(args, traj, log_file=None, ax=None):
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                mplt.plot_free_energy(EG_distance, IG_distance, avoid_zero_count=False, ax=ax[0], kT=2.479,
+                mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
                                       cmap="winter",
                                       cbar_label=None,
                                       cbar=False)
                 if LINE_GRAPHS:
-                    ax[1].plot(EG_distance)
-                    ax[2].plot(IG_distance)
+                    ax[1].plot(data[0])
+                    ax[2].plot(data[1])
 
 
 def main(argv=None):
@@ -409,7 +412,8 @@ def main(argv=None):
                 fig, ax0 = plt.subplots()
                 # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
                 # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
-                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)",xlim=(-12,5),ylim=(-5,12))
+                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)", xlim=(-12, 5),
+                        ylim=(-5, 12))
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
@@ -440,10 +444,18 @@ def main(argv=None):
 
         else:
             ax = []
+        if args.com:
+            read_func = read_com
+
+        elif args.orientation:
+            read_func = read_orient
+
+        else:
+            read_func = read_EG_IG
         for traj in args.traj_list:
             proc_trajectories(args, traj, args.file, ax)
         for file in args.file:
-            proc_trajectories(args, args.traj, file, ax)
+            proc_trajectories(args, args.traj, file, ax, read_func=read_func)
         if not args.write_dist:
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
