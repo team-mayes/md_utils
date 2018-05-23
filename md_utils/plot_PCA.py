@@ -413,8 +413,8 @@ def main(argv=None):
                 fig, ax0 = plt.subplots()
                 # TODO: If I stick with orientation histograms, make the LINE_GRAPHS variable also govern these plots
                 # ax0.set(xlabel="Timestep", ylabel="$\\theta$ (degrees)")
-                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)", xlim=(-12, 5),
-                        ylim=(-5, 12))
+                ax0.set(xlabel="N-domain $\\theta$ (degrees)", ylabel="C-domain $\\theta$ (degrees)", xlim=(12, 0),
+                        ylim=(0, 12))
                 ax = [ax0]
                 if DELTA_PHI:
                     ax0 = plt.subplot(212)
