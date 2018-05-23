@@ -77,7 +77,7 @@ def com_distance(traj, group1, group2):
     # this function accepts a trajectory and a file with two rows of
     # 0 indexed indices to compute the center of mass for 2 groups
     distances = []
-    for set1,set2 in zip(group1,group2):
+    for set1, set2 in zip(group1, group2):
         com1 = md.compute_center_of_mass(traj.atom_slice(set1))
         com2 = md.compute_center_of_mass(traj.atom_slice(set2))
 
@@ -92,13 +92,13 @@ def com_distance(traj, group1, group2):
 
 def read_com(log_file):
     print("Reading data from log file: {}.".format(log_file))
-    COM_list = []
+    com_list = []
     with open(log_file, "rt") as fin:
         for row in fin:
             s_data = row.split(sep=',')
             if not s_data[0][0] == '#':
-                COM_list.append(s_data)
-    return np.concatenate([np.array(i, float) for i in COM_list])
+                com_list.append(s_data)
+    return np.concatenate([np.array(i, float) for i in com_list])
 
 
 def read_orient(log_file):
@@ -113,42 +113,44 @@ def read_orient(log_file):
                 s_line = line.split()
                 q1_6, q7_12 = 2 * 180 * np.arccos(float(s_line[2])) / np.pi, 2 * 180 * np.arccos(
                     float(s_line[11])) / np.pi
-                v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
-                v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
-                delta1_6 = angle_between(v1_6, ROTATION_AXIS)
-                delta7_12 = angle_between(v7_12, ROTATION_AXIS)
-                if DELTA_PHI:
-                    delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
-                if delta1_6 > 90:
-                    q1_6 *= -1
-                # elif delta1_6 > 30:
-                #     q1_6 = 0
-                if delta7_12 > 90:
-                    q7_12 *= -1
-                # elif delta7_12 > 30:
-                #     q7_12 = 0
+                # v1_6 = np.array([s_line[4], s_line[6], s_line[8]], float)
+                # v7_12 = np.array([s_line[13], s_line[15], s_line[17]], float)
+                # delta1_6 = angle_between(v1_6, ROTATION_AXIS)
+                # delta7_12 = angle_between(v7_12, ROTATION_AXIS)
+                # if DELTA_PHI:
+                #     delta1_6_angles.append(delta1_6), delta7_12_angles.append(delta7_12)
+                # if delta1_6 > 90:
+                #     q1_6 *= -1
+                # # elif delta1_6 > 30:
+                # #     q1_6 = 0
+                # if delta7_12 > 90:
+                #     q7_12 *= -1
+                # # elif delta7_12 > 30:
+                # #     q7_12 = 0
 
                 q1_6_angles.append(q1_6), q7_12_angles.append(q7_12)
 
     return [q1_6_angles, q7_12_angles, delta1_6_angles, delta7_12_angles]
 
-def read_EG_IG(log_file):
-    EG_list = []
-    IG_list = []
+
+def read_eg_ig(log_file):
+    eg_list = []
+    ig_list = []
     logging = 'eg'
     with open(log_file, "rt") as fin:
         for row in fin:
             s_data = row.split(sep=',')
             if not s_data[0][0] == '#' and logging == 'eg':
-                EG_list.append(s_data)
+                eg_list.append(s_data)
                 logging = 'ig'
             elif not s_data[0][0] == '#' and logging == 'ig':
-                IG_list.append(s_data)
+                ig_list.append(s_data)
                 logging = 'eg'
-    EG_distance = np.concatenate([np.array(i, float) for i in EG_list])
-    IG_distance = np.concatenate([np.array(i, float) for i in IG_list])
+    eg_distance = np.concatenate([np.array(i, float) for i in eg_list])
+    ig_distance = np.concatenate([np.array(i, float) for i in ig_list])
 
-    return [EG_distance,IG_distance]
+    return [eg_distance, ig_distance]
+
 
 def parse_cmdline(argv=None):
     """
@@ -282,7 +284,8 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance, read_func=None, write_func=None, plot_func=None):
+def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance, read_func=None, write_func=None,
+                      plot_func=None):
     # TODO: have plot_trajectories accept a "read_data" function rather than having to shoehorn it in
     if log_file:
         print("Reading data from log file: {}.".format(log_file))
@@ -292,7 +295,6 @@ def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance
         print("Reading data from trajectory: {}.".format(traj))
 
         ind_list = []
-        data = np.empty([2],float)
         for indexfile in args.index_list:
             with open(indexfile, newline='') as file:
                 rows = csv.reader(file, delimiter=' ', quotechar='|')
@@ -373,7 +375,6 @@ def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance
                 ax[1].axhline(y=30, linestyle='--')
                 ax[1].legend()
 
-
         else:
             # Suppress the error associated with a larger display window than is sampled
             with warnings.catch_warnings():
@@ -451,7 +452,7 @@ def main(argv=None):
             read_func = read_orient
 
         else:
-            read_func = read_EG_IG
+            read_func = read_eg_ig
         for traj in args.traj_list:
             proc_trajectories(args, traj, args.file, ax)
         for file in args.file:
