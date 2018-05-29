@@ -11,44 +11,13 @@ ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP     
 
 ENERGY: 5000000      5031.7103     24067.6124     17470.5460       428.9976        -245592.3561      7253.0478         0.0000         0.0000     64115.1670        -127225.2751       302.1999   -191340.4420   -126792.8028       302.1999            307.7807       307.8429    950854.9192       307.7807       307.8429
 
-LDB: ============= START OF LOAD BALANCING ============== 24.5254
-LDB: ============== END OF LOAD BALANCING =============== 24.5256
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 24.5262
-LDB: ============= START OF LOAD BALANCING ============== 26.0767
-LDB: Partitioning computes with target load 0.000000
-LDB: Increased migratable compute count from 0 to 0
-LDB: Largest unpartitionable compute is 0.000000
-LDB: ============== END OF LOAD BALANCING =============== 26.0776
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 26.0794
-Info: Initial time: 28 CPUs 0.0197735 s/step 0.11443 days/ns 1257.02 MB memory
-LDB: ============= START OF LOAD BALANCING ============== 26.4751
-LDB: ============== END OF LOAD BALANCING =============== 26.4753
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 26.4768
-LDB: ============= START OF LOAD BALANCING ============== 28.0106
-LDB: TIME 28.011 LOAD: AVG 0.617531 MAX 0.717968  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1257.23 MB
-LDB: TIME 28.0112 LOAD: AVG 0.617531 MAX 0.717968  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 TorusLB MEM: 1257.25 MB
-LDB: ============== END OF LOAD BALANCING =============== 28.0119
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 28.0127
-Info: Initial time: 28 CPUs 0.0193116 s/step 0.111757 days/ns 1257.48 MB memory
-LDB: ============= START OF LOAD BALANCING ============== 29.8756
-LDB: TIME 29.876 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1257.71 MB
-LDB: TIME 29.8761 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1257.71 MB
-LDB: TIME 29.8762 LOAD: AVG 0.717439 MAX 0.866857  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1257.71 MB
-LDB: ============== END OF LOAD BALANCING =============== 29.8769
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 29.8776
-Info: Initial time: 28 CPUs 0.0186277 s/step 0.107799 days/ns 1257.72 MB memory
-LDB: ============= START OF LOAD BALANCING ============== 31.8008
-LDB: TIME 31.8012 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 None MEM: 1258.16 MB
-LDB: TIME 31.8014 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1258.16 MB
-LDB: TIME 31.8015 LOAD: AVG 0.758892 MAX 0.900967  PROXIES: TOTAL 352 MAXPE 13 MAXPATCH 7 RefineTorusLB MEM: 1258.16 MB
-LDB: ============== END OF LOAD BALANCING =============== 31.8024
-Info: useSync: 0 useProxySync: 0
-LDB: =============== DONE WITH MIGRATION ================ 31.8032
+ACCELERATED MD: STEP 0 dV 29887.9 dVAVG 29887.9 BOND 5080.03 ANGLE 23880.1 DIHED 17458.4 IMPRP 402.362 ELECT -285221 VDW 10446.8 POTENTIAL -227953
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG            PRESSURE      GPRESSURE         VOLUME       PRESSAVG      GPRESSAVG
+
+
+OPENING EXTENDED SYSTEM TRAJECTORY FILE
+ACCELERATED MD: STEP 300 dV 3806.42 dVAVG 4043.11 BOND 7395.73 ANGLE 33607.3 DIHED 18894.6 IMPRP 547.677 ELECT -259658 VDW 7726.98 POTENTIAL -191486
+
 Info: Benchmark time: 28 CPUs 0.0191676 s/step 0.110924 days/ns 1258.16 MB memory
 Info: Benchmark time: 28 CPUs 0.0191501 s/step 0.110822 days/ns 1258.16 MB memory
 Info: Benchmark time: 28 CPUs 0.0189274 s/step 0.109534 days/ns 1258.18 MB memory

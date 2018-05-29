@@ -101,6 +101,18 @@ def read_com(log_file):
     return np.concatenate([np.array(i, float) for i in com_list])
 
 
+def plot_com(data, ax, label=None):
+    ax[0].plot(data[0], label=label)
+    if HISTOGRAMS:
+        dummy = np.linspace(min(data[0]), max(data[0]), data[0].size)
+        density = gaussian_kde(data[0])
+        density.covariance_factor = lambda: .25
+        density._compute_covariance()
+        ydummy = density(dummy)
+        ax[1].plot(ydummy, dummy, antialiased=True, linewidth=2)
+        ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
+
+
 def read_orient(log_file):
     q1_6_angles = []
     q7_12_angles = []
@@ -133,6 +145,24 @@ def read_orient(log_file):
     return [q1_6_angles, q7_12_angles, delta1_6_angles, delta7_12_angles]
 
 
+def plot_orient(data, ax, label=None):
+    # ax[0].plot(q1_6_angles, label='N (static)-domain')
+    # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
+    # ax[0].legend()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
+                              cmap="winter",
+                              cbar_label=None,
+                              cbar=False)
+    if DELTA_PHI:
+        ax[1].plot(data[2], label='N (static)-domain')
+        ax[1].plot(data[3], label='C (mobile)-domain')
+        ax[1].axhline(y=150, linestyle='--')
+        ax[1].axhline(y=30, linestyle='--')
+        ax[1].legend()
+
+
 def read_eg_ig(log_file):
     eg_list = []
     ig_list = []
@@ -150,6 +180,19 @@ def read_eg_ig(log_file):
     ig_distance = np.concatenate([np.array(i, float) for i in ig_list])
 
     return [eg_distance, ig_distance]
+
+
+def plot_eg_ig(data, ax, label=None):
+    # Suppress the error associated with a larger display window than is sampled
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
+                              cmap="winter",
+                              cbar_label=None,
+                              cbar=False)
+        if LINE_GRAPHS:
+            ax[1].plot(data[0])
+            ax[2].plot(data[1])
 
 
 def parse_cmdline(argv=None):
@@ -341,51 +384,11 @@ def proc_trajectories(args, traj, log_file=None, ax=None, traj_func=com_distance
             csvfile.write("#")
             csvfile.write(''.join(traj))
             csvfile.write('\n')
-            if args.com:
-                dist_writer.writerow(data[0])
-            else:
-                dist_writer.writerow(data[0])
-                dist_writer.writerow(data[1])
+            for line in data:
+                dist_writer.writerow(line)
+
     elif not args.write_dist:
-        if args.com:
-            ax[0].plot(data[0], label=log_file)
-            if HISTOGRAMS:
-                dummy = np.linspace(min(data[0]), max(data[0]), data[0].size)
-                density = gaussian_kde(data[0])
-                density.covariance_factor = lambda: .25
-                density._compute_covariance()
-                ydummy = density(dummy)
-                ax[1].plot(ydummy, dummy, antialiased=True, linewidth=2)
-                ax[1].fill_between(ydummy, dummy, alpha=.5, zorder=5, antialiased=True)
-
-        elif args.orientation:
-            # ax[0].plot(q1_6_angles, label='N (static)-domain')
-            # ax[0].plot(q7_12_angles, label='C (mobile)-domain')
-            # ax[0].legend()
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
-                                      cmap="winter",
-                                      cbar_label=None,
-                                      cbar=False)
-            if DELTA_PHI:
-                ax[1].plot(data[2], label='N (static)-domain')
-                ax[1].plot(data[3], label='C (mobile)-domain')
-                ax[1].axhline(y=150, linestyle='--')
-                ax[1].axhline(y=30, linestyle='--')
-                ax[1].legend()
-
-        else:
-            # Suppress the error associated with a larger display window than is sampled
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                mplt.plot_free_energy(data[0], data[1], avoid_zero_count=False, ax=ax[0], kT=2.479,
-                                      cmap="winter",
-                                      cbar_label=None,
-                                      cbar=False)
-                if LINE_GRAPHS:
-                    ax[1].plot(data[0])
-                    ax[2].plot(data[1])
+        plot_func(data, ax, log_file)
 
 
 def main(argv=None):
@@ -447,16 +450,20 @@ def main(argv=None):
             ax = []
         if args.com:
             read_func = read_com
+            plot_func = plot_com
 
         elif args.orientation:
             read_func = read_orient
+            plot_func = plot_orient
 
         else:
             read_func = read_eg_ig
+            plot_func = plot_eg_ig
+
         for traj in args.traj_list:
             proc_trajectories(args, traj, args.file, ax)
         for file in args.file:
-            proc_trajectories(args, args.traj, file, ax, read_func=read_func)
+            proc_trajectories(args, args.traj, file, ax, read_func=read_func, plot_func=plot_func)
         if not args.write_dist:
             if args.com:
                 # This is declared here so as not to break the axis with the histogram
