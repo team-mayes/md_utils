@@ -70,12 +70,12 @@ def parse_cmdline(argv):
                         action='store_true', default=False)
     parser.add_argument("-t", "--total", help="Flag to collect total potential energy data.", action='store_true',
                         default=False)
+    parser.add_argument("-a", "--amd", help="Flag to collect aMD boost energies.", action='store_true', default=False)
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
     parser.add_argument("--stats", help="Flag to automatically generate statistics from the data.", action='store_true',
                         default=False)
-    parser.add_argument("-a", "--amd", help="Flag to collect aMD boost energies.", action='store_true', default=False)
 
     args = None
     try:
@@ -165,9 +165,10 @@ def process_log(log_file, dihedral, total, performance, amd, step):
                     result_list.append(dict(result_dict))
                 elif amd and AMD_PAT.match(line):
                     s_line = line.split()
-                    result_dict[TIMESTEP] = int(s_line[3])
-                    result_dict[AMD_BOOST] = float(s_line[5])
-                    result_list.append(dict(result_dict))
+                    if int(s_line[3]) % 2500 == 0:
+                        result_dict[TIMESTEP] = int(int(s_line[3])/2500)
+                        result_dict[AMD_BOOST] = float(s_line[5])
+                        result_list.append(dict(result_dict))
 
     return result_list
 
