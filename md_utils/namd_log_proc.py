@@ -156,7 +156,7 @@ def process_log(log_file, dihedral, total, performance, amd, step):
                 elif performance and PERFORMANCE_PAT.match(line):
                     s_line = line.replace("/", " ").split()
                     result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[PERFORMANCE] = float(s_line[4]) * 500000 / 3600
+                    result_dict[PERFORMANCE] = float(s_line[8]) * 500000 / 3600
                     result_list.append(dict(result_dict))
                 elif total and ENERGY_PAT.match(line):
                     s_line = line.split()
