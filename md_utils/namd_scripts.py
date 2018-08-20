@@ -56,6 +56,7 @@ DEF_COORDINATES = 'test.pdb'
 OUT_PAT = re.compile(r"^outputname.*")
 IN_PAT = re.compile(r"^set inputname.*")
 RUN_PAT = re.compile(r"^run.*")
+FIRSTTIME_PAT = re.compile(r"^firsttimestep.*")
 NUM_PAT = re.compile(r"^numsteps.*")
 XSC_PAT = re.compile(r"^.*0 0 0.*")
 JOB_PAT = re.compile(r"^.*--job-name.*")
@@ -85,8 +86,9 @@ def make_restart(file, xsc_file=None):
             for line in fin:
                 if OUT_PAT.match(line):
                     s_line = line.split()
-                    outputname = s_line[1]
+                    outputname = s_line[1].strip(";")
                     s_out = outputname.split(".")
+
                     if len(s_out) < 3:
                         new_out = outputname + '.2'
                     else:
@@ -94,23 +96,40 @@ def make_restart(file, xsc_file=None):
                     fout.write(line.replace(outputname, new_out))
                 elif IN_PAT.match(line):
                     s_line = line.split()
-                    inputname = s_line[2]
+                    inputname = s_line[2].strip(";")
                     new_in = outputname + '.restart'
                     fout.write(line.replace(inputname, new_in))
                 # This assumes that the firsttimestep is a derived quantity, so I need to add a check for explicit firsttime
-                elif RUN_PAT.match(line):
-                    if xsc_file:
-                        inputname = xsc_file
+                elif FIRSTTIME_PAT.match(line):
+                    s_line = line.split()
+                    current_step = s_line[1].strip(";")
+                    if current_step != "$firsttime":
+                        restart_xsc = new_in + '.xsc'
+                        with open(restart_xsc, "rt") as xin:
+                            for x_line in xin:
+                                if line != '\n' and line[0] != '#':
+                                    s_x_line = x_line.split()
+                                    start_step = int(s_x_line[0])
+                        fout.write(line.replace(current_step, str(start_step)))
                     else:
-                        inputname += '.xsc'
-                    with open(inputname, "rt") as xin:
-                        for x_line in xin:
-                            if XSC_PAT.match(x_line):
-                                s_x_line = x_line.split()
-                                start_step = int(s_x_line[0])
+                        fout.write(line)
+                elif RUN_PAT.match(line):
+                    try:
+                        start_step
+                    except:
+                        if xsc_file:
+                            inputname = xsc_file
+                        else:
+                            inputname += '.xsc'
+                        with open(inputname, "rt") as xin:
+                            for x_line in xin:
+                                if x_line != '\n' and x_line[0] != '#':
+                                    s_x_line = x_line.split()
+                                    current_step = s_x_line[0]
+
                     s_line = line.split()
                     run_step = int(s_line[1].split(";")[0])
-                    num_step = start_step + run_step
+                    num_step = int(current_step) + run_step
                     ns = str(int(num_step / 500000))
                     output = 'numsteps           ' + str(num_step) + ';            # ' + ns + ' ns'
                     fout.write(output)
@@ -277,7 +296,8 @@ def parse_cmdline(argv):
     parser.add_argument("-re", "--restart",
                         help="Flag to generate a restart inp and job file from a provided job prefix. "
                              "This option preempts all other options.", default=None)
-    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is to read from inp file.", default=None)
+    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is to read from inp file.",
+                        default=None)
 
     args = None
     try:
