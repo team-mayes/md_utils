@@ -65,7 +65,7 @@ SUBMIT_PAT = re.compile(r"^.*namd2.*")
 # Local variable warnings are due to my taking shortcuts by
 # knowing how NAMD input scripts and job files are structured
 
-def make_restart(file, xsc_file):
+def make_restart(file, xsc_file=None):
     inp_file = file + '.inp'
     job_file = file + '.job'
     s_file = file.split(".")
@@ -97,6 +97,7 @@ def make_restart(file, xsc_file):
                     inputname = s_line[2]
                     new_in = outputname + '.restart'
                     fout.write(line.replace(inputname, new_in))
+                # This assumes that the firsttimestep is a derived quantity, so I need to add a check for explicit firsttime
                 elif RUN_PAT.match(line):
                     if xsc_file:
                         inputname = xsc_file
@@ -276,7 +277,7 @@ def parse_cmdline(argv):
     parser.add_argument("-re", "--restart",
                         help="Flag to generate a restart inp and job file from a provided job prefix. "
                              "This option preempts all other options.", default=None)
-    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is current directory.", default=None)
+    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is to read from inp file.", default=None)
 
     args = None
     try:
