@@ -166,19 +166,13 @@ def plot_orient(data, ax, label=None):
 def read_eg_ig(log_file):
     eg_list = []
     ig_list = []
-    logging = 'eg'
     with open(log_file, "rt") as fin:
-        for row in fin:
-            s_data = row.split(sep=',')
-            if not s_data[0][0] == '#' and logging == 'eg':
-                eg_list.append(s_data)
-                logging = 'ig'
-            elif not s_data[0][0] == '#' and logging == 'ig':
-                ig_list.append(s_data)
-                logging = 'eg'
-    eg_distance = np.concatenate([np.array(i, float) for i in eg_list])
-    ig_distance = np.concatenate([np.array(i, float) for i in ig_list])
-
+        for line in fin:
+            if line != '\n' and line[0] != '#':
+                s_line = line.split()
+                eg_list.append(s_line[1]), ig_list.append(s_line[2])
+    eg_distance = np.array(eg_list, float)
+    ig_distance = np.array(ig_list, float)
     return [eg_distance, ig_distance]
 
 
@@ -204,7 +198,8 @@ def parse_cmdline(argv=None):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    parser = argparse.ArgumentParser(description='Plot trajectory files projected onto EG and IG dimensions')
+    # TODO: Remove the trajectory processing components of plot_PCA to make it purely plotting from CV input
+    parser = argparse.ArgumentParser(description='Plot trajectory files projected onto gating or orientation dimensions')
     parser.add_argument("-t", "--traj",
                         help='Trajectory file or files for analysis. Wildcard arguments such as "*dcd" '
                              'are permitted but must be written as a string',

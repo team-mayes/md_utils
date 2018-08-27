@@ -36,8 +36,8 @@ PNG_QUAT_FILE = os.path.join(PCA_DIR, 'test_quat.png')
 TRAJ_GLOB = os.path.join(PCA_DIR, '*dcd')
 PCA_DIST_OUT = os.path.join(PCA_DIR, 'test_2D.csv')
 COM_DIST_OUT = os.path.join(PCA_DIR, 'test_com.csv')
+DIST_FILE = os.path.join(PCA_DIR, 'gating.log')
 GOOD_DIST_FILE = os.path.join(PCA_DIR, 'dist_good.csv')
-GOOD_APPEND_FILE = os.path.join(PCA_DIR, 'dist_append_good.csv')
 GOOD_COMBINED_FILE = os.path.join(PCA_DIR, 'dist_combined_good.csv')
 GOOD_STRIDE_FILE = os.path.join(PCA_DIR, 'dist_stride_good.csv')
 GOOD_COM_FILE = os.path.join(PCA_DIR, 'com_good.csv')
@@ -93,12 +93,13 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("not currently configured" in output)
 
     def testBadName(self):
-        test_input = ["-n", BAD_NAME, "--outdir", PCA_DIR, "-f", GOOD_DIST_FILE]
+        test_input = ["-n", BAD_NAME, "--outdir", PCA_DIR, "-f", DIST_FILE]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stdout(main, test_input) as output:
             self.assertTrue("Removing extension" in output)
         silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
+
 
 # This catches an error that is no longer relevant
 #     def testOrientationWrite(self):
@@ -141,28 +142,8 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(PCA_DIST_OUT, disable=DISABLE_REMOVE)
 
-    def testAppendDistances(self):
-        test_input = ["-t", TRAJ_FILE, "-p", TOP_FILE, "-i", EG_FILE, IG_FILE, "-n", NAME, "--outdir", PCA_DIR]
-        try:
-            silent_remove(PCA_DIST_OUT)
-            # The append happens in place, so the base file must first be generated
-            main(test_input)
-            main(test_input)
-            self.assertFalse(diff_lines(PCA_DIST_OUT, GOOD_APPEND_FILE))
-        finally:
-            silent_remove(PCA_DIST_OUT, disable=DISABLE_REMOVE)
-
     def testReadDistances(self):
-        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_DIST_FILE]
-        try:
-            silent_remove(PNG_2D_FILE)
-            main(test_input)
-            self.assertTrue(os.path.isfile(PNG_2D_FILE))
-        finally:
-            silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
-
-    def testReadAppend(self):
-        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", GOOD_APPEND_FILE]
+        test_input = ["-n", NAME, "--outdir", PCA_DIR, "-f", DIST_FILE]
         try:
             silent_remove(PNG_2D_FILE)
             main(test_input)
