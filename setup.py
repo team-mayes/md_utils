@@ -45,6 +45,7 @@ setup(
                                      # 'converge_evb_par = md_utils.converge_evb_par:main',
                                      # 'convert_cp2k_forces = md_utils.convert_cp2k_forces:main',
                                      # 'cp2k_proc = md_utils.cp2k_proc:main',
+                                      'CV_analysis = md_utils.CV_analysis:main',
                                      # 'data2data = md_utils.data2data:main',
                                      # 'data2pdb = md_utils.data2pdb:main',
                                      # 'data_edit = md_utils.data_edit:main',
