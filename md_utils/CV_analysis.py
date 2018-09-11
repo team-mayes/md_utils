@@ -1,10 +1,17 @@
-#!/usr/bin/env python
+from __future__ import print_function
 import os
 import subprocess
 import sys
 import argparse
 from pathlib import Path
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError
+
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, MissingSectionHeaderError
 
 __author__ = 'xadams'
 
@@ -24,7 +31,6 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     parser = argparse.ArgumentParser(description='Perform a specified number of CV analyses.')
-
     parser.add_argument("-q" "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true', default=False)
     parser.add_argument("-r" "--reverse", help="Flag for 2-domain quaternion analysis with inward reference structure", action='store_true', default=False)
     parser.add_argument("-f" "--full", help="Flag for 12 helix quaternion analysis.", action='store_true', default=False)
@@ -35,11 +41,16 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
-        print(args)
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
         return args, IO_ERROR
+    except (KeyError, InvalidDataError, SystemExit) as e:
+        if hasattr(e, 'code') and e.code == 0:
+            return args, GOOD_RET
+        warning(e)
+        parser.print_help()
+        return args, INPUT_ERROR
     return args, GOOD_RET
 
 # # Read in the home directory

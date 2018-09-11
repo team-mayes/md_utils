@@ -89,3 +89,6 @@ tests/test_data/fill_tpl/make_prod_cpu.ini
 
 # VirtualEnv dir
 venv/
+
+# pytest_cache
+.pytest_cache*
