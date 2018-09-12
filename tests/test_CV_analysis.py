@@ -23,21 +23,11 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 CV_ANALYSIS_DIR = os.path.join(DATA_DIR, 'CV_analysis')
 
-LOG_PATH = os.path.join(CV_ANALYSIS_DIR, 'namd_short.log')
-LOG_OUT_DIHEDRAL = os.path.join(CV_ANALYSIS_DIR, 'namd_short_dihedral.csv')
-LOG_OUT_PERFORMANCE = os.path.join(CV_ANALYSIS_DIR, 'namd_short_performance.csv')
-LOG_OUT_TOTAL = os.path.join(CV_ANALYSIS_DIR, 'namd_short_total.csv')
-LOG_OUT_ENERGY = os.path.join(CV_ANALYSIS_DIR, 'namd_short_energy.csv')
-LOG_OUT_STEP = os.path.join(CV_ANALYSIS_DIR, 'namd_short_total.csv')
-LOG_OUT_AMD = os.path.join(CV_ANALYSIS_DIR, 'namd_short_amdboost.csv')
-STATS_OUT = os.path.join(CV_ANALYSIS_DIR, 'stats_namd_short_dihedral.csv')
-GOOD_LOG_OUT_DIHEDRAL = os.path.join(CV_ANALYSIS_DIR, 'ts_dihedral_good.csv')
-GOOD_LOG_OUT_PERFORMANCE = os.path.join(CV_ANALYSIS_DIR, 'ts_performance_good.csv')
-GOOD_LOG_OUT_TOTAL = os.path.join(CV_ANALYSIS_DIR, 'ts_total_good.csv')
-GOOD_LOG_OUT_ENERGY = os.path.join(CV_ANALYSIS_DIR, 'ts_energy_good.csv')
-GOOD_LOG_OUT_STEP = os.path.join(CV_ANALYSIS_DIR, 'ts_step_good.csv')
-GOOD_LOG_OUT_AMD = os.path.join(CV_ANALYSIS_DIR, 'ts_amd_good.csv')
-GOOD_STATS = os.path.join(CV_ANALYSIS_DIR, 'stats_ts_dihedral_good.csv')
+TOP_PATH = os.path.join(CV_ANALYSIS_DIR, 'protein.psf')
+COOR_PATH = os.path.join(CV_ANALYSIS_DIR, '7.7.coor')
+QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'out_quat.log')
+DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
+DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
 
 LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'log_list.txt')
 LOG_LIST_OUT = os.path.join(CV_ANALYSIS_DIR, 'log_list_sum.csv')
@@ -60,18 +50,18 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testNoSuchFile(self):
-        test_input = ["-f", "ghost", ]
+        test_input = ["ghost"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Could not find specified log file" in output)
+            self.assertTrue("Could not find specified file" in output)
 
     def testNoSpecifiedFile(self):
         test_input = []
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Found no log file names to process" in output)
+            self.assertTrue("required: files" in output)
 
     # def testNoFilesInList(self):
     #     test_input = ["-f", EMPTY_LOG_LIST]
@@ -80,39 +70,46 @@ class TestMainFailWell(unittest.TestCase):
     #     with capture_stderr(main, test_input) as output:
     #         self.assertTrue("Found no lammps log data to process from" in output)
 
-    def testNoSuchFileInList(self):
-        test_input = ["-l", GHOST_LOG_LIST, "-p"]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("Problems reading file:" in output)
+    # def testNoSuchFileInList(self):
+    #     test_input = ["-l", GHOST_LOG_LIST, "-p"]
+    #     if logger.isEnabledFor(logging.DEBUG):
+    #         main(test_input)
+    #     with capture_stderr(main, test_input) as output:
+    #         self.assertTrue("Problems reading file:" in output)
 
     def testNoOptionSelected(self):
-        test_input = ["-f", LOG_PATH]
+        test_input = [TOP_PATH, COOR_PATH]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
             self.assertTrue("Did not choose to" in output)
 
-    def testBothOptionsSelected(self):
-        test_input = ["-f", LOG_PATH, "-d", "-p"]
+    def testNoTrajectory(self):
+        test_input = [TOP_PATH]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue("Please select only one" in output)
+            self.assertTrue("No trajectory files provided." in output)
+
+    def testNoOverwrite(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-n", DUPLICATE_BASE]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("exists. Please rename" in output)
 
 
 class TestMain(unittest.TestCase):
-    def testDihedralLogFile(self):
-        test_input = ["-f", LOG_PATH, "-d"]
+    def testOutQuat(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q", "--conformation", 'out']
         try:
             main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_DIHEDRAL, GOOD_LOG_OUT_DIHEDRAL))
+            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_OUT))
         finally:
-            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
+            silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 
-    def testPerformanceLogFile(self):
-        test_input = ["-f", LOG_PATH, "-p"]
+    def testNoOverwrite(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q", "--conformation", 'out', "-n", DUPLICATE_OUT]
         try:
             main(test_input)
             self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
