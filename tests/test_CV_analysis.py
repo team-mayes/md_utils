@@ -30,9 +30,12 @@ DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
 DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
 QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
 FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full.in')
+DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full_double.in')
 
 GOOD_QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_quat.in')
 GOOD_FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_full.in')
+GOOD_DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_double.in')
+
 
 EMPTY_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'ghost_log_list.txt')
@@ -124,14 +127,16 @@ class TestMain(unittest.TestCase):
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 
     def testMakeTpls(self):
-        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "--conf", 'out', "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "-d", "--conf", 'out', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertFalse(diff_lines(QUAT_TPL_OUT, GOOD_QUAT_TPL_OUT))
             self.assertFalse(diff_lines(FULL_TPL_OUT, GOOD_FULL_TPL_OUT))
+            self.assertFalse(diff_lines(DOUBLE_TPL_OUT, GOOD_DOUBLE_TPL_OUT))
         finally:
             silent_remove(QUAT_TPL_OUT, disable=DISABLE_REMOVE)
             silent_remove(FULL_TPL_OUT, disable=DISABLE_REMOVE)
+            silent_remove(DOUBLE_TPL_OUT, disable=DISABLE_REMOVE)
 
     def testTotalLogFile(self):
         test_input = ["-f", LOG_PATH, "-t"]

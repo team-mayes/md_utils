@@ -30,7 +30,8 @@ CONFORMATIONS = [IN, OUT]
 CV_OUTNAMES = ['quat', 'full', 'full_double', 'gating', 'cartesian']
 QUAT = home + '/CV_analysis/tcl_scripts/' + 'orientation_quat.tpl'
 FULL = home + '/CV_analysis/tcl_scripts/' + 'orientation_full.tpl'
-CV_TPLS = [QUAT, FULL, "orientation_full_double.tpl"]
+DOUBLE = home + '/CV_analysis/tcl_scripts/' + 'orientation_full_double.tpl'
+CV_TPLS = [QUAT, FULL, DOUBLE]
 CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in"]
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
@@ -126,6 +127,7 @@ def parse_cmdline(argv):
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
+        # TODO: Fix automatic detection of 'common' directory
         # common = os.environ["COMMON"]
         common = '/Users/xadams/XylE/common/'
         if args.conf == 'in':
