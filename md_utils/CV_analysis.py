@@ -6,7 +6,8 @@ import argparse
 from pathlib import Path
 from collections import OrderedDict
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
-from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
+from md_utils.md_common import (IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError,
+                                warning, read_tpl)
 
 try:
     # noinspection PyCompatibility
@@ -17,6 +18,8 @@ except ImportError:
 
 __author__ = 'xadams'
 
+home = str(Path.home())
+
 DEF_TOP = ['../protein.psf', 'protein.psf', '../step5_assembly.xplor_ext.psf']
 IF_FILES = ['../protein.psf', '../inoc_glucose.psf']
 OF_FILES = ['protein.psf', 'protg.psf']
@@ -24,12 +27,18 @@ OUT_FILE = 'orientation_quat.log'
 IN = 'in'
 OUT = 'out'
 CONFORMATIONS = [IN, OUT]
-CV_OUTNAMES = ['quat', 'rev', 'full', 'full_double', 'gating', 'cartesian']
-CV_TPLS = ["orientation_quat.tpl", "orientation_reverse.tpl", "orientation_full.tpl", "orientation_full_double.tpl"]
-CV_TPLS_OUT = ["orientation_quat.in", "orientation_reverse.in", "orientation_full.in", "orientation_full_double.in"]
+CV_OUTNAMES = ['quat', 'full', 'full_double', 'gating', 'cartesian']
+QUAT = home + '/CV_analysis/tcl_scripts/' + 'orientation_quat.tpl'
+FULL = home + '/CV_analysis/tcl_scripts/' + 'orientation_full.tpl'
+CV_TPLS = [QUAT, FULL, "orientation_full_double.tpl"]
+CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in"]
 REF_FILE = 'reference_file'
+REF_FILE_2 = 'reference_file_2'
 IN_REF_FILE = 'eq_100ns_inocg.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
+IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
+OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
+
 
 def parse_cmdline(argv):
     """
@@ -47,17 +56,18 @@ def parse_cmdline(argv):
     # parser.add_argument("-l", "--list", help="File with list of trajectory files")
     parser.add_argument("-q", "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true',
                         default=False)
-    parser.add_argument("-r", "--reverse", help="Flag for 2-domain quaternion analysis with inward reference structure",
-                        action='store_true', default=False)
+    # parser.add_argument("-r", "--reverse", help="Flag for 2-domain quaternion analysis with inward reference structure",
+    #                     action='store_true', default=False)
     parser.add_argument("-f", "--full", help="Flag for 12 helix quaternion analysis.", action='store_true',
                         default=False)
-    parser.add_argument("-d", "--double", help="Flag for 12 helix quaternion analysis with both reference structures.",
+    parser.add_argument("-d", "--double",
+                        help="Flag for 24-D analysis: 12 helix quaternion analysis with both reference structures.",
                         action='store_true', default=False)
     parser.add_argument("-g", "--gating", help="Flag for 2-gating distance analysis.", action='store_true',
                         default=False)
-    parser.add_argument("-c", "--cartesian", help="Flag for full cartesian measurement of all alpha carbons.",
+    parser.add_argument("--cartesian", help="Flag for full cartesian measurement of all alpha carbons.",
                         action='store_true', default=False)
-    parser.add_argument("--conf",
+    parser.add_argument("-c", "--conf",
                         help="Conformation of the topology. This is important for selecting the reference file. "
                              "Valid options are {}. This will supercede internal topology detection logic".format(
                             CONFORMATIONS), choices=CONFORMATIONS)
@@ -85,7 +95,7 @@ def parse_cmdline(argv):
         # Check that trajectories and analysis options are provided
         if not any(args.traj):
             raise InvalidDataError("No trajectory files provided.")
-        args.analysis_flags = [args.quat, args.reverse, args.full, args.double, args.gating, args.cartesian]
+        args.analysis_flags = [args.quat, args.full, args.double, args.gating, args.cartesian]
         if not any(args.analysis_flags):
             raise InvalidDataError("Did not choose to output any CV. No output will be produced.")
         # Check for files with same names as output to be generated
@@ -116,13 +126,25 @@ def parse_cmdline(argv):
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
+        # common = os.environ["COMMON"]
+        common = '/Users/xadams/XylE/common/'
         if args.conf == 'in':
             tpl_vals[REF_FILE] = common + IN_REF_FILE
+            tpl_vals[REF_FILE_2] = common + IN_REF_FILE_2
         elif args.conf == 'out':
             tpl_vals[REF_FILE] = common + OUT_REF_FILE
+            tpl_vals[REF_FILE_2] = common + OUT_REF_FILE_2
         else:
             raise InvalidDataError("Conformation was not provided and could not be inferred from topology file {}. "
-                                   "Please provide one of the following conformations: {}".format(args.top,CONFORMATIONS))
+                                   "Please provide one of the following conformations: {}".format(args.top,
+                                                                                                  CONFORMATIONS))
+        args.config = {OUT_DIR: args.out_dir, TPL_VALS: tpl_vals, OUT_FILE: args.name}
+        args.tpl_files = []
+        args.tpl_names = []
+        for flag, tpl_in, tpl_out in zip(args.analysis_flags, CV_TPLS, CV_TPLS_OUT):
+            if flag:
+                args.tpl_files.append(tpl_in)
+                args.tpl_names.append(tpl_out)
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -142,8 +164,6 @@ def parse_cmdline(argv):
 
 def analysis(argv):
     # Read in the home directory and common for reference files
-    home = str(Path.home())
-    common = os.environ("COMMON")
 
     # Determine reference files based on home directory and topology file
     if argv[0] in IF_FILES:
@@ -153,7 +173,7 @@ def analysis(argv):
     else:
         print("Exception: Unsure which ref file to use")
         exit(3)
-
+    exit()
     subprocess.call(["vmd", "-e", "/home/xadams/bin/orientation_quat.tcl", argv.top, argv[1], "-args", CV_IN])
 
 
@@ -165,9 +185,10 @@ def main(argv=None):
         return ret
 
     try:
+        for file, name in zip(args.tpl_files, args.tpl_names):
+            fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
         # gen_CV_script(args)
-        # fill_save_tpl(, args.name)
-        analysis(args)
+        # analysis(args)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

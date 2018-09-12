@@ -13,7 +13,7 @@ from md_utils.md_common import diff_lines, capture_stderr, capture_stdout, silen
 
 __author__ = 'xadams'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -28,10 +28,11 @@ COOR_PATH = os.path.join(CV_ANALYSIS_DIR, '7.7.coor')
 QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'out_quat.log')
 DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
 DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
+QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
+FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full.in')
 
-LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'log_list.txt')
-LOG_LIST_OUT = os.path.join(CV_ANALYSIS_DIR, 'log_list_sum.csv')
-GOOD_LOG_LIST_OUT = os.path.join(CV_ANALYSIS_DIR, 'log_list_sum_good.csv')
+GOOD_QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_quat.in')
+GOOD_FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_full.in')
 
 EMPTY_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'ghost_log_list.txt')
@@ -122,13 +123,15 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 
-    def testNoOverwrite(self):
-        test_input = [TOP_PATH, COOR_PATH, "-q", "--conformation", 'out', "-n", DUPLICATE_OUT]
+    def testMakeTpls(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "--conf", 'out', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_PERFORMANCE, GOOD_LOG_OUT_PERFORMANCE))
+            self.assertFalse(diff_lines(QUAT_TPL_OUT, GOOD_QUAT_TPL_OUT))
+            self.assertFalse(diff_lines(FULL_TPL_OUT, GOOD_FULL_TPL_OUT))
         finally:
-            silent_remove(LOG_OUT_PERFORMANCE, disable=DISABLE_REMOVE)
+            silent_remove(QUAT_TPL_OUT, disable=DISABLE_REMOVE)
+            silent_remove(FULL_TPL_OUT, disable=DISABLE_REMOVE)
 
     def testTotalLogFile(self):
         test_input = ["-f", LOG_PATH, "-t"]

@@ -227,8 +227,7 @@ def validate_args(args):
     else:
         out_dir = os.path.dirname(args.config_tpl)
 
-    cfg = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
-    args.config = cfg
+    args.config = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
     # fill_tpl_ordered_dict.update
     #
     # val_ordered_dict = process_tpl_vals(config.items(section))
@@ -330,8 +329,8 @@ def main(argv=None):
         if args.restart:
             make_restart(args.restart, args.xsc)
         else:
-            filled_tpl_name = args.file_out_name
-            fill_save_tpl(args.config, read_tpl(args.config_tpl), args.config[TPL_VALS], args.config_tpl, filled_tpl_name)
+            fill_save_tpl(args.config, read_tpl(args.config_tpl), args.config[TPL_VALS],
+                          args.config_tpl, args.file_out_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
