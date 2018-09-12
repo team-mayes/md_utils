@@ -24,8 +24,8 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 CV_ANALYSIS_DIR = os.path.join(DATA_DIR, 'CV_analysis')
 
 TOP_PATH = os.path.join(CV_ANALYSIS_DIR, 'protein.psf')
-COOR_PATH = os.path.join(CV_ANALYSIS_DIR, '7.7.coor')
-QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'out_quat.log')
+COOR_PATH = os.path.join(CV_ANALYSIS_DIR, 'test.pdb')
+QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
 DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
 QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
@@ -35,7 +35,7 @@ DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full_double.in')
 GOOD_QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_quat.in')
 GOOD_FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_full.in')
 GOOD_DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_double.in')
-
+GOOD_QUAT_LOG_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_quat.log')
 
 EMPTY_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'ghost_log_list.txt')
@@ -119,10 +119,10 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testOutQuat(self):
-        test_input = [TOP_PATH, COOR_PATH, "-q", "--conformation", 'out']
+        test_input = [TOP_PATH, COOR_PATH, "-q", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_OUT))
+            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 

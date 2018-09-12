@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import argparse
+import re
 from pathlib import Path
 from collections import OrderedDict
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
@@ -39,6 +40,12 @@ IN_REF_FILE = 'eq_100ns_inocg.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
 IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
 OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
+TCL_FILES = ["orientation_quat.tcl", "orientation_full.tcl", "orientation_full_double.tcl"]
+
+# TCL Patterns
+CV_IN_PAT = re.compile(r"^cv configfile.*")
+EXIT_PAT = re.compile(r"^exit.*")
+BASENAME_PAT = re.compile(r"^set basename.*")
 
 
 def parse_cmdline(argv):
@@ -143,10 +150,13 @@ def parse_cmdline(argv):
         args.config = {OUT_DIR: args.out_dir, TPL_VALS: tpl_vals, OUT_FILE: args.name}
         args.tpl_files = []
         args.tpl_names = []
-        for flag, tpl_in, tpl_out in zip(args.analysis_flags, CV_TPLS, CV_TPLS_OUT):
+        args.tcl_files = []
+        global home
+        for flag, tpl_in, tpl_out, tcl in zip(args.analysis_flags, CV_TPLS, CV_TPLS_OUT, TCL_FILES):
             if flag:
                 args.tpl_files.append(tpl_in)
                 args.tpl_names.append(tpl_out)
+                args.tcl_files.append(home + '/CV_analysis/tcl_scripts/' + tcl)
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -160,23 +170,29 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-# def gen_CV_script(args):
-#     # This will combine appropriate tcl scripts for a single, efficient vmd run
-#     print('hello')
+def gen_CV_script(in_files, out_file, out_dir):
+    # This will combine appropriate tcl scripts for a single, efficient vmd run
+    i = 1
 
-def analysis(argv):
-    # Read in the home directory and common for reference files
+    with open(out_file, "w") as fout:
+        for file in in_files:
+            with open(file, "rt") as fin:
+                for line in fin:
+                    if CV_IN_PAT.match(line):
+                        fout.write("cv configfile [lindex $argv {}]\n".format(i))
+                    elif EXIT_PAT.match(line):
+                        i += 1
+                    elif BASENAME_PAT.match(line):
+                        fout.write("set basename [lindex $argv 0]\n")
+                    else:
+                        fout.write(line)
+        fout.write("exit")
 
-    # Determine reference files based on home directory and topology file
-    if argv[0] in IF_FILES:
-        CV_IN = home + '/bin/tcl_scripts/orientation_quat_inoc.in'
-    elif argv[0] in OF_FILES:
-        CV_IN = home + '/bin/tcl_scripts/orientation_quat_prot.in'
-    else:
-        print("Exception: Unsure which ref file to use")
-        exit(3)
-    exit()
-    subprocess.call(["vmd", "-e", "/home/xadams/bin/orientation_quat.tcl", argv.top, argv[1], "-args", CV_IN])
+
+def analysis(top, traj, tcl, base_output, in_files):
+    # TODO: remove dispdev for use on remote clusters
+    subprocess.call(
+        ["vmd", "-e", tcl, top, ' '.join(traj), "-dispdev", "text", "-args", base_output, ' '.join(in_files)])
 
 
 def main(argv=None):
@@ -187,10 +203,14 @@ def main(argv=None):
         return ret
 
     try:
+        tcl_script = args.out_dir + '/' + 'CV_analysis.tcl'
+        out_file = args.out_dir + '/' + args.name
+        args.IN_FILES = []
         for file, name in zip(args.tpl_files, args.tpl_names):
+            args.IN_FILES.append(args.out_dir + '/' + name)
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
-        # gen_CV_script(args)
-        # analysis(args)
+        gen_CV_script(args.tcl_files, tcl_script, args.out_dir)
+        analysis(args.top, args.traj, tcl_script, out_file, args.IN_FILES)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
