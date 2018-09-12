@@ -328,10 +328,8 @@ def main(argv=None):
         if args.restart:
             make_restart(args.restart, args.xsc)
         else:
-            cfg = args.config
-            tpl_name = args.config_tpl
             filled_tpl_name = args.file_out_name
-            fill_save_tpl(cfg, read_tpl(tpl_name), cfg[TPL_VALS], tpl_name, filled_tpl_name)
+            fill_save_tpl(args.config, read_tpl(args.config_tpl), args.config[TPL_VALS], args.config_tpl, filled_tpl_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

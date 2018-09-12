@@ -4,6 +4,7 @@ import subprocess
 import sys
 import argparse
 from pathlib import Path
+from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
 
 try:
@@ -58,8 +59,11 @@ def parse_cmdline(argv):
     parser.add_argument("-n", "--name",
                         help="Base name for output files. The type of analysis will be appended for each file.",
                         type=str, default="CV_analysis")
+    parser.add_argument("-o", "--out_dir", help="Directory to write output files to. Default is current directory.",
+                        type=str, default='.')
 
     args = None
+    # TODO: add list processing if necessary
     try:
         args = parser.parse_args(argv)
         args.traj = []
@@ -72,7 +76,6 @@ def parse_cmdline(argv):
                     args.traj.append(file)
             else:
                 raise IOError("Could not find specified file: {}".format(file))
-        # TODO: add list processing if necessary
         if not any(args.traj):
             raise InvalidDataError("No trajectory files provided.")
         args.analysis_flags = [args.quat, args.reverse, args.full, args.double, args.gating, args.cartesian]
@@ -129,6 +132,7 @@ def main(argv=None):
 
     try:
         # gen_CV_script(args)
+        fill_save_tpl()
         analysis(args)
     except IOError as e:
         warning("Problems reading file:", e)
