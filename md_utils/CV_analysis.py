@@ -24,7 +24,9 @@ IN = 'in'
 OUT = 'out'
 CONFORMATIONS = [IN, OUT]
 CV_OUTNAMES = ['quat', 'rev', 'full', 'full_double', 'gating', 'cartesian']
-CV_TPLS = []
+CV_TPLS = ["orientation_quat.tpl", "orientation_reverse.tpl", "orientation_full.tpl", "orientation_full_double.tpl"]
+CV_TPLS_OUT = ["orientation_quat.in", "orientation_reverse.in", "orientation_full.in", "orientation_full_double.in"]]
+REF_FILE = 'reference_file'
 
 def parse_cmdline(argv):
     """
@@ -89,7 +91,8 @@ def parse_cmdline(argv):
                                            "or select a different name.")
                 else:
                     args.outfiles.append(outfile)
-
+        tpl_vals = OrderedDict()
+        tpl_vals[REF_FILE] =
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -132,7 +135,7 @@ def main(argv=None):
 
     try:
         # gen_CV_script(args)
-        fill_save_tpl()
+        fill_save_tpl(,args.name)
         analysis(args)
     except IOError as e:
         warning("Problems reading file:", e)
