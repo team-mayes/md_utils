@@ -4,6 +4,7 @@ import subprocess
 import sys
 import argparse
 from pathlib import Path
+from collections import OrderedDict
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError, warning
 
@@ -25,8 +26,10 @@ OUT = 'out'
 CONFORMATIONS = [IN, OUT]
 CV_OUTNAMES = ['quat', 'rev', 'full', 'full_double', 'gating', 'cartesian']
 CV_TPLS = ["orientation_quat.tpl", "orientation_reverse.tpl", "orientation_full.tpl", "orientation_full_double.tpl"]
-CV_TPLS_OUT = ["orientation_quat.in", "orientation_reverse.in", "orientation_full.in", "orientation_full_double.in"]]
+CV_TPLS_OUT = ["orientation_quat.in", "orientation_reverse.in", "orientation_full.in", "orientation_full_double.in"]
 REF_FILE = 'reference_file'
+IN_REF_FILE = 'eq_100ns_inocg.pdb'
+OUT_REF_FILE = 'eq_100ns_protonated.pdb'
 
 def parse_cmdline(argv):
     """
@@ -70,6 +73,7 @@ def parse_cmdline(argv):
         args = parser.parse_args(argv)
         args.traj = []
         args.outfiles = []
+        # Check files and assign to either topology or trajectory lists
         for file in args.files:
             if os.path.isfile(file):
                 if file.endswith('.psf'):
@@ -78,11 +82,13 @@ def parse_cmdline(argv):
                     args.traj.append(file)
             else:
                 raise IOError("Could not find specified file: {}".format(file))
+        # Check that trajectories and analysis options are provided
         if not any(args.traj):
             raise InvalidDataError("No trajectory files provided.")
         args.analysis_flags = [args.quat, args.reverse, args.full, args.double, args.gating, args.cartesian]
         if not any(args.analysis_flags):
             raise InvalidDataError("Did not choose to output any CV. No output will be produced.")
+        # Check for files with same names as output to be generated
         for flag, outname in zip(args.analysis_flags, CV_OUTNAMES):
             if flag:
                 outfile = args.name + '_' + outname + '.log'
@@ -91,8 +97,32 @@ def parse_cmdline(argv):
                                            "or select a different name.")
                 else:
                     args.outfiles.append(outfile)
+        # If no topology file is given, search for defaults and stop when first file is found
+        try:
+            args.top
+        except:
+            args.top = None
+            for file in DEF_TOP:
+                if os.path.isfile(file):
+                    args.top = file
+                    break
+        if not args.top:
+            raise InvalidDataError("No topology file provided and no default file found.")
+        # Logic to detect the conformation of the files provided.
+        # Currently very specific to Alex's data structure!
+        if 'inoc' in args.top or args.top == '../protein.psf':
+            args.conf = 'in'
+        elif 'protg' in args.top or 'protx' in args.top or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
+            args.conf = 'out'
+
         tpl_vals = OrderedDict()
-        tpl_vals[REF_FILE] =
+        if args.conf == 'in':
+            tpl_vals[REF_FILE] = common + IN_REF_FILE
+        elif args.conf == 'out':
+            tpl_vals[REF_FILE] = common + OUT_REF_FILE
+        else:
+            raise InvalidDataError("Conformation was not provided and could not be inferred from topology file {}. "
+                                   "Please provide one of the following conformations: {}".format(args.top,CONFORMATIONS))
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -104,6 +134,7 @@ def parse_cmdline(argv):
         parser.print_help()
         return args, INPUT_ERROR
     return args, GOOD_RET
+
 
 # def gen_CV_script(args):
 #     # This will combine appropriate tcl scripts for a single, efficient vmd run
@@ -135,7 +166,7 @@ def main(argv=None):
 
     try:
         # gen_CV_script(args)
-        fill_save_tpl(,args.name)
+        # fill_save_tpl(, args.name)
         analysis(args)
     except IOError as e:
         warning("Problems reading file:", e)

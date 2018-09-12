@@ -91,6 +91,20 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("No trajectory files provided." in output)
 
+    def testNoTopology(self):
+        test_input = [COOR_PATH, "-q"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("No topology file" in output)
+
+    def testNoConformation(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Conformation was not" in output)
+
     def testNoOverwrite(self):
         test_input = [TOP_PATH, COOR_PATH, "-q", "-n", DUPLICATE_BASE]
         if logger.isEnabledFor(logging.DEBUG):

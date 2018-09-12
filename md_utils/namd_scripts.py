@@ -99,7 +99,6 @@ def make_restart(file, xsc_file=None):
                     inputname = s_line[2].strip(";")
                     new_in = outputname + '.restart'
                     fout.write(line.replace(inputname, new_in))
-                # This assumes that the firsttimestep is a derived quantity, so I need to add a check for explicit firsttime
                 elif FIRSTTIME_PAT.match(line):
                     s_line = line.split()
                     current_step = s_line[1].strip(";")
@@ -147,6 +146,7 @@ def make_restart(file, xsc_file=None):
                     line = line.rstrip()
                     # Restart train could potentially derail,
                     # but I'm depending on not failing too many consecutive times
+                    # At that point human intervention is necessary
                     fout.write(line + '_restart\n')
                 elif SUBMIT_PAT.match(line):
                     s_line = line.split()
