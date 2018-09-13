@@ -95,6 +95,7 @@ def parse_cmdline(argv):
 
     args = None
     # TODO: add list processing if necessary
+    # TODO: add reverse CV if desired
     try:
         args = parser.parse_args(argv)
         args.traj = []
