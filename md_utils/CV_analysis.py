@@ -196,10 +196,10 @@ def gen_CV_script(in_files, out_file, out_dir):
 
 
 def analysis(top, traj, tcl, base_output, in_files):
-    # TODO: remove dispdev for use on remote clusters
     subprocess.call(
-        ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(in_files), ' '.join(traj)])
-
+        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(in_files), ' '.join(traj)])
+        # Use this line if testing on maitake
+        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(in_files), ' '.join(traj)])
 
 def main(argv=None):
     # Read input
