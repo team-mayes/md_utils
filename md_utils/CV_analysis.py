@@ -18,10 +18,9 @@ except ImportError:
     from configparser import ConfigParser, MissingSectionHeaderError
 
 __author__ = 'xadams'
-# TODO: replace the inocg's with inoc
 
-home = str(Path.home())
-
+HOME = str(Path.home())
+TEST_DATA_DIR = '/md_utils/tests/test_data/CV_analysis/'
 DEF_TOP = ['../protein.psf', 'protein.psf', '../step5_assembly.xplor_ext.psf']
 IF_FILES = ['../protein.psf', '../inoc_glucose.psf']
 OF_FILES = ['protein.psf', 'protg.psf']
@@ -30,17 +29,17 @@ IN = 'in'
 OUT = 'out'
 CONFORMATIONS = [IN, OUT]
 CV_OUTNAMES = ['quat', 'full', 'full_double', 'gating', 'cartesian']
-QUAT = home + '/CV_analysis/tcl_scripts/' + 'orientation_quat.tpl'
-FULL = home + '/CV_analysis/tcl_scripts/' + 'orientation_full.tpl'
-DOUBLE = home + '/CV_analysis/tcl_scripts/' + 'orientation_full_double.tpl'
-GATING = home + '/CV_analysis/tcl_scripts/' + 'gating.tpl'
-CARTESIAN = home + '/CV_analysis/tcl_scripts/' + 'cartesian.tpl'
+QUAT = HOME + TEST_DATA_DIR + 'orientation_quat.tpl'
+FULL = HOME + TEST_DATA_DIR + 'orientation_full.tpl'
+DOUBLE = HOME + TEST_DATA_DIR + 'orientation_full_double.tpl'
+GATING = HOME + TEST_DATA_DIR + 'gating.tpl'
+CARTESIAN = HOME + TEST_DATA_DIR + 'cartesian.tpl'
 CV_TPLS = [QUAT, FULL, DOUBLE, GATING, CARTESIAN]
 CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in",
                "gating.in", "cartesian.in"]
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
-IN_REF_FILE = 'eq_100ns_inocg.pdb'
+IN_REF_FILE = 'eq_100ns_inoc.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
 IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
 OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
@@ -58,7 +57,7 @@ def parse_cmdline(argv):
     Returns the parsed argument list and return code.
     'argv' is a list of arguments, or 'None' for 'sys.argv[1:]".
     """
-    global home
+    global HOME
 
     if argv is None:
         argv = sys.argv[1:]
@@ -142,7 +141,7 @@ def parse_cmdline(argv):
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
-        ref_home = home + '/CV_analysis/tcl_scripts/'
+        ref_home = HOME + TEST_DATA_DIR
         if args.conf == 'in':
             tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
             tpl_vals[REF_FILE_2] = ref_home + IN_REF_FILE_2
@@ -161,7 +160,7 @@ def parse_cmdline(argv):
             if flag:
                 args.tpl_files.append(tpl_in)
                 args.tpl_names.append(tpl_out)
-                args.tcl_files.append(home + '/CV_analysis/tcl_scripts/' + tcl)
+                args.tcl_files.append(HOME + TEST_DATA_DIR + tcl)
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -199,8 +198,8 @@ def gen_CV_script(in_files, out_file, cv_files):
 
 def analysis(top, traj, tcl, base_output):
     subprocess.call(
-        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
-        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
+        # ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
+        ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
     # Use second line if testing on maitake
 
 
