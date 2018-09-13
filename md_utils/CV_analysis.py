@@ -18,6 +18,7 @@ except ImportError:
     from configparser import ConfigParser, MissingSectionHeaderError
 
 __author__ = 'xadams'
+# TODO: replace the inocg's with inoc
 
 home = str(Path.home())
 
@@ -136,15 +137,14 @@ def parse_cmdline(argv):
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
-        # TODO: Fix automatic detection of 'common' directory
-        # common = os.environ["COMMON"]
-        common = '/Users/xadams/XylE/common/'
+        global home
+        ref_home = home + '/CV_analysis/tcl_scripts/'
         if args.conf == 'in':
-            tpl_vals[REF_FILE] = common + IN_REF_FILE
-            tpl_vals[REF_FILE_2] = common + IN_REF_FILE_2
+            tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + IN_REF_FILE_2
         elif args.conf == 'out':
-            tpl_vals[REF_FILE] = common + OUT_REF_FILE
-            tpl_vals[REF_FILE_2] = common + OUT_REF_FILE_2
+            tpl_vals[REF_FILE] = ref_home + OUT_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + OUT_REF_FILE_2
         else:
             raise InvalidDataError("Conformation was not provided and could not be inferred from topology file {}. "
                                    "Please provide one of the following conformations: {}".format(args.top,
