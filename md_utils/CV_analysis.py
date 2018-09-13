@@ -33,15 +33,19 @@ CV_OUTNAMES = ['quat', 'full', 'full_double', 'gating', 'cartesian']
 QUAT = home + '/CV_analysis/tcl_scripts/' + 'orientation_quat.tpl'
 FULL = home + '/CV_analysis/tcl_scripts/' + 'orientation_full.tpl'
 DOUBLE = home + '/CV_analysis/tcl_scripts/' + 'orientation_full_double.tpl'
-CV_TPLS = [QUAT, FULL, DOUBLE]
-CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in"]
+GATING = home + '/CV_analysis/tcl_scripts/' + 'gating.tpl'
+CARTESIAN = home + '/CV_analysis/tcl_scripts/' + 'cartesian.tpl'
+CV_TPLS = [QUAT, FULL, DOUBLE, GATING, CARTESIAN]
+CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in",
+               "gating.in", "cartesian.in"]
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
 IN_REF_FILE = 'eq_100ns_inocg.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
 IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
 OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
-TCL_FILES = ["orientation_quat.tcl", "orientation_full.tcl", "orientation_full_double.tcl"]
+TCL_FILES = ["orientation_quat.tcl", "orientation_full.tcl", "orientation_full_double.tcl",
+             "gating.tcl", "cartesian.tcl"]
 
 # TCL Patterns
 CV_IN_PAT = re.compile(r"^cv configfile.*")
@@ -54,6 +58,7 @@ def parse_cmdline(argv):
     Returns the parsed argument list and return code.
     'argv' is a list of arguments, or 'None' for 'sys.argv[1:]".
     """
+    global home
 
     if argv is None:
         argv = sys.argv[1:]
@@ -137,7 +142,6 @@ def parse_cmdline(argv):
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
-        global home
         ref_home = home + '/CV_analysis/tcl_scripts/'
         if args.conf == 'in':
             tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
@@ -153,7 +157,6 @@ def parse_cmdline(argv):
         args.tpl_files = []
         args.tpl_names = []
         args.tcl_files = []
-        global home
         for flag, tpl_in, tpl_out, tcl in zip(args.analysis_flags, CV_TPLS, CV_TPLS_OUT, TCL_FILES):
             if flag:
                 args.tpl_files.append(tpl_in)
@@ -172,7 +175,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def gen_CV_script(in_files, out_file, out_dir):
+def gen_CV_script(in_files, out_file):
     # This will combine appropriate tcl scripts for a single, efficient vmd run
     i = 0
 
@@ -198,8 +201,9 @@ def gen_CV_script(in_files, out_file, out_dir):
 def analysis(top, traj, tcl, base_output, in_files):
     subprocess.call(
         ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(in_files), ' '.join(traj)])
-        # Use this line if testing on maitake
         # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(in_files), ' '.join(traj)])
+    # Use second line if testing on maitake
+
 
 def main(argv=None):
     # Read input
@@ -215,7 +219,7 @@ def main(argv=None):
         for file, name in zip(args.tpl_files, args.tpl_names):
             args.IN_FILES.append(args.out_dir + '/' + name)
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
-        gen_CV_script(args.tcl_files, tcl_script, args.out_dir)
+        gen_CV_script(args.tcl_files, tcl_script)
         analysis(args.top, args.traj, tcl_script, out_file, args.IN_FILES)
         if not args.keep:
             os.remove(tcl_script)
