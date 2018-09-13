@@ -33,6 +33,7 @@ FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full.in')
 DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full_double.in')
 FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full.log')
 DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full_double.log')
+TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 
 GOOD_QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_quat.in')
 GOOD_FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_full.in')
@@ -40,6 +41,7 @@ GOOD_DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_double.in'
 GOOD_QUAT_LOG_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_quat.log')
 GOOD_FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full.log')
 GOOD_DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full_double.log')
+GOOD_TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_traj.log')
 
 EMPTY_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'ghost_log_list.txt')
@@ -141,3 +143,11 @@ class TestMain(unittest.TestCase):
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
             silent_remove(FULL_OUT, disable=DISABLE_REMOVE)
             silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)
+
+    def testMultipleTraj(self):
+        test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(TRAJ_OUT, GOOD_TRAJ_OUT))
+        finally:
+            silent_remove(TRAJ_OUT, disable=DISABLE_REMOVE)

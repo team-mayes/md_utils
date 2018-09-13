@@ -177,6 +177,9 @@ def gen_CV_script(in_files, out_file, out_dir):
     i = 0
 
     with open(out_file, "w") as fout:
+        # TODO: convert these lines into a single header file
+        fout.write("set traj [regexp -all -inline {\S+} [lindex $argv 2]]\n")
+        fout.write("foreach file $traj {\n    mol addfile $file waitfor all\n}\n")
         fout.write("set cv_in [regexp -all -inline {\S+} [lindex $argv 1]]\n")
         for file in in_files:
             with open(file, "rt") as fin:
@@ -195,7 +198,7 @@ def gen_CV_script(in_files, out_file, out_dir):
 def analysis(top, traj, tcl, base_output, in_files):
     # TODO: remove dispdev for use on remote clusters
     subprocess.call(
-        ["vmd", "-e", tcl, top, ' '.join(traj), "-dispdev", "text", "-args", base_output, ' '.join(in_files)])
+        ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(in_files), ' '.join(traj)])
 
 
 def main(argv=None):
