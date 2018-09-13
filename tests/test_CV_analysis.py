@@ -31,11 +31,15 @@ DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
 QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
 FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full.in')
 DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_full_double.in')
+FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full.log')
+DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full_double.log')
 
 GOOD_QUAT_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_quat.in')
 GOOD_FULL_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_full.in')
 GOOD_DOUBLE_TPL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_orientation_double.in')
 GOOD_QUAT_LOG_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_quat.log')
+GOOD_FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full.log')
+GOOD_DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full_double.log')
 
 EMPTY_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'empty_log_list.txt')
 GHOST_LOG_LIST = os.path.join(CV_ANALYSIS_DIR, 'ghost_log_list.txt')
@@ -126,70 +130,14 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 
-    def testMakeTpls(self):
-        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "-d", "--conf", 'out', "-o", CV_ANALYSIS_DIR]
+    def testQuatFullDouble(self):
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "-d", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(QUAT_TPL_OUT, GOOD_QUAT_TPL_OUT))
-            self.assertFalse(diff_lines(FULL_TPL_OUT, GOOD_FULL_TPL_OUT))
-            self.assertFalse(diff_lines(DOUBLE_TPL_OUT, GOOD_DOUBLE_TPL_OUT))
+            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
+            self.assertFalse(diff_lines(FULL_OUT, GOOD_FULL_OUT))
+            self.assertFalse(diff_lines(DOUBLE_OUT, GOOD_DOUBLE_OUT))
         finally:
-            silent_remove(QUAT_TPL_OUT, disable=DISABLE_REMOVE)
-            silent_remove(FULL_TPL_OUT, disable=DISABLE_REMOVE)
-            silent_remove(DOUBLE_TPL_OUT, disable=DISABLE_REMOVE)
-
-    def testTotalLogFile(self):
-        test_input = ["-f", LOG_PATH, "-t"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_TOTAL, GOOD_LOG_OUT_TOTAL))
-        finally:
-            silent_remove(LOG_OUT_TOTAL, disable=DISABLE_REMOVE)
-
-    def testBothLogFile(self):
-        test_input = ["-f", LOG_PATH, "-d", "-t"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_ENERGY, GOOD_LOG_OUT_ENERGY))
-        finally:
-            silent_remove(LOG_OUT_ENERGY, disable=DISABLE_REMOVE)
-
-    def testStepLogFile(self):
-
-        test_input = ["-f", LOG_PATH, "-t", "-s", "5002000"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
-        finally:
-            silent_remove(LOG_OUT_STEP, disable=DISABLE_REMOVE)
-
-            # def testLogList(self):
-            #     try:
-            #         main(["-l", LOG_LIST])
-            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-            #     finally:
-            #         silent_remove(LOG_LIST_OUT)
-
-    def testStats(self):
-        test_input = ["-f", LOG_PATH, "-d", "--stats"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(STATS_OUT, GOOD_STATS))
-        finally:
-            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
-            silent_remove(STATS_OUT, disable=DISABLE_REMOVE)
-
-            # def testLogList(self):
-            #     try:
-            #         main(["-l", LOG_LIST])
-            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
-            #     finally:
-            #         silent_remove(LOG_LIST_OUT)
-
-    def testAMD(self):
-        test_input = ["-f", LOG_PATH, "-a"]
-        try:
-            main(test_input)
-            self.assertFalse(diff_lines(LOG_OUT_AMD, GOOD_LOG_OUT_AMD))
-        finally:
-            silent_remove(LOG_OUT_AMD, disable=DISABLE_REMOVE)
+            silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(FULL_OUT, disable=DISABLE_REMOVE)
+            silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)

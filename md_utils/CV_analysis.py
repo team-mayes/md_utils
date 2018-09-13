@@ -84,6 +84,8 @@ def parse_cmdline(argv):
                         type=str, default="CV_analysis")
     parser.add_argument("-o", "--out_dir", help="Directory to write output files to. Default is current directory.",
                         type=str, default='.')
+    parser.add_argument("-k", "--keep", help="Flag to retain intermediate .in and .tcl files.", action='store_true',
+                        default=False)
 
     args = None
     # TODO: add list processing if necessary
@@ -172,14 +174,15 @@ def parse_cmdline(argv):
 
 def gen_CV_script(in_files, out_file, out_dir):
     # This will combine appropriate tcl scripts for a single, efficient vmd run
-    i = 1
+    i = 0
 
     with open(out_file, "w") as fout:
+        fout.write("set cv_in [regexp -all -inline {\S+} [lindex $argv 1]]\n")
         for file in in_files:
             with open(file, "rt") as fin:
                 for line in fin:
                     if CV_IN_PAT.match(line):
-                        fout.write("cv configfile [lindex $argv {}]\n".format(i))
+                        fout.write("cv configfile [lindex $cv_in {}]\n".format(i))
                     elif EXIT_PAT.match(line):
                         i += 1
                     elif BASENAME_PAT.match(line):
@@ -211,6 +214,10 @@ def main(argv=None):
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
         gen_CV_script(args.tcl_files, tcl_script, args.out_dir)
         analysis(args.top, args.traj, tcl_script, out_file, args.IN_FILES)
+        if not args.keep:
+            os.remove(tcl_script)
+            for file in args.IN_FILES:
+                os.remove(file)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
