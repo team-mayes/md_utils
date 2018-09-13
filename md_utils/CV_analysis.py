@@ -69,7 +69,8 @@ def parse_cmdline(argv):
     # parser.add_argument("-l", "--list", help="File with list of trajectory files")
     parser.add_argument("-q", "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true',
                         default=False)
-    # parser.add_argument("-r", "--reverse", help="Flag for 2-domain quaternion analysis with inward reference structure",
+    # parser.add_argument("-r", "--reverse", help="Flag for 2-domain quaternion analysis
+    #                       with inward reference structure",
     #                     action='store_true', default=False)
     parser.add_argument("-f", "--full", help="Flag for 12 helix quaternion analysis.", action='store_true',
                         default=False)
@@ -83,7 +84,7 @@ def parse_cmdline(argv):
     parser.add_argument("-c", "--conf",
                         help="Conformation of the topology. This is important for selecting the reference file. "
                              "Valid options are {}. This will supercede internal topology detection logic".format(
-                            CONFORMATIONS), choices=CONFORMATIONS)
+                                CONFORMATIONS), choices=CONFORMATIONS)
     parser.add_argument("-n", "--name",
                         help="Base name for output files. The type of analysis will be appended for each file.",
                         type=str, default="CV_analysis")
@@ -137,7 +138,8 @@ def parse_cmdline(argv):
         # Currently very specific to Alex's data structure!
         if 'inoc' in args.top or args.top == '../protein.psf':
             args.conf = 'in'
-        elif 'protg' in args.top or 'protx' in args.top or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
+        elif any(cv in args.top for cv in ["protg", "protx"]) \
+                or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
@@ -198,8 +200,8 @@ def gen_CV_script(in_files, out_file, cv_files):
 
 def analysis(top, traj, tcl, base_output):
     subprocess.call(
-        # ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
-        ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
+        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
+        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
     # Use second line if testing on maitake
 
 
