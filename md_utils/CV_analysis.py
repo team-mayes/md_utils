@@ -175,20 +175,19 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def gen_CV_script(in_files, out_file):
+def gen_CV_script(in_files, out_file, cv_files):
     # This will combine appropriate tcl scripts for a single, efficient vmd run
     i = 0
 
     with open(out_file, "w") as fout:
         # TODO: convert these lines into a single header file
-        fout.write("set traj [regexp -all -inline {\S+} [lindex $argv 2]]\n")
+        fout.write("set traj [regexp -all -inline {\S+} [lindex $argv 1]]\n")
         fout.write("foreach file $traj {\n    mol addfile $file waitfor all\n}\n")
-        fout.write("set cv_in [regexp -all -inline {\S+} [lindex $argv 1]]\n")
         for file in in_files:
             with open(file, "rt") as fin:
                 for line in fin:
                     if CV_IN_PAT.match(line):
-                        fout.write("cv configfile [lindex $cv_in {}]\n".format(i))
+                        fout.write("cv configfile {}\n".format(cv_files[i]))
                     elif EXIT_PAT.match(line):
                         i += 1
                     elif BASENAME_PAT.match(line):
@@ -198,10 +197,10 @@ def gen_CV_script(in_files, out_file):
         fout.write("exit")
 
 
-def analysis(top, traj, tcl, base_output, in_files):
+def analysis(top, traj, tcl, base_output):
     subprocess.call(
-        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(in_files), ' '.join(traj)])
-        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(in_files), ' '.join(traj)])
+        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
+        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
     # Use second line if testing on maitake
 
 
@@ -219,8 +218,8 @@ def main(argv=None):
         for file, name in zip(args.tpl_files, args.tpl_names):
             args.IN_FILES.append(args.out_dir + '/' + name)
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
-        gen_CV_script(args.tcl_files, tcl_script)
-        analysis(args.top, args.traj, tcl_script, out_file, args.IN_FILES)
+        gen_CV_script(args.tcl_files, tcl_script, args.IN_FILES)
+        analysis(args.top, args.traj, tcl_script, out_file)
         if not args.keep:
             os.remove(tcl_script)
             for file in args.IN_FILES:
