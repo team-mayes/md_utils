@@ -4,14 +4,16 @@ This program sets up scripts for running NAMD
 """
 
 from __future__ import print_function
+
 import argparse
 import os
-from collections import OrderedDict
+import re
 import sys
+from collections import OrderedDict
+
+from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
-                                create_out_fname, read_csv_to_list,
-                                list_to_csv, IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA)
-from md_utils.fill_tpl import TPL_VALS_SEC, TPL_EQS_SEC, OUT_DIR
+                                IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
 
 try:
     # noinspection PyCompatibility
@@ -28,12 +30,14 @@ CPU = "cpu"
 GPU = "gpu"
 OTHER = 'other'
 TYPES = [CPU, GPU, OTHER]
-OUT_FILE = 'output_file_name'
+OUT_FILE = 'file_out_name'
 
-RUN = "run"
-NAME = 'name'
+RUN = 'runtime'
+JOB_NAME = 'name'
 INPUT_NAME = 'input_name'
-FIRST = 'first'
+OUTPUT = 'output_name'
+STRUCTURE = 'structure'
+COORDINATES = 'coordinates'
 
 # Defaults
 DEF_TYPE = CPU
@@ -41,10 +45,122 @@ DEF_CPU_TPL_FILE = 'make_prod_cpu.tpl'
 DEF_GPU_TPL_FILE = 'make_prod_gpu.tpl'
 DEF_CPU_OUT_FILE = 'make_prod_cpu.ini'
 DEF_GPU_OUT_FILE = 'make_prod_gpu.ini'
-DEF_RUN = 1
-DEF_FIRST = 1
-DEF_NAME = 'test'
-DEF_INPUT_NAME = 1
+DEF_RUN = 2
+DEF_JOB_NAME = 'test'
+DEF_INPUT_NAME = 'input'
+DEF_OUTPUT = 'output'
+DEF_STRUCTURE = 'test.psf'
+DEF_COORDINATES = 'test.pdb'
+
+# Restart Patterns
+OUT_PAT = re.compile(r"^outputname.*")
+IN_PAT = re.compile(r"^set inputname.*")
+RUN_PAT = re.compile(r"^run.*")
+FIRSTTIME_PAT = re.compile(r"^firsttimestep.*")
+NUM_PAT = re.compile(r"^numsteps.*")
+XSC_PAT = re.compile(r"^.*0 0 0.*")
+JOB_PAT = re.compile(r"^.*--job-name.*")
+SUBMIT_PAT = re.compile(r"^.*namd2.*")
+
+
+# Local variable warnings are due to my taking shortcuts by
+# knowing how NAMD input scripts and job files are structured
+
+def make_restart(file, xsc_file=None):
+    inp_file = file + '.inp'
+    job_file = file + '.job'
+    s_file = file.split(".")
+    if len(s_file) < 3:
+        restart_file = file + '.2.'
+    else:
+        s_file[2] = str(1 + int(s_file[2]))
+        restart_file = ''
+        for part in s_file:
+            restart_file += part + '.'
+    restart_inp = restart_file + 'inp'
+    restart_job = restart_file + 'job'
+
+    # process and write a restart inp file
+    with open(inp_file, "rt") as fin:
+        with open(restart_inp, "w") as fout:
+            for line in fin:
+                if OUT_PAT.match(line):
+                    s_line = line.split()
+                    outputname = s_line[1].strip(";")
+                    s_out = outputname.split(".")
+
+                    if len(s_out) < 3:
+                        new_out = outputname + '.2'
+                    else:
+                        new_out = s_out[0] + '.' + s_out[1] + '.' + str((int(s_out[2]) + 1))
+                    fout.write(line.replace(outputname, new_out))
+                elif IN_PAT.match(line):
+                    s_line = line.split()
+                    inputname = s_line[2].strip(";")
+                    new_in = outputname + '.restart'
+                    fout.write(line.replace(inputname, new_in))
+                elif FIRSTTIME_PAT.match(line):
+                    s_line = line.split()
+                    current_step = s_line[1].strip(";")
+                    if current_step != "$firsttime":
+                        restart_xsc = new_in + '.xsc'
+                        with open(restart_xsc, "rt") as xin:
+                            for x_line in xin:
+                                if line != '\n' and line[0] != '#':
+                                    s_x_line = x_line.split()
+                                    start_step = int(s_x_line[0])
+                        fout.write(line.replace(current_step, str(start_step)))
+                    else:
+                        fout.write(line)
+                elif RUN_PAT.match(line):
+                    try:
+                        start_step
+                    except:
+                        if xsc_file:
+                            inputname = xsc_file
+                        else:
+                            inputname += '.xsc'
+                        with open(inputname, "rt") as xin:
+                            for x_line in xin:
+                                if x_line != '\n' and x_line[0] != '#':
+                                    s_x_line = x_line.split()
+                                    current_step = s_x_line[0]
+
+                    s_line = line.split()
+                    run_step = int(s_line[1].split(";")[0])
+                    steps_remaining = run_step - int(current_step) # This variable can be used for writing
+                    # 'run' to input file or modifying the requested time in the job file
+                    num_step = int(current_step) + run_step
+                    ns = str(int(num_step / 500000))
+                    output = 'numsteps           ' + str(num_step) + ';            # ' + ns + ' ns'
+                    fout.write(output)
+                else:
+                    fout.write(line)
+
+    # process and write a restart job file
+    # TODO: Make intelligent judgement about modifying the time requested
+    with open(job_file, "rt") as fin:
+        with open(restart_job, "w") as fout:
+            for line in fin:
+                if JOB_PAT.match(line):
+                    line = line.rstrip()
+                    # Restart train could potentially derail,
+                    # but I'm depending on not failing too many consecutive times
+                    # At that point human intervention is necessary
+                    fout.write(line + '_restart\n')
+                elif SUBMIT_PAT.match(line):
+                    s_line = line.split()
+                    for element in s_line:
+                        if '.inp' in element:
+                            old_inp = element
+                        elif '.log' in element:
+                            old_log = element
+                    line = line.replace(old_inp, new_out + '.inp')
+                    fout.write(line.replace(old_log, new_out + '.log'))
+                else:
+                    fout.write(line)
+    print("Wrote file: {}".format(restart_inp))
+    print("Wrote file: {}".format(restart_job))
 
 
 def validate_args(args):
@@ -68,12 +184,27 @@ def validate_args(args):
         raise InvalidDataError("Input error: could not find the specified "
                                "'config_tpl' file '{}'.".format(args.config_tpl))
 
+    if args.file_out_name is None:
+        # If more allowed TYPES are added, more default specs will be needed.
+        if args.type is OTHER:
+            raise InvalidDataError("User must specify a 'file_out_name' when the run 'type' is '{}'".format(OTHER))
+        if args.type is GPU:
+            args.file_out_name = DEF_GPU_OUT_FILE
+        else:
+            args.file_out_name = DEF_CPU_OUT_FILE
+
     # args.config
-    int_var_dict = {FIRST: args.first, RUN: args.run}
+    int_var_dict = {RUN: args.run}
     for variable_name, req_pos_int in int_var_dict.items():
         if req_pos_int < 1:
             raise InvalidDataError("Input error: the integer value for '{}' must be > 1.".format(variable_name))
         tpl_vals[variable_name] = req_pos_int
+
+    tpl_vals[JOB_NAME] = args.job_name
+    tpl_vals[INPUT_NAME] = args.input_name
+    tpl_vals[OUTPUT] = args.output_name
+    tpl_vals[STRUCTURE] = args.structure
+    tpl_vals[COORDINATES] = args.coordinates
 
     if args.file_out_name:
         file_out_name = args.file_out_name
@@ -96,15 +227,14 @@ def validate_args(args):
     else:
         out_dir = os.path.dirname(args.config_tpl)
 
-    cfg = {OUT_DIR: out_dir, TPL_VALS_SEC: tpl_vals, OUT_FILE: file_out_name}
-    args.config = cfg
+    args.config = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
     # fill_tpl_ordered_dict.update
-        #
-        # val_ordered_dict = process_tpl_vals(config.items(section))
-        # if section == TPL_EQS_SEC:
-        #     # just keep the names, so we know special processing is required
-        #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
-        # proc[TPL_VALS].update(val_ordered_dict)
+    #
+    # val_ordered_dict = process_tpl_vals(config.items(section))
+    # if section == TPL_EQS_SEC:
+    #     # just keep the names, so we know special processing is required
+    #     proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
+    # proc[TPL_VALS].update(val_ordered_dict)
 
 
 def parse_cmdline(argv):
@@ -137,17 +267,13 @@ def parse_cmdline(argv):
                                                 "directory.",
                         default=None)
 
-    parser.add_argument("-f", "--first", help="Value for created template: first (integer). "
-                                              "Default is {}.".format(DEF_FIRST),
-                        type=int, default=DEF_FIRST)
-
     parser.add_argument("-i", "--input_name", help="Value for created template: input_name. "
                                                    "Default is {}.".format(DEF_INPUT_NAME),
                         default=DEF_INPUT_NAME)
 
-    parser.add_argument("-n", "--name", help="Value for created template: name. "
-                                             "Default is {}.".format(DEF_NAME),
-                        default=DEF_NAME)
+    parser.add_argument("-n", "--job_name", help="Value for created template: name. "
+                                                 "Default is {}.".format(DEF_JOB_NAME),
+                        default=DEF_JOB_NAME)
 
     parser.add_argument("-o", "--file_out_name", help="The name of the configuration file to be created. "
                                                       "By default, the program will create a file named {} "
@@ -157,14 +283,28 @@ def parse_cmdline(argv):
                                                       "the job type is {}.'".format(DEF_CPU_OUT_FILE, CPU,
                                                                                     DEF_GPU_OUT_FILE, GPU, OTHER),
                         default=None)
+    parser.add_argument("--output_name", help="Name for the NAMD output", default=DEF_OUTPUT)
     parser.add_argument("-r", "--run", help="Value for created template: run length (integer; "
                                             "default is {}.".format(DEF_RUN),
                         type=int, default=DEF_RUN)
 
+    parser.add_argument("-s", "--structure", help="Name of the structure file; "
+                                                  "default is {}.".format(DEF_STRUCTURE),
+                        default=DEF_STRUCTURE)
+    parser.add_argument("-co", "--coordinates", help="Name of the coordinates file; "
+                                                     "default is {}.".format(DEF_COORDINATES),
+                        default=DEF_COORDINATES)
+    parser.add_argument("-re", "--restart",
+                        help="Flag to generate a restart inp and job file from a provided job prefix. "
+                             "This option preempts all other options.", default=None)
+    parser.add_argument("-x", "--xsc", help="Path to extended system file. Default is to read from inp file.",
+                        default=None)
+
     args = None
     try:
         args = parser.parse_args(argv)
-        validate_args(args)
+        if not args.restart:
+            validate_args(args)
     except IOError as e:
         warning(e)
         parser.print_help()
@@ -185,19 +325,12 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    cfg = args.config
-    tpl_name = args.config_tpl
-    filled_tpl_name = args.file_out_name
     try:
-        # cfg = {dict} {'parameter_values': OrderedDict([('voo_b', [0.0]), ('vii_0', [-300.0]),
-        # ('vii_type_d', ['OH1']), ('vii_type_a', ['OW']), ('vii_b', [-0.5]), ('vii_lb', [1.0]), ('vii_b_da', [2.5]),
-        # ('vii_cut', [5.0])]), 'calculated_parameter_names': OrderedDict(), 'tpl_fil
-        #     filled_tpl_name = {str} 'evb_test.par'
-        # tpl_name = {str} 'tests/test_data/fill_tpl/evb_par.tpl'
-        print("cfg: {}, {}".format(type(cfg), cfg))
-        print("tpl_name: {}, {}".format(type(tpl_name), tpl_name))
-        print("filled_tpl_name: {}, {}".format(type(filled_tpl_name), filled_tpl_name))
-        # make_tpl(cfg, tpl_name, filled_tpl_name)
+        if args.restart:
+            make_restart(args.restart, args.xsc)
+        else:
+            fill_save_tpl(args.config, read_tpl(args.config_tpl), args.config[TPL_VALS],
+                          args.config_tpl, args.file_out_name)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR

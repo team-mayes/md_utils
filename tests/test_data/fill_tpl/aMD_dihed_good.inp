@@ -3,12 +3,23 @@ coordinates        ../step5_assembly.namd.pdb
 
 set temp           303.15;
 
+proc get_first_ts { xscfile } {
+    set fd [open $xscfile r]
+    gets $fd
+    gets $fd
+    gets $fd line
+    set ts [lindex $line 0]
+    close $fd
+    return $ts
+}
+
 outputname         aMD_dihed.4
 set inputname      aMD_dihed.3
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      2500000;
+set firsttime      [get_first_ts $inputname.xsc]
+firsttimestep      $firsttime;
 restartfreq        10000;              # 500 steps = every 1ps
 dcdfreq            2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
@@ -126,4 +137,4 @@ accelMDalpha 1053
 accelMDOutFreq 100
 
 # run
-run                7500000;            # 15 ns
+run                 500000;            # 1 ns

@@ -29,11 +29,15 @@ LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'namd_short_performance.csv')
 LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
 LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'namd_short_energy.csv')
 LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
+LOG_OUT_AMD = os.path.join(NAMD_LOG_DIR, 'namd_short_amdboost.csv')
+STATS_OUT = os.path.join(NAMD_LOG_DIR, 'stats_namd_short_dihedral.csv')
 GOOD_LOG_OUT_DIHEDRAL = os.path.join(NAMD_LOG_DIR, 'ts_dihedral_good.csv')
 GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
 GOOD_LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'ts_total_good.csv')
 GOOD_LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
 GOOD_LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'ts_step_good.csv')
+GOOD_LOG_OUT_AMD = os.path.join(NAMD_LOG_DIR, 'ts_amd_good.csv')
+GOOD_STATS = os.path.join(NAMD_LOG_DIR, 'stats_ts_dihedral_good.csv')
 
 LOG_LIST = os.path.join(NAMD_LOG_DIR, 'log_list.txt')
 LOG_LIST_OUT = os.path.join(NAMD_LOG_DIR, 'log_list_sum.csv')
@@ -132,7 +136,8 @@ class TestMain(unittest.TestCase):
             silent_remove(LOG_OUT_ENERGY, disable=DISABLE_REMOVE)
 
     def testStepLogFile(self):
-        test_input = ["-f", LOG_PATH, "-t", "-s 5002000"]
+
+        test_input = ["-f", LOG_PATH, "-t", "-s", "5002000"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
@@ -145,3 +150,27 @@ class TestMain(unittest.TestCase):
             #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
             #     finally:
             #         silent_remove(LOG_LIST_OUT)
+
+    def testStats(self):
+        test_input = ["-f", LOG_PATH, "-d", "--stats"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(STATS_OUT, GOOD_STATS))
+        finally:
+            silent_remove(LOG_OUT_DIHEDRAL, disable=DISABLE_REMOVE)
+            silent_remove(STATS_OUT, disable=DISABLE_REMOVE)
+
+            # def testLogList(self):
+            #     try:
+            #         main(["-l", LOG_LIST])
+            #         self.assertFalse(diff_lines(LOG_LIST_OUT, GOOD_LOG_LIST_OUT))
+            #     finally:
+            #         silent_remove(LOG_LIST_OUT)
+
+    def testAMD(self):
+        test_input = ["-f", LOG_PATH, "-a"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(LOG_OUT_AMD, GOOD_LOG_OUT_AMD))
+        finally:
+            silent_remove(LOG_OUT_AMD, disable=DISABLE_REMOVE)

@@ -250,22 +250,6 @@ class TestMain(unittest.TestCase):
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file, disable=DISABLE_REMOVE)
 
-    def testMakeGPUJob(self):
-        try:
-            silent_remove(PROD_GPU_JOB_OUT)
-            main(["-c", PROD_GPU_JOB_INI])
-            self.assertFalse(diff_lines(PROD_GPU_JOB_OUT, GOOD_PROD_GPU_JOB_OUT))
-        finally:
-            silent_remove(PROD_GPU_JOB_OUT, disable=DISABLE_REMOVE)
-
-    def testMakeGPUInp(self):
-        try:
-            silent_remove(PROD_GPU_INP_OUT)
-            main(["-c", PROD_GPU_INP_INI])
-            self.assertFalse(diff_lines(PROD_GPU_INP_OUT, GOOD_PROD_GPU_INP_OUT))
-        finally:
-            silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
-
     def testMakeGPUInpJob(self):
         # Test processing two tpl files with one input; bit redundant with above, but not worried about it
         try:
@@ -279,6 +263,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
 
     def testMakeCPUINPJOB(self):
+        # todo: fix test
         try:
             silent_remove(PROD_CPU_JOB_OUT)
             silent_remove(PROD_CPU_INP_OUT)

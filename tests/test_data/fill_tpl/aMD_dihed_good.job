@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=Protx_dihed4
-#SBATCH -t 30:00:00
+#SBATCH -t 2:00:00
 #SBATCH -p GPU
 #SBATCH -N 1 --tasks-per-node=28
 #SBATCH --mail-type=ALL
@@ -13,4 +13,3 @@ module load cuda
 cd $SLURM_SUBMIT_DIR
 nvidia-smi
 /home/jphillip/NAMD_binaries/NAMD_LATEST_Linux-x86_64-multicore-Bridges-CUDA/namd2 +idlepoll +p $SLURM_NPROCS +pemap 0-13+14 aMD_dihed.4.inp>& aMD_dihed.4.log
-transfer aMD_dihed.4

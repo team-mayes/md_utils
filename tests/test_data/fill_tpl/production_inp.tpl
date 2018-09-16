@@ -3,12 +3,23 @@ coordinates        {coordinates}
 
 set temp           303.15
 
+proc get_first_ts {{ xscfile }} {{
+    set fd [open $xscfile r]
+    gets $fd
+    gets $fd
+    gets $fd line
+    set ts [lindex $line 0]
+    close $fd
+    return $ts
+}}
+
 outputname         {output_name}
 set inputname      {input_name}
 binCoordinates     $inputname.coor;    # coordinates from last run (binary)
 binVelocities      $inputname.vel;     # velocities from last run (binary)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
-firsttimestep      {firststep}
+set firsttime      [get_first_ts $inputname.xsc]
+firsttimestep      $firsttime
 restartfreq      10000;                # 500 steps = every 1ps
 dcdfreq           2500;
 dcdUnitCell        yes;                # the file will contain unit cell info in the style of
@@ -119,5 +130,4 @@ langevinTemp         $temp;            # random noise at this level
 langevinHydrogen       off;            # don't couple bath to hydrogens
 
 # run
-numsteps        {last:>10};            # {endtime} ns
 run               {run:>8};            # {runtime} ns

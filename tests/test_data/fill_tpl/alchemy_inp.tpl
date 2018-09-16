@@ -4,9 +4,20 @@ coordinates        {coordinates}
 set temp           303.15;
 temperature        $temp
 
+proc get_first_ts {{ xscfile }} {{
+    set fd [open $xscfile r]
+    gets $fd
+    gets $fd
+    gets $fd line
+    set ts [lindex $line 0]
+    close $fd
+    return $ts
+}}
+
 outputname         {output_name}
 set inputname      {input_name}
-firsttimestep      {first};
+set firsttime      [get_first_ts $inputname.xsc]
+firsttimestep      $firsttime
 #binCoordinates    $inputname.coor;    # cannot use binary coordinates as the topology has changed (dual)
 #binVelocities     $inputname.vel;     #  cannot use binary coordinates as the topology has changed (dual)
 extendedSystem     $inputname.xsc;     # cell dimensions from last run (binary)
