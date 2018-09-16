@@ -1136,6 +1136,10 @@ def diff_lines(floc1, floc2, delimiter=","):
 
     warning("Checking for differences between files {} {}".format(floc1, floc2))
     try:
+        # take care of parentheses
+        for char in ('(', ')', '[', ']'):
+            output_plus = output_plus.replace(char, delimiter)
+            output_neg = output_neg.replace(char, delimiter)
         # pycharm doesn't know six very well
         # noinspection PyCallingNonCallable
         diff_plus_lines = list(csv.reader(six.StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
@@ -1146,7 +1150,7 @@ def diff_lines(floc1, floc2, delimiter=","):
         diff_neg_lines = output_neg.split('\n')
         for diff_list in [diff_plus_lines, diff_neg_lines]:
             for line_id in range(len(diff_list)):
-                diff_list[line_id] = diff_list[line_id].split(delimiter)
+                diff_list[line_id] = [x.strip() for x in diff_list[line_id].split(delimiter)]
 
     if len(diff_plus_lines) == len(diff_neg_lines):
         # if the same number of lines, there is a chance that the difference is only due to difference in
@@ -1156,7 +1160,9 @@ def diff_lines(floc1, floc2, delimiter=","):
             if len(line_plus) == len(line_neg):
                 # print("Checking for differences between: ", line_neg, line_plus)
                 for item_plus, item_neg in zip(line_plus, line_neg):
-                    if isinstance(item_plus, float) and isinstance(item_neg, float):
+                    try:
+                        item_plus = float(item_plus)
+                        item_neg = float(item_neg)
                         # if difference greater than the tolerance, the difference is not just precision
                         # Note: if only one value is nan, the float diff is zero!
                         #  Thus, check for diffs only if neither are nan; show different if only one is nan
@@ -1173,7 +1179,7 @@ def diff_lines(floc1, floc2, delimiter=","):
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
                             diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
                             break
-                    else:
+                    except ValueError:
                         # not floats, so the difference is not just precision
                         if item_plus != item_neg:
                             diff_lines_list.append("- " + " ".join(map(str, line_neg)))
