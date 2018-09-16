@@ -172,6 +172,7 @@ def parse_cmdline(argv):
         warning(e)
         parser.print_help()
         return args, IO_ERROR
+
     except (KeyError, InvalidDataError, SystemExit) as e:
         if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
@@ -373,6 +374,7 @@ def process_pdb(cfg, atom_num_dict, mol_num_dict, element_dict):
 def main(argv=None):
     # Read input
     args, ret = parse_cmdline(argv)
+    # TODO: did not show the expected behavior when I didn't have a required cfg in the ini file
     if ret != GOOD_RET or args is None:
         return ret
 

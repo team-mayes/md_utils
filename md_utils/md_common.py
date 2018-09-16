@@ -414,11 +414,15 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
                 data_array = np.copy(data_vector)
             else:
                 data_array = np.vstack((data_array, data_vector))
+    if np.isnan(data_array).any():
+        if data_array.size == 1:
+            raise InvalidDataError("Data in file was not read as an array of floats. Check input, e.g. if the delimiter "
+                                   "is not ('{}')".format(delimiter))
+        else:
+            warning("Encountered entry (or entries) which could not be converted to a float. "
+                    "'nan' will be returned for the stats for that column.")
     if len(data_array.shape) == 1:
         raise InvalidDataError("File contains a vector, not an array of floats: {}\n".format(data_file))
-    if np.isnan(data_array).any():
-        warning("Encountered entry (or entries) which could not be converted to a float. "
-                "'nan' will be returned for the stats for that column.")
     return data_array, header_row, hist_data
 
 

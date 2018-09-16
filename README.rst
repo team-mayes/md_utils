@@ -28,9 +28,9 @@ Scripts added to the package aim have at least 90% test coverage.
 Installation
 ------------
 
-1. Make sure python is installed. Python 2.7 is recommended. The package is meant to be python 3 compatible,
-   but primarily tested with Python 2.7. There are many ways to install python.
-   For example, see http://conda.pydata.org/miniconda.html
+1. Make sure python is installed. Python 3.5 is recommended. The package is meant to be python 2.7 compatible,
+   but primarily tested with Python 3.5. There are many ways to install python.
+   We recommend http://conda.pydata.org/miniconda.html
 
 2. From the base folder where you would like the set of files (a new folder will be created, by default called md_utils):
    ::
