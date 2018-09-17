@@ -4,7 +4,7 @@ from md_utils.pdb_edit import main
 from md_utils.md_common import diff_lines, capture_stderr, silent_remove, capture_stdout
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)

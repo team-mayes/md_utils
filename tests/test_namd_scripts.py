@@ -84,6 +84,13 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("invalid choice" in output)
 
+    def testNoSpecifiedFile(self):
+        test_input = []
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("could not find" in output)
+
     def testNoConfigFile(self):
         # test error re config file
         test_input = ["-t", 'other', '-o', "ghost.txt"]
@@ -95,10 +102,12 @@ class TestMainFailWell(unittest.TestCase):
     def testNoOutFileOther(self):
         # test error re config file
         test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
-        if logger.isEnabledFor(logging.DEBUG):
-            main(test_input)
-        with capture_stderr(main, test_input) as output:
-            self.assertTrue("must specify" in output)
+        main(test_input)
+        # if logger.isEnabledFor(logging.DEBUG):
+        #     main(test_input)
+        # with capture_stderr(main, test_input) as output:
+        #     self.assertTrue("could not find" in output)
+        #     self.assertTrue("must specify" in output)
 
 
 class TestMain(unittest.TestCase):

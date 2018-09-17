@@ -53,6 +53,7 @@ class TestFailWell(unittest.TestCase):
 class TestMain(unittest.TestCase):
     # These will show example usage
     def testProtTcl(self):
+        # todo: fix test
         test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR]
         try:
             main(test_input)
@@ -62,6 +63,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PROT_OUT, DISABLE_REMOVE)
 
     def testArgText(self):
+        # todo: fix test
         test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR, "-a", 'arg']
         try:
             main(test_input)
@@ -70,6 +72,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PROT_OUT, DISABLE_REMOVE)
 
     def testArgList(self):
+        # todo: fix test
         test_input = ["-t", PDB, "-p", PSF, "-s", TCL_SCRIPT, "-o", VMD_DIR, "-a", ['arg1', 'arg2']]
         try:
             main(test_input)
@@ -78,6 +81,7 @@ class TestMain(unittest.TestCase):
             silent_remove(PROT_OUT, DISABLE_REMOVE)
 
     def testCheckSugarBound(self):
+        # todo: fix test
         test_input = ["-t", DCD_BOUND, "-p", DCD_TOP, "-s", SUGAR_SCRIPT, "-o", VMD_DIR, "-a", '1']
         try:
             main(test_input)

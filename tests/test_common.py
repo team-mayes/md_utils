@@ -62,6 +62,9 @@ MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
 DIFF_LINES_ONE_NAN = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 
+DIFF_LINES_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat.log')
+DIFF_LINES_ALT_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat_good.log')
+
 IMPROP_SEC = os.path.join(LAMMPS_PROC_DIR, 'glue_improp.data')
 IMPROP_SEC_ALT = os.path.join(LAMMPS_PROC_DIR, 'glue_improp_diff_ord.data')
 
@@ -354,6 +357,9 @@ class TestDiffLines(unittest.TestCase):
         # make there also be a precision difference so the entry-by-entry comparison will be made
         diff_line_list = diff_lines(DIFF_LINES_ONE_NAN_PREC_DIFF, DIFF_LINES_ONE_NAN)
         self.assertFalse(diff_line_list)
+
+    def testSciVectorsPrecDiff(self):
+        self.assertFalse(diff_lines(DIFF_LINES_SCI_FILE, DIFF_LINES_ALT_SCI_FILE))
 
 
 class TestQuoteDeQuote(unittest.TestCase):

@@ -127,6 +127,7 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testOutQuat(self):
+        # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, "-q", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
@@ -135,6 +136,7 @@ class TestMain(unittest.TestCase):
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
 
     def testAll(self):
+        # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "-d", "-g", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
@@ -149,6 +151,7 @@ class TestMain(unittest.TestCase):
             silent_remove(GATING_OUT, disable=DISABLE_REMOVE)
 
     def testMultipleTraj(self):
+        # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
@@ -157,6 +160,7 @@ class TestMain(unittest.TestCase):
             silent_remove(TRAJ_OUT, disable=DISABLE_REMOVE)
 
     def testGating(self):
+        # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, "-g", "-c", "in", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)

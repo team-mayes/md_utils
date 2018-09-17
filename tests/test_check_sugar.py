@@ -53,6 +53,7 @@ class TestFailWell(unittest.TestCase):
 class TestMain(unittest.TestCase):
     # These will show example usage
     def testCheckSugarBound(self):
+        # todo: fix test
         test_input = ["-t", DCD_BOUND, "-p", DCD_TOP, "-o", VMD_DIR, "-s", SUGAR_SCRIPT, "-k", "-a", '1']
         try:
             if logger.isEnabledFor(logging.DEBUG):
@@ -64,6 +65,7 @@ class TestMain(unittest.TestCase):
             silent_remove(BOUND_OUT, disable=DISABLE_REMOVE)
 
     def testCheckSugarUnbound(self):
+        # todo: fix test
         test_input = ["-t", DCD_UNBOUND, "-p", DCD_TOP, "-o", VMD_DIR, "-s", SUGAR_SCRIPT, "-a", '1']
         try:
             if logger.isEnabledFor(logging.DEBUG):

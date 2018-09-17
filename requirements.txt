@@ -5,4 +5,5 @@ matplotlib
 argparse>=1.2.1
 six
 numpy
-
+pyemma
+mdtraj
