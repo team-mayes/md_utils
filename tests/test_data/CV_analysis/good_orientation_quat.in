@@ -29,10 +29,10 @@ colvar {
                 atomNameResidueRange { CA 403-423 }
                 atomNameResidueRange { CA 443-462 }
             }
-            refPositionsFile /Users/xadams/XylE/common/eq_100ns_protonated.pdb
+            refPositionsFile /Users/xadams/md_utils/tests/test_data/CV_analysis/eq_100ns_inoc.pdb
             enableFitGradients off
         }
-        refPositionsFile /Users/xadams/XylE/common/eq_100ns_protonated.pdb
+        refPositionsFile /Users/xadams/md_utils/tests/test_data/CV_analysis/eq_100ns_inoc.pdb
     }
 }
 
@@ -64,9 +64,9 @@ colvar {
                 atomNameResidueRange { CA 403-423 }
                 atomNameResidueRange { CA 443-462 }
             }
-            refPositionsFile /Users/xadams/XylE/common/eq_100ns_protonated.pdb
+            refPositionsFile /Users/xadams/md_utils/tests/test_data/CV_analysis/eq_100ns_inoc.pdb
             enableFitGradients off
         }
-        refPositionsFile /Users/xadams/XylE/common/eq_100ns_protonated.pdb
+        refPositionsFile /Users/xadams/md_utils/tests/test_data/CV_analysis/eq_100ns_inoc.pdb
     }
 }

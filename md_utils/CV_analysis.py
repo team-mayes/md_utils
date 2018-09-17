@@ -84,7 +84,7 @@ def parse_cmdline(argv):
     parser.add_argument("-c", "--conf",
                         help="Conformation of the topology. This is important for selecting the reference file. "
                              "Valid options are {}. This will supercede internal topology detection logic".format(
-                                CONFORMATIONS), choices=CONFORMATIONS)
+                            CONFORMATIONS), choices=CONFORMATIONS)
     parser.add_argument("-n", "--name",
                         help="Base name for output files. The type of analysis will be appended for each file.",
                         type=str, default="CV_analysis")
@@ -94,7 +94,6 @@ def parse_cmdline(argv):
                         default=False)
 
     args = None
-    # TODO: add list processing if necessary
     # TODO: add reverse CV if desired
     try:
         args = parser.parse_args(argv)
@@ -140,7 +139,7 @@ def parse_cmdline(argv):
         if 'inoc' in args.top or args.top == '../protein.psf':
             args.conf = 'in'
         elif any(cv in args.top for cv in ["protg", "protx"]) \
-                or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
+            or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
@@ -182,9 +181,6 @@ def gen_CV_script(in_files, out_file, cv_files):
     i = 0
 
     with open(out_file, "w") as fout:
-        # TODO: convert these lines into a single header file
-        fout.write("set traj [regexp -all -inline {\S+} [lindex $argv 1]]\n")
-        fout.write("foreach file $traj {\n    mol addfile $file waitfor all\n}\n")
         for file in in_files:
             with open(file, "rt") as fin:
                 for line in fin:
@@ -199,11 +195,19 @@ def gen_CV_script(in_files, out_file, cv_files):
         fout.write("exit")
 
 
-def analysis(top, traj, tcl, base_output):
+def analysis(args, tcl, base_output):
     if HOME == '/Users/xadams':
-        subprocess.call(["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
+        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-dispdev", "text", "-args", base_output])
     else:
-        subprocess.call(["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
+        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-args", base_output])
+    if len(args.traj) > 1:
+        print("Currently CV_analysis cannot handle multiple trajectories. "
+              "Intermediate files will be automatically retained. Rerun with: \n"
+              "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj), base_output))
+    elif not args.keep:
+        os.remove(tcl)
+        for file in args.IN_FILES:
+            os.remove(file)
 
 def main(argv=None):
     # Read input
@@ -220,11 +224,8 @@ def main(argv=None):
             args.IN_FILES.append(args.out_dir + '/' + name)
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
         gen_CV_script(args.tcl_files, tcl_script, args.IN_FILES)
-        analysis(args.top, args.traj, tcl_script, out_file)
-        if not args.keep:
-            os.remove(tcl_script)
-            for file in args.IN_FILES:
-                os.remove(file)
+        analysis(args, tcl_script, out_file)
+
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
