@@ -200,11 +200,10 @@ def gen_CV_script(in_files, out_file, cv_files):
 
 
 def analysis(top, traj, tcl, base_output):
-    subprocess.call(
-        ["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
-        # ["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
-    # Use second line if testing on maitake
-
+    if HOME == '/Users/xadams':
+        subprocess.call(["vmd", "-e", tcl, top, "-dispdev", "text", "-args", base_output, ' '.join(traj)])
+    else:
+        subprocess.call(["vmd", "-e", tcl, top, "-args", base_output, ' '.join(traj)])
 
 def main(argv=None):
     # Read input
