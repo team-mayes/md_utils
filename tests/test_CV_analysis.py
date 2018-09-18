@@ -142,8 +142,6 @@ class TestMain(unittest.TestCase):
         test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
-            # with capture_stdout(main, test_input) as output:
-            #     self.assertTrue("vmd -e" in output)
             self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
             self.assertTrue(os.path.isfile(TCL_OUT))
             self.assertTrue(os.path.isfile(CV_FILE_OUT))
