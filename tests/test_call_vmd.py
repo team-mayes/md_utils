@@ -9,7 +9,7 @@ import logging
 from md_utils.call_vmd import main
 from md_utils.md_common import capture_stdout, capture_stderr, diff_lines, silent_remove
 
-__author__ = 'adams'
+__author__ = 'xadams'
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
