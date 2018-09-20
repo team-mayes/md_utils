@@ -76,6 +76,7 @@ def parse_cmdline(argv):
     parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
     parser.add_argument("--stats", help="Flag to automatically generate statistics from the data.", action='store_true',
                         default=False)
+    # TODO: Add flag to automatically calculate aMD parameters
 
     args = None
     try:
