@@ -11,9 +11,9 @@ import unittest
 from md_utils.md_common import capture_stderr, capture_stdout, silent_remove, diff_lines
 from md_utils.namd_scripts import main
 
-__author__ = 'hbmayes'
+__author__ = 'xadams'
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
@@ -46,6 +46,8 @@ GOOD_RESTART_FIRSTTIME_INP = os.path.join(RESTART_TEST_DIR, "restart_firsttime_g
 GOOD_RESTART_FIRSTTIME_JOB = os.path.join(RESTART_TEST_DIR, "restart_firsttime_good.job")
 GOOD_RESTART_RESTART_INP = os.path.join(RESTART_TEST_DIR, "restart_restart_good.inp")
 GOOD_RESTART_RESTART_JOB = os.path.join(RESTART_TEST_DIR, "restart_restart_good.job")
+TEST = os.path.join(RESTART_TEST_DIR, "orientation_pulling_TM1-7")
+TEST_XSC = os.path.join(RESTART_TEST_DIR, "orientation_pulling_TM1-7.restart.xsc")
 
 
 # /home/cmayes/code/python/lab/md_utils/tests/test_data/fill_tpl/make_prod_gpu_inp.ini
@@ -139,15 +141,16 @@ class TestMain(unittest.TestCase):
 
     # A previous version of the code did not account for fringe scenarios where the firsttimestep was explicitly declared
     # This test doesn't actually work because paths are stupid, but trust me
-    # def testRestartFirstTimeStep(self):
-    #     test_input = ['--restart', RESTART_FIRSTTIME_PREFIX, '-x', XSC_FILE]
-    #     try:
-    #         main(test_input)
-    #         self.assertFalse(diff_lines(RESTART_FIRSTTIME_INP_OUT, GOOD_RESTART_FIRSTTIME_INP))
-    #         self.assertFalse(diff_lines(RESTART_FIRSTTIME_JOB_OUT, GOOD_RESTART_FIRSTTIME_JOB))
-    #     finally:
-    #         silent_remove(RESTART_FIRSTTIME_INP_OUT, disable=DISABLE_REMOVE)
-    #         silent_remove(RESTART_FIRSTTIME_JOB_OUT, disable=DISABLE_REMOVE)
+    def testRestartFirstTimeStep(self):
+        print(RESTART_FIRSTTIME_PREFIX,XSC_FILE)
+        test_input = ['--restart', RESTART_FIRSTTIME_PREFIX, '-x', XSC_FILE]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_INP_OUT, GOOD_RESTART_FIRSTTIME_INP))
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_JOB_OUT, GOOD_RESTART_FIRSTTIME_JOB))
+        finally:
+            silent_remove(RESTART_FIRSTTIME_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESTART_FIRSTTIME_JOB_OUT, disable=DISABLE_REMOVE)
 
     def testRestartofRestart(self):
         test_input = ['--restart', RESTART_RESTART_PREFIX]
@@ -158,3 +161,13 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(RESTART_RESTART_INP_OUT, disable=DISABLE_REMOVE)
             silent_remove(RESTART_RESTART_JOB_OUT, disable=DISABLE_REMOVE)
+
+    def testZeroFirstTime(self):
+        test_input = ['--restart', TEST, '-x', TEST_XSC]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_INP_OUT, GOOD_RESTART_FIRSTTIME_INP))
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_JOB_OUT, GOOD_RESTART_FIRSTTIME_JOB))
+        finally:
+            silent_remove(RESTART_FIRSTTIME_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESTART_FIRSTTIME_JOB_OUT, disable=DISABLE_REMOVE)

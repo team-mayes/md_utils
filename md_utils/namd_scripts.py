@@ -103,7 +103,10 @@ def make_restart(file, xsc_file=None):
                     s_line = line.split()
                     current_step = s_line[1].strip(";")
                     if current_step != "$firsttime":
-                        restart_xsc = new_in + '.xsc'
+                        if xsc_file:
+                            restart_xsc = xsc_file
+                        else:
+                            restart_xsc = new_in + '.xsc'
                         with open(restart_xsc, "rt") as xin:
                             for x_line in xin:
                                 if line != '\n' and line[0] != '#':
