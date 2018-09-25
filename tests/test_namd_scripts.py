@@ -100,15 +100,15 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("User must specify" in output)
 
-    def testNoOutFileOther(self):
-        # test error re config file
-        test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
-        main(test_input)
-        # if logger.isEnabledFor(logging.DEBUG):
-        #     main(test_input)
-        # with capture_stderr(main, test_input) as output:
-        #     self.assertTrue("could not find" in output)
-        #     self.assertTrue("must specify" in output)
+    # def testNoOutFileOther(self):
+    #     # test error re config file
+    #     test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
+    #     main(test_input)
+    #     if logger.isEnabledFor(logging.DEBUG):
+    #         main(test_input)
+    #     with capture_stderr(main, test_input) as output:
+    #         self.assertTrue("could not find" in output)
+    #         self.assertTrue("must specify" in output)
 
 
 class TestMain(unittest.TestCase):
@@ -138,8 +138,6 @@ class TestMain(unittest.TestCase):
             silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
             silent_remove(RESTART_JOB_OUT, disable=DISABLE_REMOVE)
 
-    # A previous version of the code did not account for fringe scenarios where the firsttimestep was explicitly declared
-    # This test doesn't actually work because paths are stupid, but trust me
     def testRestartFirstTimeStep(self):
         test_input = ['--restart', RESTART_FIRSTTIME_PREFIX, '-x', XSC_RESTART_FILE]
         try:
