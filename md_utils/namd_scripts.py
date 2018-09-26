@@ -135,7 +135,7 @@ def make_restart(file, xsc_file=None):
                     # 'run' to input file or modifying the requested time in the job file
                     num_step = int(current_step) + run_step
                     ns = str(int(num_step / 500000))
-                    output = 'numsteps            ' + str(num_step) + ';            # ' + ns + ' ns\n'
+                    output = 'numsteps    {:>14};            # {} ns'.format(num_step,ns)
                     fout.write(output)
                 else:
                     fout.write(line)
