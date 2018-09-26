@@ -142,10 +142,8 @@ class TestMain(unittest.TestCase):
         test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
-            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
             self.assertTrue(os.path.isfile(TCL_OUT))
             self.assertTrue(os.path.isfile(CV_FILE_OUT))
         finally:
-            silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
             silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
             silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)

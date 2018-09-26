@@ -196,15 +196,16 @@ def gen_CV_script(in_files, out_file, cv_files):
 
 
 def analysis(args, tcl, base_output):
-    if HOME == '/Users/xadams':
-        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-dispdev", "text", "-args", base_output])
-    else:
-        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-args", base_output])
     if len(args.traj) > 1:
         print("Currently CV_analysis cannot handle multiple trajectories. "
               "Intermediate files will be automatically retained. Rerun with: \n"
               "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj), base_output))
-    elif not args.keep:
+        return
+    elif HOME == '/Users/xadams':
+        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-dispdev", "text", "-args", base_output])
+    else:
+        subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-args", base_output])
+    if not args.keep:
         os.remove(tcl)
         for file in args.IN_FILES:
             os.remove(file)
