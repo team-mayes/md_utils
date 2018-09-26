@@ -19,6 +19,12 @@ except ImportError:
 
 __author__ = 'xadams'
 
+
+class bcolors:
+    BOLD = '\033[1m'
+    ENDC = '\033[0m'
+
+
 HOME = str(Path.home())
 TEST_DATA_DIR = '/md_utils/tests/test_data/CV_analysis/'
 DEF_TOP = ['../protein.psf', 'protein.psf', '../step5_assembly.xplor_ext.psf']
@@ -198,8 +204,9 @@ def gen_CV_script(in_files, out_file, cv_files):
 def analysis(args, tcl, base_output):
     if len(args.traj) > 1:
         print("Currently CV_analysis cannot handle multiple trajectories. "
-              "Intermediate files will be automatically retained. Rerun with: \n"
-              "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj), base_output))
+              "Intermediate files will be automatically retained. Rerun with: \n" +
+              bcolors.BOLD + "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj),
+                                                               base_output) + bcolors.ENDC)
         return
     elif HOME == '/Users/xadams':
         subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-dispdev", "text", "-args", base_output])
@@ -209,6 +216,7 @@ def analysis(args, tcl, base_output):
         os.remove(tcl)
         for file in args.IN_FILES:
             os.remove(file)
+
 
 def main(argv=None):
     # Read input
