@@ -10,7 +10,7 @@ colvar {{
             atomNameResidueRange {{ CA 276-463 }}
 #        centerReference on
 #        rotateReference on
-#        refPositionsFile /pylon5/mc562gp/adamsa/common/eq_100ns.pdb
+#        refPositionsFile {reference_file}
         }}
     }}
 }}

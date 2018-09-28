@@ -1,6 +1,7 @@
 cv molid top
-cv configfile /home/xadams/bin/cartesian.in
-set file [open "cartesian.log" w]
+cv configfile [lindex $argv 0]
+set basename "cartesian"
+set file [open "${basename}_cartesian.log" w]
 puts -nonewline $file [cv printframelabels]
 set n [expr {int([molinfo top get numframes])}]
 for {set i 0 } { $i < $n } { incr i } {
