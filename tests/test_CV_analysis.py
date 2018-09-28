@@ -28,16 +28,14 @@ COOR_PATH = os.path.join(CV_ANALYSIS_DIR, 'test.pdb')
 QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
 DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
-FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full.log')
-DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_full_double.log')
+DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_double.log')
 TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 GATING_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_gating.log')
 TCL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis.tcl')
 CV_FILE_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
 
 GOOD_QUAT_LOG_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_quat.log')
-GOOD_FULL_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full.log')
-GOOD_DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_full_double.log')
+GOOD_DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_double.log')
 GOOD_TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_traj.log')
 GOOD_GATING_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_gating.log')
 
@@ -125,16 +123,14 @@ class TestMain(unittest.TestCase):
 
     def testAll(self):
         # todo: fix test
-        test_input = [TOP_PATH, COOR_PATH, "-q", "-f", "-d", "-g", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-d", "-g", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
-            self.assertFalse(diff_lines(FULL_OUT, GOOD_FULL_OUT))
             self.assertFalse(diff_lines(DOUBLE_OUT, GOOD_DOUBLE_OUT))
             self.assertFalse(diff_lines(GATING_OUT, GOOD_GATING_OUT))
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
-            silent_remove(FULL_OUT, disable=DISABLE_REMOVE)
             silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)
             silent_remove(GATING_OUT, disable=DISABLE_REMOVE)
 

@@ -40,14 +40,13 @@ OUT_FILE = 'orientation_quat.log'
 IN = 'in'
 OUT = 'out'
 CONFORMATIONS = [IN, OUT]
-CV_OUTNAMES = ['quat', 'full', 'full_double', 'gating', 'cartesian']
+CV_OUTNAMES = ['quat', 'double', 'gating', 'cartesian']
 QUAT = HOME + TEST_DATA_DIR + 'orientation_quat.tpl'
-FULL = HOME + TEST_DATA_DIR + 'orientation_full.tpl'
-DOUBLE = HOME + TEST_DATA_DIR + 'orientation_full_double.tpl'
+DOUBLE = HOME + TEST_DATA_DIR + 'orientation_double.tpl'
 GATING = HOME + TEST_DATA_DIR + 'gating.tpl'
 CARTESIAN = HOME + TEST_DATA_DIR + 'cartesian.tpl'
-CV_TPLS = [QUAT, FULL, DOUBLE, GATING, CARTESIAN]
-CV_TPLS_OUT = ["orientation_quat.in", "orientation_full.in", "orientation_full_double.in",
+CV_TPLS = [QUAT, DOUBLE, GATING, CARTESIAN]
+CV_TPLS_OUT = ["orientation_quat.in", "orientation_double.in",
                "gating.in", "cartesian.in"]
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
@@ -55,7 +54,7 @@ IN_REF_FILE = 'eq_100ns_inoc.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
 IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
 OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
-TCL_FILES = ["orientation_quat.tcl", "orientation_full.tcl", "orientation_full_double.tcl",
+TCL_FILES = ["orientation_quat.tcl", "orientation_double.tcl",
              "gating.tcl", "cartesian.tcl"]
 
 # TCL Patterns
@@ -81,11 +80,6 @@ def parse_cmdline(argv):
     # parser.add_argument("-l", "--list", help="File with list of trajectory files")
     parser.add_argument("-q", "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true',
                         default=False)
-    # parser.add_argument("-r", "--reverse", help="Flag for 2-domain quaternion analysis
-    #                       with inward reference structure",
-    #                     action='store_true', default=False)
-    parser.add_argument("-f", "--full", help="Flag for 12 helix quaternion analysis.", action='store_true',
-                        default=False)
     parser.add_argument("-d", "--double",
                         help="Flag for 24-D analysis: 12 helix quaternion analysis with both reference structures.",
                         action='store_true', default=False)
@@ -106,7 +100,6 @@ def parse_cmdline(argv):
                         default=False)
 
     args = None
-    # TODO: add reverse CV if desired
     try:
         args = parser.parse_args(argv)
         args.traj = []
@@ -123,7 +116,7 @@ def parse_cmdline(argv):
         # Check that trajectories and analysis options are provided
         if not any(args.traj):
             raise InvalidDataError("No trajectory files provided.")
-        args.analysis_flags = [args.quat, args.full, args.double, args.gating, args.cartesian]
+        args.analysis_flags = [args.quat, args.double, args.gating, args.cartesian]
         if not any(args.analysis_flags):
             raise InvalidDataError("Did not choose to output any CV. No output will be produced.")
         # Check for files with same names as output to be generated
