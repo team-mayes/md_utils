@@ -87,6 +87,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
+# noinspection PyTypeChecker
 def process_file(data_file, out_dir, len_buffer, delimiter, min_max_dict, header=False, make_hist=False):
     try:
         dim_vectors, header_row, hist_data = np_float_array_from_file(data_file, delimiter=delimiter,
