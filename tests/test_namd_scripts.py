@@ -11,7 +11,7 @@ import unittest
 from md_utils.md_common import capture_stderr, capture_stdout, silent_remove, diff_lines
 from md_utils.namd_scripts import main
 
-__author__ = 'hbmayes'
+__author__ = 'xadams'
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
@@ -31,6 +31,7 @@ BASIC_GPU_RESULT_GOOD = os.path.join(TPL_TEST_DATA, "make_prod_gpu_good.ini")
 
 RESTART_TEST_DIR = os.path.join(DATA_DIR, 'namd_scripts')
 XSC_FILE = os.path.join(RESTART_TEST_DIR, "8.1.xsc")
+XSC_RESTART_FILE = os.path.join(RESTART_TEST_DIR, "8.1.restart.xsc")
 RESTART_PREFIX = os.path.join(RESTART_TEST_DIR, "8.2")
 RESTART_FIRSTTIME_PREFIX = os.path.join(RESTART_TEST_DIR, "8.1")
 RESTART_RESTART_PREFIX = os.path.join(RESTART_TEST_DIR, "7.3.2")
@@ -99,15 +100,15 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("User must specify" in output)
 
-    def testNoOutFileOther(self):
-        # test error re config file
-        test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
-        main(test_input)
-        # if logger.isEnabledFor(logging.DEBUG):
-        #     main(test_input)
-        # with capture_stderr(main, test_input) as output:
-        #     self.assertTrue("could not find" in output)
-        #     self.assertTrue("must specify" in output)
+    # def testNoOutFileOther(self):
+    #     # test error re config file
+    #     test_input = ["-t", 'other', '-c', BASIC_CPU_TPL]
+    #     main(test_input)
+    #     if logger.isEnabledFor(logging.DEBUG):
+    #         main(test_input)
+    #     with capture_stderr(main, test_input) as output:
+    #         self.assertTrue("could not find" in output)
+    #         self.assertTrue("must specify" in output)
 
 
 class TestMain(unittest.TestCase):
@@ -137,17 +138,15 @@ class TestMain(unittest.TestCase):
             silent_remove(RESTART_INP_OUT, disable=DISABLE_REMOVE)
             silent_remove(RESTART_JOB_OUT, disable=DISABLE_REMOVE)
 
-    # A previous version of the code did not account for fringe scenarios where the firsttimestep was explicitly declared
-    # This test doesn't actually work because paths are stupid, but trust me
-    # def testRestartFirstTimeStep(self):
-    #     test_input = ['--restart', RESTART_FIRSTTIME_PREFIX, '-x', XSC_FILE]
-    #     try:
-    #         main(test_input)
-    #         self.assertFalse(diff_lines(RESTART_FIRSTTIME_INP_OUT, GOOD_RESTART_FIRSTTIME_INP))
-    #         self.assertFalse(diff_lines(RESTART_FIRSTTIME_JOB_OUT, GOOD_RESTART_FIRSTTIME_JOB))
-    #     finally:
-    #         silent_remove(RESTART_FIRSTTIME_INP_OUT, disable=DISABLE_REMOVE)
-    #         silent_remove(RESTART_FIRSTTIME_JOB_OUT, disable=DISABLE_REMOVE)
+    def testRestartFirstTimeStep(self):
+        test_input = ['--restart', RESTART_FIRSTTIME_PREFIX, '-x', XSC_RESTART_FILE]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_INP_OUT, GOOD_RESTART_FIRSTTIME_INP))
+            self.assertFalse(diff_lines(RESTART_FIRSTTIME_JOB_OUT, GOOD_RESTART_FIRSTTIME_JOB))
+        finally:
+            silent_remove(RESTART_FIRSTTIME_INP_OUT, disable=DISABLE_REMOVE)
+            silent_remove(RESTART_FIRSTTIME_JOB_OUT, disable=DISABLE_REMOVE)
 
     def testRestartofRestart(self):
         test_input = ['--restart', RESTART_RESTART_PREFIX]

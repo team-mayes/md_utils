@@ -103,10 +103,13 @@ def make_restart(file, xsc_file=None):
                     s_line = line.split()
                     current_step = s_line[1].strip(";")
                     if current_step != "$firsttime":
-                        restart_xsc = new_in + '.xsc'
+                        if xsc_file:
+                            restart_xsc = xsc_file
+                        else:
+                            restart_xsc = new_in + '.xsc'
                         with open(restart_xsc, "rt") as xin:
                             for x_line in xin:
-                                if line != '\n' and line[0] != '#':
+                                if x_line != '\n' and x_line[0] != '#':
                                     s_x_line = x_line.split()
                                     start_step = int(s_x_line[0])
                         fout.write(line.replace(current_step, str(start_step)))
@@ -132,7 +135,7 @@ def make_restart(file, xsc_file=None):
                     # 'run' to input file or modifying the requested time in the job file
                     num_step = int(current_step) + run_step
                     ns = str(int(num_step / 500000))
-                    output = 'numsteps           ' + str(num_step) + ';            # ' + ns + ' ns'
+                    output = 'numsteps    {:>14};            # {} ns'.format(num_step,ns)
                     fout.write(output)
                 else:
                     fout.write(line)

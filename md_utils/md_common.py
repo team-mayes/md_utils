@@ -416,8 +416,8 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
                 data_array = np.vstack((data_array, data_vector))
     if np.isnan(data_array).any():
         if data_array.size == 1:
-            raise InvalidDataError("Data in file was not read as an array of floats. Check input, e.g. if the delimiter "
-                                   "is not ('{}')".format(delimiter))
+            raise InvalidDataError("Data in file was not read as an array of floats. Check input, "
+                                   "e.g. if the delimiter is not ('{}')".format(delimiter))
         else:
             warning("Encountered entry (or entries) which could not be converted to a float. "
                     "'nan' will be returned for the stats for that column.")
@@ -1101,6 +1101,7 @@ def conv_num(s):
             return s
 
 
+# noinspection PyTypeChecker
 def diff_lines(floc1, floc2, delimiter=","):
     """
     Determine all lines in a file are equal.
