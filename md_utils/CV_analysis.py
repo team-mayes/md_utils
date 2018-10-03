@@ -8,7 +8,7 @@ from pathlib import Path
 from collections import OrderedDict
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError,
-                                warning, read_tpl)
+                                warning, read_tpl, file_rows_to_list)
 
 try:
     # noinspection PyCompatibility
@@ -77,7 +77,7 @@ def parse_cmdline(argv):
     parser = argparse.ArgumentParser(
         description='Perform a specified number of CV analyses when given a topology and trajectory files.')
     parser.add_argument('files', metavar='files', type=str, nargs='+')
-    # parser.add_argument("-l", "--list", help="File with list of trajectory files")
+    parser.add_argument("-l", "--list", help="File with list of trajectory files")
     parser.add_argument("-q", "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true',
                         default=False)
     parser.add_argument("-d", "--double",
@@ -90,7 +90,7 @@ def parse_cmdline(argv):
     parser.add_argument("-c", "--conf",
                         help="Conformation of the topology. This is important for selecting the reference file. "
                              "Valid options are {}. This will supercede internal topology detection logic".format(
-                            CONFORMATIONS), choices=CONFORMATIONS)
+                                CONFORMATIONS), choices=CONFORMATIONS)
     parser.add_argument("-n", "--name",
                         help="Base name for output files. The type of analysis will be appended for each file.",
                         type=str, default="CV_analysis")
@@ -105,6 +105,14 @@ def parse_cmdline(argv):
         args.traj = []
         args.outfiles = []
         # Check files and assign to either topology or trajectory lists
+        if args.list:
+            if os.path.isfile(args.list):
+                args.traj += file_rows_to_list(args.list)
+                for file in args.traj:
+                    if not os.path.isfile(file):
+                        raise IOError("Problems reading file: {}".format(file))
+            else:
+                raise IOError("Could not find list file: {}".format(args.list))
         for file in args.files:
             if os.path.isfile(file):
                 if file.endswith('.psf'):
@@ -181,7 +189,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def gen_CV_script(in_files, out_file, cv_files):
+def gen_cv_script(in_files, out_file, cv_files):
     # This will combine appropriate tcl scripts for a single, efficient vmd run
     i = 0
 
@@ -207,6 +215,7 @@ def analysis(args, tcl, base_output):
               bcolors.BOLD + "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj),
                                                                base_output) + bcolors.ENDC)
         return
+    # This logic runs a text mode version of VMD if it detects Alex's laptop
     elif HOME == '/Users/xadams':
         subprocess.call(["vmd", "-e", tcl, args.top, args.traj[0], "-dispdev", "text", "-args", base_output])
     else:
@@ -231,7 +240,7 @@ def main(argv=None):
         for file, name in zip(args.tpl_files, args.tpl_names):
             args.IN_FILES.append(args.out_dir + '/' + name)
             fill_save_tpl(args.config, read_tpl(file), args.config[TPL_VALS], file, name)
-        gen_CV_script(args.tcl_files, tcl_script, args.IN_FILES)
+        gen_cv_script(args.tcl_files, tcl_script, args.IN_FILES)
         analysis(args, tcl_script, out_file)
 
     except IOError as e:

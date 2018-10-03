@@ -25,6 +25,7 @@ CV_ANALYSIS_DIR = os.path.join(DATA_DIR, 'CV_analysis')
 
 TOP_PATH = os.path.join(CV_ANALYSIS_DIR, 'protein.psf')
 COOR_PATH = os.path.join(CV_ANALYSIS_DIR, 'test.pdb')
+LIST_PATH = os.path.join(CV_ANALYSIS_DIR, 'list.txt')
 QUAT_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 DUPLICATE_BASE = os.path.join(CV_ANALYSIS_DIR, 'duplicate')
 DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
@@ -71,19 +72,19 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("required: files" in output)
 
-    # def testNoFilesInList(self):
-    #     test_input = ["-f", EMPTY_LOG_LIST]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("Found no lammps log data to process from" in output)
+    def testNoFilesInList(self):
+        test_input = [TOP_PATH, "-l", EMPTY_LOG_LIST, "-q"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("No trajectory files" in output)
 
-    # def testNoSuchFileInList(self):
-    #     test_input = ["-l", GHOST_LOG_LIST, "-p"]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     with capture_stderr(main, test_input) as output:
-    #         self.assertTrue("Problems reading file:" in output)
+    def testNoSuchFileInList(self):
+        test_input = [TOP_PATH, "-l", GHOST_LOG_LIST, "-q"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Problems reading file:" in output)
 
     def testNoOptionSelected(self):
         test_input = [TOP_PATH, COOR_PATH]
@@ -140,6 +141,16 @@ class TestMain(unittest.TestCase):
 
     def testMultipleTrajectories(self):
         test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
+        try:
+            main(test_input)
+            self.assertTrue(os.path.isfile(TCL_OUT))
+            self.assertTrue(os.path.isfile(CV_FILE_OUT))
+        finally:
+            silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
+            silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
+
+    def testList(self):
+        test_input = [TOP_PATH, "-l", LIST_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(TCL_OUT))
