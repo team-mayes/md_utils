@@ -70,13 +70,15 @@ def parse_cmdline(argv):
                         action='store_true', default=False)
     parser.add_argument("-t", "--total", help="Flag to collect total potential energy data.", action='store_true',
                         default=False)
-    parser.add_argument("-a", "--amd", help="Flag to collect aMD boost energies.", action='store_true', default=False)
+    parser.add_argument("-b", "--boost", help="Flag to collect aMD boost energies.", action='store_true', default=False)
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
-    parser.add_argument("-s", "--step", help="Timestep to begin logging quantities. Default is none", default=None)
-    parser.add_argument("--stats", help="Flag to automatically generate statistics from the data.", action='store_true',
+    parser.add_argument("--step", help="Timestep to begin logging quantities. Default is none", default=None)
+    parser.add_argument("-s", "--stats", help="Flag to automatically generate statistics from the data.", action='store_true',
                         default=False)
-    # TODO: Add flag to automatically calculate aMD parameters
+    parser.add_argument("-a", "--amd", help="Flag to automatically calculate aMD boost parameters. "
+                                            "Will automatically set to collect dihedral and total energy data.")
+    # TODO: Add function to automatically calculate aMD parameters, flag already exists
 
     args = None
     try:
@@ -98,10 +100,14 @@ def parse_cmdline(argv):
         if ((args.dihedral or args.total) and args.performance):
             raise InvalidDataError("Script is not currently configured to accept both energy data ('-s' or '-t') and "
                                    "performance data ('-p'). Please select only one.")
-        if not (args.dihedral or args.performance or args.total or args.amd):
+        if not (args.dihedral or args.performance or args.total or args.boost):
             raise InvalidDataError(
                 "Did not choose to output dihedral data ('-s'), total potential energy ('-t'),  performance data ('-p') or aMD boost data ('-a'). "
                 "No output will be produced.")
+        if args.amd:
+            # Automatically turn on energy measurements if aMD parameters are flagged
+            args.dihedral = True
+            args.total = True
     except IOError as e:
         warning("Problems reading file:", e)
         parser.print_help()
@@ -115,7 +121,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_log(log_file, dihedral, total, performance, amd, step):
+def process_log(log_file, dihedral, total, performance, boost, step):
     """
     Gather key info from log file
     @param log_file: name of log file
@@ -164,7 +170,7 @@ def process_log(log_file, dihedral, total, performance, amd, step):
                     result_dict[TIMESTEP] = int(s_line[1])
                     result_dict[E_TOTAL] = float(s_line[13])
                     result_list.append(dict(result_dict))
-                elif amd and AMD_PAT.match(line):
+                elif boost and AMD_PAT.match(line):
                     s_line = line.split()
                     if int(s_line[3]) % 2500 == 0:
                         result_dict[TIMESTEP] = int(int(s_line[3])/2500)
@@ -220,7 +226,7 @@ def main(argv=None):
         return ret
 
     try:
-        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.performance, args.amd,
+        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.performance, args.boost,
                           args.step, args.stats)
     except IOError as e:
         warning("Problems reading file:", e)

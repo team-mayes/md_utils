@@ -140,7 +140,6 @@ def parse_cmdline(argv=None):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    # TODO: Remove the trajectory processing components of plot_PCA to make it purely plotting from CV input
     parser = argparse.ArgumentParser(
         description='Plot trajectory files projected onto gating or orientation dimensions')
     parser.add_argument("-n", "--name", help="Name for the saved plot. "
