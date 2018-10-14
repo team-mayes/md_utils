@@ -15,10 +15,10 @@ with open('HISTORY.rst') as history_file:
 
 requirements = ['argparse',
                 'six',
-                'pandas'
-                'scipy'
-                'seaborn'
-                'matplotlib'
+                'pandas',
+                'scipy',
+                'seaborn',
+                'matplotlib',
                 'numpy',
                 ]
 
