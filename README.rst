@@ -8,8 +8,8 @@ MD Utilities
 .. image:: https://img.shields.io/pypi/v/md_utils.svg
         :target: https://pypi.python.org/pypi/md_utils
 
-.. image:: https://codecov.io/gh/team-mayes/arthritis_proj_demo/branch/master/graph/badge.svg
-        :target: https://codecov.io/gh/team-mayes/arthritis_proj_demo/branch/master
+.. image:: https://codecov.io/gh/team-mayes/md_utils/branch/master/graph/badge.svg
+        :target: https://codecov.io/gh/team-mayes/md_utils/branch/master
 
 Utility scripts for MD data
 
