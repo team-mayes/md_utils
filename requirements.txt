@@ -1,7 +1,7 @@
 pandas
 scipy
 seaborn
-matplotlib
+matplotlib==2.2.3
 argparse>=1.2.1
 six
 numpy

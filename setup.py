@@ -18,7 +18,7 @@ requirements = ['argparse',
                 'pandas',
                 'scipy',
                 'seaborn',
-                'matplotlib',
+                'matplotlib==2.2.3',
                 'numpy',
                 ]
 
