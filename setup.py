@@ -20,7 +20,6 @@ requirements = ['argparse',
                 'seaborn',
                 'matplotlib==2.2.3',
                 'numpy',
-                'pyEMMA'
                 ]
 
 test_requirements = ['argparse',
