@@ -33,7 +33,7 @@ install:
 - # Useful for debugging any issues with conda
 - conda info -a
 
-- conda create -q -n test-environment python=$PYTHON_VER pip pytest pytest-cov cython numpy
+- conda create -q -n test-environment python=$PYTHON_VER pip pytest pytest-cov cython numpy pandas
 - source activate test-environment
 - python setup.py install
 
