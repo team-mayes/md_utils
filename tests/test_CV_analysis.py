@@ -33,10 +33,12 @@ DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_double.log')
 TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 GATING_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_gating.log')
 CART_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_cartesian.log')
+REV_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_rev.log')
 TCL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis.tcl')
 CV_FILE_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
 
 GOOD_QUAT_LOG_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_quat.log')
+GOOD_REV_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_rev.log')
 GOOD_DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_double.log')
 GOOD_TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_traj.log')
 GOOD_GATING_OUT = os.path.join(CV_ANALYSIS_DIR, 'good_CV_analysis_gating.log')
@@ -126,15 +128,17 @@ class TestMain(unittest.TestCase):
 
     def testAll(self):
         # todo: fix test
-        test_input = [TOP_PATH, COOR_PATH, "-q", "-d", "-g", "--cartesian", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-r", "-d", "-g", "--cartesian", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
+            self.assertFalse(diff_lines(REV_OUT, GOOD_REV_OUT))
             self.assertFalse(diff_lines(DOUBLE_OUT, GOOD_DOUBLE_OUT))
             self.assertFalse(diff_lines(GATING_OUT, GOOD_GATING_OUT))
             self.assertFalse(diff_lines(CART_OUT, GOOD_CART_OUT))
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
+            silent_remove(REV_OUT, disable=DISABLE_REMOVE)
             silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)
             silent_remove(GATING_OUT, disable=DISABLE_REMOVE)
             silent_remove(CART_OUT, disable=DISABLE_REMOVE)
