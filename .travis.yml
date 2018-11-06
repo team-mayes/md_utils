@@ -1,20 +1,52 @@
-# Config file for automatic testing at travis-ci.org
-
 language: python
 
-python:
-  - "3.4"
-  - "3.3"
-  - "2.7"
+matrix:
+    include:
+    # Extra includes for OSX since python language is not available by default on OSX
+    - os: osx
+      language: generic
+      env: PYTHON_VER=3.5
+    - os: osx
+      language: generic
+      env: PYTHON_VER=3.6
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+    - os: linux
+      python: 3.5
+      env: PYTHON_VER=3.5
+    - os: linux
+      python: 3.6
+      env: PYTHON_VER=3.6
+
+before_install:
+# Additional info about the build
+- uname -a
+- df -h
+- ulimit -a
+
 install:
-  - pip install -r requirements.txt
-  - pip install coveralls
+- ./.travis/install.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda update -q conda
+- # Useful for debugging any issues with conda
+- conda info -a
 
-# command to run tests, e.g. python setup.py test
+- conda create -q -n test-environment python=$PYTHON_VER pip pytest pytest-cov cython numpy pandas
+- source activate test-environment
+- python setup.py install
+
+- # Install pip only modules
+- pip install codecov
+
 script:
-  coverage run --source=md_utils setup.py test
+- # Allows matplotlib to render in all envs
+- export MPLBACKEND=Agg
+- pytest -v --cov=md_utils tests/
+
+notifications:
+    email: false
 
 after_success:
-  coveralls
+- codecov

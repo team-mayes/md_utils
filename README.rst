@@ -2,14 +2,14 @@
 MD Utilities
 ============
 
-.. image:: https://img.shields.io/travis/cmayes/md_utils.svg
-        :target: https://travis-ci.org/cmayes/md_utils
+.. image:: https://img.shields.io/travis/team-mayes/md_utils.svg
+        :target: https://travis-ci.org/team-mayes/md_utils
 
 .. image:: https://img.shields.io/pypi/v/md_utils.svg
         :target: https://pypi.python.org/pypi/md_utils
 
-.. image:: https://coveralls.io/repos/cmayes/md_utils/badge.svg?branch=master&service=github
-        :target: https://coveralls.io/github/cmayes/md_utils?branch=master
+.. image:: https://codecov.io/gh/team-mayes/md_utils/branch/master/graph/badge.svg
+        :target: https://codecov.io/gh/team-mayes/md_utils/branch/master
 
 Utility scripts for MD data
 
