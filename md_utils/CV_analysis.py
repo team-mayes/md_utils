@@ -41,8 +41,9 @@ OF_FILES = ['protein.psf', 'protg.psf']
 OUT_FILE = 'orientation_quat.log'
 INOC = 'inoc'
 IN = 'in'
+OUTOC = 'outoc'
 OUT = 'out'
-CONFORMATIONS = [INOC, IN, OUT]
+CONFORMATIONS = [INOC, IN, OUTOC, OUT]
 CV_OUTNAMES = ['quat', 'rev', 'double', 'gating', 'cartesian']
 QUAT = HOME + TEST_DATA_DIR + 'orientation_quat.tpl'
 REVERSE = HOME + TEST_DATA_DIR + 'orientation_rev.tpl'
@@ -55,11 +56,13 @@ CV_TPLS_OUT = ["orientation_quat.in", "orientation_rev.in", "orientation_double.
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
 INOC_REF_FILE = 'eq_100ns_inoc.pdb'
-OUT_REF_FILE = 'eq_100ns_protonated.pdb'
+OUTOC_REF_FILE = 'eq_100ns_protonated.pdb'
 IN_REF_FILE = 'eq_100ns_in.pdb'
+OUT_REF_FILE = 'eq_100ns_out.pdb'
 INOC_REF_FILE_2 = 'in_100ns_inoc.pdb'
-OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
+OUTOC_REF_FILE_2 = 'in_100ns_protonated.pdb'
 IN_REF_FILE_2 = 'in_100ns_in.pdb'
+OUT_REF_FILE_2 = 'in_100ns_out.pdb'
 
 TCL_FILES = ["orientation_quat.tcl", "orientation_rev.tcl", "orientation_double.tcl",
              "gating.tcl", "cartesian.tcl"]
@@ -164,19 +167,22 @@ def parse_cmdline(argv):
                 args.conf = 'inoc'
             elif any(cv in args.top for cv in ["protg", "protx"]) \
                 or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
-                args.conf = 'out'
+                args.conf = 'outoc'
 
         tpl_vals = OrderedDict()
         ref_home = HOME + TEST_DATA_DIR
         if args.conf == 'inoc':
             tpl_vals[REF_FILE] = ref_home + INOC_REF_FILE
             tpl_vals[REF_FILE_2] = ref_home + INOC_REF_FILE_2
-        elif args.conf == 'out':
-            tpl_vals[REF_FILE] = ref_home + OUT_REF_FILE
-            tpl_vals[REF_FILE_2] = ref_home + OUT_REF_FILE_2
+        elif args.conf == 'outoc':
+            tpl_vals[REF_FILE] = ref_home + OUTOC_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + OUTOC_REF_FILE_2
         elif args.conf == 'in':
             tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
             tpl_vals[REF_FILE_2] = ref_home + IN_REF_FILE_2
+        elif args.conf == 'out':
+            tpl_vals[REF_FILE] = ref_home + OUT_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + OUT_REF_FILE_2
         else:
             raise InvalidDataError("Conformation was not provided and could not be inferred from topology file {}. "
                                    "Please provide one of the following conformations: {}".format(args.top,
