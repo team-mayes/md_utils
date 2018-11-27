@@ -7,6 +7,7 @@ Tests for md_utils script
 import logging
 import unittest
 import os
+from shutil import which
 
 from md_utils.CV_analysis import main
 from md_utils.md_common import diff_lines, capture_stderr, capture_stdout, silent_remove
@@ -129,19 +130,27 @@ class TestMain(unittest.TestCase):
     def testAll(self):
         # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, "-q", "-r", "-d", "-g", "--cartesian", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
+
         try:
             main(test_input)
-            self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
-            self.assertFalse(diff_lines(REV_OUT, GOOD_REV_OUT))
-            self.assertFalse(diff_lines(DOUBLE_OUT, GOOD_DOUBLE_OUT))
-            self.assertFalse(diff_lines(GATING_OUT, GOOD_GATING_OUT))
-            self.assertFalse(diff_lines(CART_OUT, GOOD_CART_OUT))
+            if which("vmd"):
+                self.assertFalse(diff_lines(QUAT_OUT, GOOD_QUAT_LOG_OUT))
+                self.assertFalse(diff_lines(REV_OUT, GOOD_REV_OUT))
+                self.assertFalse(diff_lines(DOUBLE_OUT, GOOD_DOUBLE_OUT))
+                self.assertFalse(diff_lines(GATING_OUT, GOOD_GATING_OUT))
+                self.assertFalse(diff_lines(CART_OUT, GOOD_CART_OUT))
+            else:
+                self.assertTrue(os.path.isfile(TCL_OUT))
+                self.assertTrue(os.path.isfile(CV_FILE_OUT))
         finally:
             silent_remove(QUAT_OUT, disable=DISABLE_REMOVE)
             silent_remove(REV_OUT, disable=DISABLE_REMOVE)
             silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)
             silent_remove(GATING_OUT, disable=DISABLE_REMOVE)
             silent_remove(CART_OUT, disable=DISABLE_REMOVE)
+            silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
+            silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
+
 
     def testMultipleTrajectories(self):
         test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]

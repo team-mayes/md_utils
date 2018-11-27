@@ -6,6 +6,7 @@ import argparse
 import re
 from pathlib import Path
 from collections import OrderedDict
+from shutil import which
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, InvalidDataError,
                                 warning, read_tpl, file_rows_to_list)
@@ -215,6 +216,12 @@ def analysis(args, tcl, base_output):
     if len(args.traj) > 1:
         print("Currently CV_analysis cannot handle multiple trajectories. "
               "Intermediate files will be automatically retained. Rerun with: \n" +
+              bcolors.BOLD + "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj),
+                                                               base_output) + bcolors.ENDC)
+        return
+    # TODO: Add specific error for not having VMD
+    elif not which('vmd'):
+        print("VMD not detected with the alias 'vmd'. Please either alias as 'vmd' or rerun with: \n" +
               bcolors.BOLD + "vmd -e {} {} {} -args {}".format(tcl, args.top, ' '.join(args.traj),
                                                                base_output) + bcolors.ENDC)
         return
