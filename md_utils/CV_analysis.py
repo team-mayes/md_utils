@@ -142,7 +142,7 @@ def parse_cmdline(argv):
                 outfile = args.name + '_' + outname + '.log'
                 if os.path.isfile(outfile):
                     raise InvalidDataError("{} exists. Please rename or delete this file, "
-                                           "or select a different name.")
+                                           "or select a different name.".format(outfile))
                 else:
                     args.outfiles.append(outfile)
         # If no topology file is given, search for defaults and stop when first file is found
