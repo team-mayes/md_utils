@@ -32,6 +32,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
+# TODO: install reference files as part of md_utils to avoid requiring installation in the home directory
 HOME = str(Path.home())
 TEST_DATA_DIR = '/md_utils/tests/test_data/CV_analysis/'
 DEF_TOP = ['../protein.psf', 'protein.psf', '../step5_assembly.xplor_ext.psf']
@@ -158,11 +159,12 @@ def parse_cmdline(argv):
         # Logic to detect the conformation of the files provided.
         # Currently very specific to Alex's data structure!
         # TODO: Consider looking at directory name instead
-        if 'inoc' in args.top or args.top == '../protein.psf':
-            args.conf = 'inoc'
-        elif any(cv in args.top for cv in ["protg", "protx"]) \
-            or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
-            args.conf = 'out'
+        if not args.conf:
+            if 'inoc' in args.top or args.top == '../protein.psf':
+                args.conf = 'inoc'
+            elif any(cv in args.top for cv in ["protg", "protx"]) \
+                or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
+                args.conf = 'out'
 
         tpl_vals = OrderedDict()
         ref_home = HOME + TEST_DATA_DIR
