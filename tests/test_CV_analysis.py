@@ -129,7 +129,7 @@ class TestMain(unittest.TestCase):
 
     def testAll(self):
         # todo: fix test
-        test_input = [TOP_PATH, COOR_PATH, "-q", "-r", "-d", "-g", "--cartesian", "--conf", 'in', "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, COOR_PATH, "-q", "-r", "-d", "-g", "--cartesian", "--conf", 'inoc', "-o", CV_ANALYSIS_DIR]
 
         try:
             main(test_input)
@@ -153,7 +153,7 @@ class TestMain(unittest.TestCase):
 
 
     def testMultipleTrajectories(self):
-        test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, COOR_PATH, COOR_PATH, "-q", "-c", "inoc", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(TCL_OUT))
@@ -163,7 +163,7 @@ class TestMain(unittest.TestCase):
             silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
 
     def testList(self):
-        test_input = [TOP_PATH, "-l", LIST_PATH, "-q", "-c", "in", "-o", CV_ANALYSIS_DIR]
+        test_input = [TOP_PATH, "-l", LIST_PATH, "-q", "-c", "inoc", "-o", CV_ANALYSIS_DIR]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(TCL_OUT))

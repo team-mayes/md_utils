@@ -35,12 +35,13 @@ class bcolors:
 HOME = str(Path.home())
 TEST_DATA_DIR = '/md_utils/tests/test_data/CV_analysis/'
 DEF_TOP = ['../protein.psf', 'protein.psf', '../step5_assembly.xplor_ext.psf']
-IF_FILES = ['../protein.psf', '../inoc_glucose.psf']
+IFOC_FILES = ['../protein.psf', '../inoc_glucose.psf']
 OF_FILES = ['protein.psf', 'protg.psf']
 OUT_FILE = 'orientation_quat.log'
+INOC = 'inoc'
 IN = 'in'
 OUT = 'out'
-CONFORMATIONS = [IN, OUT]
+CONFORMATIONS = [INOC, IN, OUT]
 CV_OUTNAMES = ['quat', 'rev', 'double', 'gating', 'cartesian']
 QUAT = HOME + TEST_DATA_DIR + 'orientation_quat.tpl'
 REVERSE = HOME + TEST_DATA_DIR + 'orientation_rev.tpl'
@@ -52,10 +53,13 @@ CV_TPLS_OUT = ["orientation_quat.in", "orientation_rev.in", "orientation_double.
                "gating.in", "cartesian.in"]
 REF_FILE = 'reference_file'
 REF_FILE_2 = 'reference_file_2'
-IN_REF_FILE = 'eq_100ns_inoc.pdb'
+INOC_REF_FILE = 'eq_100ns_inoc.pdb'
 OUT_REF_FILE = 'eq_100ns_protonated.pdb'
-IN_REF_FILE_2 = 'in_100ns_inoc.pdb'
+IN_REF_FILE = 'eq_100ns_in.pdb'
+INOC_REF_FILE_2 = 'in_100ns_inoc.pdb'
 OUT_REF_FILE_2 = 'in_100ns_protonated.pdb'
+IN_REF_FILE_2 = 'in_100ns_in.pdb'
+
 TCL_FILES = ["orientation_quat.tcl", "orientation_rev.tcl", "orientation_double.tcl",
              "gating.tcl", "cartesian.tcl"]
 
@@ -153,20 +157,24 @@ def parse_cmdline(argv):
             raise InvalidDataError("No topology file provided and no default file found.")
         # Logic to detect the conformation of the files provided.
         # Currently very specific to Alex's data structure!
+        # TODO: Consider looking at directory name instead
         if 'inoc' in args.top or args.top == '../protein.psf':
-            args.conf = 'in'
+            args.conf = 'inoc'
         elif any(cv in args.top for cv in ["protg", "protx"]) \
             or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
             args.conf = 'out'
 
         tpl_vals = OrderedDict()
         ref_home = HOME + TEST_DATA_DIR
-        if args.conf == 'in':
-            tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
-            tpl_vals[REF_FILE_2] = ref_home + IN_REF_FILE_2
+        if args.conf == 'inoc':
+            tpl_vals[REF_FILE] = ref_home + INOC_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + INOC_REF_FILE_2
         elif args.conf == 'out':
             tpl_vals[REF_FILE] = ref_home + OUT_REF_FILE
             tpl_vals[REF_FILE_2] = ref_home + OUT_REF_FILE_2
+        elif args.conf == 'in':
+            tpl_vals[REF_FILE] = ref_home + IN_REF_FILE
+            tpl_vals[REF_FILE_2] = ref_home + IN_REF_FILE_2
         else:
             raise InvalidDataError("Conformation was not provided and could not be inferred from topology file {}. "
                                    "Please provide one of the following conformations: {}".format(args.top,
