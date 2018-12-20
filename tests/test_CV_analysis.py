@@ -33,7 +33,6 @@ DUPLICATE_OUT = os.path.join(CV_ANALYSIS_DIR, 'duplicate_quat.log')
 DOUBLE_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_double.log')
 TRAJ_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_quat.log')
 GATING_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_gating.log')
-CART_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_cartesian.log')
 REV_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis_rev.log')
 TCL_OUT = os.path.join(CV_ANALYSIS_DIR, 'CV_analysis.tcl')
 CV_FILE_OUT = os.path.join(CV_ANALYSIS_DIR, 'orientation_quat.in')
@@ -128,7 +127,6 @@ class TestMainFailWell(unittest.TestCase):
 class TestMain(unittest.TestCase):
 
     def testAll(self):
-        # todo: fix test
         test_input = [TOP_PATH, COOR_PATH, "-q", "-r", "-d", "-g", "--conf", 'inoc', "-o", CV_ANALYSIS_DIR]
 
         try:
@@ -146,20 +144,6 @@ class TestMain(unittest.TestCase):
             silent_remove(REV_OUT, disable=DISABLE_REMOVE)
             silent_remove(DOUBLE_OUT, disable=DISABLE_REMOVE)
             silent_remove(GATING_OUT, disable=DISABLE_REMOVE)
-            silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
-            silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
-
-    def testCartesian(self):
-        test_input = [TOP_PATH, COOR_PATH, "--cartesian", "--conf", 'inoc', "-o", CV_ANALYSIS_DIR]
-        try:
-            main(test_input)
-            if which("vmd"):
-                self.assertFalse(diff_lines(CART_OUT, GOOD_CART_OUT))
-            else:
-                self.assertTrue(os.path.isfile(TCL_OUT))
-                self.assertTrue(os.path.isfile(CV_FILE_OUT))
-        finally:
-            silent_remove(CART_OUT, disable=DISABLE_REMOVE)
             silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
             silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
 
