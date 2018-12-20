@@ -263,7 +263,6 @@ class TestMain(unittest.TestCase):
             silent_remove(PROD_GPU_INP_OUT, disable=DISABLE_REMOVE)
 
     def testMakeCPUINPJOB(self):
-        # todo: fix test
         try:
             silent_remove(PROD_CPU_JOB_OUT)
             silent_remove(PROD_CPU_INP_OUT)

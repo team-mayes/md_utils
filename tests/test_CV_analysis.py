@@ -171,3 +171,6 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(TCL_OUT, disable=DISABLE_REMOVE)
             silent_remove(CV_FILE_OUT, disable=DISABLE_REMOVE)
+
+if __name__ == "__main__":
+    unittest.main()
