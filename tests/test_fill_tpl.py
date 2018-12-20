@@ -317,3 +317,6 @@ class TestMain(unittest.TestCase):
         finally:
             silent_remove(ALCHEMY_CPU_JOB_OUT, disable=DISABLE_REMOVE)
             silent_remove(ALCHEMY_CPU_INP_OUT, disable=DISABLE_REMOVE)
+
+if __name__ == "__main__":
+    unittest.main()
