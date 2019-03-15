@@ -1,13 +1,22 @@
 import argparse
 import subprocess
 import matplotlib.pyplot as plt
+import sys
 
-def make_file(n):
+def make_file(basename, n_list):
+    for n in n_list:
+        with open(filename, 'w') as fout:
+            #makes the file
+        subprocess.call(["qsub", filename])
     #TODO: Make this work
     return jobfile
 
-def make_analysis():
+def make_analysis(basename, n_list):
     #TODO: I'm not sure what this will look like yet, but it will include namd_log_proc and the python plotting bit
+    # "for file in ${files[@]}
+    # "do
+    # "   namd_log_proc --stats -p file
+    # "done
 
 def plot_scaling():
     #TODO: Make a beautiful scaling plot
@@ -22,7 +31,7 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    #TODO: Make this work, should include config file, runtime, maybe a template job file?
+    #TODO: Add description and arguments, should include name, config file, runtime, maybe a template job file?
     parser = argparse.ArgumentParser(description='Command-line NAMD template script editor.')
     parser.add_argument("-t", "--type", help="The type of job needed. Valid options are {}. "
                                              "The default option is {}.".format(TYPES, DEF_TYPE),
@@ -53,17 +62,14 @@ def main(argv=None):
 
     submit_list = []
     try:
-        # generate files
-        for num in num_procs:
-            submit = make_file(num)
-            submit_list.append(submit)
-        # submit files
-        for file in submit_list:
-            #TODO: add quicksubmit checks and submission commands
-            subprocess.call(["qsub", file])
+        # generate and submit job files
+        submit = make_file(num_procs)
+
 
         make_analysis()
         subprocess.call(["qsub", analysis_script])
+        #qsub -a $(date -d '5 minutes' "+%H%M") resubmit.pbs
+        #sbatch --begin=now+10minutes
 
     except IOError as e:
         warning("Problems reading file:", e)
