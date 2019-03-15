@@ -67,6 +67,7 @@ SUBMIT_PAT = re.compile(r"^.*namd2.*")
 # knowing how NAMD input scripts and job files are structured
 
 def make_restart(file, xsc_file=None):
+    # TODO: restart pbs files as well as job files (won't be necessary in a short time)
     inp_file = file + '.inp'
     job_file = file + '.job'
     s_file = file.split(".")
@@ -84,6 +85,7 @@ def make_restart(file, xsc_file=None):
     with open(inp_file, "rt") as fin:
         with open(restart_inp, "w") as fout:
             for line in fin:
+                # TODO: not depend on outputname being specified before the inputname
                 if OUT_PAT.match(line):
                     s_line = line.split()
                     outputname = s_line[1].strip(";")
