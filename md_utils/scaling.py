@@ -15,7 +15,8 @@ NUM_PROCS = 'num_procs'
 MEM = 'mem'
 JOB_NAME = 'job_name'
 NUM_NODES = 'num_nodes'
-
+# Patterns
+OUT_PAT = re.compile(r"^outputname.*")
 
 def proc_args(keys):
     tpl_vals = {}
@@ -38,7 +39,8 @@ def make_file(basename, n_list):
 
 def make_analysis(basename, n_list, scheduler):
     #TODO: I'm not sure what this will look like yet, but it will include namd_log_proc and the python plotting bit
-    #Decision: will the analysis wait for 10 minutes, wait for the largest job, or otherwise?
+    #I actually think it will be simpler to read all of the data into the plotting function rather than preprocessing with col_stats, which loses the filename
+    #Decision: will the analysis wait for 10 minutes, wait for the largest job, or otherwise? I could be super fly and search the scheduler for basename files
     # set variables based on the scheduler type
     if scheduler=='pbs':
         ext = '.pbs'
@@ -68,6 +70,7 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     #TODO: Add description and arguments, should include name, config file, runtime, maybe a template job file? Also scheduler but we can try to autodetect it as well
+    #TODO: Add an option to just replot 
     parser = argparse.ArgumentParser(description='Command-line NAMD template script editor.')
     parser.add_argument("-t", "--type", help="The type of job needed. Valid options are {}. "
                                              "The default option is {}.".format(TYPES, DEF_TYPE),
