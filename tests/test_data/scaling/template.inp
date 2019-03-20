@@ -1,0 +1,140 @@
+#############################################################
+## JOB DESCRIPTION                                         ##
+#############################################################
+
+# Minimization and Equilibration of 
+# Ubiquitin in a Water Box
+
+
+#############################################################
+## ADJUSTABLE PARAMETERS                                   ##
+#############################################################
+
+structure          3_chains_solvated.psf
+coordinates        3_chains_solvated.pdb
+
+set temperature    303
+set outputname     3_chains.1
+set input          3_chains_minimization.restart
+
+binCoordinates     $input.coor
+binVelocities      $input.vel
+extendedSystem     $input.xsc
+
+firsttimestep      1000
+
+
+#############################################################
+## SIMULATION PARAMETERS                                   ##
+#############################################################
+
+# Input
+paraTypeCharmm	    on
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/par_all36m_prot.prm
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/par_all36_na.prm
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/par_all36_carb.prm
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/par_all36_lipid.prm
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/par_all36_cgenff.prm
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_prot_retinol.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_na_rna_modified.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_carb_glycopeptide.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_prot_fluoro_alkanes.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_prot_na_combined.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_prot_heme.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_bacterial.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_miscellaneous.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_cholesterol.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_yeast.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_sphingo.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_inositol.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_cardiolipin.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_detergent.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_lipid_lps.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_water_ions.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_dum_noble_gases.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_na_nad_ppi.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_carb_glycolipid.str
+parameters          /scratch/hbmayes_fluxod/xadams/toppar/toppar_all36_carb_imlab.str
+
+
+
+# Force-Field Parameters
+exclude             scaled1-4
+1-4scaling          1.0
+cutoff              12.0
+switching           on
+switchdist          10.0
+pairlistdist        14.0
+
+
+# Integrator Parameters
+timestep            2.0  ;# 2fs/step
+rigidBonds          all  ;# needed for 2fs steps
+nonbondedFreq       1
+fullElectFrequency  2  
+stepspercycle       10
+
+
+# Constant Temperature Control
+langevin            on    ;# do langevin dynamics
+langevinDamping     1     ;# damping coefficient (gamma) of 1/ps
+langevinTemp        $temperature
+langevinHydrogen    off    ;# don't couple langevin bath to hydrogens
+
+
+# Periodic Boundary Conditions
+cellBasisVector1    88.0    0.   0.0
+cellBasisVector2     0.0  99.0   0.0
+cellBasisVector3     0.0    0  172.0
+cellOrigin          44.0   49.5  86.0
+
+wrapAll             on
+
+
+# PME (for full-system periodic electrostatics)
+PME                 yes
+PMEGridSpacing      1.0
+
+#manual grid definition
+#PMEGridSizeX        45
+#PMEGridSizeY        45
+#PMEGridSizeZ        48
+
+
+# Constant Pressure Control (variable volume)
+useGroupPressure      yes ;# needed for rigidBonds
+useFlexibleCell       no
+useConstantArea       no
+
+langevinPiston        on
+langevinPistonTarget  1.01325 ;#  in bar -> 1 atm
+langevinPistonPeriod  100.0
+langevinPistonDecay   50.0
+langevinPistonTemp    $temperature
+
+
+# Output
+outputName          $outputname
+
+restartfreq         500     ;# 500steps = every 1ps
+dcdfreq             250
+xstFreq             250
+outputEnergies      100
+outputPressure      100
+
+
+#############################################################
+## EXTRA PARAMETERS                                        ##
+#############################################################
+
+
+#############################################################
+## EXECUTION SCRIPT                                        ##
+#############################################################
+
+colvars             on
+colvarsConfig       3_chains_restraint.in
+
+run 2500 ;# 5ps
+
+
