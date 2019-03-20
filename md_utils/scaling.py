@@ -17,12 +17,13 @@ NUM_PROCS = 'num_procs'
 MEM = 'mem'
 JOB_NAME = 'job_name'
 NUM_NODES = 'num_nodes'
+RUN_NAMD = "namd2 +p {} {} >& {}"
 # Patterns
 OUT_PAT = re.compile(r"^outputname.*")
 
 # Defaults
 DEF_NAME = 'scaling'
-
+TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
 
 def proc_args(keys):
     tpl_vals = {}
@@ -37,12 +38,15 @@ def proc_args(keys):
 
 
 def make_file(basename, n_list):
+    out_dir = os.getcwd()
+
+    keys.config = {OUT_DIR: out_dir, TPL_VALS: tpl_vals, OUT_FILE: file_out_name}
     for n in n_list:
         with open(filename, 'w') as fout:
             # makes the file
             subprocess.call(["qsub", filename])
     # TODO: Make this work
-    # TODO: Loop over nodes and processors, but only use full multiple nodes
+    # TODO: Loop over nodes and processors, but only use full multiple nodes, assume that final proc element is max
 
 
 def make_analysis(basename, n_list, scheduler):
@@ -95,6 +99,8 @@ def parse_cmdline(argv):
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-n", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
                         default=DEF_NAME)
+    parser.add_argument("-d", "--debug", help="Flag to generate but not submit the script.",
+                        default=False, action='store_true')  # Mostly for testing
 
     args = None
     try:
@@ -111,6 +117,7 @@ def parse_cmdline(argv):
         for num in args.num_procs:
             filename = args.name + '_' + num + '.' + job_ext
             args.filelist.append(filename)
+        args.tpl_vals = proc_args(args)
     except IOError as e:
         warning(e)
         parser.print_help()
