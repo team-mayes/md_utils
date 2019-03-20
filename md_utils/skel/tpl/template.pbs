@@ -6,7 +6,7 @@
 
 # how much of the computer are we using? computers processors, memory and time, ppn = processors per node
 # mem is shared by all processors, pmem is per processor
-#PBS -l nodes=1:ppn={num_procs}
+#PBS -l nodes={nnodes}:ppn={nprocs}
 #PBS -l pmem={mem}gb
 # 15 seconds 15:00:00 hours 15:00:00:00 days, 15:00 is minimum amount you should ask for
 #PBS -V

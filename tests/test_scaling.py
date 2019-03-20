@@ -11,15 +11,16 @@ from md_utils.scaling import main
 
 __author__ = 'xadams'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
+BASENAME = os.path.join(SCALING_DIR, "scaling")
+CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
 # COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
-
 
 class TestMainFailWell(unittest.TestCase):
     def testHelp(self):
@@ -30,6 +31,10 @@ class TestMainFailWell(unittest.TestCase):
             self.assertFalse(output)
         with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
+
+    def testFileNames(self):
+        test_input = ['-n', BASENAME, '-c', CONF_FILE]
+        main(test_input)
 
 
 class TestMain(unittest.TestCase):
