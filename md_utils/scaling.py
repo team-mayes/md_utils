@@ -27,9 +27,8 @@ OUT_PAT = re.compile(r"^set outputname.*")
 # Defaults
 DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
-# DEF_NPROCS = [1, 2, 4, 8, 12]
-DEF_NPROCS = [2]
-DEF_NNODES = [1]
+DEF_NPROCS = "1 2 4 8 12"
+DEF_NNODES = "1"
 DEF_WALLTIME = 10
 DEF_MEM = 4
 
@@ -129,10 +128,10 @@ def parse_cmdline(argv):
                         default=False, action='store_true')  # Mostly for testing
     parser.add_argument("-c", "--config", help="Configuraton file name and extension",
                         type=str)
-    parser.add_argument("-p", "--nprocs", nargs='+', help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
+    parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')], help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
                         default=DEF_NPROCS)
-    parser.add_argument("--nnodes", nargs='+', help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
-                        default=DEF_NNODES, type=int)
+    parser.add_argument("--nnodes", type=lambda s: [int(item) for item in s.split(' ')], help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
+                        default=DEF_NNODES)
 
     #TODO: Read in user lists
     args = None

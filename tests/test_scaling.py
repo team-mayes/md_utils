@@ -20,6 +20,8 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
 BASENAME = os.path.join(SCALING_DIR, "scaling")
 CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
+PROC_LIST = ["1", "2", "4", "8", "12"]
+PROC_STRING = ' '.join(map(str, PROC_LIST))
 
 class TestMainFailWell(unittest.TestCase):
     def testHelp(self):
@@ -31,18 +33,19 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
-    def testFileNames(self):
-        test_input = ['-n', BASENAME, '-c', CONF_FILE, '-d', '-p', "1", "2", "4"]
-        main(test_input)
+
 
 
 class TestMain(unittest.TestCase):
-    def testReadDistances(self):
-        test_input = [DIST_FILE, "-n", NAME, "--outdir", PCA_DIR]
+    def testFileNames(self):
+        test_input = ['-n', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING]
         try:
-            silent_remove(PNG_2D_FILE)
             main(test_input)
-            self.assertTrue(os.path.isfile(PNG_2D_FILE))
+            for num in PROC_LIST:
+                self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.pbs'))
+                self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
         finally:
-            silent_remove(PNG_2D_FILE, disable=DISABLE_REMOVE)
+            for num in PROC_LIST:
+                silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
 
