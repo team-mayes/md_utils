@@ -129,9 +129,9 @@ def parse_cmdline(argv):
                         default=False, action='store_true')  # Mostly for testing
     parser.add_argument("-c", "--config", help="Configuraton file name and extension",
                         type=str)
-    parser.add_argument("-p", "--nprocs", help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
+    parser.add_argument("-p", "--nprocs", nargs='+', help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
                         default=DEF_NPROCS)
-    parser.add_argument("--nnodes", help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
+    parser.add_argument("--nnodes", nargs='+', help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
                         default=DEF_NNODES, type=int)
 
     #TODO: Read in user lists

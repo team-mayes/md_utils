@@ -20,7 +20,6 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
 BASENAME = os.path.join(SCALING_DIR, "scaling")
 CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
-# COM_FILE = os.path.join(PCA_DIR, 'sugar_protein_indices.txt')
 
 class TestMainFailWell(unittest.TestCase):
     def testHelp(self):
@@ -33,7 +32,7 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
     def testFileNames(self):
-        test_input = ['-n', BASENAME, '-c', CONF_FILE]
+        test_input = ['-n', BASENAME, '-c', CONF_FILE, '-d', '-p', "1", "2", "4"]
         main(test_input)
 
 
