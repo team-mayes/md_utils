@@ -19,9 +19,16 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
 BASENAME = os.path.join(SCALING_DIR, "scaling")
-CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
+CONF_FILE = os.path.join("md_utils/skel/tpl/template.inp")
 PROC_LIST = ["1", "2", "4", "8", "12"]
 PROC_STRING = ' '.join(map(str, PROC_LIST))
+NODE_LIST = ["1", "2"]
+NODE_STRING = ' '.join(map(str, NODE_LIST))
+for n in NODE_LIST:
+    if int(n) > 1:
+        print(n, PROC_LIST[-1])
+        PROC_LIST.append(str(int(n) * int(PROC_LIST[-1])))
+
 
 class TestMainFailWell(unittest.TestCase):
     def testHelp(self):
@@ -34,11 +41,9 @@ class TestMainFailWell(unittest.TestCase):
             self.assertTrue("optional arguments" in output)
 
 
-
-
 class TestMain(unittest.TestCase):
     def testFileNames(self):
-        test_input = ['-n', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING, '--nnodes', NODE_STRING]
         try:
             main(test_input)
             for num in PROC_LIST:
@@ -48,5 +53,4 @@ class TestMain(unittest.TestCase):
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
-    #TODO: Addd a test that actually checks for content
-
+    # TODO: Addd a test that actually checks for content

@@ -28,7 +28,7 @@ OUT_PAT = re.compile(r"^set outputname.*")
 DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
 DEF_NPROCS = "1 2 4 8 12"
-DEF_NNODES = "1"
+DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
 DEF_MEM = 4
 
@@ -53,11 +53,16 @@ def make_file(keys):
         jobfile = file + job_ext
         configfile = file + config_ext
         logfile = file + log_ext
-        total_procs = file.split('_')[-1]
+        total_procs = int(file.split('_')[-1])
+        ppn = int(keys.nprocs[-1])
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH,"template.pbs")
-        keys.tpl_vals[NUM_NODES] = 1
-        keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
+        if total_procs <= ppn:
+            keys.tpl_vals[NUM_NODES] = 1
+            keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
+        else:
+            keys.tpl_vals[NUM_NODES] = str(int(total_procs/ppn))
+            keys.tpl_vals[NUM_PROCS] = str(ppn)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH),keys.tpl_vals,JOB_TPL_PATH,jobfile)
 
         with open(jobfile, 'a') as fout:
@@ -70,8 +75,6 @@ def make_file(keys):
                     else:
                         fout.write(line)
         print('subprocess.call(["qsub", jobfile])')
-    # TODO: Make this work
-    # TODO: Loop over nodes and processors, but only use full multiple nodes, assume that final proc element is max
 
 
 def make_analysis(basename, n_list, scheduler):
@@ -120,7 +123,7 @@ def parse_cmdline(argv):
     # TODO: Add an option to just replot
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
-    parser.add_argument("-n", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
+    parser.add_argument("-b", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
                         default=DEF_NAME)
     parser.add_argument("-d", "--debug", help="Flag to generate but not submit the script.",
                         default=False, action='store_true')  # Mostly for testing
@@ -128,7 +131,7 @@ def parse_cmdline(argv):
                         type=str)
     parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')], help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
                         default=DEF_NPROCS)
-    parser.add_argument("--nnodes", type=lambda s: [int(item) for item in s.split(' ')], help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
+    parser.add_argument("-n", "--nnodes", type=lambda s: [int(item) for item in s.split(' ')], help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
                         default=DEF_NNODES)
 
     args = None
@@ -144,10 +147,13 @@ def parse_cmdline(argv):
         job_ext = '.job'
 
         args.filelist = []
+        for nproc in args.nprocs:
+            filename = args.name + '_' + str(nproc)
+            args.filelist.append(filename)
         for nnode in args.nnodes:
-            for nproc in args.nprocs:
-                total_procs = nnode*nproc
-                filename = args.name + '_' + str(total_procs)
+            if int(nnode) > 1:
+                total_procs = str(nnode * args.nprocs[-1])
+                filename = args.name + '_' + total_procs
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
     except IOError as e:

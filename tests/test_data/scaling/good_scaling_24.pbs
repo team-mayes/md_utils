@@ -6,8 +6,8 @@
 
 # how much of the computer are we using? computers processors, memory and time, ppn = processors per node
 # mem is shared by all processors, pmem is per processor
-#PBS -l nodes={nnodes}:ppn={nprocs}
-#PBS -l pmem={mem}gb
+#PBS -l nodes=2:ppn=12
+#PBS -l pmem=4gb
 # 15 seconds 15:00:00 hours 15:00:00:00 days, 15:00 is minimum amount you should ask for
 #PBS -V
 
@@ -16,8 +16,8 @@
 # should match suffix 
 #PBS -q fluxod
 
-#PBS -l walltime={walltime}:00
-#PBS -N {job_name}
+#PBS -l walltime=10:00
+#PBS -N /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 ####  End PBS preamble
 ####  Commands follow this line
 
@@ -36,3 +36,4 @@ fi
 echo "Running from $(pwd)"
 
 # Your commands below:
+namd2 +p 24 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_24.conf >& /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_24.log
