@@ -32,10 +32,11 @@ DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
 DEF_MEM = 4
 
+
 def proc_args(keys):
     tpl_vals = {}
 
-    tpl_vals[WALLTIME] = DEF_WALLTIME
+    tpl_vals[WALLTIME] = keys.walltime
     tpl_vals[nprocs] = keys.nprocs
     tpl_vals[MEM] = DEF_MEM
     tpl_vals[JOB_NAME] = keys.name
@@ -55,15 +56,16 @@ def make_file(keys):
         logfile = file + log_ext
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
+        # TODO: Check if file already exists. If it does, provide a message and exit
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
-        JOB_TPL_PATH = os.path.join(TPL_PATH,"template.pbs")
+        JOB_TPL_PATH = os.path.join(TPL_PATH, "template.pbs")
         if total_procs <= ppn:
             keys.tpl_vals[NUM_NODES] = 1
             keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
         else:
-            keys.tpl_vals[NUM_NODES] = str(int(total_procs/ppn))
+            keys.tpl_vals[NUM_NODES] = str(int(total_procs / ppn))
             keys.tpl_vals[NUM_PROCS] = str(ppn)
-        fill_save_tpl(config, read_tpl(JOB_TPL_PATH),keys.tpl_vals,JOB_TPL_PATH,jobfile)
+        fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
 
         with open(jobfile, 'a') as fout:
             fout.write(RUN_NAMD.format(total_procs, configfile, logfile))
@@ -74,7 +76,14 @@ def make_file(keys):
                         fout.write("set outputname\t\t{} \n".format(file))
                     else:
                         fout.write(line)
-        print('subprocess.call(["qsub", jobfile])')
+        if keys.debug:
+            print('subprocess.call(["qsub", jobfile])')
+        elif keys.scheduler == 'pbs':
+            subprocess.call(["qsub", jobfile])
+        elif keys.scheduler == 'slurm':
+            subprocess.call(["sbatch", jobfile])
+        else:
+            print('subprocess.call(["sbatch", jobfile])')
 
 
 def make_analysis(basename, n_list, scheduler):
@@ -121,6 +130,7 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     # TODO: Add an option to just replot
+    # TODO: Add memory as a user parameter (analogous to walltime)
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-b", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
@@ -129,10 +139,16 @@ def parse_cmdline(argv):
                         default=False, action='store_true')  # Mostly for testing
     parser.add_argument("-c", "--config", help="Configuraton file name and extension",
                         type=str)
-    parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')], help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
+    parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')],
+                        help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
                         default=DEF_NPROCS)
-    parser.add_argument("-n", "--nnodes", type=lambda s: [int(item) for item in s.split(' ')], help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
+    parser.add_argument("-n", "--nnodes", type=lambda s: [int(item) for item in s.split(' ')],
+                        help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(
+                            DEF_NNODES),
                         default=DEF_NNODES)
+    parser.add_argument("-w", "--walltime", type=int,
+                        help="Integer number of minutes to run scaling job. Default is {}".format(DEF_WALLTIME),
+                        default=DEF_WALLTIME)
 
     args = None
     try:
@@ -140,11 +156,10 @@ def parse_cmdline(argv):
         # Automatic scheduler detection
         if which('qsub'):
             args.scheduler = 'pbs'
-            job_ext = '.pbs'
         elif which('sbatch'):
             args.scheduler = 'slurm'
-            job_ext = '.job'
-        job_ext = '.job'
+        else:
+            args.scheduler = 'none'
 
         args.filelist = []
         for nproc in args.nprocs:
@@ -175,11 +190,9 @@ def main(argv=None):
     args, ret = parse_cmdline(argv)
     if ret != GOOD_RET or args is None:
         return ret
-    make_file(args)
 
-    submit_list = []
-    # try:
-    #     # generate and submit job files
+    try:
+        make_file(args)
     #     submit = make_file(nprocs)
     #
     #     make_analysis()
@@ -187,12 +200,12 @@ def main(argv=None):
     #     # qsub -a $(date -d '5 minutes' "+%H%M") resubmit.pbs
     #     # sbatch --begin=now+10minutes
     #
-    # except IOError as e:
-    #     warning("Problems reading file:", e)
-    #     return IO_ERROR
-    # except (ValueError, InvalidDataError) as e:
-    #     warning("Problems reading data:", e)
-    #     return INVALID_DATA
+    except IOError as e:
+        warning("Problems reading file:", e)
+        return IO_ERROR
+    except (ValueError, InvalidDataError) as e:
+        warning("Problems reading data:", e)
+        return INVALID_DATA
 
     return GOOD_RET  # success
 

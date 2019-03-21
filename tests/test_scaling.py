@@ -45,12 +45,23 @@ class TestMain(unittest.TestCase):
     def testFileNames(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING, '--nnodes', NODE_STRING]
         try:
-            main(test_input)
-            for num in PROC_LIST:
-                self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.pbs'))
-                self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("subprocess.call" in output)
+                for num in PROC_LIST:
+                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.pbs'))
+                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
         finally:
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
     # TODO: Addd a test that actually checks for content
+
+    def testOutput(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d']
+        try:
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("subprocess.call" in output)
+        finally:
+            for num in PROC_LIST:
+                silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
