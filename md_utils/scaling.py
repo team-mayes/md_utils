@@ -117,9 +117,7 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    # TODO: Add description and arguments, should include name, config file, runtime, maybe a template job file? Also scheduler but we can try to autodetect it as well
     # TODO: Add an option to just replot
-    # TODO: create the joblist in the proc_args step and pass it around
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-n", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
@@ -133,7 +131,6 @@ def parse_cmdline(argv):
     parser.add_argument("--nnodes", type=lambda s: [int(item) for item in s.split(' ')], help="List of number of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(DEF_NNODES),
                         default=DEF_NNODES)
 
-    #TODO: Read in user lists
     args = None
     try:
         args = parser.parse_args(argv)
