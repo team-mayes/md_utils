@@ -54,6 +54,7 @@ class TestMain(unittest.TestCase):
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
+
     # TODO: Addd a test that actually checks for content
 
     def testOutput(self):

@@ -34,6 +34,7 @@ DEF_WALLTIME = 10
 DEF_MEM = 4
 TYPES = ['namd']
 DEF_TYPE = 'namd'
+SCHEDULER_TYPES = ['pbs', 'slurm']
 
 
 def proc_args(keys):
@@ -156,20 +157,24 @@ def parse_cmdline(argv):
     parser.add_argument("-s", "--software",
                         help="Program for performing scaling analysis. Valid options are: {}. Default is {}".format(
                             TYPES, DEF_TYPE), default=DEF_TYPE, choices=TYPES)
+    parser.add_argument("--scheduler",
+                        help="Scheduler type for jobfiles. Valid options are: {}. Automatic detection will be attempted by default".format(
+                            TYPES))
 
     args = None
     try:
         args = parser.parse_args(argv)
         # Automatic scheduler detection
-        if which('qsub'):
-            args.scheduler = 'pbs'
-            args.job_ext = '.pbs'
-        elif which('sbatch'):
-            args.scheduler = 'slurm'
-            args.job_ext = '.job'
-        else:
-            args.scheduler = 'none'
-            args.job_ext = '.job'
+        if not args.scheduler:
+            if which('qsub'):
+                args.scheduler = 'pbs'
+                args.job_ext = '.pbs'
+            elif which('sbatch'):
+                args.scheduler = 'slurm'
+                args.job_ext = '.job'
+            else:
+                args.scheduler = 'none'
+                args.job_ext = '.job'
 
         args.filelist = []
         for nproc in args.nprocs:
