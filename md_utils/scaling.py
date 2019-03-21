@@ -10,8 +10,8 @@ from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
 
-TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/tests/test_data/scaling')
-OUT_FILE = 'file_out_name'
+CONF_EXT = '.conf'
+LOG_EXT = '.log'
 
 ## Dictionary Keywords
 WALLTIME = 'walltime'
@@ -20,9 +20,10 @@ MEM = 'mem'
 JOB_NAME = 'job_name'
 NUM_NODES = 'nnodes'
 NUM_PROCS = 'nprocs'
+OUT_FILE = 'file_out_name'
 RUN_NAMD = "namd2 +p {} {} >& {}"
 # Patterns
-OUT_PAT = re.compile(r"^set outputname.*")
+NAMD_OUT_PAT = re.compile(r"^set outputname.*")
 
 # Defaults
 DEF_NAME = 'scaling'
@@ -31,6 +32,8 @@ DEF_NPROCS = "1 2 4 8 12"
 DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
 DEF_MEM = 4
+TYPES = ['namd']
+DEF_TYPE = 'namd'
 
 
 def proc_args(keys):
@@ -39,6 +42,7 @@ def proc_args(keys):
     tpl_vals[WALLTIME] = keys.walltime
     tpl_vals[nprocs] = keys.nprocs
     tpl_vals[MEM] = DEF_MEM
+    # tpl_vals[MEM] = keys.mem
     tpl_vals[JOB_NAME] = keys.name
     tpl_vals[NUM_NODES] = keys.nnodes
     tpl_vals[NUM_PROCS] = keys.nprocs
@@ -48,31 +52,30 @@ def proc_args(keys):
 
 def make_file(keys):
     for i, file in enumerate(keys.filelist):
-        job_ext = '.pbs'
-        config_ext = '.conf'
-        log_ext = '.log'
-        jobfile = file + job_ext
-        configfile = file + config_ext
-        logfile = file + log_ext
+        jobfile = file + keys.job_ext
+        configfile = file + CONF_EXT
+        logfile = file + LOG_EXT
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
         # TODO: Check if file already exists. If it does, provide a message and exit
-        config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
-        JOB_TPL_PATH = os.path.join(TPL_PATH, "template.pbs")
         if total_procs <= ppn:
             keys.tpl_vals[NUM_NODES] = 1
             keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
         else:
             keys.tpl_vals[NUM_NODES] = str(int(total_procs / ppn))
             keys.tpl_vals[NUM_PROCS] = str(ppn)
+        config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
+        JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
 
         with open(jobfile, 'a') as fout:
-            fout.write(RUN_NAMD.format(total_procs, configfile, logfile))
+            if keys.software == 'namd':
+                fout.write(RUN_NAMD.format(total_procs, configfile, logfile))
+                out_pat = NAMD_OUT_PAT
         with open(configfile, 'w') as fout:
             with open(keys.config, 'r') as fin:
                 for line in fin:
-                    if OUT_PAT.match(line):
+                    if out_pat.match(line):
                         fout.write("set outputname\t\t{} \n".format(file))
                     else:
                         fout.write(line)
@@ -131,6 +134,7 @@ def parse_cmdline(argv):
     # initialize the parser object:
     # TODO: Add an option to just replot
     # TODO: Add memory as a user parameter (analogous to walltime)
+    # TODO: Adjust defaults for flux vs slurm (furthermore comet vs bridges)
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-b", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
@@ -149,6 +153,9 @@ def parse_cmdline(argv):
     parser.add_argument("-w", "--walltime", type=int,
                         help="Integer number of minutes to run scaling job. Default is {}".format(DEF_WALLTIME),
                         default=DEF_WALLTIME)
+    parser.add_argument("-s", "--software",
+                        help="Program for performing scaling analysis. Valid options are: {}. Default is {}".format(
+                            TYPES, DEF_TYPE), default=DEF_TYPE, choices=TYPES)
 
     args = None
     try:
@@ -156,10 +163,13 @@ def parse_cmdline(argv):
         # Automatic scheduler detection
         if which('qsub'):
             args.scheduler = 'pbs'
+            args.job_ext = '.pbs'
         elif which('sbatch'):
             args.scheduler = 'slurm'
+            args.job_ext = '.job'
         else:
             args.scheduler = 'none'
+            args.job_ext = '.job'
 
         args.filelist = []
         for nproc in args.nprocs:
@@ -193,8 +203,8 @@ def main(argv=None):
 
     try:
         make_file(args)
-    #     submit = make_file(nprocs)
-    #
+        # TODO: Analysis
+        # TODO: Plotting
     #     make_analysis()
     #     subprocess.call(["qsub", analysis_script])
     #     # qsub -a $(date -d '5 minutes' "+%H%M") resubmit.pbs

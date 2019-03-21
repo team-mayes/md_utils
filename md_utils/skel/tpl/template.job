@@ -2,7 +2,7 @@
 #SBATCH --job-name={job_name}
 #SBATCH -t {walltime}:00:00
 #SBATCH -p RM
-#SBATCH -N 1 --tasks-per-node=1
+#SBATCH -N {nnodes} --tasks-per-node={nprocs}
 #SBATCH --mail-type=END,FAIL
 set echo
 set -x

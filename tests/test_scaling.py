@@ -48,11 +48,11 @@ class TestMain(unittest.TestCase):
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
                 for num in PROC_LIST:
-                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.pbs'))
+                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.job'))
                     self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
         finally:
             for num in PROC_LIST:
-                silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
     # TODO: Addd a test that actually checks for content
 
@@ -63,5 +63,5 @@ class TestMain(unittest.TestCase):
                 self.assertTrue("subprocess.call" in output)
         finally:
             for num in PROC_LIST:
-                silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
