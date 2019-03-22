@@ -1,6 +1,6 @@
 import argparse
 import subprocess
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import sys
 import os
 import pandas as pd
@@ -24,6 +24,8 @@ OUT_FILE = 'file_out_name'
 RUN_NAMD = "namd2 +p {} {} >& {}"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^set outputname.*")
+FILE_PAT = re.compile(r"^files=.*")
+BASE_PAT = re.compile(r"^basename=.*")
 
 # Defaults
 DEF_NAME = 'scaling'
@@ -51,7 +53,7 @@ def proc_args(keys):
     return tpl_vals
 
 
-def make_file(keys):
+def submit_files(keys):
     for i, file in enumerate(keys.filelist):
         jobfile = file + keys.job_ext
         configfile = file + CONF_EXT
@@ -81,20 +83,40 @@ def make_file(keys):
                     else:
                         fout.write(line)
         if keys.debug or keys.scheduler == 'none':
-            print('subprocess.call(["sbatch", jobfile])')
+            print("subprocess.call([{}, {}])".format(keys.sub_command,jobfile))
         else:
             subprocess.call([keys.sub_command, jobfile])
 
 
-def make_analysis(keys):
+def submit_analysis(keys):
     # One could argue parsing the scheduler output is more robust, but that's a feature for another day
-    # TODO: Make analysis job
-    # TODO: add files & basename to resubmit
-    # TODO: submit resubmit
-    # This anlysis is incredibly cheap so I won't worry about checking what has already been done
-    analysis_jobfile = basename + '_analysis' + keys.job_ext
+    # This anlysis is cheap so I won't worry about checking what has already been done
+    analysis_jobfile = keys.name + '_analysis' + keys.job_ext
     with open(analysis_jobfile, 'w') as fout:
-        print("hello world")
+        with open(TPL_PATH + 'analysis.tpl', 'r') as fin:
+            for line in fin:
+                if FILE_PAT.match(line):
+                    fout.write("files={}\n".format(keys.filelist))
+                elif BASE_PAT.match(line):
+                    fout.write("basename={}\n".format(keys.name))
+                else:
+                    fout.write(line)
+
+    resubmit_jobfile = keys.name + '_resubmit' + keys.job_ext
+    with open(resubmit_jobfile, 'w') as fout:
+        with open(TPL_PATH + 'resubmit.tpl', 'r') as fin:
+            for line in fin:
+                if FILE_PAT.match(line):
+                    fout.write("files={}\n".format(keys.filelist))
+                elif BASE_PAT.match(line):
+                    fout.write("basename={}\n".format(keys.name))
+                else:
+                    fout.write(line)
+
+    if keys.debug or keys.scheduler == 'none':
+        print("subprocess.call([{}, {}])".format(keys.sub_command,resubmit_jobfile))
+    else:
+        subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
 def plot_scaling(files):
@@ -160,6 +182,7 @@ def parse_cmdline(argv):
             else:
                 args.scheduler = 'none'
                 args.job_ext = '.job'
+                args.sub_command = 'submit'
 
         args.filelist = []
         for nproc in args.nprocs:
@@ -192,14 +215,10 @@ def main(argv=None):
         return ret
 
     try:
-        make_file(args)
-        # TODO: Analysis
+        submit_files(args)
+        submit_analysis(args)
         # TODO: Plotting
-    #     make_analysis()
-    #     subprocess.call(["qsub", analysis_script])
-    #     # qsub -a $(date -d '5 minutes' "+%H%M") resubmit.pbs
-    #     # sbatch --begin=now+10minutes
-    #
+
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
