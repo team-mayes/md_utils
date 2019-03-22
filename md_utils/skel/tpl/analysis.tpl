@@ -13,10 +13,9 @@ cd ~
 # This submits this job file again, but makes sure
 # that it waits in the queue for at least 10 minutes
 files=
-basename=
 
 for file in ${{files[@]}}
 do
-    namd_scripts --stats -p -f $file
+    namd_scripts -p -f ${file}.log
 done
 python -c "from md_utils import scaling; scaling.plot_scaling('$files')"

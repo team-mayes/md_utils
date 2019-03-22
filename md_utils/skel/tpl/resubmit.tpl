@@ -16,9 +16,9 @@ basename=
 
 for file in ${{files[@]}}
 do
-    if [ -f $file ]
+    if [ -f ${file}.log ]
     then
-        echo "$file exists"
+        echo "${file}.log exists"
     else
         qsub -a $(date -d '10 minutes' "+%H%M") resubmit.pbs 
         exit 1

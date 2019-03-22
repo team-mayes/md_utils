@@ -61,6 +61,8 @@ def submit_files(keys):
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
         # TODO: Check if file already exists. If it does, provide a message and skip
+        if os.path.isfile(jobfile):
+            continue
         if total_procs <= ppn:
             keys.tpl_vals[NUM_NODES] = 1
             keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
