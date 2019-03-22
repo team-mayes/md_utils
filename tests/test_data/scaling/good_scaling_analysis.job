@@ -12,10 +12,11 @@ set -e
 cd ~
 # This submits this job file again, but makes sure
 # that it waits in the queue for at least 10 minutes
-files=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2
+files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
+basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
 for file in ${{files[@]}}
 do
     namd_scripts -p -f ${file}.log
 done
-python -c "from md_utils import scaling; scaling.plot_scaling('$files')"
+python -c "from md_utils import scaling; scaling.plot_scaling('$files','$basename')"

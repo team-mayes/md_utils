@@ -3,7 +3,7 @@
 
 # join output with error
 #PBS -j oe
-
+#PBS -m n
 # how much of the computer are we using? computers processors, memory and time, ppn = processors per node
 # mem is shared by all processors, pmem is per processor
 #PBS -l nodes={nnodes}:ppn={nprocs}

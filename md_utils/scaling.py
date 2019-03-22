@@ -10,6 +10,8 @@ import re
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
+# This line switches to a non-Gui backend, allowing plotting on PSC Bridges
+plt.switch_backend('agg')
 
 CONF_EXT = '.conf'
 LOG_EXT = '.log'
@@ -85,7 +87,7 @@ def submit_files(keys):
                     else:
                         fout.write(line)
         if keys.debug or keys.scheduler == 'none':
-            print("subprocess.call([{}, {}])".format(keys.sub_command,jobfile))
+            print("subprocess.call([{}, {}])".format(keys.sub_command, jobfile))
         else:
             subprocess.call([keys.sub_command, jobfile])
 
@@ -116,12 +118,12 @@ def submit_analysis(keys):
                     fout.write(line)
 
     if keys.debug or keys.scheduler == 'none':
-        print("subprocess.call([{}, {}])".format(keys.sub_command,resubmit_jobfile))
+        print("subprocess.call([{}, {}])".format(keys.sub_command, resubmit_jobfile))
     else:
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files):
+def plot_scaling(files,name):
     # TODO: Make a beautiful scaling plot
     # TODO: Some preprocessing needs to be done with output from namd_log_proc
     list = []
@@ -132,23 +134,24 @@ def plot_scaling(files):
     get_procs = lambda x: [item.split('_')[-1] for item in x.filename.unique()]
     means = []
     for file in frame.filename.unique():
-        means.append(frame['time/ns'][frame['filename']==file].mean())
-    nprocs = np.asarray(get_procs(frame),dtype=int)
+        means.append(frame['time/ns'][frame['filename'] == file].mean())
+    nprocs = np.asarray(get_procs(frame), dtype=int)
     fig, ax = plt.subplots()
     ax1 = ax.twinx()
-    get_speedup = lambda b: [b[0]/i for i in b]
+    get_speedup = lambda b: [b[0] / i for i in b]
     speedup = np.asarray(get_speedup(means))
-    x = np.linspace(1,12)
+    x = np.linspace(1, 12)
 
     ax.plot(nprocs, np.asarray(means), label='time/ns')
-    ax1.plot(x,x, 'k', label="Perfect Scaling")
+    ax1.plot(x, x, 'k', label="Perfect Scaling")
     ax1.plot(nprocs, speedup, 'r', label="Speedup")
 
     ax.set_xlabel("Number of Processors")
     ax1.set_ylabel("hours/ns")
     ax.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    plt.savefig(files[0].split('_')[:-1]+'.png')
+    plt.savefig(name + '.png')
+
 
 def parse_cmdline(argv):
     """
@@ -242,7 +245,7 @@ def main(argv=None):
             submit_files(args)
             submit_analysis(args)
         if args.plot:
-            plot_scaling(args.filelist)
+            plot_scaling(args.filelist, args.name)
         # TODO: Plotting
 
     except IOError as e:

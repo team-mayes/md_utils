@@ -22,6 +22,7 @@ BASENAME = os.path.join(SCALING_DIR, "scaling")
 CONF_FILE = os.path.join("md_utils/skel/tpl/template.inp")
 GOOD_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit.job")
 GOOD_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis.job")
+PNG_OUT = os.path.join(SCALING_DIR, "scaling.png")
 PROC_LIST = ["1", "2", "4", "8", "12"]
 PROC_STRING = ' '.join(map(str, PROC_LIST))
 NODE_LIST = ["1", "2"]
@@ -85,6 +86,9 @@ class TestMain(unittest.TestCase):
 
     def testPlotting(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", '--nnodes', "1", "--plot"]
-        # try:
-        main(test_input)
+        try:
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_OUT))
+        finally:
+            silent_remove(PNG_OUT,silent_remove(PNG_OUT))
 
