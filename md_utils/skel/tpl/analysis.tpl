@@ -6,6 +6,7 @@
 #PBS -q fluxod
 #PBS -V
 #PBS -j oe
+#PBS -m e
 set -u
 set -e
 cd ~
@@ -16,11 +17,6 @@ basename=
 
 for file in ${{files[@]}}
 do
-    if [ -f $file ]
-    then
-        echo "$file exists"
-    else
-        qsub -a $(date -d '10 minutes' "+%H%M") resubmit.pbs 
-        exit 1
+    namd_scripts --stats -p -f $file
 done
-qsub -a $(date -d '10 minutes' "+%H%M") ${basename}_analysis.pbs
+python -c "from md_utils import scaling; scaling.plot_scaling('$files')"

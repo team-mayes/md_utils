@@ -1,6 +1,6 @@
 import argparse
 import subprocess
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import sys
 import os
 import pandas as pd
@@ -58,7 +58,7 @@ def make_file(keys):
         logfile = file + LOG_EXT
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
-        # TODO: Check if file already exists. If it does, provide a message and exit
+        # TODO: Check if file already exists. If it does, provide a message and skip
         if total_procs <= ppn:
             keys.tpl_vals[NUM_NODES] = 1
             keys.tpl_vals[NUM_PROCS] = keys.nprocs[i]
@@ -80,45 +80,28 @@ def make_file(keys):
                         fout.write("set outputname\t\t{} \n".format(file))
                     else:
                         fout.write(line)
-        if keys.debug:
-            print('subprocess.call(["qsub", jobfile])')
-        elif keys.scheduler == 'pbs':
-            subprocess.call(["qsub", jobfile])
-        elif keys.scheduler == 'slurm':
-            subprocess.call(["sbatch", jobfile])
-        else:
+        if keys.debug or keys.scheduler == 'none':
             print('subprocess.call(["sbatch", jobfile])')
+        else:
+            subprocess.call([keys.sub_command, jobfile])
 
 
-def make_analysis(basename, n_list, scheduler):
-    # TODO: I'm not sure what this will look like yet, but it will include namd_log_proc and the python plotting bit
-    # I actually think it will be simpler to read all of the data into the plotting function rather than preprocessing with col_stats, which loses the filename
-    # Decision: job that searches for the existence of all the logs. If it finds them, submit analysis job for 10 minutes later, otherwise resubmit itself.
-    # This solution is somewhat vulnerable to failed jobs, but that's the user's responsibility.
-    # Alternatively we could learn how to parse the scheduler output
-    # set variables based on the scheduler type
-    if scheduler == 'pbs':
-        ext = '.pbs'
-        submit = 'qsub'
-        tpl = os.path.join(TPL_PATH)
-    elif scheduler == 'slurm':
-        ext = '.job'
-        submit = 'sbatch'
-    analysis_jobfile = basename + '_analysis' + ext
+def make_analysis(keys):
+    # One could argue parsing the scheduler output is more robust, but that's a feature for another day
+    # TODO: Make analysis job
+    # TODO: add files & basename to resubmit
+    # TODO: submit resubmit
+    # This anlysis is incredibly cheap so I won't worry about checking what has already been done
+    analysis_jobfile = basename + '_analysis' + keys.job_ext
     with open(analysis_jobfile, 'w') as fout:
         print("hello world")
 
 
-# "for file in ${files[@]}
-# "do
-# "   namd_log_proc --stats -p file
-# "done
-
-def plot_scaling(list_of_files):
+def plot_scaling(files):
     # TODO: Make a beautiful scaling plot
     # TODO: Some preprocessing needs to be done with output from namd_log_proc
     list = []
-    for file in list_of_files:
+    for file in files:
         df = pd.read_csv(file, header=0, index_col=None)
         list.append(df)
     frame = pd.concat(list, ignore_index=True)
@@ -169,9 +152,11 @@ def parse_cmdline(argv):
             if which('qsub'):
                 args.scheduler = 'pbs'
                 args.job_ext = '.pbs'
+                args.sub_command = 'qsub'
             elif which('sbatch'):
                 args.scheduler = 'slurm'
                 args.job_ext = '.job'
+                args.sub_command = 'sbatch'
             else:
                 args.scheduler = 'none'
                 args.job_ext = '.job'

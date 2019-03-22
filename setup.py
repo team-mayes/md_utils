@@ -78,6 +78,7 @@ setup(
                                       # 'proc_plumed_cv = md_utils.proc_plumed_cv:main',
                                       # 'rename_files = md_utils.rename_files:main',
                                       # 'replace_col = md_utils.replace_col:main',
+                                      'scaling = md_utils.scaling:main',
                                       # 'wham_block = md_utils.wham_block:main',
                                       # 'wham_rad = md_utils.wham_rad:main',
                                       # 'wham_split = md_utils.wham_split:main',
