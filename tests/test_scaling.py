@@ -82,3 +82,9 @@ class TestMain(unittest.TestCase):
             silent_remove(BASENAME + '_2.conf', disable=DISABLE_REMOVE)
             silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
             silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
+
+    def testPlotting(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", '--nnodes', "1", "--plot"]
+        # try:
+        main(test_input)
+

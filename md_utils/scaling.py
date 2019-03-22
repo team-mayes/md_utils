@@ -5,6 +5,7 @@ import sys
 import os
 import pandas as pd
 from shutil import which
+import numpy as np
 import re
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
@@ -126,10 +127,29 @@ def plot_scaling(files):
     # TODO: Some preprocessing needs to be done with output from namd_log_proc
     list = []
     for file in files:
-        df = pd.read_csv(file, header=0, index_col=None)
+        df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
         list.append(df)
     frame = pd.concat(list, ignore_index=True)
+    get_procs = lambda x: [item.split('_')[-1] for item in x.filename.unique()]
+    means = []
+    for file in frame.filename.unique():
+        means.append(frame['time/ns'][frame['filename']==file].mean())
+    nprocs = np.asarray(get_procs(frame),dtype=int)
+    fig, ax = plt.subplots()
+    ax1 = ax.twinx()
+    get_speedup = lambda b: [b[0]/i for i in b]
+    speedup = np.asarray(get_speedup(means))
+    x = np.linspace(1,12)
 
+    ax.plot(nprocs, np.asarray(means), label='time/ns')
+    ax1.plot(x,x, 'k', label="Perfect Scaling")
+    ax1.plot(nprocs, speedup, 'r', label="Speedup")
+
+    ax.set_xlabel("Number of Processors")
+    ax1.set_ylabel("hours/ns")
+    ax.set_ylabel("Speedup")
+    fig.legend(loc='upper center')
+    plt.show()
 
 def parse_cmdline(argv):
     """
@@ -167,6 +187,7 @@ def parse_cmdline(argv):
     parser.add_argument("--scheduler",
                         help="Scheduler type for jobfiles. Valid options are: {}. Automatic detection will be attempted by default".format(
                             TYPES))
+    parser.add_argument("--plot", default=False, action='store_true', help="Flag to only plot the specified files")
 
     args = None
     try:
@@ -196,7 +217,6 @@ def parse_cmdline(argv):
                 total_procs = str(nnode * args.nprocs[-1])
                 filename = args.name + '_' + total_procs
                 args.filelist.append(filename)
-        print(args.filelist, args.nprocs, args.nnodes)
         args.tpl_vals = proc_args(args)
     except IOError as e:
         warning(e)
@@ -219,8 +239,11 @@ def main(argv=None):
         return ret
 
     try:
-        submit_files(args)
-        submit_analysis(args)
+        if not args.plot:
+            submit_files(args)
+            submit_analysis(args)
+        if args.plot:
+            plot_scaling(args.filelist)
         # TODO: Plotting
 
     except IOError as e:
