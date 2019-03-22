@@ -22,5 +22,6 @@ do
     else
         qsub -a $(date -d '10 minutes' "+%H%M") resubmit.pbs 
         exit 1
+    fi
 done
 qsub -a $(date -d '10 minutes' "+%H%M") ${basename}_analysis.pbs
