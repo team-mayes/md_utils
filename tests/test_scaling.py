@@ -20,6 +20,8 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
 BASENAME = os.path.join(SCALING_DIR, "scaling")
 CONF_FILE = os.path.join("md_utils/skel/tpl/template.inp")
+GOOD_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit.job")
+GOOD_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis.job")
 PROC_LIST = ["1", "2", "4", "8", "12"]
 PROC_STRING = ' '.join(map(str, PROC_LIST))
 NODE_LIST = ["1", "2"]
@@ -55,9 +57,7 @@ class TestMain(unittest.TestCase):
                 silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
 
-    # TODO: Addd a test that actually checks for content
-
-    def testOutput(self):
+    def testJobOutput(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d']
         try:
             with capture_stdout(main, test_input) as output:
@@ -66,3 +66,19 @@ class TestMain(unittest.TestCase):
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
+
+    def testAnalysisOutput(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2", '--nnodes', "1"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(BASENAME + '_analysis.job', GOOD_ANALYSIS))
+            self.assertFalse(diff_lines(BASENAME + '_resubmit.job', GOOD_RESUBMIT))
+        finally:
+            silent_remove(BASENAME + '_1.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_1.conf', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_2.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_2.conf', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)

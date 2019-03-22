@@ -93,10 +93,10 @@ def submit_analysis(keys):
     # This anlysis is cheap so I won't worry about checking what has already been done
     analysis_jobfile = keys.name + '_analysis' + keys.job_ext
     with open(analysis_jobfile, 'w') as fout:
-        with open(TPL_PATH + 'analysis.tpl', 'r') as fin:
+        with open(os.path.join(TPL_PATH, 'analysis.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
-                    fout.write("files={}\n".format(keys.filelist))
+                    fout.write("files={}\n".format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.name))
                 else:
@@ -104,10 +104,10 @@ def submit_analysis(keys):
 
     resubmit_jobfile = keys.name + '_resubmit' + keys.job_ext
     with open(resubmit_jobfile, 'w') as fout:
-        with open(TPL_PATH + 'resubmit.tpl', 'r') as fin:
+        with open(os.path.join(TPL_PATH, 'resubmit.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
-                    fout.write("files={}\n".format(keys.filelist))
+                    fout.write("files={}\n".format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.name))
                 else:
@@ -185,6 +185,7 @@ def parse_cmdline(argv):
                 args.sub_command = 'submit'
 
         args.filelist = []
+
         for nproc in args.nprocs:
             filename = args.name + '_' + str(nproc)
             args.filelist.append(filename)
@@ -193,6 +194,7 @@ def parse_cmdline(argv):
                 total_procs = str(nnode * args.nprocs[-1])
                 filename = args.name + '_' + total_procs
                 args.filelist.append(filename)
+        print(args.filelist, args.nprocs, args.nnodes)
         args.tpl_vals = proc_args(args)
     except IOError as e:
         warning(e)
