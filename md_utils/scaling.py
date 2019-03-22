@@ -61,7 +61,6 @@ def submit_files(keys):
         logfile = file + LOG_EXT
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
-        # TODO: Check if file already exists. If it does, provide a message and skip
         if os.path.isfile(jobfile):
             continue
         if total_procs <= ppn:
@@ -99,7 +98,7 @@ def submit_analysis(keys):
         with open(os.path.join(TPL_PATH, 'analysis.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
-                    fout.write("files={}\n".format(' '.join(keys.filelist)))
+                    fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.name))
                 else:
@@ -110,7 +109,7 @@ def submit_analysis(keys):
         with open(os.path.join(TPL_PATH, 'resubmit.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
-                    fout.write("files={}\n".format(' '.join(keys.filelist)))
+                    fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.name))
                 else:
@@ -149,7 +148,7 @@ def plot_scaling(files):
     ax1.set_ylabel("hours/ns")
     ax.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    plt.show()
+    plt.savefig(files[0].split('_')[:-1]+'.png')
 
 def parse_cmdline(argv):
     """
