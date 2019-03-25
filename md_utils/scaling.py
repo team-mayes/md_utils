@@ -132,7 +132,6 @@ def plot_scaling(files,from_bash=False):
     else:
         file_list = files
     for file in file_list:
-        print(file)
         df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
         list.append(df)
     frame = pd.concat(list, ignore_index=True)
@@ -155,8 +154,9 @@ def plot_scaling(files,from_bash=False):
     ax1.set_ylabel("hours/ns")
     ax.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    plt.savefig('_'.join(file_list[0].split('_')[:-1]) + '.png')
-
+    fig_name = '_'.join(file_list[0].split('_')[:-1]) + '.png'
+    plt.savefig(fig_name)
+    print("Wrote file: {}".format(fig_name))
 
 def parse_cmdline(argv):
     """
@@ -199,6 +199,8 @@ def parse_cmdline(argv):
     try:
         args = parser.parse_args(argv)
         # Automatic scheduler detection
+        if not args.config:
+            raise InvalidDataError("No config file provided. This is required to produce scripts.")
         if not args.scheduler:
             if which('qsub'):
                 args.scheduler = 'pbs'

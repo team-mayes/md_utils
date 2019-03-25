@@ -43,6 +43,13 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stdout(main, test_input) as output:
             self.assertTrue("optional arguments" in output)
 
+    def testNoConfig(self):
+        test_input = []
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("No config" in output)
+
 
 class TestMain(unittest.TestCase):
     def testFileNames(self):
