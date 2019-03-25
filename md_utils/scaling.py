@@ -125,9 +125,14 @@ def submit_analysis(keys):
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files):
+def plot_scaling(files,from_bash=False):
     list = []
-    for file in files:
+    if from_bash:
+        file_list = files.split(' ')
+    else:
+        file_list = files
+    for file in file_list:
+        print(file)
         df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
         list.append(df)
     frame = pd.concat(list, ignore_index=True)
@@ -150,7 +155,7 @@ def plot_scaling(files):
     ax1.set_ylabel("hours/ns")
     ax.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    plt.savefig('_'.join(files[0].split('_')[:-1]) + '.png')
+    plt.savefig('_'.join(file_list[0].split('_')[:-1]) + '.png')
 
 
 def parse_cmdline(argv):

@@ -20,4 +20,4 @@ do
 analysis=
 done
 rm resubmit.o*
-python -c "from md_utils import scaling; scaling.plot_scaling('$files')"
+python -c "from md_utils import scaling; scaling.plot_scaling('$files',True)"
