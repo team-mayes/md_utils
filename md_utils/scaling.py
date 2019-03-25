@@ -103,8 +103,6 @@ def submit_analysis(keys):
             for line in fin:
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
-                elif BASE_PAT.match(line):
-                    fout.write("basename={}\n".format(keys.basename))
                 elif ANALYSIS_PAT.match(line):
                     fout.write("\t{}\n".format(keys.analysis))
                 else:
@@ -127,7 +125,7 @@ def submit_analysis(keys):
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files, name):
+def plot_scaling(files):
     list = []
     for file in files:
         df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
@@ -152,7 +150,7 @@ def plot_scaling(files, name):
     ax1.set_ylabel("hours/ns")
     ax.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    plt.savefig(name + '.png')
+    plt.savefig('_'.join(files[0].split('_')[:-1]) + '.png')
 
 
 def parse_cmdline(argv):
@@ -250,7 +248,7 @@ def main(argv=None):
             submit_files(args)
             submit_analysis(args)
         if args.plot:
-            plot_scaling(args.filelist, args.basename)
+            plot_scaling(args.filelist)
 
     except IOError as e:
         warning("Problems reading file:", e)
