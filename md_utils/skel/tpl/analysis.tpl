@@ -10,6 +10,9 @@
 set -u
 set -e
 cd ~
+if [ -d "$PBS_O_WORKDIR" ] ; then
+    cd $PBS_O_WORKDIR
+fi
 files=
 basename=
 

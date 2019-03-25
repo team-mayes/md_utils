@@ -10,6 +10,9 @@
 set -u
 set -e
 cd ~
+if [ -d "$PBS_O_WORKDIR" ] ; then
+    cd $PBS_O_WORKDIR
+fi
 files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
 basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
