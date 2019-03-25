@@ -32,7 +32,7 @@ SEC_TIMESTEP = 'timestep'
 # For evb processing and output
 FILE_NAME = 'filename'
 TIMESTEP = 'timestep'
-RUN_PAT = re.compile(r"^ETITLE:.*")
+RUN_PAT = re.compile(r"^TCL: Running.*")
 ENERGY_PAT = re.compile(r"^ENERGY: .*")
 PERFORMANCE_PAT = re.compile(r"^TIMING: .*")
 AMD_PAT = re.compile(r"^ACCELERATED .*")
@@ -74,7 +74,8 @@ def parse_cmdline(argv):
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
     parser.add_argument("--step", help="Timestep to begin logging quantities. Default is none", default=None)
-    parser.add_argument("-s", "--stats", help="Flag to automatically generate statistics from the data.", action='store_true',
+    parser.add_argument("-s", "--stats", help="Flag to automatically generate statistics from the data.",
+                        action='store_true',
                         default=False)
     parser.add_argument("-a", "--amd", help="Flag to automatically calculate aMD boost parameters. "
                                             "Will automatically set to collect dihedral and total energy data.")
@@ -173,7 +174,7 @@ def process_log(log_file, dihedral, total, performance, boost, step):
                 elif boost and AMD_PAT.match(line):
                     s_line = line.split()
                     if int(s_line[3]) % 2500 == 0:
-                        result_dict[TIMESTEP] = int(int(s_line[3])/2500)
+                        result_dict[TIMESTEP] = int(int(s_line[3]) / 2500)
                         result_dict[AMD_BOOST] = float(s_line[5])
                         result_list.append(dict(result_dict))
 

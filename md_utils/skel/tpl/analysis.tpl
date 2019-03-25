@@ -20,4 +20,5 @@ for file in ${files[@]}
 do
 analysis=
 done
+rm resubmit.o*
 python -c "from md_utils import scaling; scaling.plot_scaling('$files','$basename')"

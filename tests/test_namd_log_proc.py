@@ -137,7 +137,7 @@ class TestMain(unittest.TestCase):
 
     def testStepLogFile(self):
 
-        test_input = ["-f", LOG_PATH, "-t", "-s", "5002000"]
+        test_input = ["-f", LOG_PATH, "-t", "--step", "5002000"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(LOG_OUT_STEP, GOOD_LOG_OUT_STEP))
@@ -167,8 +167,8 @@ class TestMain(unittest.TestCase):
             #     finally:
             #         silent_remove(LOG_LIST_OUT)
 
-    def testAMD(self):
-        test_input = ["-f", LOG_PATH, "-a"]
+    def testBoost(self):
+        test_input = ["-f", LOG_PATH, "-b"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(LOG_OUT_AMD, GOOD_LOG_OUT_AMD))
