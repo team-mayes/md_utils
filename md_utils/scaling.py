@@ -160,7 +160,7 @@ def plot_scaling(files, from_bash=False):
     ax1 = ax.twinx()
     get_speedup = lambda b: [b[0] / i for i in b]
     speedup = np.asarray(get_speedup(means))
-    x = np.linspace(1, 12)
+    x = np.linspace(1, nprocs[-1])
 
     ax.plot(nprocs, np.asarray(means), label='time/ns')
     ax1.plot(x, x, 'k', label="Perfect Scaling")
