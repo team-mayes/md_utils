@@ -40,7 +40,7 @@ DEF_NPROCS = "1 2 4 8 12"
 DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
 DEF_MEM = 4
-TYPES = ['namd']
+TYPES = ['namd', 'amber']
 DEF_TYPE = 'namd'
 SCHEDULER_TYPES = ['pbs', 'slurm']
 
@@ -81,6 +81,8 @@ def submit_files(keys):
         with open(jobfile, 'a') as fout:
             if keys.software == 'namd':
                 fout.write(keys.run.format(total_procs, configfile, logfile))
+            elif keys.software == 'amber':
+                print("Uh oh, this should never be printed.")
         with open(configfile, 'w') as fout:
             with open(keys.config, 'r') as fin:
                 for line in fin:
@@ -125,7 +127,7 @@ def submit_analysis(keys):
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files,from_bash=False):
+def plot_scaling(files, from_bash=False):
     list = []
     if from_bash:
         file_list = files.split(' ')
@@ -157,6 +159,7 @@ def plot_scaling(files,from_bash=False):
     fig_name = '_'.join(file_list[0].split('_')[:-1]) + '.png'
     plt.savefig(fig_name)
     print("Wrote file: {}".format(fig_name))
+
 
 def parse_cmdline(argv):
     """
@@ -230,6 +233,10 @@ def parse_cmdline(argv):
             args.run = RUN_NAMD
             args.analysis = ANALYZE_NAMD
             args.out_pat = NAMD_OUT_PAT
+        elif args.software == 'amber':
+            raise InvalidDataError(
+                "The functionality of scaling with amber scripts has not been added yet. "
+                "Please contact xadams@umich.edu if you would like to assist.")
     except IOError as e:
         warning(e)
         parser.print_help()
