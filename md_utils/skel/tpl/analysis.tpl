@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N resubmit
+#PBS -N analysis
 #PBS -l walltime=30:00
 #PBS -l nodes=1:ppn=1,pmem=1g
 #PBS -A hbmayes_fluxod
@@ -15,6 +15,6 @@ basename=
 
 for file in ${files[@]}
 do
-    namd_scripts -p -f ${file}.log
+analysis=
 done
 python -c "from md_utils import scaling; scaling.plot_scaling('$files','$basename')"

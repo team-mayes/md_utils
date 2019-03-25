@@ -26,10 +26,12 @@ NUM_NODES = 'nnodes'
 NUM_PROCS = 'nprocs'
 OUT_FILE = 'file_out_name'
 RUN_NAMD = "namd2 +p {} {} >& {}"
+ANALYZE_NAMD = "namd_scripts -p -f ${file}.log"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^set outputname.*")
 FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
+ANALYSIS_PAT = re.compile(r"^analysis=.*")
 
 # Defaults
 DEF_NAME = 'scaling'
@@ -50,7 +52,7 @@ def proc_args(keys):
     tpl_vals[nprocs] = keys.nprocs
     tpl_vals[MEM] = DEF_MEM
     # tpl_vals[MEM] = keys.mem
-    tpl_vals[JOB_NAME] = keys.name
+    tpl_vals[JOB_NAME] = keys.basename
     tpl_vals[NUM_NODES] = keys.nnodes
     tpl_vals[NUM_PROCS] = keys.nprocs
 
@@ -78,12 +80,11 @@ def submit_files(keys):
 
         with open(jobfile, 'a') as fout:
             if keys.software == 'namd':
-                fout.write(RUN_NAMD.format(total_procs, configfile, logfile))
-                out_pat = NAMD_OUT_PAT
+                fout.write(keys.run.format(total_procs, configfile, logfile))
         with open(configfile, 'w') as fout:
             with open(keys.config, 'r') as fin:
                 for line in fin:
-                    if out_pat.match(line):
+                    if keys.out_pat.match(line):
                         fout.write("set outputname\t\t{} \n".format(file))
                     else:
                         fout.write(line)
@@ -104,6 +105,8 @@ def submit_analysis(keys):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.basename))
+                elif ANALYSIS_PAT.match(line):
+                    fout.write("\t{}\n".format(keys.analysis))
                 else:
                     fout.write(line)
 
@@ -218,6 +221,10 @@ def parse_cmdline(argv):
                 filename = args.basename + '_' + total_procs
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
+        if args.software == 'namd':
+            args.run = RUN_NAMD
+            args.analysis = ANALYZE_NAMD
+            args.out_pat = NAMD_OUT_PAT
     except IOError as e:
         warning(e)
         parser.print_help()
