@@ -1,9 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name={job_name}
-#SBATCH -t {walltime}:00:00
+#SBATCH -t {walltime}:00
 #SBATCH -p {partition}
 #SBATCH -N {nnodes} --tasks-per-node={nprocs}
-#SBATCH --mail-type=END,FAIL
 set echo
 set -x
 
