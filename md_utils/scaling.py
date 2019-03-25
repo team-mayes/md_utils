@@ -26,7 +26,7 @@ NUM_NODES = 'nnodes'
 NUM_PROCS = 'nprocs'
 OUT_FILE = 'file_out_name'
 RUN_NAMD = "namd2 +p {} {} >& {}"
-ANALYZE_NAMD = "namd_scripts -p -f ${file}.log"
+ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^set outputname.*")
 FILE_PAT = re.compile(r"^files=.*")

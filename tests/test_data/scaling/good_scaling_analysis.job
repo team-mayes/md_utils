@@ -15,6 +15,6 @@ basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
 for file in ${files[@]}
 do
-    namd_scripts -p -f ${file}.log
+    namd_log_proc -p -f ${file}.log
 done
 python -c "from md_utils import scaling; scaling.plot_scaling('$files','$basename')"
