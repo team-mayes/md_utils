@@ -11,7 +11,7 @@ from md_utils.scaling import main
 
 __author__ = 'xadams and cluyet'
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)

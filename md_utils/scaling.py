@@ -162,9 +162,9 @@ def plot_scaling(files, from_bash=False):
     speedup = np.asarray(get_speedup(means))
     x = np.linspace(1, nprocs[-1])
 
-    ax.plot(nprocs, np.asarray(means), label='time/ns')
-    ax1.plot(x, x, 'k', label="Perfect Scaling")
-    ax1.plot(nprocs, speedup, 'r', label="Speedup")
+    ax.plot(nprocs, np.asarray(means), label='time/ns', marker='^')
+    ax1.plot(x, x, 'k', label="Perfect Scaling", linestyle='--')
+    ax1.plot(nprocs, speedup, 'r', label="Speedup", marker='o')
 
     ax.set_xlabel("Number of Processors")
     ax.set_ylabel("hours/ns")
