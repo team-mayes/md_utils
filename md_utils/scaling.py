@@ -10,6 +10,7 @@ import re
 from md_utils.fill_tpl import OUT_DIR, TPL_VALS, fill_save_tpl
 from md_utils.md_common import (InvalidDataError, warning,
                                 IO_ERROR, GOOD_RET, INPUT_ERROR, INVALID_DATA, read_tpl)
+
 # This line switches to a non-Gui backend, allowing plotting on PSC Bridges
 plt.switch_backend('agg')
 
@@ -95,25 +96,25 @@ def submit_files(keys):
 def submit_analysis(keys):
     # One could argue parsing the scheduler output is more robust, but that's a feature for another day
     # This anlysis is cheap so I won't worry about checking what has already been done
-    analysis_jobfile = keys.name + '_analysis' + keys.job_ext
+    analysis_jobfile = keys.basename + '_analysis' + keys.job_ext
     with open(analysis_jobfile, 'w') as fout:
         with open(os.path.join(TPL_PATH, 'analysis.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
-                    fout.write("basename={}\n".format(keys.name))
+                    fout.write("basename={}\n".format(keys.basename))
                 else:
                     fout.write(line)
 
-    resubmit_jobfile = keys.name + '_resubmit' + keys.job_ext
+    resubmit_jobfile = keys.basename + '_resubmit' + keys.job_ext
     with open(resubmit_jobfile, 'w') as fout:
         with open(os.path.join(TPL_PATH, 'resubmit.tpl'), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
-                    fout.write("basename={}\n".format(keys.name))
+                    fout.write("basename={}\n".format(keys.basename))
                 else:
                     fout.write(line)
 
@@ -123,9 +124,7 @@ def submit_analysis(keys):
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files,name):
-    # TODO: Make a beautiful scaling plot
-    # TODO: Some preprocessing needs to be done with output from namd_log_proc
+def plot_scaling(files, name):
     list = []
     for file in files:
         df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
@@ -162,12 +161,11 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    # TODO: Add an option to just replot
     # TODO: Add memory as a user parameter (analogous to walltime)
     # TODO: Adjust defaults for flux vs slurm (furthermore comet vs bridges)
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
-    parser.add_argument("-b", "--name", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
+    parser.add_argument("-b", "--basename", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
                         default=DEF_NAME)
     parser.add_argument("-d", "--debug", help="Flag to generate but not submit the script.",
                         default=False, action='store_true')  # Mostly for testing
@@ -212,12 +210,12 @@ def parse_cmdline(argv):
         args.filelist = []
 
         for nproc in args.nprocs:
-            filename = args.name + '_' + str(nproc)
+            filename = args.basename + '_' + str(nproc)
             args.filelist.append(filename)
         for nnode in args.nnodes:
             if int(nnode) > 1:
                 total_procs = str(nnode * args.nprocs[-1])
-                filename = args.name + '_' + total_procs
+                filename = args.basename + '_' + total_procs
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
     except IOError as e:
@@ -245,8 +243,7 @@ def main(argv=None):
             submit_files(args)
             submit_analysis(args)
         if args.plot:
-            plot_scaling(args.filelist, args.name)
-        # TODO: Plotting
+            plot_scaling(args.filelist, args.basename)
 
     except IOError as e:
         warning("Problems reading file:", e)

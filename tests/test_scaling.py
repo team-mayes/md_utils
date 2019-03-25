@@ -9,7 +9,7 @@ import os
 from md_utils.md_common import silent_remove, capture_stderr, capture_stdout, diff_lines
 from md_utils.scaling import main
 
-__author__ = 'xadams'
+__author__ = 'xadams and cluyet'
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
@@ -90,5 +90,4 @@ class TestMain(unittest.TestCase):
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_OUT))
         finally:
-            silent_remove(PNG_OUT,silent_remove(PNG_OUT))
-
+            silent_remove(PNG_OUT, silent_remove(PNG_OUT))
