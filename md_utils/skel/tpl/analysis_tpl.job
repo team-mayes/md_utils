@@ -9,10 +9,10 @@ set -x
 
 cd $SLURM_SUBMIT_DIR
 ## Your commands here:
-files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_28"
+files=
 
 for file in ${files[@]}
 do
-	namd_log_proc -p -f ${file}.log
+analysis=
 done
 python -c "from md_utils import scaling; scaling.plot_scaling('$files',True)"

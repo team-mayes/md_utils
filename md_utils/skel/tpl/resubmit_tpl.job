@@ -8,8 +8,8 @@ set -x
 
 cd $SLURM_SUBMIT_DIR
 ## Your commands here:
-files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_28"
-basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
+files=
+basename=
 
 for file in ${files[@]}
 do

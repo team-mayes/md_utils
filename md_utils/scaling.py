@@ -25,6 +25,10 @@ JOB_NAME = 'job_name'
 NUM_NODES = 'nnodes'
 NUM_PROCS = 'nprocs'
 OUT_FILE = 'file_out_name'
+PARTITION = 'partition'
+MAX_BRIDGES = 28
+BRIDGES_SHARED = 'RM-shared'
+BRIDGES_RM = 'RM'
 RUN_NAMD = "namd2 +p {} {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
 # Patterns
@@ -39,10 +43,11 @@ TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__)))
 DEF_NPROCS = "1 2 4 8 12"
 DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
-DEF_MEM = 4
+DEF_MEM = 2
 TYPES = ['namd', 'amber']
 DEF_TYPE = 'namd'
 SCHEDULER_TYPES = ['pbs', 'slurm']
+CLUSTERS = ['bridges', 'flux', 'comet']
 
 
 def proc_args(keys):
@@ -74,6 +79,11 @@ def submit_files(keys):
         else:
             keys.tpl_vals[NUM_NODES] = str(int(total_procs / ppn))
             keys.tpl_vals[NUM_PROCS] = str(ppn)
+        if keys.cluster == 'bridges':
+            if total_procs < MAX_BRIDGES:
+                keys.tpl_vals[PARTITION] = BRIDGES_SHARED
+            else:
+                keys.tpl_vals[PARTITION] = BRIDGES_RM
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
@@ -101,7 +111,7 @@ def submit_analysis(keys):
     # This anlysis is cheap so I won't worry about checking what has already been done
     analysis_jobfile = keys.basename + '_analysis' + keys.job_ext
     with open(analysis_jobfile, 'w') as fout:
-        with open(os.path.join(TPL_PATH, 'analysis.tpl'), 'r') as fin:
+        with open(os.path.join(TPL_PATH, 'analysis_tpl' + keys.job_ext), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
@@ -112,7 +122,7 @@ def submit_analysis(keys):
 
     resubmit_jobfile = keys.basename + '_resubmit' + keys.job_ext
     with open(resubmit_jobfile, 'w') as fout:
-        with open(os.path.join(TPL_PATH, 'resubmit.tpl'), 'r') as fin:
+        with open(os.path.join(TPL_PATH, 'resubmit_tpl' + keys.job_ext), 'r') as fin:
             for line in fin:
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
@@ -153,12 +163,13 @@ def plot_scaling(files, from_bash=False):
     ax1.plot(nprocs, speedup, 'r', label="Speedup")
 
     ax.set_xlabel("Number of Processors")
-    ax1.set_ylabel("hours/ns")
-    ax.set_ylabel("Speedup")
+    ax.set_ylabel("hours/ns")
+    ax1.set_ylabel("Speedup")
     fig.legend(loc='upper center')
     fig_name = '_'.join(file_list[0].split('_')[:-1]) + '.png'
     plt.savefig(fig_name)
     print("Wrote file: {}".format(fig_name))
+    # TODO: output stats alongside figure?
 
 
 def parse_cmdline(argv):
@@ -195,16 +206,19 @@ def parse_cmdline(argv):
                             TYPES, DEF_TYPE), default=DEF_TYPE, choices=TYPES)
     parser.add_argument("--scheduler",
                         help="Scheduler type for jobfiles. Valid options are: {}. Automatic detection will be attempted by default".format(
-                            TYPES))
+                            SCHEDULER_TYPES))
     parser.add_argument("--plot", default=False, action='store_true', help="Flag to only plot the specified files")
+    parser.add_argument("--cluster",
+                        help="Cluster where scaling is to be performed. Options are: {}. This is important if running on Bridges".format(
+                            CLUSTERS), default=None)
 
     args = None
     try:
         args = parser.parse_args(argv)
         # Automatic scheduler detection
-        if not args.config:
-            raise InvalidDataError("No config file provided. This is required to produce scripts.")
-        if not args.scheduler:
+        if not args.config and not args.plot:
+            raise InvalidDataError("No config file provided. This is required unless data is only being plotted.")
+        if not args.scheduler and not args.cluster:
             if which('qsub'):
                 args.scheduler = 'pbs'
                 args.job_ext = '.pbs'
@@ -215,8 +229,20 @@ def parse_cmdline(argv):
                 args.sub_command = 'sbatch'
             else:
                 args.scheduler = 'none'
-                args.job_ext = '.job'
+                args.job_ext = '.pbs'
                 args.sub_command = 'submit'
+        elif args.cluster == 'bridges' or args.scheduler == 'slurm':
+            args.scheduler = 'slurm'
+            args.job_ext = '.job'
+            args.sub_command = 'sbatch'
+        elif args.cluster == 'comet':
+            raise InvalidDataError(
+                "Scaling.py does not currently have a template for comet. "
+                "Please contact xadams@umich.edu to learn how you can add this functionality.")
+        elif args.cluster == 'flux' or args.scheduler == 'pbs':
+            args.scheduler = 'pbs'
+            args.job_ext = '.pbs'
+            args.sub_command = 'qsub'
 
         args.filelist = []
 

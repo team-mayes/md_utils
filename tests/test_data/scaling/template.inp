@@ -116,12 +116,11 @@ langevinPistonTemp    $temperature
 # Output
 outputName          $outputname
 
-restartfreq         500     ;# 500steps = every 1ps
-dcdfreq             250
-xstFreq             250
-outputEnergies      100
-outputPressure      100
-
+restartfreq         10000    ;# 500steps = every 1ps
+dcdfreq             1000
+outputEnergies      1000
+outputPressure      1000
+outputTiming        100
 
 #############################################################
 ## EXTRA PARAMETERS                                        ##
