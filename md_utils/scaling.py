@@ -29,8 +29,10 @@ PARTITION = 'partition'
 MAX_BRIDGES = 28
 BRIDGES_SHARED = 'RM-shared'
 BRIDGES_RM = 'RM'
+BRIDGES_FULLNODE = "2\n#SBATCH --cpus-per-task=14"
 RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
+RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 +commap 0,14,7,21 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^set outputname.*")
@@ -86,6 +88,8 @@ def submit_files(keys):
                 keys.tpl_vals[PARTITION] = BRIDGES_SHARED
             else:
                 keys.tpl_vals[PARTITION] = BRIDGES_RM
+                keys.tpl_vals[NUM_PROCS] = BRIDGES_FULLNODE
+                keys.run = RUN_NAMD_BRIDGES_FULLNODE
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
