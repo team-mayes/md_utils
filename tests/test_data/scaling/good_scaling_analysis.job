@@ -15,7 +15,7 @@ cd ~
 files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
 basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
-for file in ${{files[@]}}
+for file in ${files[@]}
 do
     namd_scripts -p -f ${file}.log
 done
