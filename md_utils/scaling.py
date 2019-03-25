@@ -29,7 +29,8 @@ PARTITION = 'partition'
 MAX_BRIDGES = 28
 BRIDGES_SHARED = 'RM-shared'
 BRIDGES_RM = 'RM'
-RUN_NAMD = "namd2 +p {} {} >& {}"
+RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
+RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^set outputname.*")
@@ -89,7 +90,9 @@ def submit_files(keys):
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
 
         with open(jobfile, 'a') as fout:
-            if keys.software == 'namd':
+            if keys.software == 'namd' and keys.cluster == 'bridges':
+                fout.write(keys.run.format(configfile, logfile))
+            elif keys.software == 'namd':
                 fout.write(keys.run.format(total_procs, configfile, logfile))
             elif keys.software == 'amber':
                 print("Uh oh, this should never be printed.")
@@ -256,7 +259,10 @@ def parse_cmdline(argv):
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
         if args.software == 'namd':
-            args.run = RUN_NAMD
+            if args.cluster == 'bridges':
+                args.run = RUN_NAMD_BRIDGES
+            else:
+                args.run = RUN_NAMD_PBS
             args.analysis = ANALYZE_NAMD
             args.out_pat = NAMD_OUT_PAT
         elif args.software == 'amber':

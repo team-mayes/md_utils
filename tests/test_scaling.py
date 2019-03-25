@@ -74,6 +74,8 @@ class TestMain(unittest.TestCase):
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
                 silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testJobOutputPBS(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d']
