@@ -72,8 +72,8 @@ def submit_files(keys):
         logfile = file + LOG_EXT
         total_procs = int(file.split('_')[-1])
         ppn = int(keys.nprocs[-1])
-        if os.path.isfile(jobfile):
-            print("{} exists. Will not submit a new scaling run".format(jobfile))
+        if os.path.isfile(logfile):
+            print("{} exists. Will not submit a new scaling run".format(logfile))
             continue
         if total_procs <= ppn:
             keys.tpl_vals[NUM_NODES] = 1

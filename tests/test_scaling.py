@@ -60,6 +60,8 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("xadams" in output)
 
+    #TODO:Test for skip message when logfile exists
+
 
 class TestMain(unittest.TestCase):
     def testFileNamesPBS(self):
