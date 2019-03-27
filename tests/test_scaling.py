@@ -80,7 +80,7 @@ class TestMain(unittest.TestCase):
                 silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testJobOutputPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d']
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2"]
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
@@ -93,7 +93,7 @@ class TestMain(unittest.TestCase):
                 silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testAnalysisOutputPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2", '--nnodes', "1"]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(BASENAME + '_analysis.pbs', GOOD_PBS_ANALYSIS))
@@ -107,7 +107,7 @@ class TestMain(unittest.TestCase):
             silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testPlotting(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", '--nnodes', "1", "--plot"]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", "--plot"]
         try:
             main(test_input)
             self.assertTrue(os.path.isfile(PNG_OUT))
@@ -116,7 +116,7 @@ class TestMain(unittest.TestCase):
 
     # This test combines all previous PBS scripts, which are best used for diagnostics
     def testBridges(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 28", '--nnodes', "1", '--cluster', 'bridges']
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 28", '--cluster', 'bridges']
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue('sbatch' in output)
