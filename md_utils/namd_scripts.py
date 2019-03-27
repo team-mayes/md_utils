@@ -54,6 +54,7 @@ DEF_COORDINATES = 'test.pdb'
 
 # Restart Patterns
 OUT_PAT = re.compile(r"^outputname.*")
+SET_OUT_PAT = re.compile(r"^set output.*")
 IN_PAT = re.compile(r"^set input.*")
 RUN_PAT = re.compile(r"^run.*")
 FIRSTTIME_PAT = re.compile(r"^firsttimestep.*")
@@ -86,16 +87,20 @@ def make_restart(file, xsc_file=None):
         with open(restart_inp, "w") as fout:
             for line in fin:
                 # TODO: not depend on outputname being specified before the inputname
-                if OUT_PAT.match(line):
-                    s_line = line.split()
-                    outputname = s_line[1].strip(";")
-                    s_out = outputname.split(".")
+                if OUT_PAT.match(line) or SET_OUT_PAT.match(line):
+                    try:
+                        outputname
+                        fout.write(line)
+                    except:
+                        s_line = line.split()
+                        outputname = s_line[1].strip(";")
+                        s_out = outputname.split(".")
 
-                    if len(s_out) < 3:
-                        new_out = outputname + '.2'
-                    else:
-                        new_out = s_out[0] + '.' + s_out[1] + '.' + str((int(s_out[2]) + 1))
-                    fout.write(line.replace(outputname, new_out))
+                        if len(s_out) < 3:
+                            new_out = outputname + '.2'
+                        else:
+                            new_out = s_out[0] + '.' + s_out[1] + '.' + str((int(s_out[2]) + 1))
+                        fout.write(line.replace(outputname, new_out))
                 elif IN_PAT.match(line):
                     s_line = line.split()
                     inputname = s_line[2].strip(";")
