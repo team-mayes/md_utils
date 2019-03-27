@@ -15,7 +15,7 @@ basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 rm ${basename}_log_list
 for file in ${files[@]}
 do
-    echo $file >> ${basename}_log_list
+    echo ${file}.log >> ${basename}_log_list
 done
 
 namd_log_proc -p -l ${basename}_log_list

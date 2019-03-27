@@ -17,10 +17,11 @@ files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 
 basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
 rm ${basename}_log_list
+rm resubmit.o*
 for file in ${files[@]}
 do
-    echo $file >> ${basename}_log_list
+    echo ${file}.log >> ${basename}_log_list
 done
+
 namd_log_proc -p -l ${basename}_log_list
-rm resubmit.o*
 python -c "from md_utils import scaling; scaling.plot_scaling('$basename')"

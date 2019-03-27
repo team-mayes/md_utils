@@ -17,10 +17,11 @@ files=
 basename=
 
 rm ${basename}_log_list
+rm resubmit.o*
 for file in ${files[@]}
 do
     echo ${file}.log >> ${basename}_log_list
 done
+
 analysis=
-rm resubmit.o*
 python -c "from md_utils import scaling; scaling.plot_scaling('$basename')"

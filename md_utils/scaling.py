@@ -34,6 +34,7 @@ RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 +commap 0,14,7,21 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
+NAMD_OUTNAME = "outputName          {} \n"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^outputName.*")
 FILE_PAT = re.compile(r"^files=.*")
@@ -109,7 +110,7 @@ def submit_files(keys):
             with open(keys.config, 'r') as fin:
                 for line in fin:
                     if keys.out_pat.match(line):
-                        fout.write("outputName          {} \n".format(file))
+                        fout.write(keys.output.format(file))
                     elif keys.software == 'namd':
                         if not timing and (NAMD_RUN_PAT.match(line) or NAMD_NUMSTEPS_PAT.match(line)):
                             fout.write("outputTiming        100\n")
@@ -278,6 +279,7 @@ def parse_cmdline(argv):
                 args.run = RUN_NAMD_PBS
             args.analysis = ANALYZE_NAMD
             args.out_pat = NAMD_OUT_PAT
+            args.output = NAMD_OUTNAME
         elif args.software == 'amber':
             raise InvalidDataError(
                 "The functionality of scaling with amber scripts has not been added yet. "
