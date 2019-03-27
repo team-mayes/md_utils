@@ -15,7 +15,7 @@ basename=
 rm ${basename}_log_list
 for file in ${files[@]}
 do
-    echo $file >> ${basename}_log_list
+    echo ${file}.log >> ${basename}_log_list
 done
 
 analysis=

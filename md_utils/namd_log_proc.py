@@ -33,6 +33,7 @@ SEC_TIMESTEP = 'timestep'
 FILE_NAME = 'filename'
 TIMESTEP = 'timestep'
 RUN_PAT = re.compile(r"^TCL: Running.*")
+RUN_PAT2 = re.compile(r"^ETITLE:.*")
 ENERGY_PAT = re.compile(r"^ENERGY: .*")
 PERFORMANCE_PAT = re.compile(r"^TIMING: .*")
 AMD_PAT = re.compile(r"^ACCELERATED .*")
@@ -141,7 +142,7 @@ def process_log(log_file, dihedral, total, performance, boost, step):
         result_dict = {}
         for line in l_file:
             line = line.strip()
-            if RUN_PAT.match(line):
+            if RUN_PAT.match(line) or RUN_PAT2.match(line):
                 reading_data = True
                 result_dict[FILE_NAME] = file_root
             if not first_step:
