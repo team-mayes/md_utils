@@ -35,10 +35,11 @@ RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 +commap 0,14,7,21 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
 # Patterns
-NAMD_OUT_PAT = re.compile(r"^set outputname.*")
+NAMD_OUT_PAT = re.compile(r"^outputName.*")
 FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
 ANALYSIS_PAT = re.compile(r"^analysis=.*")
+NAMD_TIMING_PAT = re.compile(r"^outputTiming.*")
 
 # Defaults
 DEF_NAME = 'scaling'
@@ -46,7 +47,7 @@ TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__)))
 DEF_NPROCS = "1 2 4 8 12"
 DEF_NNODES = "1 2"
 DEF_WALLTIME = 10
-DEF_MEM = 2
+DEF_MEM = 1
 TYPES = ['namd', 'amber']
 DEF_TYPE = 'namd'
 SCHEDULER_TYPES = ['pbs', 'slurm']
@@ -105,7 +106,7 @@ def submit_files(keys):
             with open(keys.config, 'r') as fin:
                 for line in fin:
                     if keys.out_pat.match(line):
-                        fout.write("set outputname\t\t{} \n".format(file))
+                        fout.write("outputName          {} \n".format(file))
                     else:
                         fout.write(line)
         if keys.debug or keys.scheduler == 'none':

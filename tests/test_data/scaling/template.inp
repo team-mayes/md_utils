@@ -14,7 +14,7 @@ structure          3_chains_solvated.psf
 coordinates        3_chains_solvated.pdb
 
 set temperature    303
-set outputname     {output}
+set outputname     3_chains.1
 set input          3_chains_minimization.restart
 
 binCoordinates     $input.coor
@@ -119,7 +119,6 @@ outputName          $outputname
 restartfreq         10000    ;# 500steps = every 1ps
 dcdfreq             1000
 outputEnergies      1000
-outputPressure      1000
 outputTiming        100
 
 #############################################################

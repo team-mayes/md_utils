@@ -91,7 +91,7 @@ def make_restart(file, xsc_file=None):
                     try:
                         outputname
                         fout.write(line)
-                    except:
+                    except NameError:
                         s_line = line.split()
                         outputname = s_line[-1].strip(";")
                         s_out = outputname.split(".")
@@ -125,7 +125,7 @@ def make_restart(file, xsc_file=None):
                 elif RUN_PAT.match(line):
                     try:
                         start_step
-                    except:
+                    except NameError:
                         if xsc_file:
                             inputname = xsc_file
                         else:
@@ -138,11 +138,11 @@ def make_restart(file, xsc_file=None):
 
                     s_line = line.split()
                     run_step = int(s_line[1].split(";")[0])
-                    steps_remaining = run_step - int(current_step) # This variable can be used for writing
+                    steps_remaining = run_step - int(current_step)  # This variable can be used for writing
                     # 'run' to input file or modifying the requested time in the job file
                     num_step = int(current_step) + run_step
                     ns = str(int(num_step / 500000))
-                    output = 'numsteps    {:>14};            # {} ns'.format(num_step,ns)
+                    output = 'numsteps    {:>14};            # {} ns'.format(num_step, ns)
                     fout.write(output)
                 else:
                     fout.write(line)
