@@ -54,7 +54,7 @@ DEF_COORDINATES = 'test.pdb'
 
 # Restart Patterns
 OUT_PAT = re.compile(r"^outputname.*")
-IN_PAT = re.compile(r"^set inputname.*")
+IN_PAT = re.compile(r"^set input.*")
 RUN_PAT = re.compile(r"^run.*")
 FIRSTTIME_PAT = re.compile(r"^firsttimestep.*")
 NUM_PAT = re.compile(r"^numsteps.*")
