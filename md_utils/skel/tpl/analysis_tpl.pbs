@@ -14,10 +14,13 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
 files=
+basename=
 
+rm ${basename}_log_list
 for file in ${files[@]}
 do
-analysis=
+    echo $file >> ${basename}_log_list
 done
+analysis=
 rm resubmit.o*
-python -c "from md_utils import scaling; scaling.plot_scaling('$files',True)"
+python -c "from md_utils import scaling; scaling.plot_scaling('$basename')"

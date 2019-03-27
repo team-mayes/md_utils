@@ -10,14 +10,19 @@ set -x
 cd $SLURM_SUBMIT_DIR
 ## Your commands here:
 files=
+basename=
 
+rm ${basename}_log_list
 for file in ${files[@]}
 do
-analysis=
+    echo $file >> ${basename}_log_list
 done
+
+analysis=
+
 resubfiles=$(egrep -lir "sbatch" slurm*)
 for file in $resubfiles
 do
     rm $file
 done
-python -c "from md_utils import scaling; scaling.plot_scaling('$files',True)"
+python -c "from md_utils import scaling; scaling.plot_scaling('$basename')"

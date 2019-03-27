@@ -14,10 +14,13 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
 files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
+basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
+rm ${basename}_log_list
 for file in ${files[@]}
 do
-    namd_log_proc -p -f ${file}.log
+    echo $file >> ${basename}_log_list
 done
+namd_log_proc -p -l ${basename}_log_list
 rm resubmit.o*
-python -c "from md_utils import scaling; scaling.plot_scaling('$files',True)"
+python -c "from md_utils import scaling; scaling.plot_scaling('$basename')"

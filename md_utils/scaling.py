@@ -33,7 +33,7 @@ BRIDGES_FULLNODE = "2\n#SBATCH --cpus-per-task=14"
 RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 +commap 0,14,7,21 {} >& {}"
-ANALYZE_NAMD = "namd_log_proc -p -f ${file}.log"
+ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^outputName.*")
 FILE_PAT = re.compile(r"^files=.*")
@@ -125,7 +125,9 @@ def submit_analysis(keys):
                 if FILE_PAT.match(line):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif ANALYSIS_PAT.match(line):
-                    fout.write("\t{}\n".format(keys.analysis))
+                    fout.write("{}\n".format(keys.analysis))
+                elif BASE_PAT.match(line):
+                    fout.write("basename={}\n".format(keys.basename))
                 else:
                     fout.write(line)
 
@@ -146,16 +148,8 @@ def submit_analysis(keys):
         subprocess.call([keys.sub_command, resubmit_jobfile])
 
 
-def plot_scaling(files, from_bash=False):
-    list = []
-    if from_bash:
-        file_list = files.split(' ')
-    else:
-        file_list = files
-    for file in file_list:
-        df = pd.read_csv(file + '_performance.csv', header=0, index_col=None)
-        list.append(df)
-    frame = pd.concat(list, ignore_index=True)
+def plot_scaling(filename):
+    frame = pd.read_csv(filename + '_log_list_performance.csv', header=0, index_col=None)
     get_procs = lambda x: [item.split('_')[-1] for item in x.filename.unique()]
     means = []
     for file in frame.filename.unique():
@@ -175,7 +169,7 @@ def plot_scaling(files, from_bash=False):
     ax.set_ylabel("hours/ns")
     ax1.set_ylabel("Speedup")
     fig.legend(loc='upper center')
-    fig_name = '_'.join(file_list[0].split('_')[:-1]) + '.png'
+    fig_name = filename + '.png'
     plt.savefig(fig_name)
     print("Wrote file: {}".format(fig_name))
     # TODO: output stats alongside figure?
@@ -300,7 +294,7 @@ def main(argv=None):
             submit_files(args)
             submit_analysis(args)
         if args.plot:
-            plot_scaling(args.filelist)
+            plot_scaling(args.basename)
 
     except IOError as e:
         warning("Problems reading file:", e)
