@@ -95,7 +95,7 @@ def submit_files(keys):
                 keys.run = RUN_NAMD_BRIDGES_FULLNODE
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
-        fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile)
+        fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile, print_info=False)
 
         with open(jobfile, 'a') as fout:
             if keys.software == 'namd' and keys.cluster == 'bridges':
