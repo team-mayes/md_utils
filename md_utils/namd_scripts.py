@@ -93,7 +93,7 @@ def make_restart(file, xsc_file=None):
                         fout.write(line)
                     except:
                         s_line = line.split()
-                        outputname = s_line[1].strip(";")
+                        outputname = s_line[-1].strip(";")
                         s_out = outputname.split(".")
 
                         if len(s_out) < 3:
