@@ -40,6 +40,8 @@ FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
 ANALYSIS_PAT = re.compile(r"^analysis=.*")
 NAMD_TIMING_PAT = re.compile(r"^outputTiming.*")
+NAMD_RUN_PAT = re.compile(r"^run.*")
+NAMD_NUMSTEPS_PAT = re.compile(r"^numsteps.*")
 
 # Defaults
 DEF_NAME = 'scaling'
@@ -102,11 +104,22 @@ def submit_files(keys):
                 fout.write(keys.run.format(total_procs, configfile, logfile))
             elif keys.software == 'amber':
                 print("Uh oh, this should never be printed.")
+        timing = False
         with open(configfile, 'w') as fout:
             with open(keys.config, 'r') as fin:
                 for line in fin:
                     if keys.out_pat.match(line):
                         fout.write("outputName          {} \n".format(file))
+                    elif keys.software == 'namd':
+                        if not timing and (NAMD_RUN_PAT.match(line) or NAMD_NUMSTEPS_PAT.match(line)):
+                            fout.write("outputTiming        100\n")
+                            timing=True
+                            fout.write(line)
+                        elif NAMD_TIMING_PAT.match(line):
+                            timing=True
+                            fout.write(line)
+                        else:
+                            fout.write(line)
                     else:
                         fout.write(line)
         if keys.debug or keys.scheduler == 'none':
