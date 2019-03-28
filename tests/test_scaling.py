@@ -60,7 +60,7 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("xadams" in output)
 
-    #TODO:Test for skip message when logfile exists
+    # TODO:Test for skip message when logfile exists
 
 
 class TestMain(unittest.TestCase):
@@ -106,14 +106,6 @@ class TestMain(unittest.TestCase):
             silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
             silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
-    def testPlotting(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", "--plot"]
-        try:
-            main(test_input)
-            self.assertTrue(os.path.isfile(PNG_OUT))
-        finally:
-            silent_remove(PNG_OUT, disable=DISABLE_REMOVE)
-
     # This test combines all previous PBS scripts, which are best used for diagnostics
     def testBridges(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 28", '--cluster', 'bridges']
@@ -130,3 +122,11 @@ class TestMain(unittest.TestCase):
             silent_remove(BASENAME + '_28.conf', disable=DISABLE_REMOVE)
             silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
             silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
+
+    def testPlotting(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2 4 8 12", "--plot"]
+        try:
+            main(test_input)
+            self.assertTrue(os.path.isfile(PNG_OUT))
+        finally:
+            silent_remove(PNG_OUT, disable=DISABLE_REMOVE)

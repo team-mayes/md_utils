@@ -32,7 +32,8 @@ BRIDGES_RM = 'RM'
 BRIDGES_FULLNODE = "2\n#SBATCH --cpus-per-task=14"
 RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
-RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 +commap 0,14,7,21 {} >& {}"
+RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 " \
+                            "+commap 0,14,7,21 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 NAMD_OUTNAME = "outputName          {} \n"
 # Patterns
@@ -47,7 +48,9 @@ NAMD_NUMSTEPS_PAT = re.compile(r"^numsteps.*")
 # Defaults
 DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
-DEF_NPROCS = "1 2 4 8 12"
+DEF_NPROCS_FLUX = "1 2 4 8 12"
+DEF_NPROCS_BRIDGES = "1 2 4 8 14 28"
+DEF_NPROCS_COMET = "1 2 4 8 12 24"  # TODO: Confirm this with someone who uses Comet
 DEF_NNODES = "1"
 DEF_WALLTIME = 10
 DEF_MEM = 1
@@ -62,8 +65,7 @@ def proc_args(keys):
 
     tpl_vals[WALLTIME] = keys.walltime
     tpl_vals[nprocs] = keys.nprocs
-    tpl_vals[MEM] = DEF_MEM
-    # tpl_vals[MEM] = keys.mem
+    tpl_vals[MEM] = keys.memory
     tpl_vals[JOB_NAME] = keys.basename
     tpl_vals[NUM_NODES] = keys.nnodes
     tpl_vals[NUM_PROCS] = keys.nprocs
@@ -114,10 +116,10 @@ def submit_files(keys):
                     elif keys.software == 'namd':
                         if not timing and (NAMD_RUN_PAT.match(line) or NAMD_NUMSTEPS_PAT.match(line)):
                             fout.write("outputTiming        100\n")
-                            timing=True
+                            timing = True
                             fout.write(line)
                         elif NAMD_TIMING_PAT.match(line):
-                            timing=True
+                            timing = True
                             fout.write(line)
                         else:
                             fout.write(line)
@@ -199,7 +201,6 @@ def parse_cmdline(argv):
 
     # initialize the parser object:
     # TODO: Add memory as a user parameter (analogous to walltime)
-    # TODO: Adjust defaults for flux vs slurm (furthermore comet vs bridges)
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-b", "--basename", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),
@@ -209,10 +210,12 @@ def parse_cmdline(argv):
     parser.add_argument("-c", "--config", help="Configuraton file name and extension",
                         type=str)
     parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')],
-                        help="List of numbers of processors to test. Default is: {}".format(DEF_NPROCS),
-                        default=DEF_NPROCS)
+                        help="List of numbers of processors to test. Default chosen based on cluster. "
+                             "Flux default is {}, Bridges default is {}, Comet default is {}".format(
+                            DEF_NPROCS_FLUX, DEF_NPROCS_BRIDGES, DEF_NPROCS_COMET), default=None)
     parser.add_argument("-n", "--nnodes", type=lambda s: [int(item) for item in s.split(' ')],
-                        help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. Default is {}".format(
+                        help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. "
+                             "Default is {}".format(
                             DEF_NNODES),
                         default=DEF_NNODES)
     parser.add_argument("-w", "--walltime", type=int,
@@ -222,12 +225,16 @@ def parse_cmdline(argv):
                         help="Program for performing scaling analysis. Valid options are: {}. Default is {}".format(
                             TYPES, DEF_TYPE), default=DEF_TYPE, choices=TYPES)
     parser.add_argument("--scheduler",
-                        help="Scheduler type for jobfiles. Valid options are: {}. Automatic detection will be attempted by default".format(
+                        help="Scheduler type for jobfiles. Valid options are: {}. "
+                             "Automatic detection will be attempted by default".format(
                             SCHEDULER_TYPES))
     parser.add_argument("--plot", default=False, action='store_true', help="Flag to only plot the specified files")
     parser.add_argument("--cluster",
-                        help="Cluster where scaling is to be performed. Options are: {}. This is important if running on Bridges".format(
+                        help="Cluster where scaling is to be performed. Options are: {}. "
+                             "This is especially important if running namd on Bridges".format(
                             CLUSTERS), default=None)
+    parser.add_argument("-m","--memory", help="Memory (in Gb) requested per core. Default is: {}".format(DEF_MEM),
+                        default=DEF_MEM, type=int)
 
     args = None
     try:
@@ -248,11 +255,17 @@ def parse_cmdline(argv):
                 args.scheduler = 'none'
                 args.job_ext = '.pbs'
                 args.sub_command = 'submit'
+                if not args.nprocs:
+                    args.nprocs = DEF_NPROCS_FLUX
         elif args.cluster == 'bridges' or args.scheduler == 'slurm':
             args.scheduler = 'slurm'
             args.job_ext = '.job'
             args.sub_command = 'sbatch'
+            if not args.nprocs:
+                args.nprocs = DEF_NPROCS_BRIDGES
         elif args.cluster == 'comet':
+            if not args.nprocs:
+                DEF_NPROCS_COMET
             raise InvalidDataError(
                 "Scaling.py does not currently have a template for comet. "
                 "Please contact xadams@umich.edu to learn how you can add this functionality.")
@@ -260,6 +273,8 @@ def parse_cmdline(argv):
             args.scheduler = 'pbs'
             args.job_ext = '.pbs'
             args.sub_command = 'qsub'
+            if not args.nprocs:
+                args.nprocs = DEF_NPROCS_FLUX
 
         args.filelist = []
 
