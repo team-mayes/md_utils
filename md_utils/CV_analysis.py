@@ -90,7 +90,8 @@ def parse_cmdline(argv):
     parser.add_argument("-l", "--list", help="File with list of trajectory files")
     parser.add_argument("-q", "--quat", help="Flag for 2-domain quaternion analysis.", action='store_true',
                         default=False)
-    parser.add_argument("-r", "--rev", help="Flag for 12 helix quaternion analysis with inward facing reference structure.",
+    parser.add_argument("-r", "--rev",
+                        help="Flag for 12 helix quaternion analysis with inward facing reference structure.",
                         action='store_true', default=False)
     parser.add_argument("-d", "--double",
                         help="Flag for 24-D analysis: 12 helix quaternion analysis with both reference structures.",
@@ -101,8 +102,8 @@ def parse_cmdline(argv):
                         action='store_true', default=False)
     parser.add_argument("-c", "--conf",
                         help="Conformation of the topology. This is important for selecting the reference file. "
-                             "Valid options are {}. This will supercede internal topology detection logic".format(
-                                CONFORMATIONS), choices=CONFORMATIONS)
+                             "Valid options are {}. This will supercede internal "
+                             "topology detection logic".format(CONFORMATIONS), choices=CONFORMATIONS)
     parser.add_argument("-n", "--name",
                         help="Base name for output files. The type of analysis will be appended for each file.",
                         type=str, default="CV_analysis")
@@ -151,7 +152,7 @@ def parse_cmdline(argv):
         # If no topology file is given, search for defaults and stop when first file is found
         try:
             args.top
-        except:
+        except NameError:
             args.top = None
             for file in DEF_TOP:
                 if os.path.isfile(file):
@@ -165,8 +166,8 @@ def parse_cmdline(argv):
         if not args.conf:
             if 'inoc' in args.top or args.top == '../protein.psf':
                 args.conf = 'inoc'
-            elif any(cv in args.top for cv in ["protg", "protx"]) \
-                or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
+            elif any(cv in args.top for cv in
+                     ["protg", "protx"]) or args.top == 'protein.psf' or args.top == '../step5_assembly.xplor_ext.psf':
                 args.conf = 'outoc'
 
         tpl_vals = OrderedDict()

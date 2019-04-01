@@ -6,7 +6,7 @@
 import unittest
 import logging
 import os
-from md_utils.md_common import silent_remove, capture_stderr, capture_stdout, diff_lines
+from md_utils.md_common import silent_remove, capture_stderr, capture_stdout
 from md_utils.plot_PCA import main
 
 __author__ = 'adams'

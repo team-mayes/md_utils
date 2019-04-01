@@ -200,7 +200,6 @@ def parse_cmdline(argv):
         argv = sys.argv[1:]
 
     # initialize the parser object:
-    # TODO: Add memory as a user parameter (analogous to walltime)
     parser = argparse.ArgumentParser(
         description='Automated submission and analysis of scaling data for a provided program')
     parser.add_argument("-b", "--basename", help="Basename for the scaling files. Default is {}.".format(DEF_NAME),

@@ -138,10 +138,10 @@ def make_restart(file, xsc_file=None):
 
                     s_line = line.split()
                     run_step = int(s_line[1].split(";")[0])
-                    steps_remaining = run_step - int(current_step)  # This variable can be used for writing
+                    # steps_remaining = run_step - int(current_step)  # This variable can be used for writing
                     # 'run' to input file or modifying the requested time in the job file
                     num_step = int(current_step) + run_step
-                    ns = str(int(num_step / 500000))
+                    ns = str(float(num_step / 500000))
                     output = 'numsteps    {:>14};            # {} ns'.format(num_step, ns)
                     fout.write(output)
                 else:
