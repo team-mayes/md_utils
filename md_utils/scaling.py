@@ -41,7 +41,7 @@ NAMD_OUT_PAT = re.compile(r"^outputName.*")
 FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
 ANALYSIS_PAT = re.compile(r"^analysis=.*")
-NAMD_TIMING_PAT = re.compile(r"^outputTiming.*")
+NAMD_TIMING_PAT = re.compile(r"^outputTiming.*", re.IGNORECASE)
 NAMD_RUN_PAT = re.compile(r"^run.*")
 NAMD_NUMSTEPS_PAT = re.compile(r"^numsteps.*")
 
@@ -50,7 +50,7 @@ DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
 DEF_NPROCS_FLUX = [1, 2, 4, 8, 12]
 DEF_NPROCS_BRIDGES = [1, 2, 4, 8, 14, 28]
-DEF_NPROCS_COMET = "1 2 4 8 12 24"  # TODO: Confirm this with someone who uses Comet
+DEF_NPROCS_COMET = [1, 2, 4, 8, 12, 24]  # TODO: Confirm this with someone who uses Comet
 DEF_NNODES = "1"
 DEF_WALLTIME = 10
 DEF_MEM = 1
