@@ -133,3 +133,5 @@ class TestMain(unittest.TestCase):
             self.assertTrue(os.path.isfile(PNG_OUT))
         finally:
             silent_remove(PNG_OUT, disable=DISABLE_REMOVE)
+
+    # TODO: add test for outputtiming duplicate

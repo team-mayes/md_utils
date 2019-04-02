@@ -37,7 +37,7 @@ RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +p
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 NAMD_OUTNAME = "outputName          {} \n"
 # Patterns
-NAMD_OUT_PAT = re.compile(r"^outputName.*")
+NAMD_OUT_PAT = re.compile(r"^outputName.*", re.IGNORECASE)
 FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
 ANALYSIS_PAT = re.compile(r"^analysis=.*")
@@ -226,6 +226,7 @@ def parse_cmdline(argv):
                              "Automatic detection will be attempted by default".format(
                             SCHEDULER_TYPES))
     parser.add_argument("--plot", default=False, action='store_true', help="Flag to only plot the specified files")
+    #TODO: Make cluster a required argument or make automatic detection system
     parser.add_argument("--cluster",
                         help="Cluster where scaling is to be performed. Options are: {}. "
                              "This is especially important if running namd on Bridges".format(
@@ -250,6 +251,9 @@ def parse_cmdline(argv):
                 args.scheduler = 'slurm'
                 args.job_ext = '.job'
                 args.sub_command = 'sbatch'
+                # If slurm is detected default to comet as it has fewer cores
+                if not args.nprocs:
+                    args.nprocs = DEF_NPROCS_COMET
             else:
                 args.scheduler = 'none'
                 args.job_ext = '.pbs'
@@ -276,7 +280,6 @@ def parse_cmdline(argv):
                 args.nprocs = DEF_NPROCS_FLUX
 
         args.filelist = []
-        print(args.filelist)
         for nproc in args.nprocs:
             filename = args.basename + '_' + str(nproc)
             args.filelist.append(filename)
@@ -286,8 +289,6 @@ def parse_cmdline(argv):
                 filename = args.basename + '_' + total_procs
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
-        print("Hello WOrld")
-        print(args.filelist)
         if args.software == 'namd':
             if args.cluster == 'bridges':
                 args.run = RUN_NAMD_BRIDGES
