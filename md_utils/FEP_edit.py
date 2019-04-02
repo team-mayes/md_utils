@@ -5,13 +5,10 @@ Edit a FEP file to correct timestep data and remove statements falsely indicatin
 """
 
 from __future__ import print_function
-import os
 import sys
 import argparse
 import re
-import numpy as np
-from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname, read_csv_dict, \
-    print_qm_kind, create_element_dict, print_qm_links, list_to_csv
+from md_utils.md_common import list_to_file, InvalidDataError, warning, process_cfg, create_out_fname
 
 try:
     # noinspection PyCompatibility
@@ -20,7 +17,7 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 
-__author__ = 'hmayes'
+__author__ = 'xadams'
 
 # Error Codes
 # The good status code
@@ -202,7 +199,6 @@ def process_FEP(cfg):
                 line_struct = [line_head, timestep, elec0, elec1, vdw0, vdw1, dE,
                                dEavg, temp, dG]
                 time_content.append(line_struct)
-
 
                 # tail_content to contain everything after the 'Atoms' section
 

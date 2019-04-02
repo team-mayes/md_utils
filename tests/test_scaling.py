@@ -81,10 +81,13 @@ class TestMain(unittest.TestCase):
 
     def testJobOutputPBS(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
                 self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
+                # TODO: Add test for pbs file as well
         finally:
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)

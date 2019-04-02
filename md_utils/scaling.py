@@ -17,7 +17,7 @@ plt.switch_backend('agg')
 CONF_EXT = '.conf'
 LOG_EXT = '.log'
 
-## Dictionary Keywords
+# Dictionary Keywords
 WALLTIME = 'walltime'
 nprocs = 'nprocs'
 MEM = 'mem'
@@ -48,8 +48,8 @@ NAMD_NUMSTEPS_PAT = re.compile(r"^numsteps.*")
 # Defaults
 DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
-DEF_NPROCS_FLUX = "1 2 4 8 12"
-DEF_NPROCS_BRIDGES = "1 2 4 8 14 28"
+DEF_NPROCS_FLUX = [1, 2, 4, 8, 12]
+DEF_NPROCS_BRIDGES = [1, 2, 4, 8, 14, 28]
 DEF_NPROCS_COMET = "1 2 4 8 12 24"  # TODO: Confirm this with someone who uses Comet
 DEF_NNODES = "1"
 DEF_WALLTIME = 10
@@ -166,15 +166,13 @@ def submit_analysis(keys):
 
 def plot_scaling(filename):
     frame = pd.read_csv(filename + '_log_list_performance.csv', header=0, index_col=None)
-    get_procs = lambda x: [item.split('_')[-1] for item in x.filename.unique()]
     means = []
     for file in frame.filename.unique():
         means.append(frame['time/ns'][frame['filename'] == file].mean())
-    nprocs = np.asarray(get_procs(frame), dtype=int)
+    nprocs = np.asarray([item.split('_')[-1] for item in frame.filename.unique()], dtype=int)
     fig, ax = plt.subplots()
     ax1 = ax.twinx()
-    get_speedup = lambda b: [b[0] / i for i in b]
-    speedup = np.asarray(get_speedup(means))
+    speedup = np.asarray([means[0] / i for i in means])
     x = np.linspace(1, nprocs[-1])
 
     ax.plot(nprocs, np.asarray(means), label='time/ns', marker='^')
@@ -232,7 +230,7 @@ def parse_cmdline(argv):
                         help="Cluster where scaling is to be performed. Options are: {}. "
                              "This is especially important if running namd on Bridges".format(
                             CLUSTERS), default=None)
-    parser.add_argument("-m","--memory", help="Memory (in Gb) requested per core. Default is: {}".format(DEF_MEM),
+    parser.add_argument("-m", "--memory", help="Memory (in Gb) requested per core. Default is: {}".format(DEF_MEM),
                         default=DEF_MEM, type=int)
 
     args = None
@@ -246,6 +244,8 @@ def parse_cmdline(argv):
                 args.scheduler = 'pbs'
                 args.job_ext = '.pbs'
                 args.sub_command = 'qsub'
+                if not args.nprocs:
+                    args.nprocs = DEF_NPROCS_FLUX
             elif which('sbatch'):
                 args.scheduler = 'slurm'
                 args.job_ext = '.job'
@@ -276,7 +276,7 @@ def parse_cmdline(argv):
                 args.nprocs = DEF_NPROCS_FLUX
 
         args.filelist = []
-
+        print(args.filelist)
         for nproc in args.nprocs:
             filename = args.basename + '_' + str(nproc)
             args.filelist.append(filename)
@@ -286,6 +286,8 @@ def parse_cmdline(argv):
                 filename = args.basename + '_' + total_procs
                 args.filelist.append(filename)
         args.tpl_vals = proc_args(args)
+        print("Hello WOrld")
+        print(args.filelist)
         if args.software == 'namd':
             if args.cluster == 'bridges':
                 args.run = RUN_NAMD_BRIDGES
