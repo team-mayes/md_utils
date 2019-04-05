@@ -16,7 +16,10 @@ fi
 files=
 basename=
 
-rm ${basename}_log_list
+if [ -f ${basename}_log_list ]
+then
+    rm ${basename}_log_list
+fi
 rm resubmit.o*
 for file in ${files[@]}
 do

@@ -16,7 +16,10 @@ fi
 files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
 basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
 
-rm ${basename}_log_list
+if [ -f ${basename}_log_list ]
+then
+    rm ${basename}_log_list
+fi
 rm resubmit.o*
 for file in ${files[@]}
 do
