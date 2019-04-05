@@ -14,8 +14,8 @@ cd ~
 if [ -d "$PBS_O_WORKDIR" ] ; then
     cd $PBS_O_WORKDIR
 fi
-files="/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_1 /Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling_2"
-basename=/Users/xadams/PycharmProjects/md_utils/tests/test_data/scaling/scaling
+files="tests/test_data/scaling/scaling_1 tests/test_data/scaling/scaling_2"
+basename=tests/test_data/scaling/scaling
 
 for file in ${files[@]}
 do

@@ -18,7 +18,7 @@ DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
-BASENAME = os.path.join(SCALING_DIR, "scaling")
+BASENAME = "tests/test_data/scaling/scaling"
 CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
 GOOD_PBS_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit.pbs")
 GOOD_PBS_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis.pbs")
@@ -65,8 +65,10 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testFileNamesPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING, '--nnodes', NODE_STRING, "--scheduler", "pbs"]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING,
+                      '--nnodes', NODE_STRING, "--scheduler", "pbs"]
         try:
+            print(DATA_DIR)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
                 for num in PROC_LIST:
@@ -87,7 +89,7 @@ class TestMain(unittest.TestCase):
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
             self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
-                # TODO: Add test for pbs file as well
+            # TODO: Add test for pbs file as well
         finally:
             for num in PROC_LIST:
                 silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
