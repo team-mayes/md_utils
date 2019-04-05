@@ -33,6 +33,7 @@ class TestFEPEditMain(unittest.TestCase):
         finally:
             silent_remove(DEF_OUT, disable=DISABLE_REMOVE)
 
+
 class TestFEPEditCatchImperfectInput(unittest.TestCase):
     # Testing for elegant failure and hopefully helpful error messages
     def testHelp(self):

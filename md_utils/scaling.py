@@ -61,14 +61,8 @@ CLUSTERS = ['bridges', 'flux', 'comet']
 
 
 def proc_args(keys):
-    tpl_vals = {}
-
-    tpl_vals[WALLTIME] = keys.walltime
-    tpl_vals[nprocs] = keys.nprocs
-    tpl_vals[MEM] = keys.memory
-    tpl_vals[JOB_NAME] = keys.basename
-    tpl_vals[NUM_NODES] = keys.nnodes
-    tpl_vals[NUM_PROCS] = keys.nprocs
+    tpl_vals = {WALLTIME: keys.walltime, nprocs: keys.nprocs, MEM: keys.memory, JOB_NAME: keys.basename,
+                NUM_NODES: keys.nnodes, NUM_PROCS: keys.nprocs}
 
     return tpl_vals
 
@@ -169,15 +163,15 @@ def plot_scaling(filename):
     means = []
     for file in frame.filename.unique():
         means.append(frame['time/ns'][frame['filename'] == file].mean())
-    nprocs = np.asarray([item.split('_')[-1] for item in frame.filename.unique()], dtype=int)
+    number_of_processors = np.asarray([item.split('_')[-1] for item in frame.filename.unique()], dtype=int)
     fig, ax = plt.subplots()
     ax1 = ax.twinx()
     speedup = np.asarray([means[0] / i for i in means])
-    x = np.linspace(1, nprocs[-1])
+    x = np.linspace(1, number_of_processors[-1])
 
-    ax.plot(nprocs, np.asarray(means), label='time/ns', marker='^')
+    ax.plot(number_of_processors, np.asarray(means), label='time/ns', marker='^')
     ax1.plot(x, x, 'k', label="Perfect Scaling", linestyle='--')
-    ax1.plot(nprocs, speedup, 'r', label="Speedup", marker='o')
+    ax1.plot(number_of_processors, speedup, 'r', label="Speedup", marker='o')
 
     ax.set_xlabel("Number of Processors")
     ax.set_ylabel("hours/ns")
@@ -223,14 +217,13 @@ def parse_cmdline(argv):
                             TYPES, DEF_TYPE), default=DEF_TYPE, choices=TYPES)
     parser.add_argument("--scheduler",
                         help="Scheduler type for jobfiles. Valid options are: {}. "
-                             "Automatic detection will be attempted by default".format(
-                            SCHEDULER_TYPES))
+                             "Automatic detection will be attempted by default".format(SCHEDULER_TYPES))
     parser.add_argument("--plot", default=False, action='store_true', help="Flag to only plot the specified files")
-    #TODO: Make cluster a required argument or make automatic detection system
+    # TODO: Make cluster a required argument or make automatic detection system
     parser.add_argument("--cluster",
                         help="Cluster where scaling is to be performed. Options are: {}. "
                              "This is especially important if running namd on Bridges".format(
-                            CLUSTERS), default=None)
+                                CLUSTERS), default=None)
     parser.add_argument("-m", "--memory", help="Memory (in Gb) requested per core. Default is: {}".format(DEF_MEM),
                         default=DEF_MEM, type=int)
 
