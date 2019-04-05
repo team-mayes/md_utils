@@ -35,7 +35,7 @@ RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 " \
                             "+commap 0,14,7,21 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
-NAMD_OUTNAME = "outputName          {} \n"
+NAMD_OUTNAME = "outputName          {}\n"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^outputName.*", re.IGNORECASE)
 FILE_PAT = re.compile(r"^files=.*")

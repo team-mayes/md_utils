@@ -84,14 +84,9 @@ class TestMain(unittest.TestCase):
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         try:
-            for num in PROC_LIST:
-                silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
-                silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
-            silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
-            silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
-                self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
+            self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
                 # TODO: Add test for pbs file as well
         finally:
             for num in PROC_LIST:
