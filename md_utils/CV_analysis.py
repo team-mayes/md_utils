@@ -152,7 +152,7 @@ def parse_cmdline(argv):
         # If no topology file is given, search for defaults and stop when first file is found
         try:
             args.top
-        except NameError:
+        except AttributeError:
             args.top = None
             for file in DEF_TOP:
                 if os.path.isfile(file):
