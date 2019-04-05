@@ -65,7 +65,7 @@ class TestMainFailWell(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def testFileNamesPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING, '--nnodes', NODE_STRING]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING, '--nnodes', NODE_STRING, "--scheduler", "pbs"]
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("subprocess.call" in output)
@@ -80,7 +80,7 @@ class TestMain(unittest.TestCase):
                 silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testJobOutputPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2"]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2", "--scheduler", "pbs"]
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         try:
@@ -96,7 +96,7 @@ class TestMain(unittest.TestCase):
             silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
 
     def testAnalysisOutputPBS(self):
-        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2"]
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2", "--scheduler", "pbs"]
         try:
             main(test_input)
             self.assertFalse(diff_lines(BASENAME + '_analysis.pbs', GOOD_PBS_ANALYSIS))
