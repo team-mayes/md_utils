@@ -30,6 +30,7 @@ LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
 LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'namd_short_energy.csv')
 LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'namd_short_total.csv')
 LOG_OUT_AMD = os.path.join(NAMD_LOG_DIR, 'namd_short_amdboost.csv')
+LOG_OUT_VDW = os.path.join(NAMD_LOG_DIR, 'namd_short_vdw.csv')
 STATS_OUT = os.path.join(NAMD_LOG_DIR, 'stats_namd_short_dihedral.csv')
 GOOD_LOG_OUT_DIHEDRAL = os.path.join(NAMD_LOG_DIR, 'ts_dihedral_good.csv')
 GOOD_LOG_OUT_PERFORMANCE = os.path.join(NAMD_LOG_DIR, 'ts_performance_good.csv')
@@ -37,6 +38,7 @@ GOOD_LOG_OUT_TOTAL = os.path.join(NAMD_LOG_DIR, 'ts_total_good.csv')
 GOOD_LOG_OUT_ENERGY = os.path.join(NAMD_LOG_DIR, 'ts_energy_good.csv')
 GOOD_LOG_OUT_STEP = os.path.join(NAMD_LOG_DIR, 'ts_step_good.csv')
 GOOD_LOG_OUT_AMD = os.path.join(NAMD_LOG_DIR, 'ts_amd_good.csv')
+GOOD_LOG_OUT_VDW = os.path.join(NAMD_LOG_DIR, 'ts_vdw_good.csv')
 GOOD_STATS = os.path.join(NAMD_LOG_DIR, 'stats_ts_dihedral_good.csv')
 
 LOG_LIST = os.path.join(NAMD_LOG_DIR, 'log_list.txt')
@@ -174,3 +176,11 @@ class TestMain(unittest.TestCase):
             self.assertFalse(diff_lines(LOG_OUT_AMD, GOOD_LOG_OUT_AMD))
         finally:
             silent_remove(LOG_OUT_AMD, disable=DISABLE_REMOVE)
+
+    def testVDW(self):
+        test_input = ["-f", LOG_PATH, "-v"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(LOG_OUT_VDW, GOOD_LOG_OUT_VDW))
+        finally:
+            silent_remove(LOG_OUT_VDW, disable=DISABLE_REMOVE)

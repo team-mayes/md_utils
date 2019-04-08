@@ -43,7 +43,7 @@ E_BOND = 'E_bond'
 E_ANGL = 'E_angl'
 E_DIHED = 'E_dihed'
 E_IMPRO = 'E_impro'
-E_VDWL = 'E_vdwl'
+E_VDW = 'E_vdw'
 TEMP = 'Temp'
 PRESS = 'Press'
 PERFORMANCE = 'time/ns'
@@ -74,6 +74,7 @@ def parse_cmdline(argv):
     parser.add_argument("-b", "--boost", help="Flag to collect aMD boost energies.", action='store_true', default=False)
     parser.add_argument("-p", "--performance", help="Flag to collect performance data.",
                         action='store_true', default=False)
+    parser.add_argument("-v", "--vdw", help="Flag to collect VdW energy data", action='store_true', default=False)
     parser.add_argument("--step", help="Timestep to begin logging quantities. Default is none", default=None)
     parser.add_argument("-s", "--stats", help="Flag to automatically generate statistics from the data.",
                         action='store_true',
@@ -85,6 +86,7 @@ def parse_cmdline(argv):
     args = None
     try:
         args = parser.parse_args(argv)
+        flags = [args.dihedral, args.performance, args.total, args.boost, args.vdw]
         if args.file is None:
             args.file_list = []
         else:
@@ -102,10 +104,10 @@ def parse_cmdline(argv):
         if ((args.dihedral or args.total) and args.performance):
             raise InvalidDataError("Script is not currently configured to accept both energy data ('-s' or '-t') and "
                                    "performance data ('-p'). Please select only one.")
-        if not (args.dihedral or args.performance or args.total or args.boost):
+        if not any(flags):
             raise InvalidDataError(
-                "Did not choose to output dihedral data ('-s'), total potential energy ('-t'),  performance data ('-p') or aMD boost data ('-a'). "
-                "No output will be produced.")
+                "Did not choose to output dihedral data ('-s'), total potential energy ('-t'), "
+                "performance data ('-p'), VdW data ('-v') or aMD boost data ('-b'). No output will be produced.")
         if args.amd:
             # Automatically turn on energy measurements if aMD parameters are flagged
             args.dihedral = True
@@ -123,7 +125,7 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def process_log(log_file, dihedral, total, performance, boost, step):
+def process_log(log_file, dihedral, total, vdw, performance, boost, step):
     """
     Gather key info from log file
     @param log_file: name of log file
@@ -151,26 +153,20 @@ def process_log(log_file, dihedral, total, performance, boost, step):
                     if int(s_line[1]) >= step_int:
                         first_step = True
             if reading_data and first_step:
-                if dihedral and total and ENERGY_PAT.match(line):
+                if (dihedral or total or vdw) and ENERGY_PAT.match(line):
                     s_line = line.split()
                     result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[E_DIHED] = float(s_line[4])
-                    result_dict[E_TOTAL] = float(s_line[13])
-                    result_list.append(dict(result_dict))
-                elif dihedral and ENERGY_PAT.match(line):
-                    s_line = line.split()
-                    result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[E_DIHED] = float(s_line[4])
+                    if dihedral:
+                        result_dict[E_DIHED] = float(s_line[4])
+                    if total:
+                        result_dict[E_TOTAL] = float(s_line[13])
+                    if vdw:
+                        result_dict[E_VDW] = float(s_line[7])
                     result_list.append(dict(result_dict))
                 elif performance and PERFORMANCE_PAT.match(line):
                     s_line = line.replace("/", " ").split()
                     result_dict[TIMESTEP] = int(s_line[1])
                     result_dict[PERFORMANCE] = float(s_line[8]) * 500000 / 3600
-                    result_list.append(dict(result_dict))
-                elif total and ENERGY_PAT.match(line):
-                    s_line = line.split()
-                    result_dict[TIMESTEP] = int(s_line[1])
-                    result_dict[E_TOTAL] = float(s_line[13])
                     result_list.append(dict(result_dict))
                 elif boost and AMD_PAT.match(line):
                     s_line = line.split()
@@ -182,8 +178,8 @@ def process_log(log_file, dihedral, total, performance, boost, step):
     return result_list
 
 
-def process_log_files(source_name, log_file_list, print_dihedral_info, print_total_info, print_performance_info,
-                      print_amd_info, step, stats):
+def process_log_files(source_name, log_file_list, print_dihedral_info, print_total_info, print_vmd_info,
+                      print_performance_info, print_amd_info, step, stats):
     """
     Loops through all files and prints output
     @param source_name: the source name to use as the base for creating an outfile name
@@ -207,10 +203,13 @@ def process_log_files(source_name, log_file_list, print_dihedral_info, print_tot
     elif print_amd_info:
         field_names += [AMD_BOOST]
         out_fname = create_out_fname(source_name, suffix='_amdboost', ext=".csv")
+    elif print_vmd_info:
+        field_names += [E_VDW]
+        out_fname = create_out_fname(source_name, suffix='_vdw', ext=".csv")
 
     for log_file in log_file_list:
-        result_list += process_log(log_file, print_dihedral_info, print_total_info, print_performance_info,
-                                   print_amd_info, step)
+        result_list += process_log(log_file, print_dihedral_info, print_total_info, print_vmd_info,
+                                   print_performance_info, print_amd_info, step)
 
     if len(result_list) == 0:
         warning("Found no log data to process from: {}".format(source_name))
@@ -228,8 +227,8 @@ def main(argv=None):
         return ret
 
     try:
-        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.performance, args.boost,
-                          args.step, args.stats)
+        process_log_files(args.source_name, args.file_list, args.dihedral, args.total, args.vdw, args.performance,
+                          args.boost, args.step, args.stats)
     except IOError as e:
         warning("Problems reading file:", e)
         return IO_ERROR
