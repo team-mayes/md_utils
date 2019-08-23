@@ -101,7 +101,7 @@ def submit_files(keys):
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile, print_info=False)
 
         with open(jobfile, 'a') as fout:
-            if keys.software == 'namd' and keys.cluster == 'bridges':
+            if keys.software == 'namd' and (keys.cluster == 'bridges' or keys.cluster == 'greatlakes'):
                 fout.write(keys.run.format(configfile, logfile))
             elif keys.software == 'namd':
                 fout.write(keys.run.format(total_procs, configfile, logfile))
