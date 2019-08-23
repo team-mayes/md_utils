@@ -29,17 +29,21 @@ PARTITION = 'partition'
 MAX_BRIDGES = 28
 BRIDGES_SHARED = 'RM-shared'
 BRIDGES_RM = 'RM'
+GREATLAKES_STANDARD = 'standard'
 BRIDGES_FULLNODE = "2\n#SBATCH --cpus-per-task=14"
 RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 " \
                             "+commap 0,14,7,21 {} >& {}"
+RUN_NAMD_GREATLAKES = "module load intel\nmodule load impi\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
+RUN_NAMD_GREATLAKES_FULLNODE = "module load intel\nmodule load impi\nmpirun -np 36 namd2 +pemap 0-35 {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 NAMD_OUTNAME = "outputName          {}\n"
 # Patterns
 NAMD_OUT_PAT = re.compile(r"^outputName.*", re.IGNORECASE)
 FILE_PAT = re.compile(r"^files=.*")
 BASE_PAT = re.compile(r"^basename=.*")
+PARTITION_PAT = re.compile(r"^#SBATCH -p.*")
 ANALYSIS_PAT = re.compile(r"^analysis=.*")
 NAMD_TIMING_PAT = re.compile(r"^outputTiming.*", re.IGNORECASE)
 NAMD_RUN_PAT = re.compile(r"^run.*")
@@ -48,16 +52,16 @@ NAMD_NUMSTEPS_PAT = re.compile(r"^numsteps.*")
 # Defaults
 DEF_NAME = 'scaling'
 TPL_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__))) + '/skel/tpl')
-DEF_NPROCS_FLUX = [1, 2, 4, 8, 12]
 DEF_NPROCS_BRIDGES = [1, 2, 4, 8, 14, 28]
 DEF_NPROCS_COMET = [1, 2, 4, 8, 12, 24]  # TODO: Confirm this with someone who uses Comet
+DEF_NPROCS_GREATLAKES = [1,2,4,6,12,18,24,30,36]
 DEF_NNODES = "1"
 DEF_WALLTIME = 10
 DEF_MEM = 1
 TYPES = ['namd', 'amber']
 DEF_TYPE = 'namd'
 SCHEDULER_TYPES = ['pbs', 'slurm']
-CLUSTERS = ['bridges', 'flux', 'comet']
+CLUSTERS = ['bridges', 'comet', 'greatlakes']
 
 
 def proc_args(keys):
@@ -90,6 +94,8 @@ def submit_files(keys):
                 keys.tpl_vals[PARTITION] = BRIDGES_RM
                 keys.tpl_vals[NUM_PROCS] = BRIDGES_FULLNODE
                 keys.run = RUN_NAMD_BRIDGES_FULLNODE
+        if keys.cluster == 'greatlakes':
+            keys.tpl_vals[PARTITION] = GREATLAKES_STANDARD
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile, print_info=False)
@@ -138,6 +144,8 @@ def submit_analysis(keys):
                     fout.write("{}\n".format(keys.analysis))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.basename))
+                elif PARTITION_PAT.match(line) and keys.cluster == 'greatlakes':
+                    fout.write("#SBATCH -p {}\n".format(keys.tpl_vals[PARTITION]))
                 else:
                     fout.write(line)
 
@@ -149,6 +157,8 @@ def submit_analysis(keys):
                     fout.write('files="{}"\n'.format(' '.join(keys.filelist)))
                 elif BASE_PAT.match(line):
                     fout.write("basename={}\n".format(keys.basename))
+                elif PARTITION_PAT.match(line) and keys.cluster == 'greatlakes':
+                    fout.write("#SBATCH -p {}\n".format(keys.tpl_vals[PARTITION]))
                 else:
                     fout.write(line)
 
@@ -202,10 +212,10 @@ def parse_cmdline(argv):
                         type=str)
     parser.add_argument("-p", "--nprocs", type=lambda s: [int(item) for item in s.split(' ')],
                         help="List of numbers of processors to test. Default chosen based on cluster. "
-                             "Flux default is {}, Bridges default is {}, Comet default is {}".format(
-                            DEF_NPROCS_FLUX, DEF_NPROCS_BRIDGES, DEF_NPROCS_COMET), default=None)
+                             "Great Lakes default is {}, Bridges default is {}, Comet default is {}".format(
+                            DEF_NPROCS_GREATLAKES, DEF_NPROCS_BRIDGES, DEF_NPROCS_COMET), default=None)
     parser.add_argument("-n", "--nnodes", type=lambda s: [int(item) for item in s.split(' ')],
-                        help="List of numbers of nodes to test. Nodes size will be assumed from max processor number. "
+                        help="List of numbers of nodes to test. Node size will be assumed from max processor number. "
                              "Default is {}".format(
                             DEF_NNODES),
                         default=DEF_NNODES)
@@ -234,13 +244,7 @@ def parse_cmdline(argv):
         if not args.config and not args.plot:
             raise InvalidDataError("No config file provided. This is required unless data is only being plotted.")
         if not args.scheduler and not args.cluster:
-            if which('qsub'):
-                args.scheduler = 'pbs'
-                args.job_ext = '.pbs'
-                args.sub_command = 'qsub'
-                if not args.nprocs:
-                    args.nprocs = DEF_NPROCS_FLUX
-            elif which('sbatch'):
+            if which('sbatch'):
                 args.scheduler = 'slurm'
                 args.job_ext = '.job'
                 args.sub_command = 'sbatch'
@@ -249,10 +253,10 @@ def parse_cmdline(argv):
                     args.nprocs = DEF_NPROCS_COMET
             else:
                 args.scheduler = 'none'
-                args.job_ext = '.pbs'
+                args.job_ext = '.job'
                 args.sub_command = 'submit'
                 if not args.nprocs:
-                    args.nprocs = DEF_NPROCS_FLUX
+                    args.nprocs = DEF_NPROCS_COMET
         elif args.cluster == 'bridges' or args.scheduler == 'slurm':
             args.scheduler = 'slurm'
             args.job_ext = '.job'
@@ -265,12 +269,12 @@ def parse_cmdline(argv):
             raise InvalidDataError(
                 "Scaling.py does not currently have a template for comet. "
                 "Please contact xadams@umich.edu to learn how you can add this functionality.")
-        elif args.cluster == 'flux' or args.scheduler == 'pbs':
-            args.scheduler = 'pbs'
-            args.job_ext = '.pbs'
-            args.sub_command = 'qsub'
+        elif args.cluster == 'greatlakes':
+            args.scheduler = 'slurm'
+            args.job_ext = '.job'
+            args.sub_command = 'sbatch'
             if not args.nprocs:
-                args.nprocs = DEF_NPROCS_FLUX
+                args.nprocs = DEF_NPROCS_GREATLAKES
 
         args.filelist = []
         for nproc in args.nprocs:
@@ -285,6 +289,8 @@ def parse_cmdline(argv):
         if args.software == 'namd':
             if args.cluster == 'bridges':
                 args.run = RUN_NAMD_BRIDGES
+            elif args.cluster == 'greatlakes':
+                args.run = RUN_NAMD_GREATLAKES
             else:
                 args.run = RUN_NAMD_PBS
             args.analysis = ANALYZE_NAMD

@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=tests/test_data/scaling/scaling
+#SBATCH -t 10:00
+#SBATCH -p standard
+#SBATCH -N 1 --tasks-per-node=1
+set echo
+set -x
+
+cd $SLURM_SUBMIT_DIR
+## Your commands here:
+module load intel
+module load impi
+mpirun -np 1 namd2 +ppn $SLURM_NPROCS 1 >& tests/test_data/scaling/scaling_1.conf
