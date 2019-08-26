@@ -30,12 +30,13 @@ MAX_BRIDGES = 28
 BRIDGES_SHARED = 'RM-shared'
 BRIDGES_RM = 'RM'
 GREATLAKES_STANDARD = 'standard'
+TEST_CASE = 'test partition'
 BRIDGES_FULLNODE = "2\n#SBATCH --cpus-per-task=14"
 RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 " \
                             "+commap 0,14,7,21 {} >& {}"
-RUN_NAMD_GREATLAKES = "module load intel\nmodule load impi\nmpirun -np $SLURM_NPROCS /home/xadams/NAMD_2.13_Linux-x86_64-multicore/namd2 +ppn $SLURM_NPROCS {} >& {}"
+RUN_NAMD_GREATLAKES = "module load intel\nmodule load impi\necho $SLURM_NPROCS\n~/NAMD_2.13_Linux-x86_64-ibverbs-smp/charmrun +p $SLURM_NPROCS ++mpiexec ++remote-shell mpiexec namd2 {} >& {}"
 RUN_NAMD_GREATLAKES_FULLNODE = "module load intel\nmodule load impi\nmpirun -np 36 /home/xadams/NAMD_2.13_Linux-x86_64-multicore/namd2 +ppn $SLURM_NPROCS {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 NAMD_OUTNAME = "outputName          {}\n"
@@ -94,8 +95,12 @@ def submit_files(keys):
                 keys.tpl_vals[PARTITION] = BRIDGES_RM
                 keys.tpl_vals[NUM_PROCS] = BRIDGES_FULLNODE
                 keys.run = RUN_NAMD_BRIDGES_FULLNODE
-        if keys.cluster == 'greatlakes':
+        elif keys.cluster == 'greatlakes':
             keys.tpl_vals[PARTITION] = GREATLAKES_STANDARD
+        elif keys.cluster == 'comet':
+            keys.tpl_vals[PARTITION] = COMET_STANDARD # Currently undefined
+        else:
+            keys.tpl_vals[PARTITION] = TEST_CASE
         config = {OUT_DIR: os.path.dirname(jobfile), TPL_VALS: keys.tpl_vals, OUT_FILE: jobfile}
         JOB_TPL_PATH = os.path.join(TPL_PATH, "template" + keys.job_ext)
         fill_save_tpl(config, read_tpl(JOB_TPL_PATH), keys.tpl_vals, JOB_TPL_PATH, jobfile, print_info=False)
@@ -146,6 +151,8 @@ def submit_analysis(keys):
                     fout.write("basename={}\n".format(keys.basename))
                 elif PARTITION_PAT.match(line) and keys.cluster == 'greatlakes':
                     fout.write("#SBATCH -p {}\n".format(keys.tpl_vals[PARTITION]))
+                elif PARTITION_PAT.match(line) and keys.cluster == 'bridges':
+                    fout.write("#SBATCH -p {}\n".format(BRIDGES_SHARED))
                 else:
                     fout.write(line)
 
@@ -159,6 +166,8 @@ def submit_analysis(keys):
                     fout.write("basename={}\n".format(keys.basename))
                 elif PARTITION_PAT.match(line) and keys.cluster == 'greatlakes':
                     fout.write("#SBATCH -p {}\n".format(keys.tpl_vals[PARTITION]))
+                elif PARTITION_PAT.match(line) and keys.cluster == 'bridges':
+                    fout.write("#SBATCH -p {}\n".format(BRIDGES_SHARED))
                 else:
                     fout.write(line)
 

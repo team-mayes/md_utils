@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=analysis
 #SBATCH -t 30:00
-#SBATCH -p test partition
+#SBATCH -p RM-shared
 #SBATCH -N 1 --tasks-per-node=1
 #SBATCH --mail-type=END,FAIL
 set echo
@@ -9,7 +9,7 @@ set -x
 
 cd $SLURM_SUBMIT_DIR
 ## Your commands here:
-files="tests/test_data/scaling/scaling_1 tests/test_data/scaling/scaling_2"
+files="tests/test_data/scaling/scaling_1 tests/test_data/scaling/scaling_28"
 basename=tests/test_data/scaling/scaling
 
 rm ${basename}_log_list

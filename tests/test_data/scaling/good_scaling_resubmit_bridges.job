@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --job-name=resubmit
 #SBATCH -t 5:00
-#SBATCH -p test partition
+#SBATCH -p RM-shared
 #SBATCH -N 1 --tasks-per-node=1
 set echo
 set -x
 
 cd $SLURM_SUBMIT_DIR
 ## Your commands here:
-files="tests/test_data/scaling/scaling_1 tests/test_data/scaling/scaling_2"
+files="tests/test_data/scaling/scaling_1 tests/test_data/scaling/scaling_28"
 basename=tests/test_data/scaling/scaling
 
 for file in ${files[@]}

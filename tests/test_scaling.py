@@ -20,10 +20,10 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SCALING_DIR = os.path.join(DATA_DIR, 'scaling')
 BASENAME = "tests/test_data/scaling/scaling"
 CONF_FILE = os.path.join(SCALING_DIR, "template.inp")
-GOOD_PBS_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit.pbs")
-GOOD_PBS_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis.pbs")
 GOOD_SLURM_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis.job")
+GOOD_BRIDGES_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis_bridges.job")
 GOOD_SLURM_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit.job")
+GOOD_BRIDGES_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit_bridges.job")
 GOOD_GREATLAKES_RESUBMIT = os.path.join(SCALING_DIR, "good_scaling_resubmit_greatlakes.job")
 GOOD_GREATLAKES_ANALYSIS = os.path.join(SCALING_DIR, "good_scaling_analysis_greatlakes.job")
 GOOD_CONF = os.path.join(SCALING_DIR, "good_scaling_1.conf")
@@ -66,60 +66,61 @@ class TestMainFailWell(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
-    # def testFileNamesPBS(self):
-    #     test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING,
-    #                   '--nnodes', NODE_STRING, "--scheduler", "pbs"]
-    #     try:
-    #         with capture_stdout(main, test_input) as output:
-    #             self.assertTrue("subprocess.call" in output)
-    #             for num in PROC_LIST:
-    #                 self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.pbs'))
-    #                 self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
-    #     finally:
-    #         for num in PROC_LIST:
-    #             silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
-    #             silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
-    #             silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
-    #             silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
-    #
-    # def testJobOutputPBS(self):
-    #     test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2", "--scheduler", "pbs"]
-    #     if logger.isEnabledFor(logging.DEBUG):
-    #         main(test_input)
-    #     try:
-    #         with capture_stdout(main, test_input) as output:
-    #             self.assertTrue("subprocess.call" in output)
-    #         self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
-    #         # TODO: Add test for pbs file as well
-    #     finally:
-    #         for num in PROC_LIST:
-    #             silent_remove(BASENAME + '_' + num + '.pbs', disable=DISABLE_REMOVE)
-    #             silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
-    #
-    # def testAnalysisOutputPBS(self):
-    #     test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2", "--scheduler", "pbs"]
-    #     try:
-    #         main(test_input)
-    #         self.assertFalse(diff_lines(BASENAME + '_analysis.pbs', GOOD_PBS_ANALYSIS))
-    #         self.assertFalse(diff_lines(BASENAME + '_resubmit.pbs', GOOD_PBS_RESUBMIT))
-    #     finally:
-    #         silent_remove(BASENAME + '_1.pbs', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_1.conf', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_2.pbs', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_2.conf', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_analysis.pbs', disable=DISABLE_REMOVE)
-    #         silent_remove(BASENAME + '_resubmit.pbs', disable=DISABLE_REMOVE)
+    def testFileNamesPBS(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', PROC_STRING,
+                      '--nnodes', NODE_STRING]
+        try:
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("subprocess.call" in output)
+                for num in PROC_LIST:
+                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.job'))
+                    self.assertTrue(os.path.isfile(BASENAME + '_' + num + '.conf'))
+        finally:
+            for num in PROC_LIST:
+                silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
 
-    # This test combines all previous PBS scripts, which are best used for diagnostics
+    def testJobOutput(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '--nnodes', "1 2"]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        try:
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("subprocess.call" in output)
+            self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
+        finally:
+            for num in PROC_LIST:
+                silent_remove(BASENAME + '_' + num + '.job', disable=DISABLE_REMOVE)
+                silent_remove(BASENAME + '_' + num + '.conf', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_' + '48.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_' + '48.conf', disable=DISABLE_REMOVE)
+
+    def testAnalysisOutput(self):
+        test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 2"]
+        try:
+            main(test_input)
+            self.assertFalse(diff_lines(BASENAME + '_analysis.job', GOOD_SLURM_ANALYSIS))
+            self.assertFalse(diff_lines(BASENAME + '_resubmit.job', GOOD_SLURM_RESUBMIT))
+        finally:
+            silent_remove(BASENAME + '_1.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_1.conf', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_2.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_2.conf', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_analysis.job', disable=DISABLE_REMOVE)
+            silent_remove(BASENAME + '_resubmit.job', disable=DISABLE_REMOVE)
+
+    # This test combines all previous tests, which are best used individually for diagnostics
     def testBridges(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '-d', '-p', "1 28", '--cluster', 'bridges']
         try:
             with capture_stdout(main, test_input) as output:
                 self.assertTrue('sbatch' in output)
-            self.assertFalse(diff_lines(BASENAME + '_analysis.job', GOOD_SLURM_ANALYSIS))
-            self.assertFalse(diff_lines(BASENAME + '_resubmit.job', GOOD_SLURM_RESUBMIT))
+            self.assertFalse(diff_lines(BASENAME + '_analysis.job', GOOD_BRIDGES_ANALYSIS))
+            self.assertFalse(diff_lines(BASENAME + '_resubmit.job', GOOD_BRIDGES_RESUBMIT))
             self.assertFalse(diff_lines(BASENAME + '_1.conf', GOOD_CONF))
         finally:
             silent_remove(BASENAME + '_1.job', disable=DISABLE_REMOVE)
