@@ -36,8 +36,8 @@ RUN_NAMD_PBS = "namd2 +p {} {} >& {}"
 RUN_NAMD_BRIDGES = "module load namd\nmpirun -np 1 namd2 +ppn $SLURM_NPROCS {} >& {}"
 RUN_NAMD_BRIDGES_FULLNODE = "module load namd\nmpirun -np $SLURM_NTASKS namd2 +ppn 12 +pemap 1-6,15-20,8-13,22-27 " \
                             "+commap 0,14,7,21 {} >& {}"
-RUN_NAMD_GREATLAKES = "module load intel\nmodule load impi\necho $SLURM_NPROCS\n~/NAMD_2.13_Linux-x86_64-ibverbs-smp/charmrun +p $SLURM_NPROCS ++mpiexec ++remote-shell mpiexec namd2 {} >& {}"
-RUN_NAMD_GREATLAKES_FULLNODE = "module load intel\nmodule load impi\nmpirun -np 36 /home/xadams/NAMD_2.13_Linux-x86_64-multicore/namd2 +ppn $SLURM_NPROCS {} >& {}"
+RUN_NAMD_GREATLAKES = "module load intel\nmodule load impi\necho $SLURM_NPROCS\n~/NAMD_2.13_Linux-x86_64-ibverbs-smp/charmrun +p $SLURM_NPROCS ++mpiexec ++remote-shell mpiexec ~/NAMD_2.13_Linux-x86_64-ibverbs-smp/namd2 {} >& {}"
+RUN_NAMD_GREATLAKES_FULLNODE = "module load intel\nmodule load impi\nmpirun -np 36 ~/NAMD_2.13_Linux-x86_64-ibverbs-smp/namd2 +ppn $SLURM_NPROCS {} >& {}"
 ANALYZE_NAMD = "namd_log_proc -p -l ${basename}_log_list"
 NAMD_OUTNAME = "outputName          {}\n"
 # Patterns
