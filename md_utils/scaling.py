@@ -242,7 +242,7 @@ def parse_cmdline(argv):
     parser.add_argument("--cluster",
                         help="Cluster where scaling is to be performed. Options are: {}. "
                              "This is especially important if running namd on Bridges".format(
-                                CLUSTERS), default=None)
+                                CLUSTERS), choices=CLUSTERS, default=None)
     parser.add_argument("-m", "--memory", help="Memory (in Gb) requested per core. Default is: {}".format(DEF_MEM),
                         default=DEF_MEM, type=int)
 

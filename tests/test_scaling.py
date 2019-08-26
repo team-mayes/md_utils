@@ -55,6 +55,13 @@ class TestMainFailWell(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("No config" in output)
 
+    def testbadCluster(self):
+        test_input = ['--cluster', 'grealakes', '-c', CONF_FILE, '-b', BASENAME]
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("invalid choice:" in output)
+
     def testAmber(self):
         test_input = ['-b', BASENAME, '-c', CONF_FILE, '--software', "amber"]
         if logger.isEnabledFor(logging.DEBUG):
